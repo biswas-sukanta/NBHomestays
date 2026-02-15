@@ -1,0 +1,21 @@
+services:
+  # Backend: Spring Boot application
+  - type: web
+    name: nb-homestay-api
+    payload:
+      image:
+        dockerfilePath: ./backend/Dockerfile
+        dockerContext: ./backend
+    env: docker
+    region: singapore
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: PORT
+        value: 8080
