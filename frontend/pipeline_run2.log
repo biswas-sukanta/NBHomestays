@@ -1,0 +1,111 @@
+
+Running 4 tests using 1 worker
+
+[1A[2K[1/4] [chromium] ??? tests\e2e\approval-pipeline.spec.ts:8:9 ??? Approval Pipeline: Ghost to Live ??? Step 1 & 2: Host submits homestay and sees PENDING badge
+[1A[2K[chromium] ??? tests\e2e\approval-pipeline.spec.ts:8:9 ??? Approval Pipeline: Ghost to Live ??? Step 1 & 2: Host submits homestay and sees PENDING badge
+HOST [info]: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KHOST [log]: [HMR] connected
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 234ms
+
+[1A[2KHOST [info]: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KHOST [log]: [HMR] connected
+
+[1A[2KHOST [info]: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KHOST [log]: [HMR] connected
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 145ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 108ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 120ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 108ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 122ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 104ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 120ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 117ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 133ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 153ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 149ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 208ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 119ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 145ms
+
+[1A[2KLocation set: lat=27.03756891620539
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 116ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 104ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 227ms
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 104ms
+
+[1A[2KCaptured Homestay ID: 588bed87-da4b-4751-ba6a-315f07a69281, Status: PENDING
+
+[1A[2KHOST [log]: [Fast Refresh] rebuilding
+
+[1A[2KHOST [log]: [Fast Refresh] done in 130ms
+
+[1A[2K[2/4] [chromium] ??? tests\e2e\approval-pipeline.spec.ts:77:9 ??? Approval Pipeline: Ghost to Live ??? Step 3: Guest cannot find the pending homestay in search
+[1A[2K[chromium] ??? tests\e2e\approval-pipeline.spec.ts:77:9 ??? Approval Pipeline: Ghost to Live ??? Step 3: Guest cannot find the pending homestay in search
+Guest search returned 0 results, target NOT found (correct)
+
+[1A[2K[3/4] [chromium] ??? tests\e2e\approval-pipeline.spec.ts:93:9 ??? Approval Pipeline: Ghost to Live ??? Step 4 & 5: Admin sees pending homestay and approves it
+[1A[2K[chromium] ??? tests\e2e\approval-pipeline.spec.ts:93:9 ??? Approval Pipeline: Ghost to Live ??? Step 4 & 5: Admin sees pending homestay and approves it
+After approval ??? Status: APPROVED
+
+[1A[2K[4/4] [chromium] ??? tests\e2e\approval-pipeline.spec.ts:124:9 ??? Approval Pipeline: Ghost to Live ??? Step 6: Host sees APPROVED badge on dashboard
+[1A[2K  4 passed (14.9s)

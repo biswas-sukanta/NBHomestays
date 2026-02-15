@@ -1,0 +1,45 @@
+package com.nbh.backend.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "reviews")
+public class Review {
+
+    @Id
+    @GeneratedValue
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "homestay_id", nullable = false)
+    private Homestay homestay;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    private Integer rating; // 1-5
+
+    @Column(columnDefinition = "TEXT")
+    private String comment;
+
+    @ElementCollection
+    @CollectionTable(name = "review_photos", joinColumns = @JoinColumn(name = "review_id"))
+    @Column(name = "photo_url")
+    private java.util.List<String> photoUrls;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}

@@ -1,0 +1,189 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { homestayApi } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Pencil, Trash2, Plus } from 'lucide-react';
+import Link from 'next/link';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+interface Homestay {
+    id: string;
+    name: string;
+    pricePerNight: number;
+    status: string;
+    location: any;
+}
+
+export default function HostDashboard() {
+    const [listings, setListings] = useState<Homestay[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [editHomestay, setEditHomestay] = useState<Homestay | null>(null);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [homestayToDelete, setHomestayToDelete] = useState<string | null>(null);
+
+    const [editForm, setEditForm] = useState({ name: '', pricePerNight: '' });
+
+    const fetchListings = async () => {
+        try {
+            const res = await homestayApi.getMyListings();
+            const data: Homestay[] = (res.data as any[]).map((h: any) => ({
+                id: h.id,
+                name: h.name || '',
+                pricePerNight: h.pricePerNight || 0,
+                status: h.status || 'PENDING',
+                location: null,
+            }));
+            setListings(data);
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to fetch listings");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchListings();
+    }, []);
+
+    const handleEditClick = (homestay: Homestay) => {
+        setEditHomestay(homestay);
+        setEditForm({ name: homestay.name, pricePerNight: homestay.pricePerNight.toString() });
+        setIsEditOpen(true);
+    };
+
+    const handleDeleteClick = (id: string) => {
+        setHomestayToDelete(id);
+        setIsDeleteOpen(true);
+    };
+
+    const handleUpdate = async () => {
+        if (!editHomestay) return;
+        try {
+            await homestayApi.updateHomestay(editHomestay.id, {
+                name: editForm.name,
+                pricePerNight: parseFloat(editForm.pricePerNight)
+            } as any);
+            toast.success("Homestay updated");
+            setIsEditOpen(false);
+            fetchListings();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update homestay");
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!homestayToDelete) return;
+        try {
+            await homestayApi.deleteHomestay(homestayToDelete);
+            toast.success("Homestay deleted");
+            setIsDeleteOpen(false);
+            setListings(prev => prev.filter(h => h.id !== homestayToDelete));
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to delete homestay");
+        }
+    };
+
+    return (
+        <div className="container mx-auto px-4 py-12">
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold">My Listings</h1>
+                <Link href="/host/add-homestay">
+                    <Button className="bg-green-600 hover:bg-green-700">
+                        <Plus className="w-4 h-4 mr-2" /> Add Homestay
+                    </Button>
+                </Link>
+            </div>
+
+            {loading ? (
+                <div>Loading...</div>
+            ) : listings.length === 0 ? (
+                <div className="text-center text-gray-500 py-12">
+                    No listings found. Start by adding one!
+                </div>
+            ) : (
+                <div className="grid gap-4">
+                    {listings.map(homestay => (
+                        <Card key={homestay.id} className="flex flex-row items-center justify-between p-4">
+                            <div>
+                                <h3 className="text-xl font-semibold">{homestay.name}</h3>
+                                <div className="text-sm text-gray-500">
+                                    ₹{homestay.pricePerNight} / night
+                                </div>
+                                <span className={`inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded ${homestay.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                    homestay.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                        'bg-yellow-100 text-yellow-800'
+                                    }`} title={
+                                        homestay.status === 'PENDING' ? 'Waiting for Admin approval' :
+                                            homestay.status === 'APPROVED' ? 'Live and visible to guests' :
+                                                'Rejected by Admin'
+                                    }>
+                                    {homestay.status}
+                                </span>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => handleEditClick(homestay)}>
+                                    <Pencil className="w-4 h-4 mr-1" /> Edit
+                                </Button>
+                                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(homestay.id)}>
+                                    <Trash2 className="w-4 h-4 mr-1" /> Delete
+                                </Button>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            )}
+
+            {/* Edit Modal */}
+            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Listing</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div>
+                            <Label>Name</Label>
+                            <Input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} />
+                        </div>
+                        <div>
+                            <Label>Price per Night</Label>
+                            <Input type="number" value={editForm.pricePerNight} onChange={e => setEditForm({ ...editForm, pricePerNight: e.target.value })} />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+                        <Button onClick={handleUpdate}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation */}
+            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Deletion</DialogTitle>
+                    </DialogHeader>
+                    <p>Are you sure you want to delete this listing? This action cannot be undone.</p>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}

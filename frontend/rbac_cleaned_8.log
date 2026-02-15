@@ -1,0 +1,167 @@
+
+Running 3 tests using 1 worker
+
+[1A[2K[1/3] [chromium] ??? tests\e2e\rbac-map-flow.spec.ts:13:9 ??? RBAC & Map Flow Tests ??? Host: Create Listing with Map
+[1A[2K[chromium] ??? tests\e2e\rbac-map-flow.spec.ts:13:9 ??? RBAC & Map Flow Tests ??? Host: Create Listing with Map
+BROWSER LOAD [info]: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KBROWSER LOAD [log]: [HMR] connected
+
+[1A[2KBROWSER LOAD [info]: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KBROWSER LOAD [log]: [HMR] connected
+
+[1A[2KBROWSER LOAD [info]: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KBROWSER LOAD [log]: [HMR] connected
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 225ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 120ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 127ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 121ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 104ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 107ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 105ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 134ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 124ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 172ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 126ms
+
+[1A[2KSelected Location: 27.03756891620539, 88.26416015625
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 135ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 116ms
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 265ms
+
+[1A[2KCaptured Homestay ID via API: 88cac544-7eca-4705-8e11-81351960ce42
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] rebuilding
+
+[1A[2KBROWSER LOAD [log]: [Fast Refresh] done in 102ms
+
+[1A[2K[2/3] [chromium] ??? tests\e2e\rbac-map-flow.spec.ts:102:13 ??? RBAC & Map Flow Tests ??? Guest & Admin Tests ??? Guest: Read-Only Map & Permissions
+[1A[2K[chromium] ??? tests\e2e\rbac-map-flow.spec.ts:102:13 ??? RBAC & Map Flow Tests ??? Guest & Admin Tests ??? Guest: Read-Only Map & Permissions
+GUEST [info]: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KGUEST [log]: [HMR] connected
+
+[1A[2KGUEST [log]: [Fast Refresh] rebuilding
+
+[1A[2KGUEST [log]: [Fast Refresh] done in 162ms
+
+[1A[2K[3/3] [chromium] ??? tests\e2e\rbac-map-flow.spec.ts:132:13 ??? RBAC & Map Flow Tests ??? Guest & Admin Tests ??? Admin: Override Delete
+[1A[2K[chromium] ??? tests\e2e\rbac-map-flow.spec.ts:132:13 ??? RBAC & Map Flow Tests ??? Guest & Admin Tests ??? Admin: Override Delete
+ADMIN [info]: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KADMIN [log]: [HMR] connected
+
+[1A[2KADMIN [log]: [Fast Refresh] rebuilding
+
+[1A[2KADMIN [info]: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KADMIN [log]: [HMR] connected
+
+[1A[2KADMIN [info]: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KADMIN [log]: [HMR] connected
+
+[1A[2KADMIN [log]: [Fast Refresh] rebuilding
+
+[1A[2KADMIN [log]: [Fast Refresh] done in 101ms
+
+[1A[2KADMIN [log]: [Fast Refresh] rebuilding
+
+[1A[2KADMIN [log]: [Fast Refresh] done in 105ms
+
+[1A[2KADMIN [warning]: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+[1A[2KADMIN [warning]: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+[1A[2KADMIN [log]: [Fast Refresh] rebuilding
+
+[1A[2KADMIN [log]: [Fast Refresh] done in 123ms
+
+[1A[2KADMIN [log]: [Fast Refresh] rebuilding
+
+[1A[2KADMIN [log]: [Fast Refresh] done in 104ms
+
+[1A[2KADMIN [log]: [Fast Refresh] rebuilding
+
+[1A[2KADMIN [log]: [Fast Refresh] done in 117ms
+
+[1A[2K  1) [chromium] ??? tests\e2e\rbac-map-flow.spec.ts:132:13 ??? RBAC & Map Flow Tests ??? Guest & Admin Tests ??? Admin: Override Delete 
+
+    Error: [2mexpect([22m[31mpage[39m[2m).not.[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Expected pattern: not [32m/.*\/homestays\/.+/[39m
+    Received string: [31m"[7mhttp://localhost:3000/homestays/88cac544-7eca-4705-8e11-81351960ce42[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "not toHaveURL" with timeout 5000ms[22m
+    [2m    9 ?? unexpected value "http://localhost:3000/homestays/88cac544-7eca-4705-8e11-81351960ce42"[22m
+
+
+      152 |
+      153 |             // 5. Verify Redirect or Gone
+    > 154 |             await expect(page).not.toHaveURL(/.*\/homestays\/.+/);
+          |                                    ^
+      155 |             // Verify 404
+      156 |             const res = await page.request.get(`http://localhost:8080/api/homestays/${homestayId}`);
+      157 |             expect(res.status()).toBe(404);
+        at C:\Users\biswa\OneDrive\Documents\github\NorthBengalHomestays\frontend\tests\e2e\rbac-map-flow.spec.ts:154:36
+
+    Error Context: test-results\e2e-rbac-map-flow-RBAC-Map-f02be-Tests-Admin-Override-Delete-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+    test-results\e2e-rbac-map-flow-RBAC-Map-f02be-Tests-Admin-Override-Delete-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-rbac-map-flow-RBAC-Map-f02be-Tests-Admin-Override-Delete-chromium\trace.zip
+
+    ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+
+
+[1A[2K  1 failed
+    [chromium] ??? tests\e2e\rbac-map-flow.spec.ts:132:13 ??? RBAC & Map Flow Tests ??? Guest & Admin Tests ??? Admin: Override Delete 
+  2 passed (21.5s)

@@ -1,0 +1,25 @@
+﻿
+Running 2 tests using 2 workers
+
+[1A[2K[1/2] [chromium] ΓÇ║ tests\workflow.spec.ts:122:9 ΓÇ║ Scenario B: Instant Post Flow ΓÇ║ User creates post ΓåÆ instant appearance in feed and search
+[1A[2K[2/2] [chromium] ΓÇ║ tests\workflow.spec.ts:39:9 ΓÇ║ Scenario A: Host vs Admin Handshake ΓÇ║ Host submits homestay ΓåÆ PENDING ΓåÆ Admin approves ΓåÆ APPROVED in search
+[1A[2K[chromium] ΓÇ║ tests\workflow.spec.ts:39:9 ΓÇ║ Scenario A: Host vs Admin Handshake ΓÇ║ Host submits homestay ΓåÆ PENDING ΓåÆ Admin approves ΓåÆ APPROVED in search
+Created homestay: 9abef9b6-730f-4f95-8b3b-9e49a2658b8a Status: PENDING
+
+[1A[2KPublic search before approval: 0 results Γ£ô
+
+[1A[2K[chromium] ΓÇ║ tests\workflow.spec.ts:122:9 ΓÇ║ Scenario B: Instant Post Flow ΓÇ║ User creates post ΓåÆ instant appearance in feed and search
+Post appears instantly in feed Γ£ô
+
+[1A[2KCommunity search finds post Γ£ô
+
+[1A[2K[chromium] ΓÇ║ tests\workflow.spec.ts:39:9 ΓÇ║ Scenario A: Host vs Admin Handshake ΓÇ║ Host submits homestay ΓåÆ PENDING ΓåÆ Admin approves ΓåÆ APPROVED in search
+Admin sees Cloud 9 in pending list Γ£ô
+
+[1A[2KCloud 9 removed from pending list after approval Γ£ô
+
+[1A[2KHost sees APPROVED status Γ£ô
+
+[1A[2KPublic search after approval: 1 result Γ£ô
+
+[1A[2K  2 passed (11.9s)

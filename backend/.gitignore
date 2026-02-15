@@ -1,0 +1,15 @@
+
+# Maven
+target/
+*.jar
+*.war
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+logs/
+*.log
+
+# Secrets
+application.properties
+.env
+input.txt
