@@ -1,16 +1,14 @@
 # Stage 1: Build
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Stage 2: Runtime
+# Stage 2: Run (Low Memory Alpine Image)
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-
-# Optimization for 512MB RAM limit
-ENTRYPOINT ["java", "-Xms256m", "-Xmx400m", "-jar", "/app.jar"]
-
 EXPOSE 8080
+# CRITICAL: Limit Heap Size to 400MB (Render Free Tier limit is 512MB)
+ENTRYPOINT ["java", "-Xms256m", "-Xmx400m", "-jar", "app.jar"]
