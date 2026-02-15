@@ -37,7 +37,7 @@ export default function CommunityPage() {
         if (!isAuthenticated) return;
         try {
             const res = await api.get('/posts/my-posts');
-            const myIds = new Set(res.data.map((p: Post) => p.id));
+            const myIds = new Set<string>(res.data.map((p: Post) => p.id));
             setMyPostIds(myIds);
         } catch (e) { console.error("Failed to fetch my posts", e); }
     };
