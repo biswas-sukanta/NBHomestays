@@ -14,7 +14,7 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await api.post('/auth/authenticate', { email, password });
+            const res = await api.post('/api/auth/authenticate', { email, password });
             login(res.data.accessToken, res.data.refreshToken);
             window.location.href = '/'; // Force full reload to ensure state is clear or use router.push if available
         } catch (err: any) {
