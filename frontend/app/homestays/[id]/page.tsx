@@ -1,4 +1,8 @@
 import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 import { StoryCarousel } from '@/components/story-carousel';
 import { BookingForm } from '@/components/booking-form';
 import { QASection } from '@/components/qa-section';
