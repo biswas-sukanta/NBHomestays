@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { homestayApi } from '@/lib/api-client';
 import { HomestayCard, HomestaySummary } from '@/components/homestay-card';
 import type { Response as HomestayResponse } from '@/src/lib/api/models';
@@ -12,6 +12,8 @@ function SearchResults() {
     const query = searchParams.get('query') || '';
     const [homestays, setHomestays] = useState<HomestaySummary[]>([]);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
+    const [searchTerm, setSearchTerm] = useState(query);
 
     useEffect(() => {
         const fetchHomestays = async () => {
@@ -54,8 +56,31 @@ function SearchResults() {
         );
     }
 
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.push(`/search?query=${encodeURIComponent(searchTerm)}`);
+    };
+
     return (
         <div className="container mx-auto px-4 py-8">
+            <div className="mb-8 max-w-2xl">
+                <form onSubmit={handleSearch} className="flex gap-4">
+                    <input
+                        type="text"
+                        placeholder="Search homestays..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                    <button
+                        type="submit"
+                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                        Search
+                    </button>
+                </form>
+            </div>
+
             <h1 className="text-3xl font-bold mb-8 text-gray-800">
                 {query ? `Stays in "${query}"` : 'All Homestays'}
             </h1>

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
+    test.describe.configure({ mode: 'serial' });
     const timestamp = Date.now();
     const USER_EMAIL = `nb.user.${timestamp}@test.com`;
     const HOST_EMAIL = `nb.host.${timestamp}@test.com`;
@@ -16,6 +17,17 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
 
     // Increase timeout for the whole suite
     test.setTimeout(60000);
+
+    async function ensureLoggedOut(page) {
+        await page.goto('/');
+        // Check for Logout button (desktop/mobile)
+        const logoutBtn = page.locator('button:has-text("Logout")');
+        if (await logoutBtn.isVisible()) {
+            console.log('User is logged in. Logging out...');
+            await logoutBtn.click();
+            await expect(page.locator('a[href="/login"]')).toBeVisible();
+        }
+    }
 
     test('Flow 1: User Auth - Register -> Login -> Profile (No 404)', async ({ page }) => {
         // Register
@@ -91,7 +103,10 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
         expect(myStay.status).toBe('PENDING');
     });
 
-    test.skip('Flow 3: Admin Flow - View -> Approve (No 404)', async ({ page }) => {
+    test('Flow 3: Admin Flow - View -> Approve (No 404)', async ({ page, context }) => {
+        // 1. Smart Logout
+        await ensureLoggedOut(page);
+
         // Register Admin (Programmatically)
         const regRes = await page.request.post('/api/auth/register', {
             data: {
@@ -108,11 +123,19 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
         await page.goto('/login');
         await page.fill('input[name="email"]', ADMIN_EMAIL);
         await page.fill('input[name="password"]', ADMIN_PASS);
+        await expect(page.locator('button[type="submit"]')).toBeEnabled();
         await page.click('button[type="submit"]');
         await page.waitForURL('/');
 
         // Admin Dashboard
         await page.goto('/admin');
+
+        // FORCE REFRESH to ensure new data is loaded
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+
+        // Ensure we are on Pending Tab
+        await page.getByText('Pending Approval', { exact: false }).click().catch(() => { });
 
         // Verify Homestay is visible
         await expect(page.getByText(HOMESTAY_NAME)).toBeVisible();
@@ -124,34 +147,44 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
         await approveRes;
     });
 
-    test.skip('Flow 4: Explorer Flow - Search -> View -> Select (No 404)', async ({ page }) => {
-        // Wait for approval propagation
-        await page.waitForTimeout(2000);
+    test('Flow 4: Explorer Flow - Search -> View -> Select (No 404)', async ({ page, context }) => {
+        // 1. Smart Logout
+        await ensureLoggedOut(page);
 
+        // 2. Login as Standard User (reuse credentials from Flow 1)
+        await page.goto('/login');
+        await page.fill('input[name="email"]', USER_EMAIL);
+        await page.fill('input[name="password"]', PASSWORD);
+        await page.click('button[type="submit"]');
+        await page.waitForURL('/'); // Wait for Home Page
+
+        // 3. Now Navigate to Search
         await page.goto('/search');
-        await page.fill('input[placeholder*="Search"]', HOMESTAY_NAME);
-        await page.keyboard.press('Enter');
+        await page.waitForLoadState('networkidle'); // Wait for page to settle
 
+        const searchInput = page.locator('input[placeholder*="Search"]');
+        await expect(searchInput).toBeVisible();
+
+        // 4. Perform Search & Verify Click (The 404 Check)
+        await searchInput.fill(HOMESTAY_NAME);
+        await page.keyboard.press('Enter');
         await expect(page.getByText(HOMESTAY_NAME)).toBeVisible({ timeout: 10000 });
 
-        // Click to View Details
+        // 5. Click and Verify Details Page (Crucial)
         await page.getByText(HOMESTAY_NAME).click();
-        await expect(page).toHaveURL(/\/homestays\//);
 
-        // Check for 404 on details page
-        // (Implicitly checked by Playwright waiting for elements)
+        // STRICT CHECK: Verify URL pattern for Dynamic Route
+        await page.waitForURL(/\/homestays\/[a-f0-9-]+/);
+
+        // Assert Details Page Content
         await expect(page.locator('h1')).toContainText(HOMESTAY_NAME);
-
-        // Select/Book (if flow exists)
-        // Assuming 'Book Now' button
-        if (await page.isVisible('button:has-text("Book Now")')) {
-            await page.click('button:has-text("Book Now")');
-            // Check for Selection/Booking page 404
-            // await expect(page).toHaveURL(/\/booking/); 
-        }
+        // Using a generic check since button text might vary
+        await expect(page.locator('button').filter({ hasText: /Reserve|Book/ })).toBeVisible();
     });
 
-    test.skip('Flow 5: Community Flow - Create Post -> Feed (No 404)', async ({ page }) => {
+    test('Flow 5: Community Flow - Create Post -> Feed (No 404)', async ({ page }) => {
+        await ensureLoggedOut(page);
+
         // Login as Host (who is also a user)
         await page.goto('/login');
         await page.fill('input[name="email"]', HOST_EMAIL);
