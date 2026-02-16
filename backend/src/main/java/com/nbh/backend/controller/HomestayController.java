@@ -35,8 +35,12 @@ public class HomestayController {
     }
 
     @GetMapping("/{id}")
-    public HomestayDto.Response getHomestay(@PathVariable("id") UUID id) {
-        return homestayService.getHomestay(id);
+    public org.springframework.http.ResponseEntity<HomestayDto.Response> getHomestay(@PathVariable("id") UUID id) {
+        try {
+            return org.springframework.http.ResponseEntity.ok(homestayService.getHomestay(id));
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return org.springframework.http.ResponseEntity.status(e.getStatusCode()).build();
+        }
     }
 
     @PutMapping("/{id}")

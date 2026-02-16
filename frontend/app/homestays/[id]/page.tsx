@@ -45,7 +45,9 @@ async function getHomestay(id: string): Promise<Homestay | null> {
             return null;
         }
 
-        return res.json();
+        const data = await res.json();
+        if (!data) return null;
+        return data;
     } catch (error) {
         console.error('[SERVER] Error fetching homestay:', error);
         console.error(`[SERVER] API URL used: ${apiUrl}/homestays/${id}`);
