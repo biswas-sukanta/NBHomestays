@@ -82,7 +82,7 @@ export default function AddHomestayWizard() {
                 photoUrls: formData.photoUrls.split(',').map(u => u.trim()).filter(Boolean)
             };
 
-            await api.post('/homestays', payload);
+            await api.post('/api/homestays', payload);
             toast.success("Homestay created successfully!");
             router.push('/host/dashboard');
         } catch (error: any) {

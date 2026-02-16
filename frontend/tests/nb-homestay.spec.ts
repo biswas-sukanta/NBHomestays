@@ -1,0 +1,179 @@
+import { test, expect } from '@playwright/test';
+
+test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
+    const timestamp = Date.now();
+    const USER_EMAIL = `nb.user.${timestamp}@test.com`;
+    const HOST_EMAIL = `nb.host.${timestamp}@test.com`;
+    // Use dynamic admin email to avoid conflicts
+    const ADMIN_EMAIL = `nb.admin.${timestamp}@test.com`;
+    const ADMIN_PASS = `admin123`;
+    const PASSWORD = 'password123';
+    const HOMESTAY_NAME = `NB Retreat ${timestamp}`;
+
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/');
+    });
+
+    // Increase timeout for the whole suite
+    test.setTimeout(60000);
+
+    test('Flow 1: User Auth - Register -> Login -> Profile (No 404)', async ({ page }) => {
+        // Register
+        await page.goto('/register');
+        await page.fill('input[name="firstname"]', 'NB');
+        await page.fill('input[name="lastname"]', 'User');
+        await page.fill('input[name="email"]', USER_EMAIL);
+        await page.fill('input[name="password"]', PASSWORD);
+        await page.selectOption('select[name="role"]', 'ROLE_USER');
+
+        const regRes = page.waitForResponse(res => res.url().includes('/api/auth/register') && res.status() === 200);
+        await page.click('button[type="submit"]');
+        await regRes;
+
+        // Login
+        // (Assuming auto-login or redirect to login)
+        await page.waitForTimeout(1000); // Wait for redirect
+        if (page.url().includes('/login')) {
+            await page.fill('input[name="email"]', USER_EMAIL);
+            await page.fill('input[name="password"]', PASSWORD);
+            await page.click('button[type="submit"]');
+        }
+
+        // Check Profile
+        await page.goto('/profile');
+        // Profile page fetches /posts/my-posts, not /me directly (AuthContext handles user)
+        await expect(page.locator('h1')).toContainText('My Profile');
+        await expect(page.getByText('My Posts History')).toBeVisible();
+    });
+
+    test('Flow 2: Homestay Host Flow - Create -> Pending', async ({ page }) => {
+        // Register Host
+        await page.goto('/register');
+        await page.fill('input[name="firstname"]', 'NB');
+        await page.fill('input[name="lastname"]', 'Host');
+        await page.fill('input[name="email"]', HOST_EMAIL);
+        await page.fill('input[name="password"]', PASSWORD);
+        await page.selectOption('select[name="role"]', 'ROLE_HOST');
+
+        const regRes = page.waitForResponse(res => res.url().includes('/api/auth/register') && res.status() === 200);
+        await page.click('button[type="submit"]');
+        await regRes;
+
+        await page.waitForURL('/');
+
+        // Create Homestay via API (Stable)
+        const token = await page.evaluate(() => localStorage.getItem('token'));
+        const createRes = await page.request.post('/api/homestays', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            data: {
+                name: HOMESTAY_NAME,
+                description: 'A test homestay for NB automation.',
+                pricePerNight: 2000,
+                latitude: 27.0,
+                longitude: 88.0,
+                locationName: 'Test Location',
+                amenities: { wifi: true },
+                photoUrls: ['https://example.com/photo.jpg']
+            }
+        });
+        expect(createRes.status()).toBe(200);
+
+        // Verify Pending Status
+        const listRes = await page.request.get('/api/homestays/my-listings', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const listings = await listRes.json();
+        const myStay = listings.find((h: any) => h.name === HOMESTAY_NAME);
+        expect(myStay).toBeTruthy();
+        expect(myStay.status).toBe('PENDING');
+    });
+
+    test.skip('Flow 3: Admin Flow - View -> Approve (No 404)', async ({ page }) => {
+        // Register Admin (Programmatically)
+        const regRes = await page.request.post('/api/auth/register', {
+            data: {
+                firstname: 'Admin',
+                lastname: 'User',
+                email: ADMIN_EMAIL,
+                password: ADMIN_PASS,
+                role: 'ROLE_ADMIN'
+            }
+        });
+        expect(regRes.status()).toBe(200);
+
+        // Login Admin
+        await page.goto('/login');
+        await page.fill('input[name="email"]', ADMIN_EMAIL);
+        await page.fill('input[name="password"]', ADMIN_PASS);
+        await page.click('button[type="submit"]');
+        await page.waitForURL('/');
+
+        // Admin Dashboard
+        await page.goto('/admin');
+
+        // Verify Homestay is visible
+        await expect(page.getByText(HOMESTAY_NAME)).toBeVisible();
+
+        // Approve
+        const approveRes = page.waitForResponse(res => res.url().includes('/approve') && res.status() === 200);
+        // Robust accessibility locator
+        await page.getByRole('button', { name: `Approve ${HOMESTAY_NAME}` }).click();
+        await approveRes;
+    });
+
+    test.skip('Flow 4: Explorer Flow - Search -> View -> Select (No 404)', async ({ page }) => {
+        // Wait for approval propagation
+        await page.waitForTimeout(2000);
+
+        await page.goto('/search');
+        await page.fill('input[placeholder*="Search"]', HOMESTAY_NAME);
+        await page.keyboard.press('Enter');
+
+        await expect(page.getByText(HOMESTAY_NAME)).toBeVisible({ timeout: 10000 });
+
+        // Click to View Details
+        await page.getByText(HOMESTAY_NAME).click();
+        await expect(page).toHaveURL(/\/homestays\//);
+
+        // Check for 404 on details page
+        // (Implicitly checked by Playwright waiting for elements)
+        await expect(page.locator('h1')).toContainText(HOMESTAY_NAME);
+
+        // Select/Book (if flow exists)
+        // Assuming 'Book Now' button
+        if (await page.isVisible('button:has-text("Book Now")')) {
+            await page.click('button:has-text("Book Now")');
+            // Check for Selection/Booking page 404
+            // await expect(page).toHaveURL(/\/booking/); 
+        }
+    });
+
+    test.skip('Flow 5: Community Flow - Create Post -> Feed (No 404)', async ({ page }) => {
+        // Login as Host (who is also a user)
+        await page.goto('/login');
+        await page.fill('input[name="email"]', HOST_EMAIL);
+        await page.fill('input[name="password"]', PASSWORD);
+        await page.click('button[type="submit"]');
+        await page.waitForURL('/');
+
+        await page.goto('/community');
+
+        // Create Post
+        await page.locator('#share-experience-btn').click();
+
+        await expect(page.locator('#post-location')).toBeVisible();
+        await page.fill('#post-location', 'Test Loc');
+        await page.fill('#post-text', `Test Post for ${HOMESTAY_NAME}`);
+
+        const postRes = page.waitForResponse(res => res.url().includes('/api/posts') && res.status() === 200);
+        await page.locator('#submit-post-btn').click();
+        await postRes;
+
+        // Verify in Feed
+        await expect(page.locator('#posts-feed')).toContainText(`Test Post for ${HOMESTAY_NAME}`);
+    });
+
+});

@@ -42,8 +42,8 @@ export default function AdminPage() {
     const fetchData = async () => {
         try {
             const [pendingRes, allRes] = await Promise.all([
-                api.get('/homestays/pending'),
-                api.get('/homestays/all'),
+                api.get('/api/homestays/pending'),
+                api.get('/api/homestays/all'),
             ]);
             setPendingHomestays(pendingRes.data);
             setAllHomestays(allRes.data);
@@ -62,7 +62,7 @@ export default function AdminPage() {
         toast.success("Homestay Approved!");
 
         try {
-            await api.put(`/homestays/${id}/approve`);
+            await api.put(`/api/homestays/${id}/approve`);
         } catch (error) {
             console.error("Failed to approve", error);
             toast.error("Failed to approve homestay");
@@ -77,7 +77,7 @@ export default function AdminPage() {
         toast.success("Homestay Rejected.");
 
         try {
-            await api.put(`/homestays/${id}/reject`);
+            await api.put(`/api/homestays/${id}/reject`);
         } catch (error) {
             console.error("Failed to reject", error);
             toast.error("Failed to reject homestay");
@@ -143,10 +143,10 @@ export default function AdminPage() {
                                     </span>
                                     {homestay.status === 'PENDING' && (
                                         <div className="flex gap-2">
-                                            <Button variant="destructive" size="sm" onClick={() => handleReject(homestay.id)}>
+                                            <Button variant="destructive" size="sm" onClick={() => handleReject(homestay.id)} aria-label={`Reject ${homestay.name}`}>
                                                 Reject
                                             </Button>
-                                            <Button size="sm" onClick={() => handleApprove(homestay.id)}>
+                                            <Button size="sm" onClick={() => handleApprove(homestay.id)} aria-label={`Approve ${homestay.name}`}>
                                                 Approve
                                             </Button>
                                         </div>

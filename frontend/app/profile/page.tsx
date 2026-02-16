@@ -33,7 +33,7 @@ export default function UserProfile() {
 
     const fetchPosts = async () => {
         try {
-            const res = await api.get('/posts/my-posts');
+            const res = await api.get('/api/posts/my-posts');
             setPosts(res.data);
         } catch (error) {
             console.error(error);
@@ -61,7 +61,7 @@ export default function UserProfile() {
     const handleUpdate = async () => {
         if (!editPost) return;
         try {
-            await api.put(`/posts/${editPost.id}`, {
+            await api.put(`/api/posts/${editPost.id}`, {
                 textContent: editContent
             });
             toast.success("Post updated");
@@ -76,7 +76,7 @@ export default function UserProfile() {
     const handleDelete = async () => {
         if (!postToDelete) return;
         try {
-            await api.delete(`/posts/${postToDelete}`);
+            await api.delete(`/api/posts/${postToDelete}`);
             toast.success("Post deleted");
             setIsDeleteOpen(false);
             setPosts(prev => prev.filter(p => p.id !== postToDelete));

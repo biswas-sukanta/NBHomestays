@@ -23,7 +23,7 @@ export default function MyBookingsPage() {
     const { data: bookings, isLoading, error } = useQuery<Booking[]>({
         queryKey: ['my-bookings'],
         queryFn: async () => {
-            const response = await api.get('/bookings/my-bookings');
+            const response = await api.get('/api/bookings/my-bookings');
             return response.data;
         },
     });

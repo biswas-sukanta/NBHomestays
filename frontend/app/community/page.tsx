@@ -36,7 +36,7 @@ export default function CommunityPage() {
     const matchMyPosts = async (allPosts: Post[]) => {
         if (!isAuthenticated) return;
         try {
-            const res = await api.get('/posts/my-posts');
+            const res = await api.get('/api/posts/my-posts');
             const myIds = new Set<string>(res.data.map((p: Post) => p.id));
             setMyPostIds(myIds);
         } catch (e) { console.error("Failed to fetch my posts", e); }
@@ -45,7 +45,7 @@ export default function CommunityPage() {
     const fetchPosts = useCallback(async (query?: string) => {
         try {
             setLoading(true);
-            const url = query ? `/posts/search?q=${encodeURIComponent(query)}` : '/posts';
+            const url = query ? `/api/posts/search?q=${encodeURIComponent(query)}` : '/api/posts';
             const res = await api.get(url);
             setPosts(res.data);
             if (isAuthenticated) await matchMyPosts(res.data);
@@ -76,7 +76,7 @@ export default function CommunityPage() {
                 textContent: formData.textContent.trim(),
                 imageUrls: formData.imageUrls ? formData.imageUrls.split(',').map(u => u.trim()).filter(Boolean) : [],
             };
-            const res = await api.post('/posts', payload);
+            const res = await api.post('/api/posts', payload);
             setPosts(prev => [res.data, ...prev]);
             setShowModal(false);
             setFormData({ locationName: '', textContent: '', imageUrls: '' });
@@ -174,7 +174,7 @@ export default function CommunityPage() {
                                         <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={async () => {
                                             if (!confirm("Delete this post?")) return;
                                             try {
-                                                await api.delete(`/posts/${post.id}`);
+                                                await api.delete(`/api/posts/${post.id}`);
                                                 setPosts(prev => prev.filter(p => p.id !== post.id));
                                                 toast.success("Post deleted");
                                             } catch (e) { toast.error("Failed to delete"); }
@@ -202,7 +202,7 @@ export default function CommunityPage() {
                             <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
                             <Button onClick={async () => {
                                 try {
-                                    await api.put(`/posts/${editingPost.id}`, { textContent: editContent });
+                                    await api.put(`/api/posts/${editingPost.id}`, { textContent: editContent });
                                     setPosts(prev => prev.map(p => p.id === editingPost.id ? { ...p, textContent: editContent } : p));
                                     setIsEditOpen(false);
                                     toast.success("Updated!");
