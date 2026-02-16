@@ -171,10 +171,15 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
         await expect(page.getByText(HOMESTAY_NAME)).toBeVisible({ timeout: 10000 });
 
         // 5. Click and Verify Details Page (Crucial)
-        await page.getByText(HOMESTAY_NAME).click();
+        await page.getByText(HOMESTAY_NAME).first().click();
 
         // STRICT CHECK: Verify URL pattern for Dynamic Route
         await page.waitForURL(/\/homestays\/[a-f0-9-]+/);
+
+        // 6. CRITICAL: Verify NO 404 and Content Exists
+        // Ensure we didn't land on a 404 page
+        await expect(page.getByText('This page could not be found')).toBeHidden();
+        await expect(page.getByText('404')).toBeHidden();
 
         // Assert Details Page Content
         await expect(page.locator('h1')).toContainText(HOMESTAY_NAME);
