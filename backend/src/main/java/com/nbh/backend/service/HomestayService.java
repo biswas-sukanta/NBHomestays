@@ -148,8 +148,9 @@ public class HomestayService {
                                 .toList();
         }
 
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public HomestayDto.Response getHomestay(java.util.UUID id) {
-                Homestay homestay = repository.findById(id)
+                Homestay homestay = repository.findByIdWithDetails(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Homestay not found"));
                 return mapToResponse(homestay);

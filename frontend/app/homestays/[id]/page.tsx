@@ -36,13 +36,15 @@ async function getHomestay(id: string): Promise<Homestay | null> {
         });
 
         if (!res.ok) {
-            console.error(`Failed to fetch homestay ${id}: ${res.status}`);
+            console.error(`[SERVER] Failed to fetch homestay ${id}: ${res.status} ${res.statusText}`);
+            console.error(`[SERVER] API URL used: ${apiUrl}/homestays/${id}`);
             return null;
         }
 
         return res.json();
     } catch (error) {
-        console.error('Error fetching homestay:', error);
+        console.error('[SERVER] Error fetching homestay:', error);
+        console.error(`[SERVER] API URL used: ${apiUrl}/homestays/${id}`);
         return null;
     }
 }
