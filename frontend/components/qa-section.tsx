@@ -16,7 +16,8 @@ interface Question {
     answerText: string | null;
     answeredByOwner: boolean;
     createdAt: string;
-    // user: { firstname: string; lastname: string } // Backend might need to return this
+    userFirstName: string | null;
+    userLastName: string | null;
 }
 
 interface QASectionProps {
@@ -31,14 +32,14 @@ export function QASection({ homestayId }: QASectionProps) {
     const { data: questions = [], isLoading } = useQuery({
         queryKey: ['questions', homestayId],
         queryFn: async () => {
-            const res = await api.get(`/homestays/${homestayId}/questions`);
+            const res = await api.get(`/api/homestays/${homestayId}/questions`);
             return res.data as Question[];
         },
     });
 
     const askMutation = useMutation({
         mutationFn: async (text: string) => {
-            const res = await api.post(`/homestays/${homestayId}/ask`, { text });
+            const res = await api.post(`/api/homestays/${homestayId}/ask`, { text });
             return res.data;
         },
         onMutate: async (newQuestionText) => {
@@ -52,6 +53,8 @@ export function QASection({ homestayId }: QASectionProps) {
                 answerText: null,
                 answeredByOwner: false,
                 createdAt: new Date().toISOString(),
+                userFirstName: user?.firstName || 'You',
+                userLastName: user?.lastName || '',
             };
 
             queryClient.setQueryData<Question[]>(['questions', homestayId], (old = []) => [
@@ -137,7 +140,9 @@ export function QASection({ homestayId }: QASectionProps) {
                                 </div>
                                 <div className="flex-1 space-y-2">
                                     <div className="flex justify-between items-start">
-                                        <h3 className="font-semibold text-gray-900">{q.questionText}</h3>
+                                        <h3 className="font-semibold text-gray-900">
+                                            {q.userFirstName} {q.userLastName}: {q.questionText}
+                                        </h3>
                                         <span className="text-xs text-gray-500">
                                             {format(new Date(q.createdAt), 'MMM d, yyyy')}
                                         </span>
