@@ -14,6 +14,8 @@ export default defineConfig({
     use: {
         baseURL: 'http://localhost:3000',
         trace: 'on',
+        screenshot: 'on',
+        video: 'on',
         viewport: { width: 1280, height: 720 },
         ignoreHTTPSErrors: true,
     },

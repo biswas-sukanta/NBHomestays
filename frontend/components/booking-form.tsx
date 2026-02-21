@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, parseISO } from 'date-fns';
 import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
 import api from '@/lib/api';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 interface BookingFormProps {
@@ -27,6 +27,18 @@ export function BookingForm({ homestayId, pricePerNight }: BookingFormProps) {
     const [guests, setGuests] = React.useState(1);
     const router = useRouter();
     const queryClient = useQueryClient();
+
+    // Fetch blocked dates
+    const { data: unavailableDates = [] } = useQuery({
+        queryKey: ['unavailable-dates', homestayId],
+        queryFn: async () => {
+            const res = await api.get(`/api/bookings/homestay/${homestayId}/unavailable-dates`);
+            return res.data.map((range: { from: string, to: string }) => ({
+                from: parseISO(range.from),
+                to: parseISO(range.to)
+            }));
+        }
+    });
 
     // Calculate stats
     const nights = date?.from && date?.to ? differenceInDays(date.to, date.from) : 0;
@@ -119,7 +131,10 @@ export function BookingForm({ homestayId, pricePerNight }: BookingFormProps) {
                                 selected={date}
                                 onSelect={setDate}
                                 numberOfMonths={2}
-                                disabled={(date) => date < new Date()}
+                                disabled={[
+                                    (date) => date < new Date(),
+                                    ...unavailableDates
+                                ]}
                             />
                         </PopoverContent>
                     </Popover>

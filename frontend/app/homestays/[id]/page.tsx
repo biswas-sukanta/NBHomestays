@@ -4,11 +4,13 @@ export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 import { StoryCarousel } from '@/components/story-carousel';
-import { BookingForm } from '@/components/booking-form';
 import { QASection } from '@/components/qa-section';
-import { MapPin, Star, ShieldCheck } from 'lucide-react';
+import { MapPin, Star, ShieldCheck, MessageSquare } from 'lucide-react';
 import HomestayMapWrapper from '@/components/HomestayMapWrapper';
 import HomestayActions from '@/components/HomestayActions';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { InquirySection } from '@/components/inquiry-section';
 
 interface MediaItem {
     id: string;
@@ -139,10 +141,8 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                             </div>
                         )}
 
-                        {/* Booking Form */}
-                        <div className="border-t pt-8">
-                            <BookingForm homestayId={homestay.id} pricePerNight={homestay.pricePerNight} />
-                        </div>
+                        {/* Discovery & Inquiry Section */}
+                        <InquirySection homestayName={homestay.name} />
 
                         {/* Q&A Section */}
                         <div className="mt-8">

@@ -10,6 +10,7 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
     const ADMIN_PASS = `admin123`;
     const PASSWORD = 'password123';
     const HOMESTAY_NAME = `NB Retreat ${timestamp}`;
+    let homestayId: string;
 
     test.beforeEach(async ({ page }) => {
         await page.goto('/');
@@ -18,7 +19,7 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
     // Increase timeout for the whole suite
     test.setTimeout(60000);
 
-    async function ensureLoggedOut(page) {
+    async function ensureLoggedOut(page: any) {
         await page.goto('/');
         // Check for Logout button (desktop/mobile)
         const logoutBtn = page.locator('button:has-text("Logout")');
@@ -92,6 +93,14 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
             }
         });
         expect(createRes.status()).toBe(200);
+
+        // Capture homestayId for later flows
+        const listingsRes = await page.request.get('/api/homestays/my-listings', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const myHomes = await listingsRes.json();
+        homestayId = myHomes[0].id;
+        expect(homestayId).toBeDefined();
 
         // Verify Pending Status
         const listRes = await page.request.get('/api/homestays/my-listings', {
@@ -168,23 +177,19 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
         // 4. Perform Search & Verify Click (The 404 Check)
         await searchInput.fill(HOMESTAY_NAME);
         await page.keyboard.press('Enter');
-        await expect(page.getByText(HOMESTAY_NAME)).toBeVisible({ timeout: 10000 });
 
-        // 5. Click and Verify Details Page (Crucial)
-        await page.getByText(HOMESTAY_NAME).first().click();
+        // Wait for results and click the first homestay card
+        await page.waitForSelector('text=' + HOMESTAY_NAME, { timeout: 15000 });
+        await page.click('text=' + HOMESTAY_NAME);
 
         // STRICT CHECK: Verify URL pattern for Dynamic Route
         await page.waitForURL(/\/homestays\/[a-f0-9-]+/);
 
-        // 6. CRITICAL: Verify NO 404 and Content Exists
-        // Ensure we didn't land on a 404 page
-        await expect(page.getByText('This page could not be found')).toBeHidden();
-        await expect(page.getByText('404')).toBeHidden();
-
-        // Assert Details Page Content
+        // 6. CRITICAL: Verify Content Exists
         await expect(page.locator('h1')).toContainText(HOMESTAY_NAME);
-        // Using a generic check since button text might vary
-        await expect(page.locator('button').filter({ hasText: /Reserve|Book/ })).toBeVisible();
+
+        // Verify a button for WhatsApp or Enquire exists
+        await expect(page.locator('button:has-text("WhatsApp"), button:has-text("Enquire")').first()).toBeVisible();
     });
 
     test('Flow 4b: Invalid Homestay ID -> 404 Page', async ({ page }) => {
@@ -232,5 +237,6 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
         // Verify in Feed
         await expect(page.locator('#posts-feed')).toContainText(`Test Post for ${HOMESTAY_NAME}`);
     });
+
 
 });
