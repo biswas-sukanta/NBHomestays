@@ -32,39 +32,40 @@ interface Homestay {
     ownerEmail?: string;
 }
 
-async function getHomestay(id: string): Promise<Homestay | null> {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8080/api';
-    try {
-        const res = await fetch(`${apiUrl}/homestays/${id}`, {
-            cache: 'no-store',
-        });
-
-        if (!res.ok) {
-            console.error(`[SERVER] Failed to fetch homestay ${id}: ${res.status} ${res.statusText}`);
-            console.error(`[SERVER] API URL used: ${apiUrl}/homestays/${id}`);
-            return null;
-        }
-
-        const data = await res.json();
-        if (!data) return null;
-        return data;
-    } catch (error) {
-        console.error('[SERVER] Error fetching homestay:', error);
-        console.error(`[SERVER] API URL used: ${apiUrl}/homestays/${id}`);
-        return null;
-    }
-}
 
 export default async function HomestayPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const homestay = await getHomestay(id);
 
-    if (!homestay) {
-        notFound();
+    // 1. SMART API URL RESOLUTION (Fixes Local vs Prod mismatch)
+    const isDev = process.env.NODE_ENV === 'development';
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || (isDev ? 'http://localhost:8080' : 'https://nb-homestay-api.onrender.com');
+
+    const fetchUrl = `${API_BASE}/api/homestays/${id}`;
+    console.log(`[DEBUG] Fetching details from: ${fetchUrl}`);
+
+    let homestay;
+    try {
+        const res = await fetch(fetchUrl, { cache: 'no-store' });
+
+        if (!res.ok) {
+            console.error(`[DEBUG] API returned ${res.status} for URL: ${fetchUrl}`);
+            return notFound();
+        }
+
+        homestay = await res.json();
+
+        // 2. SAFE NULL CHECK (Prevents false positives)
+        if (!homestay || (typeof homestay === 'object' && !homestay.id && !homestay.name)) {
+            console.error(`[DEBUG] Data invalid or empty for URL: ${fetchUrl}`, homestay);
+            return notFound();
+        }
+    } catch (error) {
+        console.error(`[DEBUG] Fetch failed completely for URL: ${fetchUrl}`, error);
+        return notFound();
     }
 
     // Transform photos for carousel
-    const media: MediaItem[] = (homestay.photoUrls || []).map((url, index) => ({
+    const media: MediaItem[] = (homestay.photoUrls || []).map((url: string, index: number) => ({
         id: `media-${index}`,
         type: 'image', // Backend currently only stores string URLs, assume images
         url: url

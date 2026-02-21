@@ -19,6 +19,7 @@ public class PostDto {
         private String locationName;
         private String textContent;
         private List<String> imageUrls;
+        private UUID homestayId;
     }
 
     @Data
@@ -32,6 +33,8 @@ public class PostDto {
         private String locationName;
         private String textContent;
         private List<String> imageUrls;
+        private UUID homestayId;
+        private String homestayName;
         private LocalDateTime createdAt;
     }
 }

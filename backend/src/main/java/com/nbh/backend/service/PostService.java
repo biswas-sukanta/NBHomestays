@@ -18,16 +18,24 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final com.nbh.backend.repository.HomestayRepository homestayRepository;
 
     public PostDto.Response createPost(PostDto.Request request, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        com.nbh.backend.model.Homestay homestay = null;
+        if (request.getHomestayId() != null) {
+            homestay = homestayRepository.findById(request.getHomestayId())
+                    .orElseThrow(() -> new RuntimeException("Homestay not found"));
+        }
 
         Post post = Post.builder()
                 .user(user)
                 .locationName(request.getLocationName())
                 .textContent(request.getTextContent())
                 .imageUrls(request.getImageUrls())
+                .homestay(homestay)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -97,6 +105,8 @@ public class PostService {
                 .locationName(post.getLocationName())
                 .textContent(post.getTextContent())
                 .imageUrls(post.getImageUrls())
+                .homestayId(post.getHomestay() != null ? post.getHomestay().getId() : null)
+                .homestayName(post.getHomestay() != null ? post.getHomestay().getName() : null)
                 .createdAt(post.getCreatedAt())
                 .build();
     }

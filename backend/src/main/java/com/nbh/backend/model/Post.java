@@ -26,6 +26,10 @@ public class Post {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "homestay_id")
+    private Homestay homestay;
+
     @Column(name = "location_name", nullable = false)
     private String locationName;
 

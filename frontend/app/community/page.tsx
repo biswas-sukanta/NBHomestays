@@ -15,7 +15,14 @@ interface Post {
     locationName: string;
     textContent: string;
     imageUrls: string[];
+    homestayId?: string;
+    homestayName?: string;
     createdAt: string;
+}
+
+interface HomestayMinimal {
+    id: string;
+    name: string;
 }
 
 export default function CommunityPage() {
@@ -24,8 +31,9 @@ export default function CommunityPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [formData, setFormData] = useState({ locationName: '', textContent: '', imageUrls: '' });
+    const [formData, setFormData] = useState({ locationName: '', textContent: '', imageUrls: '', homestayId: '' });
     const [submitting, setSubmitting] = useState(false);
+    const [homestays, setHomestays] = useState<HomestayMinimal[]>([]);
 
     // Edit/Delete state
     const [myPostIds, setMyPostIds] = useState<Set<string>>(new Set());
@@ -58,6 +66,21 @@ export default function CommunityPage() {
 
     useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
+    const fetchHomestays = async () => {
+        try {
+            const res = await api.get('/api/homestays/search');
+            setHomestays(res.data);
+        } catch (e) {
+            console.error("Failed to fetch homestays", e);
+        }
+    };
+
+    useEffect(() => {
+        if (showModal && homestays.length === 0) {
+            fetchHomestays();
+        }
+    }, [showModal]);
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         fetchPosts(searchQuery);
@@ -75,11 +98,12 @@ export default function CommunityPage() {
                 locationName: formData.locationName.trim(),
                 textContent: formData.textContent.trim(),
                 imageUrls: formData.imageUrls ? formData.imageUrls.split(',').map(u => u.trim()).filter(Boolean) : [],
+                homestayId: formData.homestayId || null,
             };
             const res = await api.post('/api/posts', payload);
             setPosts(prev => [res.data, ...prev]);
             setShowModal(false);
-            setFormData({ locationName: '', textContent: '', imageUrls: '' });
+            setFormData({ locationName: '', textContent: '', imageUrls: '', homestayId: '' });
             toast.success('Experience shared!');
             if (isAuthenticated) {
                 setMyPostIds(prev => new Set(prev).add(res.data.id));
@@ -164,6 +188,23 @@ export default function CommunityPage() {
                                         ))}
                                     </div>
                                 )}
+
+                                {post.homestayId && (
+                                    <div className="mt-4 pt-4 border-t flex items-center justify-between bg-green-50/50 -mx-6 px-6 py-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs text-green-600 font-medium uppercase tracking-wider">Featured Homestay</span>
+                                            <span className="text-sm font-semibold text-gray-800">{post.homestayName}</span>
+                                        </div>
+                                        <Button
+                                            onClick={() => window.location.href = `/homestays/${post.homestayId}`}
+                                            className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                            size="sm"
+                                        >
+                                            Book This Vibe
+                                        </Button>
+                                    </div>
+                                )}
+
                                 {myPostIds.has(post.id) && (
                                     <div className="mt-4 flex justify-end gap-2 border-t pt-2">
                                         <Button variant="ghost" size="sm" onClick={() => {
@@ -258,6 +299,21 @@ export default function CommunityPage() {
                                     onChange={e => setFormData(prev => ({ ...prev, imageUrls: e.target.value }))}
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                                 />
+                            </div>
+                            <div>
+                                <label htmlFor="post-homestay" className="block text-sm font-medium text-gray-700 mb-1">Link a Homestay (Optional)</label>
+                                <select
+                                    id="post-homestay"
+                                    value={formData.homestayId}
+                                    onChange={e => setFormData(prev => ({ ...prev, homestayId: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                                >
+                                    <option value="">No Homestay Linked</option>
+                                    {homestays.map(h => (
+                                        <option key={h.id} value={h.id}>{h.name}</option>
+                                    ))}
+                                </select>
+                                <p className="mt-1 text-xs text-gray-400">This adds a "Book This Vibe" button to your post.</p>
                             </div>
                             <div className="flex justify-end gap-3 pt-2">
                                 <Button type="button" variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
