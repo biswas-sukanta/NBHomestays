@@ -1,6 +1,35 @@
-
 # IDEs
 .idea
 .vscode
 .DS_Store
 *.iml
+
+# Node / Frontend
+node_modules/
+.next/
+dist/
+out/
+.env*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+playwright-report/
+test-results/
+
+# Java / Backend
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/
+.project
+.classpath
+.settings/
+
+# Logs & Temporary
+*.log
+backend_log.txt
+server_error.log
+temp/
+tmp/

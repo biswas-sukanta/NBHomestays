@@ -1,6 +1,6 @@
 package com.nbh.backend.controller;
 
-import com.nbh.backend.model.Question;
+import com.nbh.backend.dto.QuestionDto;
 import com.nbh.backend.service.QuestionService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class QuestionController {
     private final QuestionService questionService;
 
     @PostMapping("/homestays/{id}/ask")
-    public ResponseEntity<Question> askQuestion(
+    public ResponseEntity<QuestionDto> askQuestion(
             @PathVariable UUID id,
             @RequestBody QuestionRequest request,
             Authentication authentication) {
@@ -29,7 +29,7 @@ public class QuestionController {
 
     @PutMapping("/questions/{id}/answer")
     @PreAuthorize("hasRole('HOST')")
-    public ResponseEntity<Question> answerQuestion(
+    public ResponseEntity<QuestionDto> answerQuestion(
             @PathVariable UUID id,
             @RequestBody QuestionRequest request,
             Authentication authentication) {
@@ -37,7 +37,7 @@ public class QuestionController {
     }
 
     @GetMapping("/homestays/{id}/questions")
-    public ResponseEntity<List<Question>> getQuestions(@PathVariable UUID id) {
+    public ResponseEntity<List<QuestionDto>> getQuestions(@PathVariable UUID id) {
         return ResponseEntity.ok(questionService.getQuestionsByHomestay(id));
     }
 

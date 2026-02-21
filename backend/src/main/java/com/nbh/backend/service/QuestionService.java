@@ -1,5 +1,6 @@
 package com.nbh.backend.service;
 
+import com.nbh.backend.dto.QuestionDto;
 import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.Question;
 import com.nbh.backend.model.User;
@@ -20,7 +21,7 @@ public class QuestionService {
     private final HomestayRepository homestayRepository;
     private final UserRepository userRepository;
 
-    public Question askQuestion(UUID homestayId, String questionText, String userEmail) {
+    public QuestionDto askQuestion(UUID homestayId, String questionText, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Homestay homestay = homestayRepository.findById(homestayId)
@@ -32,10 +33,10 @@ public class QuestionService {
                 .questionText(questionText)
                 .build();
 
-        return questionRepository.save(question);
+        return mapToDto(questionRepository.save(question));
     }
 
-    public Question answerQuestion(UUID questionId, String answerText, String userEmail) {
+    public QuestionDto answerQuestion(UUID questionId, String answerText, String userEmail) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found"));
 
@@ -49,10 +50,24 @@ public class QuestionService {
 
         question.setAnswerText(answerText);
         question.setAnsweredByOwner(true);
-        return questionRepository.save(question);
+        return mapToDto(questionRepository.save(question));
     }
 
-    public List<Question> getQuestionsByHomestay(UUID homestayId) {
-        return questionRepository.findByHomestayId(homestayId);
+    public List<QuestionDto> getQuestionsByHomestay(UUID homestayId) {
+        return questionRepository.findByHomestayId(homestayId).stream()
+                .map(this::mapToDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private QuestionDto mapToDto(Question question) {
+        return QuestionDto.builder()
+                .id(question.getId())
+                .questionText(question.getQuestionText())
+                .answerText(question.getAnswerText())
+                .answeredByOwner(question.isAnsweredByOwner())
+                .createdAt(question.getCreatedAt())
+                .userFirstName(question.getUser().getFirstName())
+                .userLastName(question.getUser().getLastName())
+                .build();
     }
 }
