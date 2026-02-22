@@ -45,6 +45,9 @@ interface Homestay {
     rating: number;
     vibeScore: number;
     amenities: Record<string, boolean>;
+    policies?: string[];
+    quickFacts?: Record<string, string>;
+    hostDetails?: Record<string, any>;
     photoUrls: string[];
     ownerId?: string;
     ownerEmail?: string;
@@ -67,9 +70,12 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
         return notFound();
     }
 
-    const amenitiesList = Object.entries(homestay.amenities || {})
-        .filter(([_, v]) => v)
-        .map(([key]) => getAmenityDisplay(key));
+    // Process Amenities (Including Unavailable)
+    const allAmenities = Object.entries(homestay.amenities || {}).map(([key, v]) => ({
+        key,
+        available: v,
+        ...getAmenityDisplay(key)
+    }));
 
     const vibeScore = homestay.vibeScore || homestay.rating || 4.5;
     const vibeClass = vibeScore >= 4.5 ? 'vibe-high' : vibeScore >= 3.5 ? 'vibe-mid' : 'vibe-low';
@@ -139,20 +145,103 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     </p>
                 </section>
 
-                {/* ── Amenities ── */}
-                {amenitiesList.length > 0 && (
+                {/* ── Quick Facts ── */}
+                {homestay.quickFacts && Object.keys(homestay.quickFacts).length > 0 && (
                     <section className="mb-8">
-                        <h2 className="text-xl font-bold text-foreground mb-4">What this place offers</h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {amenitiesList.map(({ icon, label }, i) => (
-                                <div
-                                    key={i}
-                                    className="flex items-center gap-3 bg-secondary/60 border border-border rounded-xl px-4 py-3 text-sm font-medium text-foreground"
-                                >
-                                    <span className="text-xl">{icon}</span>
-                                    <span className="capitalize">{label}</span>
+                        <h2 className="text-xl font-bold text-foreground mb-4">Know before you go</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-secondary/30 p-5 rounded-2xl border border-border">
+                            {Object.entries(homestay.quickFacts).map(([key, value]) => (
+                                <div key={key} className="flex flex-col gap-1">
+                                    <span className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">{key}</span>
+                                    <span className="text-sm font-medium text-foreground">{value}</span>
                                 </div>
                             ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* ── Amenities ── */}
+                {allAmenities.length > 0 && (
+                    <section className="mb-10">
+                        <h2 className="text-xl font-bold text-foreground mb-5">What this place offers</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                            {allAmenities.map(({ icon, label, available }, i) => (
+                                <div
+                                    key={i}
+                                    className={`flex items-center gap-4 py-3 border-b border-border/50 last:border-0 md:last:border-b ${!available && 'opacity-60 grayscale'}`}
+                                >
+                                    <span className="text-2xl flex-none w-8 text-center">{icon}</span>
+                                    <span className={`text-[0.95rem] font-medium text-foreground ${!available && 'line-through text-muted-foreground'}`}>{label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* ── Policies ── */}
+                {homestay.policies && homestay.policies.length > 0 && (
+                    <section className="mb-10">
+                        <h2 className="text-xl font-bold text-foreground mb-5">Property Policies</h2>
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 list-disc pl-5">
+                            {homestay.policies.map((policy, i) => (
+                                <li key={i} className="text-[0.95rem] text-muted-foreground leading-relaxed pl-1">{policy}</li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
+
+                {/* ── Meet Your Host ── */}
+                {homestay.hostDetails && Object.keys(homestay.hostDetails).length > 0 && (
+                    <section className="mb-10">
+                        <div className="bg-secondary/40 rounded-3xl p-6 md:p-8 border border-border mt-4">
+                            <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start md:items-center">
+                                <div className="flex-none text-center">
+                                    <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary mb-3">
+                                        {homestay.name.charAt(0)}
+                                    </div>
+                                    <h3 className="text-xl font-bold text-foreground">Meet your host</h3>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        Hosting since {homestay.hostDetails.yearsHosting ? new Date().getFullYear() - homestay.hostDetails.yearsHosting : 'recently'}
+                                    </p>
+                                </div>
+
+                                <div className="flex-1 space-y-4">
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                        {homestay.hostDetails.reviewsCount > 0 && (
+                                            <div>
+                                                <div className="text-sm font-semibold text-foreground">{homestay.hostDetails.reviewsCount}</div>
+                                                <div className="text-xs text-muted-foreground uppercase tracking-wide">Reviews</div>
+                                            </div>
+                                        )}
+                                        {homestay.hostDetails.rating > 0 && (
+                                            <div>
+                                                <div className="text-sm font-semibold text-foreground flex items-center gap-1">
+                                                    {homestay.hostDetails.rating.toFixed(2)} <Star className="w-3 h-3 fill-current" />
+                                                </div>
+                                                <div className="text-xs text-muted-foreground uppercase tracking-wide">Rating</div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {homestay.hostDetails.bio && (
+                                        <p className="text-[0.95rem] text-foreground leading-relaxed italic border-l-2 border-primary pl-4">
+                                            "{homestay.hostDetails.bio}"
+                                        </p>
+                                    )}
+
+                                    <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 text-sm">
+                                        {homestay.hostDetails.work && (
+                                            <div className="flex items-center gap-2 text-muted-foreground"><ShieldCheck className="w-4 h-4 text-primary" /> Works as {homestay.hostDetails.work}</div>
+                                        )}
+                                        {homestay.hostDetails.languages && homestay.hostDetails.languages.length > 0 && (
+                                            <div className="flex items-center gap-2 text-muted-foreground">🗣️ Speaks {homestay.hostDetails.languages.join(', ')}</div>
+                                        )}
+                                        {homestay.hostDetails.currentLocation && (
+                                            <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="w-4 h-4 text-primary" /> Lives in {homestay.hostDetails.currentLocation}</div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </section>
                 )}

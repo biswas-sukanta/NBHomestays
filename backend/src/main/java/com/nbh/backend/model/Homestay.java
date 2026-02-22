@@ -52,6 +52,18 @@ public class Homestay {
     @Column(columnDefinition = "jsonb")
     private java.util.Map<String, Boolean> amenities;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private java.util.List<String> policies;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private java.util.Map<String, String> quickFacts;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private java.util.Map<String, Object> hostDetails;
+
     @ElementCollection
     @CollectionTable(name = "homestay_photos", joinColumns = @JoinColumn(name = "homestay_id"))
     @Column(name = "photo_url")

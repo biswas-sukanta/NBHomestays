@@ -39,6 +39,9 @@ public class HomestayService {
                                 .description(request.getDescription())
                                 .pricePerNight(request.getPricePerNight())
                                 .amenities(request.getAmenities())
+                                .policies(request.getPolicies())
+                                .quickFacts(request.getQuickFacts())
+                                .hostDetails(request.getHostDetails())
                                 .photoUrls(request.getPhotoUrls())
                                 .status(status)
                                 .vibeScore(0.0)
@@ -128,6 +131,12 @@ public class HomestayService {
                         homestay.setPricePerNight(request.getPricePerNight());
                 if (request.getAmenities() != null)
                         homestay.setAmenities(request.getAmenities());
+                if (request.getPolicies() != null)
+                        homestay.setPolicies(request.getPolicies());
+                if (request.getQuickFacts() != null)
+                        homestay.setQuickFacts(request.getQuickFacts());
+                if (request.getHostDetails() != null)
+                        homestay.setHostDetails(request.getHostDetails());
                 if (request.getPhotoUrls() != null)
                         homestay.setPhotoUrls(request.getPhotoUrls());
                 if (request.getLocationName() != null)
@@ -187,13 +196,33 @@ public class HomestayService {
         }
 
         private HomestayDto.Response mapToResponse(Homestay homestay) {
+                // CRITICAL CACHE RULE: Deep copy collections to prevent Hibernate Proxy leaks
+                java.util.Map<String, Boolean> amenities = homestay.getAmenities() != null
+                                ? new java.util.HashMap<>(homestay.getAmenities())
+                                : null;
+                java.util.List<String> policies = homestay.getPolicies() != null
+                                ? new java.util.ArrayList<>(homestay.getPolicies())
+                                : null;
+                java.util.Map<String, String> quickFacts = homestay.getQuickFacts() != null
+                                ? new java.util.HashMap<>(homestay.getQuickFacts())
+                                : null;
+                java.util.Map<String, Object> hostDetails = homestay.getHostDetails() != null
+                                ? new java.util.HashMap<>(homestay.getHostDetails())
+                                : null;
+                java.util.List<String> photoUrls = homestay.getPhotoUrls() != null
+                                ? new java.util.ArrayList<>(homestay.getPhotoUrls())
+                                : null;
+
                 return HomestayDto.Response.builder()
                                 .id(homestay.getId())
                                 .name(homestay.getName())
                                 .description(homestay.getDescription())
                                 .pricePerNight(homestay.getPricePerNight())
-                                .amenities(homestay.getAmenities())
-                                .photoUrls(homestay.getPhotoUrls())
+                                .amenities(amenities)
+                                .policies(policies)
+                                .quickFacts(quickFacts)
+                                .hostDetails(hostDetails)
+                                .photoUrls(photoUrls)
                                 .vibeScore(homestay.getVibeScore())
                                 .status(homestay.getStatus())
                                 .latitude(homestay.getLatitude())
