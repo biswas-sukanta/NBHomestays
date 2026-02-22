@@ -55,10 +55,9 @@ public class User implements UserDetails {
     @lombok.EqualsAndHashCode.Exclude
     private List<com.nbh.backend.model.Comment> comments;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @lombok.ToString.Exclude
-    @lombok.EqualsAndHashCode.Exclude
-    private List<com.nbh.backend.model.PostLike> likes;
+    // PostLike uses raw UUID fields (not @ManyToOne), so @OneToMany mappedBy is
+    // incompatible.
+    // Likes are managed via LikeService + PostLikeRepository directly.
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
