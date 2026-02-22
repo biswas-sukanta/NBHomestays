@@ -17,7 +17,7 @@ public class S3Config {
     @Value("${SUPABASE_S3_ENDPOINT:}")
     private String s3Endpoint;
 
-    @Value("${SUPABASE_S3_REGION:ap-south-1}")
+    @Value("${SUPABASE_S3_REGION:us-east-1}")
     private String s3Region;
 
     @Value("${SUPABASE_ACCESS_KEY:}")
@@ -28,18 +28,21 @@ public class S3Config {
 
     @Bean
     public S3Client s3Client() {
-        if (s3Endpoint == null || s3Endpoint.isBlank()) {
-            // Null-safe check to avoid builder errors on startup if missing
+        if (s3Endpoint == null || s3Endpoint.isBlank() || accessKey.isBlank()) {
             return null;
         }
 
+        // SUPABASE S3 Proxy compatibility: Force us-east-1 for the signing region
+        // even if the database is in another region.
+        String region = (s3Region == null || s3Region.isBlank()) ? "us-east-1" : s3Region.trim();
+
         return S3Client.builder()
                 .endpointOverride(URI.create(s3Endpoint.trim()))
-                .region(Region.of(s3Region.trim()))
+                .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(accessKey.trim(), secretKey.trim())))
                 .serviceConfiguration(S3Configuration.builder()
-                        .pathStyleAccessEnabled(true) // HARD-CODED: Decouple from auto-detection bugs
+                        .pathStyleAccessEnabled(true)
                         .build())
                 .build();
     }
