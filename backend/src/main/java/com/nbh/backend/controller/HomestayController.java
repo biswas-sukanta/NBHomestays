@@ -65,25 +65,25 @@ public class HomestayController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public List<HomestayDto.Response> getAllHomestays() {
         return homestayService.getAllHomestays();
     }
 
     @GetMapping("/pending")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public List<HomestayDto.Response> getPendingHomestays() {
         return homestayService.getPendingHomestays();
     }
 
     @PutMapping("/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void approveHomestay(@PathVariable("id") UUID id) {
         homestayService.approveHomestay(id);
     }
 
     @PutMapping("/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void rejectHomestay(@PathVariable("id") UUID id) {
         homestayService.rejectHomestay(id);
     }

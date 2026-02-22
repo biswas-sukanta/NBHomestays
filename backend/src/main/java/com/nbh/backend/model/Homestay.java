@@ -60,6 +60,21 @@ public class Homestay {
     @Builder.Default
     private Double vibeScore = 0.0;
 
+    @OneToMany(mappedBy = "homestay", cascade = CascadeType.ALL, orphanRemoval = true)
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
+    private java.util.List<com.nbh.backend.model.Review> reviews;
+
+    @OneToMany(mappedBy = "homestay", cascade = CascadeType.ALL, orphanRemoval = true)
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
+    private java.util.List<Post> posts;
+
+    @OneToMany(mappedBy = "homestay", cascade = CascadeType.ALL, orphanRemoval = true)
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
+    private java.util.List<HomestayQuestion> questions;
+
     @Enumerated(EnumType.STRING)
     private Status status;
 

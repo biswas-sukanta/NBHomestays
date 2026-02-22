@@ -6,6 +6,7 @@ import { Menu, X, Home, Search, MessageSquare, UserCircle, Hotel } from 'lucide-
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { motion } from 'framer-motion';
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -44,7 +45,7 @@ export default function Navbar() {
             className={cn(
                 'sticky top-0 w-full z-50 transition-all duration-300',
                 isScrolled || pathname !== '/'
-                    ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100 py-3'
+                    ? 'bg-white/85 backdrop-blur-xl shadow-sm border-b border-gray-100 py-3'
                     : 'bg-transparent py-5'
             )}
         >
@@ -59,42 +60,60 @@ export default function Navbar() {
                 </Link>
 
                 {/* Desktop Menu */}
-                <div className="hidden md:flex items-center space-x-8">
-                    {navLinks.map((link) => (
-                        <Link
-                            key={link.name}
-                            href={link.href}
-                            className={cn(
-                                "text-sm font-medium transition-colors hover:text-green-600 flex items-center space-x-1",
-                                isScrolled || pathname !== '/' ? "text-gray-700" : "text-white/90 hover:text-white"
-                            )}
-                        >
-                            <link.icon className="w-4 h-4" />
-                            <span>{link.name}</span>
-                        </Link>
-                    ))}
-                    <div className="flex items-center space-x-4">
+                <div className="hidden md:flex items-center space-x-2">
+                    {navLinks.map((link) => {
+                        const isActive = pathname === link.href;
+                        return (
+                            <Link
+                                key={link.name}
+                                href={link.href}
+                                className={cn(
+                                    "relative px-4 py-2 text-sm font-semibold transition-colors flex items-center space-x-1.5 rounded-full",
+                                    isActive
+                                        ? (isScrolled || pathname !== '/' ? "text-green-800" : "text-white")
+                                        : (isScrolled || pathname !== '/' ? "text-gray-500 hover:text-green-700 hover:bg-green-50/50" : "text-white/80 hover:text-white hover:bg-white/10")
+                                )}
+                            >
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="navbar-indicator"
+                                        className={cn(
+                                            "absolute inset-0 rounded-full -z-10",
+                                            isScrolled || pathname !== '/' ? "bg-green-100/80" : "bg-white/20 backdrop-blur-sm"
+                                        )}
+                                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                                    />
+                                )}
+                                <link.icon className="w-4 h-4" />
+                                <span>{link.name}</span>
+                            </Link>
+                        );
+                    })}
+
+                    <div className="flex items-center space-x-4 pl-4 ml-2 border-l border-gray-300/30">
                         {isAuthenticated ? (
                             <div className="flex items-center gap-4">
-                                <span className={cn("text-sm font-medium", isScrolled || pathname !== '/' ? "text-gray-900" : "text-white")}>
-                                    {user?.firstName ? `Hi, ${user.firstName}` : 'Welcome'}
+                                <span className={cn("text-sm font-semibold tracking-tight",
+                                    isScrolled || pathname !== '/' ? "text-gray-800" : "text-white drop-shadow-sm"
+                                )}>
+                                    {user?.firstName ? `Welcome back, ${user.firstName}` : 'Welcome back'}
                                 </span>
                                 <button
                                     onClick={logout}
-                                    className={cn("px-4 py-2 rounded-full font-medium transition-all",
+                                    className={cn("px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all",
                                         isScrolled || pathname !== '/'
-                                            ? "bg-red-500 text-white hover:bg-red-600"
-                                            : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
+                                            ? "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+                                            : "bg-white/10 text-white hover:bg-red-500/90 backdrop-blur-sm"
                                     )}
                                 >
                                     Logout
                                 </button>
                             </div>
                         ) : (
-                            <Link href="/login" className={cn("px-4 py-2 rounded-full font-medium transition-all",
+                            <Link href="/login" className={cn("px-5 py-2.5 rounded-full font-bold text-sm tracking-wide transition-all",
                                 isScrolled || pathname !== '/'
-                                    ? "bg-green-600 text-white hover:bg-green-700"
-                                    : "bg-white text-green-700 hover:bg-gray-100"
+                                    ? "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
+                                    : "bg-white text-green-800 hover:bg-green-50 hover:scale-105"
                             )}>
                                 Login
                             </Link>
@@ -104,7 +123,7 @@ export default function Navbar() {
 
                 {/* Mobile Menu Button */}
                 <button
-                    className="md:hidden p-2 rounded-md"
+                    className="md:hidden p-2 rounded-md active:scale-95 transition-transform"
                     onClick={() => setIsOpen(!isOpen)}
                 >
                     {isOpen ? (
@@ -117,42 +136,62 @@ export default function Navbar() {
 
             {/* Mobile Menu */}
             {isOpen && (
-                <div className="md:hidden bg-white border-t p-4 absolute w-full shadow-lg">
-                    <div className="flex flex-col space-y-4">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                href={link.href}
-                                className="text-gray-700 hover:text-green-600 font-medium flex items-center space-x-2"
-                                onClick={() => setIsOpen(false)}
-                            >
-                                <link.icon className="w-5 h-5" />
-                                <span>{link.name}</span>
-                            </Link>
-                        ))}
-                        <hr />
-                        <hr />
-                        {isAuthenticated ? (
-                            <button
-                                onClick={() => {
-                                    logout();
-                                    setIsOpen(false);
-                                }}
-                                className="text-center w-full block bg-red-500 text-white py-2 rounded-md font-medium"
-                            >
-                                Logout
-                            </button>
-                        ) : (
-                            <Link
-                                href="/login"
-                                className="text-center w-full block bg-green-600 text-white py-2 rounded-md font-medium"
-                                onClick={() => setIsOpen(false)}
-                            >
-                                Login
-                            </Link>
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="md:hidden bg-white/95 backdrop-blur-2xl border-t border-gray-100 px-4 py-6 absolute w-full shadow-2xl"
+                >
+                    <div className="flex flex-col space-y-2">
+                        {isAuthenticated && (
+                            <div className="pb-4 mb-2 border-b border-gray-100 px-3">
+                                <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Signed in as</p>
+                                <p className="text-lg font-bold text-gray-900">
+                                    {user?.firstName ? `Welcome back, ${user.firstName}` : 'Welcome back'}
+                                </p>
+                            </div>
                         )}
+
+                        {navLinks.map((link) => {
+                            const isActive = pathname === link.href;
+                            return (
+                                <Link
+                                    key={link.name}
+                                    href={link.href}
+                                    className={cn(
+                                        "px-4 py-3 rounded-xl font-bold flex items-center space-x-3 transition-colors",
+                                        isActive ? "bg-green-50 text-green-700" : "text-gray-600 hover:bg-gray-50"
+                                    )}
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    <link.icon className={cn("w-5 h-5", isActive ? "text-green-600" : "text-gray-400")} />
+                                    <span>{link.name}</span>
+                                </Link>
+                            );
+                        })}
+
+                        <div className="pt-4 mt-2 border-t border-gray-100">
+                            {isAuthenticated ? (
+                                <button
+                                    onClick={() => {
+                                        logout();
+                                        setIsOpen(false);
+                                    }}
+                                    className="w-full bg-red-50 hover:bg-red-100 text-red-600 py-3.5 rounded-xl font-bold transition-colors"
+                                >
+                                    Logout
+                                </button>
+                            ) : (
+                                <Link
+                                    href="/login"
+                                    className="text-center w-full block bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl font-bold shadow-md transition-all active:scale-95"
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    Login
+                                </Link>
+                            )}
+                        </div>
                     </div>
-                </div>
+                </motion.div>
             )}
         </nav>
     );

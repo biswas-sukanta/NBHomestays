@@ -19,7 +19,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping
-    @PreAuthorize("hasRole('USER') or hasRole('HOST') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_HOST') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ReviewDto.Response> addReview(@RequestBody ReviewDto.Request request,
             Authentication authentication) {
         return ResponseEntity.ok(reviewService.addReview(request, authentication.getName()));

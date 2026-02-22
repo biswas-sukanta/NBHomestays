@@ -22,14 +22,14 @@ public class AdminController {
     private final UserRepository userRepository;
 
     @GetMapping("/hello")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<String> sayHello() {
         return ResponseEntity.ok("Hello Admin");
     }
 
     /** Platform-wide analytics for the admin dashboard */
     @GetMapping("/stats")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> getStats() {
         long totalUsers = userRepository.count();
         long totalPosts = postRepository.count();
@@ -49,7 +49,7 @@ public class AdminController {
 
     /** Admin-only force-delete any post (for moderation) */
     @DeleteMapping("/posts/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> adminDeletePost(@PathVariable UUID id) {
         if (!postRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
@@ -60,7 +60,7 @@ public class AdminController {
 
     /** Toggle featured status on a homestay */
     @PutMapping("/homestays/{id}/feature")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> toggleFeatured(@PathVariable UUID id) {
         Homestay homestay = homestayRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Homestay not found"));

@@ -99,9 +99,6 @@ function TripBoardsTab() {
 function MyPostsTab() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
-    const [editPost, setEditPost] = useState<Post | null>(null);
-    const [editContent, setEditContent] = useState('');
-    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     useEffect(() => {
         api.get('/api/posts/my-posts')
@@ -110,72 +107,33 @@ function MyPostsTab() {
             .finally(() => setLoading(false));
     }, []);
 
-    const handleUpdate = async () => {
-        if (!editPost) return;
-        await api.put(`/api/posts/${editPost.id}`, { textContent: editContent });
-        setPosts(p => p.map(post => post.id === editPost.id ? { ...post, textContent: editContent } : post));
-        toast.success('Post updated');
-        setEditPost(null);
-    };
-
-    const handleDelete = async () => {
-        if (!deleteId) return;
-        await api.delete(`/api/posts/${deleteId}`);
-        setPosts(p => p.filter(post => post.id !== deleteId));
-        toast.success('Post deleted');
-        setDeleteId(null);
-    };
-
-    if (loading) return <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-20 rounded-xl skeleton-shimmer" />)}</div>;
-    if (posts.length === 0) return <p className="text-center py-16 text-muted-foreground">You haven't posted anything yet. <Link href="/community" className="text-primary font-semibold">Share your experience →</Link></p>;
+    if (loading) return <div className="space-y-4">{[1, 2, 3].map(i => <div key={i} className="h-24 rounded-2xl skeleton-shimmer" />)}</div>;
+    if (posts.length === 0) return <p className="text-center py-20 text-muted-foreground font-medium">You haven't posted anything yet. <Link href="/community" className="text-green-600 font-bold hover:underline">Share your experience →</Link></p>;
 
     return (
-        <>
-            <div className="space-y-3">
-                {posts.map(post => (
-                    <div key={post.id} className="bg-card border border-border rounded-xl p-4 flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                                <MapPin className="w-3 h-3" /> {post.locationName}
-                                <span className="mx-1">·</span>
-                                {new Date(post.createdAt).toLocaleDateString()}
-                            </div>
-                            <p className="text-sm text-foreground line-clamp-2">{post.textContent}</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+            {posts.map(post => (
+                <Link key={post.id} href={`/community/post/${post.id}`}>
+                    <motion.div
+                        whileHover={{ scale: 1.01 }}
+                        className="group bg-card border border-border/80 hover:border-green-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer h-full flex flex-col"
+                    >
+                        <div className="flex items-center gap-2 text-xs font-semibold text-green-700/80 uppercase tracking-wider mb-2">
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span className="truncate">{post.locationName}</span>
+                            <span className="mx-1 text-gray-300">•</span>
+                            <span className="text-gray-500 font-medium">{new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                         </div>
-                        <div className="flex gap-1.5 flex-none">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditPost(post); setEditContent(post.textContent); }}>
-                                <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => setDeleteId(post.id)}>
-                                <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
+                        <p className="text-sm font-medium text-foreground leading-relaxed line-clamp-3 group-hover:text-green-900 transition-colors">
+                            "{post.textContent}"
+                        </p>
+                        <div className="mt-auto pt-4 flex items-center text-xs font-bold text-gray-400 group-hover:text-green-600 transition-colors">
+                            View Thread →
                         </div>
-                    </div>
-                ))}
-            </div>
-
-            <Dialog open={!!editPost} onOpenChange={() => setEditPost(null)}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>Edit Post</DialogTitle></DialogHeader>
-                    <Textarea value={editContent} onChange={e => setEditContent(e.target.value)} rows={5} />
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditPost(null)}>Cancel</Button>
-                        <Button onClick={handleUpdate}>Save</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>Delete this post?</DialogTitle></DialogHeader>
-                    <p className="text-muted-foreground text-sm">This action is permanent and cannot be undone.</p>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
-                        <Button variant="destructive" onClick={handleDelete}>Delete</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </>
+                    </motion.div>
+                </Link>
+            ))}
+        </div>
     );
 }
 
