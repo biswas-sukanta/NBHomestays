@@ -43,7 +43,7 @@ export default function Navbar() {
     return (
         <nav
             className={cn(
-                'sticky top-0 w-full z-50 transition-all duration-300',
+                'sticky top-0 w-full z-[9999] transition-all duration-300',
                 isScrolled || pathname !== '/'
                     ? 'bg-white/85 backdrop-blur-xl shadow-sm border-b border-gray-100 py-3'
                     : 'bg-transparent py-5'

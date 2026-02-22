@@ -21,7 +21,7 @@ export function LocationMapSection({ latitude, longitude, locationName }: Locati
               relative z-0 isolates the map stack into its own containing block,
               preventing Leaflet's high z-index tiles from bleeding over the fixed z-50 Navbar. 
             */}
-            <div className="relative z-0 rounded-[24px] overflow-hidden shadow-sm border border-gray-200 h-[300px] md:h-[500px] w-full bg-gray-100">
+            <div className="isolate relative z-0 rounded-[24px] overflow-hidden shadow-sm border border-gray-200 h-[300px] md:h-[500px] w-full bg-gray-100 [&_.leaflet-container]:!z-0 [&_.leaflet-pane]:!z-0">
                 <HomestayMapWrapper
                     latitude={latitude}
                     longitude={longitude}
@@ -39,8 +39,8 @@ export function LocationMapSection({ latitude, longitude, locationName }: Locati
                             <p className="text-gray-700 text-sm font-medium leading-snug">
                                 {locationName || 'North Bengal'}
                             </p>
-                            <p className="text-gray-500 text-[13px] mt-2">
-                                Exact location provided after booking.
+                            <p className="text-gray-500 text-[13px] mt-2 font-semibold">
+                                Exact location pinpoint
                             </p>
                         </div>
                     </div>
