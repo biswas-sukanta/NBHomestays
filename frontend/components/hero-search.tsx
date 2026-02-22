@@ -2,93 +2,154 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Users, Search } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { MapPin, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 export function HeroSearch() {
     const router = useRouter();
     const [location, setLocation] = React.useState('');
+    const [focused, setFocused] = React.useState(false);
 
     const handleSearch = () => {
         if (!location.trim()) {
-            toast.error("Please enter a destination to search.");
+            toast.error('Please enter a destination to search.');
             return;
         }
-
-        const params = new URLSearchParams();
-        params.set('query', location);
-
-        router.push(`/search?${params.toString()}`);
+        router.push(`/search?query=${encodeURIComponent(location.trim())}`);
     };
 
     return (
-        <div className="relative h-screen w-full overflow-hidden">
-            {/* Background Image */}
+        <div className="relative h-screen w-full overflow-hidden select-none">
+            {/* ── Ken Burns background ── */}
             <div
-                className="absolute inset-0 h-full w-full bg-cover bg-center"
+                className="absolute inset-0 h-full w-full bg-cover bg-center animate-ken-burns"
                 style={{ backgroundImage: "url('/hero_background.jpg')" }}
+                aria-hidden="true"
             />
 
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/40" />
+            {/* ── Layered overlays for editorial depth ── */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/50 to-black/70" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
 
-            {/* Content */}
+            {/* ── Content ── */}
             <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
+
+                {/* Eyebrow label */}
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 0.1 }}
+                    className="mb-4 inline-flex items-center gap-2 rounded-full glass-dark px-4 py-1.5 text-white/90 text-sm font-semibold tracking-widest uppercase"
+                >
+                    🌿 North Bengal Homestays
+                </motion.div>
+
+                {/* Headline */}
                 <motion.h1
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                    className="mb-6 text-4xl font-bold text-white md:text-6xl lg:text-7xl"
+                    transition={{ duration: 0.9, delay: 0.2 }}
+                    className="mb-5 max-w-4xl text-4xl font-extrabold text-white leading-[1.1] tracking-tight md:text-6xl lg:text-7xl"
+                    style={{ textShadow: '0 2px 20px rgba(0,0,0,0.35)' }}
                 >
-                    Find Your Vibe in North Bengal
+                    Find Your Vibe<br className="hidden md:block" /> in North Bengal
                 </motion.h1>
+
+                {/* Sub-headline */}
                 <motion.p
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                    className="mb-10 text-lg text-white/90 md:text-xl"
+                    transition={{ duration: 0.9, delay: 0.35 }}
+                    className="mb-10 max-w-xl text-base text-white/80 md:text-xl font-medium"
+                    style={{ textShadow: '0 1px 8px rgba(0,0,0,0.3)' }}
                 >
-                    Discover unique homestays with verified vibes.
+                    Unique, verified homestays with mountain views, jungle retreats & river escapes.
                 </motion.p>
 
-                {/* Search Bar */}
+                {/* ── Glassmorphism Search Bar ── */}
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6, delay: 0.6 }}
-                    className="flex w-full max-w-2xl flex-col items-center gap-2 rounded-3xl bg-white p-2 shadow-2xl md:flex-row md:pl-6"
+                    initial={{ opacity: 0, scale: 0.94, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 0.5 }}
+                    className="w-full max-w-2xl"
                 >
-                    {/* Location Input */}
-                    <div className="flex w-full items-center gap-2 p-2 md:flex-1">
-                        <MapPin className="h-5 w-5 text-gray-400" />
-                        <Input
-                            type="text"
-                            placeholder="Where to? (e.g. Darjeeling, Kalimpong)"
-                            className="border-none bg-transparent text-gray-800 placeholder:text-gray-400 focus-visible:ring-0 text-lg"
-                            value={location}
-                            onChange={(e) => setLocation(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        />
-                    </div>
-
-                    {/* Search Button */}
-                    <Button
-                        size="lg"
-                        className="w-full rounded-2xl md:w-auto md:rounded-full px-8 py-6 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg transition-all hover:scale-105 active:scale-95"
-                        onClick={handleSearch}
+                    <div
+                        className={`
+                            glass-card px-4 py-3 rounded-2xl
+                            flex flex-col md:flex-row items-center gap-3
+                            transition-all duration-300
+                            ${focused ? 'ring-2 ring-primary/60 shadow-[0_0_0_4px_rgba(53,130,90,0.15)]' : ''}
+                        `}
                     >
-                        <Search className="mr-2 h-5 w-5" />
-                        Explore Vibey Stays
-                    </Button>
+                        <div className="flex items-center gap-3 w-full md:flex-1 px-2">
+                            <MapPin className="h-5 w-5 text-primary flex-none" />
+                            <Input
+                                id="hero-search-input"
+                                type="text"
+                                placeholder="Where to? (e.g. Darjeeling, Kalimpong)"
+                                className="border-none bg-transparent text-gray-900 placeholder:text-gray-400 focus-visible:ring-0 text-lg font-medium p-0 h-auto shadow-none"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                onFocus={() => setFocused(true)}
+                                onBlur={() => setFocused(false)}
+                                aria-label="Search destination"
+                            />
+                        </div>
+
+                        {/* Divider (desktop only) */}
+                        <div className="hidden md:block w-px h-8 bg-gray-200 flex-none" />
+
+                        {/* CTA Button */}
+                        <motion.button
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            className="
+                                w-full md:w-auto flex items-center justify-center gap-2
+                                bg-primary text-primary-foreground
+                                px-8 py-3.5 rounded-xl font-bold text-base
+                                shadow-lg hover:bg-primary/90 transition-colors duration-150
+                                focus:outline-none focus-visible:ring-2 focus-visible:ring-primary
+                            "
+                            onClick={handleSearch}
+                            aria-label="Search homestays"
+                        >
+                            <Search className="w-5 h-5" />
+                            Explore Vibey Stays
+                        </motion.button>
+                    </div>
+                </motion.div>
+
+                {/* Trust indicators */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.9, duration: 0.8 }}
+                    className="mt-8 flex flex-wrap items-center justify-center gap-6 text-white/70 text-sm"
+                >
+                    {['✓ Verified Stays', '✓ Direct Inquiry', '✓ No Hidden Fees'].map((t) => (
+                        <span key={t} className="font-medium">{t}</span>
+                    ))}
                 </motion.div>
             </div>
+
+            {/* Scroll indicator */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+                className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+                aria-hidden="true"
+            >
+                <span className="text-white/50 text-xs uppercase tracking-widest">Scroll</span>
+                <motion.div
+                    className="w-0.5 h-10 bg-gradient-to-b from-white/60 to-transparent rounded-full"
+                    animate={{ scaleY: [0.4, 1, 0.4], opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                />
+            </motion.div>
         </div>
     );
 }

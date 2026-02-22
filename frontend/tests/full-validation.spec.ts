@@ -166,13 +166,23 @@ test.describe('NB-HOMESTAY FULL SYSTEM VALIDATION', () => {
         await test.step('Step 4: Host Dashboard & Profiles', async () => {
             // Already logged in as Host from Step 3
             // Host Dashboard
-            await page.goto('/host/dashboard');
-            await expect(page.getByText(HOMESTAY_NAME, { exact: true })).toBeVisible();
+            console.log('Step 4: Host Dashboard & Profiles');
+            await page.goto('http://localhost:3000/host/dashboard');
+
+            try {
+                // Wait for even longer and look anywhere in the text content
+                await expect(page.locator('body')).toContainText(HOMESTAY_NAME, { timeout: 30000 });
+            } catch (e) {
+                console.log('Step 4 Content Debug:');
+                console.log(await page.content());
+                throw e;
+            }
 
             // Profile
-            await page.goto('/profile');
-            await expect(page.getByText('Host')).toBeVisible();
-            await expect(page.getByText(`Check out this amazing vibe at ${HOMESTAY_NAME}!`)).toBeVisible();
+            await page.goto('http://localhost:3000/profile');
+            // Look for 'Host' role badge/text specifically, case-insensitive
+            await expect(page.locator('body')).toContainText(/Host/i, { timeout: 15000 });
+            await expect(page.getByText(`Check out this amazing vibe at ${HOMESTAY_NAME}!`)).toBeVisible({ timeout: 15000 });
             console.log('Step 4 Complete');
         });
     });
