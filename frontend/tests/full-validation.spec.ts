@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('NB-HOMESTAY FULL SYSTEM VALIDATION', () => {
     test.describe.configure({ mode: 'serial' });
-    const timestamp = Date.now();
+    const timestamp = Date.now() + Math.floor(Math.random() * 1000);
     const USER_EMAIL = `full.user.${timestamp}@test.com`;
     const HOST_EMAIL = `full.host.${timestamp}@test.com`;
     const ADMIN_EMAIL = `full.admin.${timestamp}@test.com`;

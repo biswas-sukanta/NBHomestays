@@ -28,6 +28,9 @@ public class AuthenticationService {
                                 .role(request.getRole() != null ? request.getRole() : User.Role.ROLE_USER)
                                 .enabled(true)
                                 .build();
+                if (repository.findByEmail(request.getEmail()).isPresent()) {
+                        throw new RuntimeException("User already exists with email: " + request.getEmail());
+                }
                 repository.save(user);
                 var jwtToken = jwtService.generateToken(java.util.Map.of("role", user.getRole().name()), user);
                 return AuthDto.AuthenticationResponse.builder()
