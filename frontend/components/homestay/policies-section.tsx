@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface PoliciesSectionProps {

@@ -8,11 +8,10 @@ import { motion } from 'framer-motion';
 
 interface StickyMobileBarProps {
     homestayName: string;
-    ownerEmail?: string;
     tripBoardItem: TripBoardItem;
 }
 
-export function StickyMobileBar({ homestayName, ownerEmail, tripBoardItem }: StickyMobileBarProps) {
+export function StickyMobileBar({ homestayName, tripBoardItem }: StickyMobileBarProps) {
     const whatsappMessage = encodeURIComponent(
         `Hi! I found "${homestayName}" on NBHomestays and I'd love to inquire about availability. Can you help?`
     );
