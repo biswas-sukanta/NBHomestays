@@ -58,8 +58,7 @@ public class RedisConfig {
         }
     }
 
-    @Bean
-    public ObjectMapper redisObjectMapper() {
+    private ObjectMapper redisObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         // Store type info so polymorphic objects deserialise correctly
