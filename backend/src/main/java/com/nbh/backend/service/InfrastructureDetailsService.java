@@ -99,4 +99,11 @@ public class InfrastructureDetailsService {
         }
         return stats;
     }
+
+    /** Clear all keys from the current Redis database. */
+    public void clearAllCaches() {
+        if (redisTemplate.getConnectionFactory() != null) {
+            redisTemplate.getConnectionFactory().getConnection().serverCommands().flushDb();
+        }
+    }
 }

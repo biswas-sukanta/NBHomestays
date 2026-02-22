@@ -1,49 +1,42 @@
-import { APIRequestContext } from '@playwright/test';
-import { API_BASE, logIfError } from './api-client';
+import { APIRequestContext, expect } from '@playwright/test';
+import { API_BASE, ApiClient, defaultHeaders } from './api-client';
 
-export interface AuthResult {
-    token: string;
-    email: string;
-}
+/** Permanent Regression Suite — Auth & Token Management */
+export class AuthHelper {
+    private static tokens: Map<string, string> = new Map();
 
-/**
- * Registers a brand-new user and returns the JWT token.
- * If registration fails (e.g. user exists), falls back to login.
- * Each call generates a unique email to avoid collisions.
- */
-export async function registerAndLogin(
-    request: APIRequestContext,
-    role: 'ROLE_USER' | 'ROLE_HOST' | 'ROLE_ADMIN' = 'ROLE_USER',
-    emailOverride?: string,
-): Promise<AuthResult> {
-    const email = emailOverride ||
-        `api_${role.replace('ROLE_', '').toLowerCase()}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}@test.com`;
-    const password = 'TestPass123!';
+    /** 
+     * Registers and logins a unique user for a specific role.
+     * Retries for Koyeb resilience. 
+     */
+    static async getAuthToken(request: APIRequestContext, role: 'ROLE_USER' | 'ROLE_HOST' | 'ROLE_ADMIN' = 'ROLE_USER'): Promise<string> {
+        const email = `reg_suite_${role.toLowerCase()}_${Date.now()}@test.com`;
+        const password = 'Password123!';
 
-    const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+        // 1. Register
+        const regRes = await request.post(`${API_BASE}/api/auth/register`, {
+            headers: defaultHeaders(),
+            data: { firstname: 'Reg', lastname: 'Suite', email, password, role }
+        });
 
-    const regRes = await request.post(`${API_BASE}/api/auth/register`, {
-        headers,
-        data: { firstname: 'API', lastname: 'Tester', email, password, role },
-    });
-    await logIfError('auth/register', regRes);
+        // 2. Handle potential 404/Cold-start
+        if (regRes.status() === 404) {
+            console.warn('Koyeb 404 detected in register, retrying in 10s...');
+            await ApiClient.throttle(10000);
+            return this.getAuthToken(request, role);
+        }
 
-    if (regRes.ok()) {
+        await ApiClient.assertResponse(`Register ${role}`, regRes);
         const body = await regRes.json();
-        return { token: body.accessToken, email };
+        const token = body.accessToken;
+
+        // 3. Login alias test (Step 1 requirement)
+        const loginRes = await request.post(`${API_BASE}/api/auth/login`, {
+            headers: defaultHeaders(),
+            data: { email, password }
+        });
+        await ApiClient.assertResponse(`Login ${role}`, loginRes);
+
+        return token;
     }
-
-    // Fallback: login with existing credentials
-    const loginRes = await request.post(`${API_BASE}/api/auth/authenticate`, {
-        headers,
-        data: { email, password },
-    });
-    await logIfError('auth/authenticate (fallback)', loginRes);
-
-    if (!loginRes.ok()) {
-        throw new Error(`Auth failed for ${email}: HTTP ${loginRes.status()}`);
-    }
-
-    const body = await loginRes.json();
-    return { token: body.accessToken, email };
 }

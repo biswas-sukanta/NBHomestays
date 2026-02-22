@@ -1,11 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { API_BASE, assertOk, logIfError } from './helpers/api-client';
+import { API_BASE, assertOk, sleep } from './helpers/api-client';
 
-test.describe('Domain 1: Auth & Identity', () => {
+test.describe.serial('Domain 1: Auth & Identity', () => {
+
+    test.afterEach(async () => { await sleep(); });
 
     test('POST /api/auth/register → creates user and returns JWT', async ({ request }) => {
         const email = `auth_reg_${Date.now()}@test.com`;
         const res = await request.post(`${API_BASE}/api/auth/register`, {
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             data: { firstname: 'Auth', lastname: 'Test', email, password: 'Pass123!', role: 'ROLE_USER' },
         });
         await assertOk('POST /api/auth/register', res);
@@ -17,9 +20,12 @@ test.describe('Domain 1: Auth & Identity', () => {
     test('POST /api/auth/authenticate → returns JWT for existing user', async ({ request }) => {
         const email = `auth_login_${Date.now()}@test.com`;
         await request.post(`${API_BASE}/api/auth/register`, {
+            headers: { 'Content-Type': 'application/json' },
             data: { firstname: 'Login', lastname: 'Test', email, password: 'Pass123!', role: 'ROLE_USER' },
         });
+        await sleep();
         const res = await request.post(`${API_BASE}/api/auth/authenticate`, {
+            headers: { 'Content-Type': 'application/json' },
             data: { email, password: 'Pass123!' },
         });
         await assertOk('POST /api/auth/authenticate', res);
@@ -30,9 +36,12 @@ test.describe('Domain 1: Auth & Identity', () => {
     test('POST /api/auth/login (alias) → same as authenticate', async ({ request }) => {
         const email = `auth_alias_${Date.now()}@test.com`;
         await request.post(`${API_BASE}/api/auth/register`, {
+            headers: { 'Content-Type': 'application/json' },
             data: { firstname: 'Alias', lastname: 'Test', email, password: 'Pass123!', role: 'ROLE_USER' },
         });
+        await sleep();
         const res = await request.post(`${API_BASE}/api/auth/login`, {
+            headers: { 'Content-Type': 'application/json' },
             data: { email, password: 'Pass123!' },
         });
         await assertOk('POST /api/auth/login', res);
@@ -40,6 +49,7 @@ test.describe('Domain 1: Auth & Identity', () => {
 
     test('Bad credentials → 401/403, never 500', async ({ request }) => {
         const res = await request.post(`${API_BASE}/api/auth/authenticate`, {
+            headers: { 'Content-Type': 'application/json' },
             data: { email: 'nonexistent@test.com', password: 'wrong' },
         });
         expect(res.status(), 'Bad creds must not 500').toBeLessThan(500);
