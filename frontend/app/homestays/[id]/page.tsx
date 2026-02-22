@@ -4,9 +4,7 @@ export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 import { BentoGallery } from '@/components/bento-gallery';
-import { QASection } from '@/components/qa-section';
 import { StickyMobileBar } from '@/components/sticky-mobile-bar';
-import HomestayMapWrapper from '@/components/HomestayMapWrapper';
 import { InquirySection } from '@/components/inquiry-section';
 import { MapPin, Star } from 'lucide-react';
 
@@ -16,6 +14,8 @@ import { QuickFacts } from '@/components/homestay/quick-facts';
 import { AmenitiesSection } from '@/components/homestay/amenities-section';
 import { HostProfile } from '@/components/homestay/host-profile';
 import { PoliciesSection } from '@/components/homestay/policies-section';
+import { LocationMapSection } from '@/components/homestay/location-map-section';
+import { HomestayQASection } from '@/components/homestay/homestay-qa-section';
 
 interface MediaItem { id: string; type: 'image' | 'video'; url: string; }
 
@@ -168,23 +168,16 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     )}
 
                     {/* ── Map ── */}
-                    {homestay.latitude && homestay.longitude && (
-                        <section className="py-8 border-b border-gray-200">
-                            <h2 className="text-[22px] font-bold text-gray-900 mb-6">Where you'll be</h2>
-                            <div className="rounded-[20px] overflow-hidden shadow-sm border border-gray-200 h-[400px]">
-                                <HomestayMapWrapper
-                                    latitude={homestay.latitude}
-                                    longitude={homestay.longitude}
-                                    locationName={homestay.locationName}
-                                />
-                            </div>
-                        </section>
-                    )}
+                    <LocationMapSection
+                        latitude={homestay.latitude}
+                        longitude={homestay.longitude}
+                        locationName={homestay.locationName}
+                    />
 
                     {/* ── Desktop QA Section ── */}
-                    <section className="py-8 hidden md:block">
-                        <QASection homestayId={homestay.id} />
-                    </section>
+                    <div className="hidden md:block">
+                        <HomestayQASection homestayId={homestay.id} />
+                    </div>
                 </div>
 
                 {/* Desktop Sticky Sidebar (Pricing / Inquiry) */}
@@ -212,9 +205,9 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                 </div>
 
                 {/* Mobile QA Section */}
-                <section className="py-8 border-b border-gray-200 md:hidden w-full">
-                    <QASection homestayId={homestay.id} />
-                </section>
+                <div className="md:hidden w-full">
+                    <HomestayQASection homestayId={homestay.id} />
+                </div>
             </div>
 
             {/* ════════════════════════════════════════
@@ -223,7 +216,6 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
             <div className="md:hidden">
                 <StickyMobileBar
                     homestayName={homestay.name}
-                    ownerEmail={homestay.ownerEmail}
                     tripBoardItem={tripBoardItem}
                 />
             </div>
