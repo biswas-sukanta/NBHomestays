@@ -47,6 +47,7 @@ public class ReviewService {
                 return mapToResponse(saved);
         }
 
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
         @Cacheable(value = "homestayReviews", key = "#homestayId", sync = true)
         public List<ReviewDto.Response> getReviewsByHomestay(java.util.UUID homestayId) {
                 return reviewRepository.findByHomestayId(homestayId).stream()

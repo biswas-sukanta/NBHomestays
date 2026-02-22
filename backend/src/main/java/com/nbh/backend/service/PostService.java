@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -47,11 +49,13 @@ public class PostService {
         return mapToResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(value = "postDetail", key = "#id", sync = true)
     public java.util.Optional<PostDto.Response> getPostById(java.util.UUID id) {
         return postRepository.findById(id).map(this::mapToResponse);
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(value = "postsList", sync = true)
     public List<PostDto.Response> getAllPosts() {
         return postRepository.findAllByOrderByCreatedAtDesc().stream()
@@ -59,6 +63,7 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(value = "postsList", sync = true)
     public List<PostDto.Response> searchPosts(String query) {
         if (query == null || query.isBlank()) {
@@ -69,6 +74,7 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(value = "postsList", sync = true)
     public List<PostDto.Response> getPostsByUser(String email) {
         User user = userRepository.findByEmail(email)

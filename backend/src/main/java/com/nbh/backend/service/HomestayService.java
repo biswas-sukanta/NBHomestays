@@ -52,7 +52,8 @@ public class HomestayService {
                 return mapToResponse(saved);
         }
 
-        @Cacheable(value = "homestaysSearch", sync = true)
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
+        @Cacheable(value = "homestaysSearch", key = "'all'", sync = true)
         public List<HomestayDto.Response> searchHomestays(String query) {
                 // If query is empty, return all APPROVED homestays
                 if (query == null || query.trim().isEmpty()) {
@@ -160,6 +161,7 @@ public class HomestayService {
                 repository.delete(homestay);
         }
 
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public List<HomestayDto.Response> getHomestaysByOwner(String email) {
                 User owner = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -177,6 +179,7 @@ public class HomestayService {
                 return mapToResponse(homestay);
         }
 
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public List<HomestayDto.Response> getPendingHomestays() {
                 return repository.findByStatus(Homestay.Status.PENDING).stream()
                                 .map(this::mapToResponse)

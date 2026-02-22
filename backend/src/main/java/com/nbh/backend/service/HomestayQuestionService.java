@@ -105,6 +105,7 @@ public class HomestayQuestionService {
         answerRepository.delete(answer);
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @Cacheable(value = "homestayQA", key = "#homestayId", sync = true)
     public List<HomestayQuestionDto> getQuestionsByHomestay(UUID homestayId) {
         return questionRepository.findByHomestayIdOrderByCreatedAtDesc(homestayId).stream()
