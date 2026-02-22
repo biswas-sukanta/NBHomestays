@@ -74,7 +74,7 @@ function LikeButton({ postId, initialLiked, initialCount }: { postId: string; in
 }
 
 // ── Post Composer Modal ───────────────────────────────────────
-function PostComposer({ onSuccess, onClose, token }: { onSuccess: (post: Post) => void; onClose: () => void; token: string | null; }) {
+function PostComposer({ onSuccess, onClose }: { onSuccess: (post: Post) => void; onClose: () => void; }) {
     const [text, setText] = useState('');
     const [location, setLocation] = useState('');
     const [uploading, setUploading] = useState(false);
@@ -103,6 +103,7 @@ function PostComposer({ onSuccess, onClose, token }: { onSuccess: (post: Post) =
         if (!files.length) return;
         setUploading(true);
         try {
+            const token = localStorage.getItem('token');
             const urls = await Promise.all(files.map(async (file) => {
                 const form = new FormData();
                 form.append('file', file);
@@ -119,6 +120,7 @@ function PostComposer({ onSuccess, onClose, token }: { onSuccess: (post: Post) =
         if (!text.trim() && imageUrls.length === 0) return;
         setSubmitting(true);
         try {
+            const token = localStorage.getItem('token');
             const res = await fetch(`${API}/api/posts`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -249,7 +251,7 @@ function PostCard({ post }: { post: Post }) {
 
 // ── Main Feed Page ─────────────────────────────────────────────
 export default function CommunityPage() {
-    const { isAuthenticated, token } = useAuth() as any;
+    const { isAuthenticated } = useAuth() as any;
     const [posts, setPosts] = useState<Post[]>([]);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
@@ -334,7 +336,7 @@ export default function CommunityPage() {
             {/* Composer Modal */}
             <AnimatePresence>
                 {composerOpen && (
-                    <PostComposer token={token ?? null} onSuccess={handleNewPost} onClose={() => setComposerOpen(false)} />
+                    <PostComposer onSuccess={handleNewPost} onClose={() => setComposerOpen(false)} />
                 )}
             </AnimatePresence>
         </div>
