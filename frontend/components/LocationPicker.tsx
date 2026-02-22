@@ -39,7 +39,11 @@ function LocationMarker({ position, setPosition, onLocationSelect, readonly }: a
 
         // Reverse Geocode
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`, {
+                headers: {
+                    'User-Agent': 'NorthBengalHomestays/1.0 (Contact: biswas-sukanta/NBHomestays github)'
+                }
+            });
             const data = await res.json();
             if (onLocationSelect) {
                 onLocationSelect(latlng.lat, latlng.lng, data.display_name || '');
@@ -87,7 +91,11 @@ export default function LocationPicker({ onLocationSelect, initialLat, initialLn
         if (!searchQuery) return;
         setIsSearching(true);
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`, {
+                headers: {
+                    'User-Agent': 'NorthBengalHomestays/1.0 (Contact: biswas-sukanta/NBHomestays github)'
+                }
+            });
             const data = await res.json();
             if (data && data.length > 0) {
                 const { lat, lon, display_name } = data[0];
