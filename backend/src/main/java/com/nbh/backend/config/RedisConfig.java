@@ -5,8 +5,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.support.NoOpCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.PageImpl;
@@ -28,15 +32,28 @@ import java.util.Map;
 /**
  * Redis cache configuration — hardened for production.
  *
- * Phase 35 fixes:
- * - Registers a Jackson mixin so PageImpl can be deserialized from Redis.
- * - Registers Hibernate6Module to handle lazy proxy serialization gracefully.
- * - Sets FAIL_ON_UNKNOWN_PROPERTIES = false for forward-compatibility.
+ * Kill Switch:
+ * Set app.cache.redis.enabled=false (or env APP_CACHE_REDIS_ENABLED=false)
+ * to bypass Redis entirely. All @Cacheable annotations become no-ops and
+ * every request reads directly from PostgreSQL. The Service layer is
+ * completely untouched — routing is handled here at the CacheManager level.
+ *
+ * Serialization Fixes:
+ * - Hibernate6Module for lazy proxy handling.
+ * - PageImpl mixin for correct deserialization from Redis.
+ * - FAIL_ON_UNKNOWN_PROPERTIES = false for forward-compatibility.
  */
 @Configuration
 @EnableCaching
 public class RedisConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(RedisConfig.class);
+
+    // ── Kill Switch ───────────────────────────────────────────
+    @Value("${app.cache.redis.enabled:true}")
+    private boolean cacheEnabled;
+
+    // ── Redis Connection Properties ───────────────────────────
     @Value("${spring.data.redis.host:localhost}")
     private String redisHost;
 
@@ -49,6 +66,7 @@ public class RedisConfig {
     @Value("${spring.data.redis.ssl.enabled:false}")
     private boolean sslEnabled;
 
+    // ── Connection Factory ────────────────────────────────────
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
@@ -68,15 +86,7 @@ public class RedisConfig {
         return new LettuceConnectionFactory(config, lettuceConfigBuilder.build());
     }
 
-    /**
-     * Builds a hardened ObjectMapper for Redis serialization/deserialization.
-     *
-     * Key fixes:
-     * 1. JavaTimeModule — handles LocalDateTime fields.
-     * 2. PageImpl mixin → RestPageImpl — fixes "no default constructor" crash.
-     * 3. Hibernate6Module — serializes lazy proxies as null instead of crashing.
-     * 4. FAIL_ON_UNKNOWN_PROPERTIES = false — forward-compatible deserialization.
-     */
+    // ── Jackson ObjectMapper (hardened for Redis) ─────────────
     private ObjectMapper redisObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
 
@@ -84,16 +94,12 @@ public class RedisConfig {
         mapper.registerModule(new JavaTimeModule());
 
         // Module 2: Hibernate lazy-proxy handling
-        // This prevents InvalidDefinitionException on ByteBuddyInterceptor
-        // when serializing entities with FetchType.LAZY fields (e.g. Homestay.owner)
         mapper.registerModule(new com.fasterxml.jackson.datatype.hibernate6.Hibernate6Module());
 
         // Fix 3: Teach Jackson how to deserialize PageImpl from Redis
-        // PageImpl has no default constructor. We register our RestPageImpl
-        // (which has @JsonCreator) as a mixin so Jackson knows how to build it.
         mapper.addMixIn(PageImpl.class, RestPageImplMixin.class);
 
-        // Fix 4: Don't crash if Redis has a field we don't expect (schema evolution)
+        // Fix 4: Don't crash if Redis has a field we don't expect
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         // Store type info so polymorphic objects deserialize correctly
@@ -110,8 +116,23 @@ public class RedisConfig {
         return new GenericJackson2JsonRedisSerializer(redisObjectMapper());
     }
 
+    // ══════════════════════════════════════════════════════════
+    // THE KILL SWITCH — Global CacheManager Routing
+    // ══════════════════════════════════════════════════════════
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
+    public CacheManager cacheManager(RedisConnectionFactory factory) {
+
+        // ── Kill Switch OFF → bypass Redis entirely ──────────
+        if (!cacheEnabled) {
+            log.warn("🛑 Redis caching is DISABLED via kill switch (app.cache.redis.enabled=false). "
+                    + "Routing ALL traffic directly to PostgreSQL. "
+                    + "Every @Cacheable annotation is now a no-op.");
+            return new NoOpCacheManager();
+        }
+
+        // ── Kill Switch ON → full Redis caching ──────────────
+        log.info("✅ Redis caching is ENABLED. All @Cacheable routes will be served from Redis.");
+
         GenericJackson2JsonRedisSerializer serializer = jsonRedisSerializer();
 
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
@@ -139,6 +160,7 @@ public class RedisConfig {
                 .build();
     }
 
+    // ── RedisTemplate (for non-cache operations like diagnostics) ──
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();

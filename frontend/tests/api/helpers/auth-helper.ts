@@ -9,21 +9,25 @@ export class AuthHelper {
      * Registers and logins a unique user for a specific role.
      * Retries for Koyeb resilience. 
      */
-    static async getAuthToken(request: APIRequestContext, role: 'ROLE_USER' | 'ROLE_HOST' | 'ROLE_ADMIN' = 'ROLE_USER'): Promise<string> {
+    static async getAuthToken(request: APIRequestContext, role: 'ROLE_USER' | 'ROLE_HOST' | 'ROLE_ADMIN' = 'ROLE_USER', attempts: number = 0): Promise<string> {
+        if (attempts > 5) throw new Error(`Failed to obtain ${role} token after 5 attempts due to Koyeb 404s.`);
+
         const email = `reg_suite_${role.toLowerCase()}_${Date.now()}@test.com`;
         const password = 'Password123!';
+        const url = `${API_BASE}/api/auth/register`;
+        console.log(`[AUTH] Registering at: ${url}`);
 
         // 1. Register
-        const regRes = await request.post(`${API_BASE}/api/auth/register`, {
+        const regRes = await request.post(url, {
             headers: defaultHeaders(),
             data: { firstname: 'Reg', lastname: 'Suite', email, password, role }
         });
 
         // 2. Handle potential 404/Cold-start
         if (regRes.status() === 404) {
-            console.warn('Koyeb 404 detected in register, retrying in 10s...');
+            console.warn(`Koyeb 404 detected in register (attempt ${attempts + 1}), retrying in 10s...`);
             await ApiClient.throttle(10000);
-            return this.getAuthToken(request, role);
+            return this.getAuthToken(request, role, attempts + 1);
         }
 
         await ApiClient.assertResponse(`Register ${role}`, regRes);
