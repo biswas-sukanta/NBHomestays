@@ -63,6 +63,10 @@ public class Homestay {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean featured = false;
+
     public enum Status {
         PENDING, APPROVED, REJECTED
     }

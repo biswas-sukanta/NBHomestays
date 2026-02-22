@@ -27,6 +27,13 @@ public class PostController {
         return ResponseEntity.ok(postService.searchPosts(query));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<PostDto.Response> getPostById(@PathVariable("id") java.util.UUID id) {
+        return postService.getPostById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     public ResponseEntity<PostDto.Response> createPost(
             @RequestBody PostDto.Request request,

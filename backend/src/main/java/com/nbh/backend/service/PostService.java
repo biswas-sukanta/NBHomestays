@@ -43,6 +43,10 @@ public class PostService {
         return mapToResponse(saved);
     }
 
+    public java.util.Optional<PostDto.Response> getPostById(java.util.UUID id) {
+        return postRepository.findById(id).map(this::mapToResponse);
+    }
+
     public List<PostDto.Response> getAllPosts() {
         return postRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::mapToResponse)

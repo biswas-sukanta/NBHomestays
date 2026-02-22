@@ -12,6 +12,10 @@ public interface HomestayRepository extends JpaRepository<Homestay, UUID>, Homes
 
     List<Homestay> findByStatus(Homestay.Status status);
 
+    long countByStatus(Homestay.Status status);
+
+    long countByFeaturedTrue();
+
     List<Homestay> findByOwner(com.nbh.backend.model.User owner);
 
     @org.springframework.data.jpa.repository.Query("SELECT h FROM Homestay h LEFT JOIN FETCH h.owner LEFT JOIN FETCH h.photoUrls WHERE h.id = :id")
