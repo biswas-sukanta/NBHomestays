@@ -1,159 +1,280 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import Link from 'next/link';
 import { toast } from 'sonner';
-import { Pencil, Trash2 } from 'lucide-react';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
+import { Heart, FileText, Settings, Pencil, Trash2, MapPin, Star, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { useTripBoard } from '@/store/useTripBoard';
 
+// ── Types ─────────────────────────────────────────────────────
 interface Post {
-    id: string;
-    textContent: string;
-    locationName: string;
-    createdAt: string;
+    id: string; textContent: string; locationName: string; createdAt: string;
+}
+interface SavedHomestay {
+    id: string; name: string; pricePerNight: number; photoUrls?: string[]; vibeScore?: number;
 }
 
-export default function UserProfile() {
+const FALLBACK = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=600&q=80';
+
+const TABS = [
+    { key: 'boards', label: 'Trip Boards', icon: Heart },
+    { key: 'posts', label: 'My Posts', icon: FileText },
+    { key: 'settings', label: 'Settings', icon: Settings },
+] as const;
+type TabKey = typeof TABS[number]['key'];
+
+// ── Trip Boards Tab ───────────────────────────────────────────
+function TripBoardsTab() {
+    const { items, remove } = useTripBoard();
+    const shareUrl = typeof window !== 'undefined' && items.length > 0
+        ? `${window.location.origin}/search?ids=${items.map(i => i.id).join(',')}`
+        : null;
+
+    if (items.length === 0) {
+        return (
+            <div className="text-center py-20">
+                <div className="text-5xl mb-4">💔</div>
+                <p className="text-muted-foreground font-medium">No saved stays yet.</p>
+                <Link href="/search" className="mt-4 inline-block px-5 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors">
+                    Explore Stays
+                </Link>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            {shareUrl && (
+                <div className="mb-5 flex items-center justify-between gap-3 bg-secondary/50 rounded-xl px-4 py-3">
+                    <span className="text-sm text-muted-foreground truncate">{shareUrl}</span>
+                    <button
+                        onClick={() => { navigator.clipboard.writeText(shareUrl); toast.success('Link copied!'); }}
+                        className="flex-none text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                    >Copy link</button>
+                </div>
+            )}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {items.map(item => (
+                    <motion.div
+                        key={item.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="group relative bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                    >
+                        <Link href={`/homestays/${item.id}`}>
+                            <img
+                                src={item.imageUrl || FALLBACK}
+                                alt={item.name}
+                                className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                        </Link>
+                        <button
+                            onClick={() => remove(item.id)}
+                            className="absolute top-2 right-2 w-7 h-7 glass rounded-full flex items-center justify-center text-rose-500 hover:text-rose-600"
+                            aria-label="Remove from board"
+                        >
+                            <Heart className="w-3.5 h-3.5 fill-rose-500" />
+                        </button>
+                        <div className="p-3">
+                            <h3 className="font-semibold text-sm text-foreground line-clamp-1">{item.name}</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">₹{item.pricePerNight.toLocaleString()} / night</p>
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// ── My Posts Tab ──────────────────────────────────────────────
+function MyPostsTab() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [editPost, setEditPost] = useState<Post | null>(null);
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [postToDelete, setPostToDelete] = useState<string | null>(null);
     const [editContent, setEditContent] = useState('');
-
-    const fetchPosts = async () => {
-        try {
-            const res = await api.get('/api/posts/my-posts');
-            setPosts(res.data);
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to fetch posts");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchPosts();
+        api.get('/api/posts/my-posts')
+            .then(r => setPosts(r.data))
+            .catch(() => toast.error('Failed to load posts'))
+            .finally(() => setLoading(false));
     }, []);
-
-    const handleEditClick = (post: Post) => {
-        setEditPost(post);
-        setEditContent(post.textContent);
-        setIsEditOpen(true);
-    };
-
-    const handleDeleteClick = (id: string) => {
-        setPostToDelete(id);
-        setIsDeleteOpen(true);
-    };
 
     const handleUpdate = async () => {
         if (!editPost) return;
-        try {
-            await api.put(`/api/posts/${editPost.id}`, {
-                textContent: editContent
-            });
-            toast.success("Post updated");
-            setIsEditOpen(false);
-            fetchPosts();
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to update post");
-        }
+        await api.put(`/api/posts/${editPost.id}`, { textContent: editContent });
+        setPosts(p => p.map(post => post.id === editPost.id ? { ...post, textContent: editContent } : post));
+        toast.success('Post updated');
+        setEditPost(null);
     };
 
     const handleDelete = async () => {
-        if (!postToDelete) return;
-        try {
-            await api.delete(`/api/posts/${postToDelete}`);
-            toast.success("Post deleted");
-            setIsDeleteOpen(false);
-            setPosts(prev => prev.filter(p => p.id !== postToDelete));
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to delete post");
-        }
+        if (!deleteId) return;
+        await api.delete(`/api/posts/${deleteId}`);
+        setPosts(p => p.filter(post => post.id !== deleteId));
+        toast.success('Post deleted');
+        setDeleteId(null);
     };
 
-    return (
-        <div className="container mx-auto px-4 py-12">
-            <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+    if (loading) return <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-20 rounded-xl skeleton-shimmer" />)}</div>;
+    if (posts.length === 0) return <p className="text-center py-16 text-muted-foreground">You haven't posted anything yet. <Link href="/community" className="text-primary font-semibold">Share your experience →</Link></p>;
 
-            <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">My Posts History</h2>
-                {loading ? (
-                    <div>Loading...</div>
-                ) : posts.length === 0 ? (
-                    <div className="text-gray-500">You haven't shared any experiences yet.</div>
-                ) : (
-                    <div className="space-y-4">
-                        {posts.map(post => (
-                            <Card key={post.id} className="p-4">
-                                <CardContent className="p-0">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="font-medium text-gray-900">{post.locationName}</p>
-                                            <p className="text-gray-700 mt-1">{post.textContent}</p>
-                                            <p className="text-xs text-gray-400 mt-2">{new Date(post.createdAt).toLocaleDateString()}</p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button variant="ghost" size="icon" onClick={() => handleEditClick(post)}>
-                                                <Pencil className="w-4 h-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDeleteClick(post.id)}>
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+    return (
+        <>
+            <div className="space-y-3">
+                {posts.map(post => (
+                    <div key={post.id} className="bg-card border border-border rounded-xl p-4 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                                <MapPin className="w-3 h-3" /> {post.locationName}
+                                <span className="mx-1">·</span>
+                                {new Date(post.createdAt).toLocaleDateString()}
+                            </div>
+                            <p className="text-sm text-foreground line-clamp-2">{post.textContent}</p>
+                        </div>
+                        <div className="flex gap-1.5 flex-none">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditPost(post); setEditContent(post.textContent); }}>
+                                <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => setDeleteId(post.id)}>
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                        </div>
                     </div>
-                )}
+                ))}
             </div>
 
-            {/* Edit Post Modal */}
-            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <Dialog open={!!editPost} onOpenChange={() => setEditPost(null)}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Post</DialogTitle>
-                    </DialogHeader>
-                    <Textarea
-                        value={editContent}
-                        onChange={e => setEditContent(e.target.value)}
-                        rows={5}
-                    />
+                    <DialogHeader><DialogTitle>Edit Post</DialogTitle></DialogHeader>
+                    <Textarea value={editContent} onChange={e => setEditContent(e.target.value)} rows={5} />
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setEditPost(null)}>Cancel</Button>
                         <Button onClick={handleUpdate}>Save</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Delete Confirmation */}
-            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Delete Post?</DialogTitle>
-                    </DialogHeader>
-                    <p>Are you sure?</p>
+                    <DialogHeader><DialogTitle>Delete this post?</DialogTitle></DialogHeader>
+                    <p className="text-muted-foreground text-sm">This action is permanent and cannot be undone.</p>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
                         <Button variant="destructive" onClick={handleDelete}>Delete</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+        </>
+    );
+}
+
+// ── Settings Tab ──────────────────────────────────────────────
+function SettingsTab() {
+    const { user, logout } = useAuth() as any;
+    return (
+        <div className="max-w-md space-y-6">
+            <div className="bg-secondary/40 rounded-xl p-4 space-y-3">
+                <h3 className="font-semibold text-sm text-foreground">Account</h3>
+                <div className="text-sm text-muted-foreground space-y-1">
+                    <p><span className="font-medium text-foreground">Name:</span> {user?.firstName} {user?.lastName}</p>
+                    <p><span className="font-medium text-foreground">Email:</span> {user?.email}</p>
+                    <p><span className="font-medium text-foreground">Role:</span> {user?.role?.replace('ROLE_', '')}</p>
+                </div>
+            </div>
+            <Button
+                variant="destructive"
+                className="w-full"
+                onClick={logout}
+            >
+                <LogOut className="w-4 h-4 mr-2" /> Sign Out
+            </Button>
+        </div>
+    );
+}
+
+// ── Main Profile Page ──────────────────────────────────────────
+export default function ProfilePage() {
+    const { isAuthenticated, user, logout } = useAuth() as any;
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState<TabKey>('boards');
+
+    useEffect(() => {
+        if (!isAuthenticated) router.replace('/login');
+    }, [isAuthenticated]);
+
+    if (!isAuthenticated) return null;
+
+    const initials = [user?.firstName, user?.lastName]
+        .filter(Boolean).map((n: string) => n[0]).join('').toUpperCase() || 'U';
+
+    return (
+        <div className="min-h-screen bg-background">
+            {/* Profile header */}
+            <div className="bg-gradient-to-br from-[oklch(0.20_0.10_150)] to-[oklch(0.28_0.14_155)] pt-12 pb-6 px-4">
+                <div className="container mx-auto max-w-3xl flex items-end gap-5">
+                    <div className="w-20 h-20 rounded-2xl bg-white/20 border-2 border-white/40 flex items-center justify-center text-white text-2xl font-extrabold flex-none shadow-lg">
+                        {initials}
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-extrabold text-white leading-tight">
+                            {user?.firstName} {user?.lastName}
+                        </h1>
+                        <p className="text-white/60 text-sm mt-0.5">{user?.email}</p>
+                        <span className="mt-1.5 inline-block text-[10px] font-bold uppercase tracking-widest bg-white/15 text-white px-2.5 py-0.5 rounded-full">
+                            {user?.role?.replace('ROLE_', '')}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tab bar */}
+            <div className="border-b border-border bg-background sticky top-[68px] z-30">
+                <div className="container mx-auto max-w-3xl px-4">
+                    <div className="flex">
+                        {TABS.map(tab => (
+                            <button
+                                key={tab.key}
+                                onClick={() => setActiveTab(tab.key)}
+                                className={`flex items-center gap-1.5 px-4 py-3.5 text-sm font-semibold border-b-2 transition-colors
+                                    ${activeTab === tab.key
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                            >
+                                <tab.icon className="w-4 h-4" />
+                                <span className="hidden sm:inline">{tab.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Tab Content */}
+            <div className="container mx-auto max-w-3xl px-4 py-8">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {activeTab === 'boards' && <TripBoardsTab />}
+                        {activeTab === 'posts' && <MyPostsTab />}
+                        {activeTab === 'settings' && <SettingsTab />}
+                    </motion.div>
+                </AnimatePresence>
+            </div>
         </div>
     );
 }

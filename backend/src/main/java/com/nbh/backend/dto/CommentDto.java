@@ -1,0 +1,30 @@
+package com.nbh.backend.dto;
+
+import lombok.Builder;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+/** DTO returned to clients for comment data. */
+@Data
+@Builder
+public class CommentDto {
+
+    private UUID id;
+    private UUID postId;
+    private UUID parentId;
+
+    // Author info
+    private UUID authorId;
+    private String authorName;
+    private String authorAvatarUrl;
+
+    private String body;
+    private LocalDateTime createdAt;
+
+    /** First-level replies (populated only for top-level comments). */
+    private List<CommentDto> replies;
+    private int replyCount;
+}
