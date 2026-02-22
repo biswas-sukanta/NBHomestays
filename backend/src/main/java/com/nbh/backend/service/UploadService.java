@@ -68,6 +68,7 @@ public class UploadService {
                 .region(Region.of(s3Region))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(accessKey, secretKey)))
+                .serviceConfiguration(sc -> sc.pathStyleAccessEnabled(true))
                 .build();
 
         s3.putObject(
