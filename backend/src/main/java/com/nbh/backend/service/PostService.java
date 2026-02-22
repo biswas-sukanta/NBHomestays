@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +23,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final com.nbh.backend.repository.HomestayRepository homestayRepository;
 
+    @CacheEvict(value = "postsList", allEntries = true)
     public PostDto.Response createPost(PostDto.Request request, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -43,16 +47,19 @@ public class PostService {
         return mapToResponse(saved);
     }
 
+    @Cacheable(value = "postDetail", key = "#id", sync = true)
     public java.util.Optional<PostDto.Response> getPostById(java.util.UUID id) {
         return postRepository.findById(id).map(this::mapToResponse);
     }
 
+    @Cacheable(value = "postsList", sync = true)
     public List<PostDto.Response> getAllPosts() {
         return postRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "postsList", sync = true)
     public List<PostDto.Response> searchPosts(String query) {
         if (query == null || query.isBlank()) {
             return getAllPosts();
@@ -62,6 +69,7 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "postsList", sync = true)
     public List<PostDto.Response> getPostsByUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -70,6 +78,10 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "postsList", allEntries = true),
+            @CacheEvict(value = "postDetail", key = "#id")
+    })
     public PostDto.Response updatePost(java.util.UUID id, PostDto.Request request, String userEmail) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -90,6 +102,10 @@ public class PostService {
         return mapToResponse(saved);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "postsList", allEntries = true),
+            @CacheEvict(value = "postDetail", key = "#id")
+    })
     public void deletePost(java.util.UUID id, String userEmail) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));

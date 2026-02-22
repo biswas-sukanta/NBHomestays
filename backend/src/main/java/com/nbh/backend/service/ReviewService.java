@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,7 @@ public class ReviewService {
         private final UserRepository userRepository;
         private final VibeService vibeService;
 
+        @CacheEvict(value = "homestayReviews", key = "#request.homestayId")
         public ReviewDto.Response addReview(ReviewDto.Request request, String userEmail) {
                 User user = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -44,6 +47,7 @@ public class ReviewService {
                 return mapToResponse(saved);
         }
 
+        @Cacheable(value = "homestayReviews", key = "#homestayId", sync = true)
         public List<ReviewDto.Response> getReviewsByHomestay(java.util.UUID homestayId) {
                 return reviewRepository.findByHomestayId(homestayId).stream()
                                 .map(this::mapToResponse)

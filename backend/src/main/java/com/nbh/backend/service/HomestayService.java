@@ -12,6 +12,10 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ public class HomestayService {
         private final HomestayRepository repository;
         private final UserRepository userRepository;
 
+        @CacheEvict(value = "homestaysSearch", allEntries = true)
         public HomestayDto.Response createHomestay(HomestayDto.Request request, String userEmail) {
                 User owner = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -47,6 +52,7 @@ public class HomestayService {
                 return mapToResponse(saved);
         }
 
+        @Cacheable(value = "homestaysSearch", sync = true)
         public List<HomestayDto.Response> searchHomestays(String query) {
                 // If query is empty, return all APPROVED homestays
                 if (query == null || query.trim().isEmpty()) {
@@ -74,6 +80,10 @@ public class HomestayService {
                                 .collect(Collectors.toList());
         }
 
+        @Caching(evict = {
+                        @CacheEvict(value = "homestay", key = "#id"),
+                        @CacheEvict(value = "homestaysSearch", allEntries = true)
+        })
         public void approveHomestay(java.util.UUID id) {
                 Homestay homestay = repository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -82,6 +92,10 @@ public class HomestayService {
                 repository.save(homestay);
         }
 
+        @Caching(evict = {
+                        @CacheEvict(value = "homestay", key = "#id"),
+                        @CacheEvict(value = "homestaysSearch", allEntries = true)
+        })
         public void rejectHomestay(java.util.UUID id) {
                 Homestay homestay = repository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -90,6 +104,8 @@ public class HomestayService {
                 repository.save(homestay);
         }
 
+        @Caching(put = { @CachePut(value = "homestay", key = "#id") }, evict = {
+                        @CacheEvict(value = "homestaysSearch", allEntries = true) })
         public HomestayDto.Response updateHomestay(java.util.UUID id, HomestayDto.Request request, String userEmail) {
                 Homestay homestay = repository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -125,6 +141,10 @@ public class HomestayService {
                 return mapToResponse(saved);
         }
 
+        @Caching(evict = {
+                        @CacheEvict(value = "homestay", key = "#id"),
+                        @CacheEvict(value = "homestaysSearch", allEntries = true)
+        })
         public void deleteHomestay(java.util.UUID id, String userEmail) {
                 Homestay homestay = repository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -149,6 +169,7 @@ public class HomestayService {
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
+        @Cacheable(value = "homestay", key = "#id", sync = true)
         public HomestayDto.Response getHomestay(java.util.UUID id) {
                 Homestay homestay = repository.findByIdWithDetails(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,

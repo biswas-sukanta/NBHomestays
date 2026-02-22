@@ -92,11 +92,16 @@ public class RedisConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
                 .disableCachingNullValues();
 
-        // Per-cache TTL overrides
+        // Per-cache TTL overrides from Phase 33 Architecture Plan
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
-        cacheConfigs.put("homestays", defaultConfig.entryTtl(Duration.ofMinutes(5)));
-        cacheConfigs.put("feed", defaultConfig.entryTtl(Duration.ofSeconds(30)));
-        cacheConfigs.put("homestay-list", defaultConfig.entryTtl(Duration.ofMinutes(2)));
+        cacheConfigs.put("homestay", defaultConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigs.put("homestaysSearch", defaultConfig.entryTtl(Duration.ofHours(2)));
+        cacheConfigs.put("postsList", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigs.put("homestayQA", defaultConfig.entryTtl(Duration.ofHours(12)));
+        cacheConfigs.put("postComments", defaultConfig.entryTtl(Duration.ofHours(1)));
+        cacheConfigs.put("homestayReviews", defaultConfig.entryTtl(Duration.ofHours(12)));
+        cacheConfigs.put("adminStats", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigs.put("postDetail", defaultConfig.entryTtl(Duration.ofHours(1)));
 
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(defaultConfig)

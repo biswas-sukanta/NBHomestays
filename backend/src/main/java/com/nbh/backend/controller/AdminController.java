@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -30,6 +33,7 @@ public class AdminController {
     /** Platform-wide analytics for the admin dashboard */
     @GetMapping("/stats")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Cacheable(value = "adminStats", sync = true)
     public ResponseEntity<Map<String, Object>> getStats() {
         long totalUsers = userRepository.count();
         long totalPosts = postRepository.count();
@@ -50,6 +54,10 @@ public class AdminController {
     /** Admin-only force-delete any post (for moderation) */
     @DeleteMapping("/posts/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Caching(evict = {
+            @CacheEvict(value = "postsList", allEntries = true),
+            @CacheEvict(value = "adminStats", allEntries = true)
+    })
     public ResponseEntity<Void> adminDeletePost(@PathVariable UUID id) {
         if (!postRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
@@ -61,6 +69,10 @@ public class AdminController {
     /** Toggle featured status on a homestay */
     @PutMapping("/homestays/{id}/feature")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Caching(evict = {
+            @CacheEvict(value = "homestay", key = "#id"),
+            @CacheEvict(value = "homestaysSearch", allEntries = true)
+    })
     public ResponseEntity<Map<String, Object>> toggleFeatured(@PathVariable UUID id) {
         Homestay homestay = homestayRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Homestay not found"));

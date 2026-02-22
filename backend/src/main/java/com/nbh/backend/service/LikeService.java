@@ -3,6 +3,7 @@ package com.nbh.backend.service;
 import com.nbh.backend.model.PostLike;
 import com.nbh.backend.repository.PostLikeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ public class LikeService {
     private final PostLikeRepository postLikeRepository;
 
     @Transactional
+    @CacheEvict(value = "postsList", allEntries = true)
     public boolean toggle(UUID postId, UUID userId) {
         PostLike.PostLikePk pk = new PostLike.PostLikePk(userId, postId);
         if (postLikeRepository.existsById(pk)) {

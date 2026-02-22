@@ -6,6 +6,7 @@ import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +21,28 @@ public class VibeService {
 
     private final HomestayRepository homestayRepository;
     private final ReviewRepository reviewRepository;
+    private final CacheManager cacheManager;
 
     @Async
     @Transactional
     public void updateVibeScoreAsync(UUID homestayId) {
-        homestayRepository.findById(homestayId).ifPresent(this::calculateAndSave);
+        homestayRepository.findById(homestayId).ifPresent(h -> {
+            calculateAndSave(h);
+            // Programmatic eviction — @Async bypasses Spring AOP proxy
+            evictHomestayCache(homestayId);
+        });
+    }
+
+    private void evictHomestayCache(UUID homestayId) {
+        var homestayCache = cacheManager.getCache("homestay");
+        if (homestayCache != null)
+            homestayCache.evict(homestayId);
+
+        var searchCache = cacheManager.getCache("homestaysSearch");
+        if (searchCache != null)
+            searchCache.clear();
+
+        log.info("Evicted homestay caches after vibeScore update for {}", homestayId);
     }
 
     @Transactional

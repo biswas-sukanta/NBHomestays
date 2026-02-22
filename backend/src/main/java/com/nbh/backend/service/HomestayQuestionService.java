@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,7 @@ public class HomestayQuestionService {
     private final HomestayRepository homestayRepository;
     private final UserRepository userRepository;
 
+    @CacheEvict(value = "homestayQA", key = "#homestayId")
     public HomestayQuestionDto askQuestion(UUID homestayId, String text, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -41,6 +44,7 @@ public class HomestayQuestionService {
         return mapToQuestionDto(questionRepository.save(question));
     }
 
+    @CacheEvict(value = "homestayQA", allEntries = true)
     public HomestayQuestionDto updateQuestion(UUID questionId, String text, String userEmail) {
         HomestayQuestion question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found"));
@@ -51,6 +55,7 @@ public class HomestayQuestionService {
         return mapToQuestionDto(questionRepository.save(question));
     }
 
+    @CacheEvict(value = "homestayQA", allEntries = true)
     public void deleteQuestion(UUID questionId, String userEmail) {
         HomestayQuestion question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found"));
@@ -62,6 +67,7 @@ public class HomestayQuestionService {
         questionRepository.delete(question);
     }
 
+    @CacheEvict(value = "homestayQA", allEntries = true)
     public HomestayAnswerDto answerQuestion(UUID questionId, String text, String userEmail) {
         HomestayQuestion question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found"));
@@ -77,6 +83,7 @@ public class HomestayQuestionService {
         return mapToAnswerDto(answerRepository.save(answer));
     }
 
+    @CacheEvict(value = "homestayQA", allEntries = true)
     public HomestayAnswerDto updateAnswer(UUID answerId, String text, String userEmail) {
         HomestayAnswer answer = answerRepository.findById(answerId)
                 .orElseThrow(() -> new RuntimeException("Answer not found"));
@@ -87,6 +94,7 @@ public class HomestayQuestionService {
         return mapToAnswerDto(answerRepository.save(answer));
     }
 
+    @CacheEvict(value = "homestayQA", allEntries = true)
     public void deleteAnswer(UUID answerId, String userEmail) {
         HomestayAnswer answer = answerRepository.findById(answerId)
                 .orElseThrow(() -> new RuntimeException("Answer not found"));
@@ -97,6 +105,7 @@ public class HomestayQuestionService {
         answerRepository.delete(answer);
     }
 
+    @Cacheable(value = "homestayQA", key = "#homestayId", sync = true)
     public List<HomestayQuestionDto> getQuestionsByHomestay(UUID homestayId) {
         return questionRepository.findByHomestayIdOrderByCreatedAtDesc(homestayId).stream()
                 .map(this::mapToQuestionDto)
