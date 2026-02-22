@@ -18,7 +18,6 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import java.net.URI;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,27 +34,35 @@ import java.util.Map;
 @EnableCaching
 public class RedisConfig {
 
-    @Value("${REDIS_URL:redis://localhost:6379}")
-    private String redisUrl;
+    @Value("${spring.data.redis.host:localhost}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
+
+    @Value("${spring.data.redis.password:}")
+    private String redisPassword;
+
+    @Value("${spring.data.redis.ssl.enabled:false}")
+    private boolean sslEnabled;
 
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
-        try {
-            URI uri = URI.create(redisUrl);
-            RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-            config.setHostName(uri.getHost());
-            config.setPort(uri.getPort() == -1 ? 6379 : uri.getPort());
-            // Extract password from userinfo: "default:<password>"
-            String userInfo = uri.getUserInfo();
-            if (userInfo != null && userInfo.contains(":")) {
-                config.setPassword(userInfo.substring(userInfo.indexOf(':') + 1));
-            }
-            return new LettuceConnectionFactory(config);
-        } catch (Exception e) {
-            // Graceful fallback — Redis down won't crash the app
-            RedisStandaloneConfiguration fallback = new RedisStandaloneConfiguration("localhost", 6379);
-            return new LettuceConnectionFactory(fallback);
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
+        config.setHostName(redisHost);
+        config.setPort(redisPort);
+        if (redisPassword != null && !redisPassword.isBlank()) {
+            config.setPassword(redisPassword);
         }
+
+        org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration.LettuceClientConfigurationBuilder lettuceConfigBuilder = org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration
+                .builder();
+
+        if (sslEnabled) {
+            lettuceConfigBuilder.useSsl();
+        }
+
+        return new LettuceConnectionFactory(config, lettuceConfigBuilder.build());
     }
 
     private ObjectMapper redisObjectMapper() {

@@ -4,16 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.UUID;
 
 /**
@@ -32,17 +28,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UploadService {
 
-    @Value("${SUPABASE_S3_ENDPOINT:}")
-    private String s3Endpoint;
-
-    @Value("${SUPABASE_S3_REGION:ap-south-1}")
-    private String s3Region;
-
-    @Value("${SUPABASE_ACCESS_KEY:}")
-    private String accessKey;
-
-    @Value("${SUPABASE_SECRET_KEY:}")
-    private String secretKey;
+    private final S3Client s3Client;
 
     @Value("${SUPABASE_BUCKET:community-images}")
     private String bucket;
@@ -53,25 +39,17 @@ public class UploadService {
     /**
      * Uploads a multipart file and returns the public URL.
      *
-     * Falls back gracefully if env vars aren't set (returns a placeholder).
+     * Falls back gracefully if S3 is not configured (returns a placeholder).
      */
     public String upload(MultipartFile file) throws IOException {
-        if (s3Endpoint.isBlank() || accessKey.isBlank()) {
+        if (s3Client == null) {
             // Fallback for dev: return a placeholder Unsplash URL
             return "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80";
         }
 
         String key = "posts/" + UUID.randomUUID() + "_" + sanitize(file.getOriginalFilename());
 
-        S3Client s3 = S3Client.builder()
-                .endpointOverride(URI.create(s3Endpoint))
-                .region(Region.of(s3Region))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKey, secretKey)))
-                .serviceConfiguration(sc -> sc.pathStyleAccessEnabled(true))
-                .build();
-
-        s3.putObject(
+        s3Client.putObject(
                 PutObjectRequest.builder()
                         .bucket(bucket)
                         .key(key)

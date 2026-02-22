@@ -4,9 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
@@ -21,35 +18,26 @@ import java.util.Map;
 public class InfrastructureDetailsService {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final S3Client s3Client;
 
-    @Value("${REDIS_URL:redis://localhost:6379}")
-    private String redisUrl;
+    @Value("${spring.data.redis.host:localhost}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
 
     @Value("${SUPABASE_S3_ENDPOINT:}")
     private String s3Endpoint;
-
-    @Value("${SUPABASE_S3_REGION:ap-south-1}")
-    private String s3Region;
-
-    @Value("${SUPABASE_ACCESS_KEY:}")
-    private String accessKey;
-
-    @Value("${SUPABASE_SECRET_KEY:}")
-    private String secretKey;
 
     @Value("${SUPABASE_BUCKET:community-images}")
     private String bucket;
 
     public Map<String, Object> checkRedis() {
         Map<String, Object> stats = new HashMap<>();
-        String url = redisUrl != null ? redisUrl.trim() : "";
-        if (url.isBlank()) {
-            stats.put("status", "DOWN");
-            stats.put("error", "REDIS_URL env var is missing.");
-            return stats;
-        }
+        stats.put("host", redisHost);
+        stats.put("port", redisPort);
 
-        if (url.contains("localhost") || url.contains("127.0.0.1")) {
+        if (redisHost.contains("localhost") || redisHost.contains("127.0.0.1")) {
             stats.put("note", "Running on localhost (Development Mode)");
         }
 
@@ -71,9 +59,6 @@ public class InfrastructureDetailsService {
     public Map<String, Object> checkS3() {
         Map<String, Object> stats = new HashMap<>();
         String endpoint = s3Endpoint != null ? s3Endpoint.trim() : "";
-        String regionStr = s3Region != null ? s3Region.trim() : "us-east-1";
-        String access = accessKey != null ? accessKey.trim() : "";
-        String secret = secretKey != null ? secretKey.trim() : "";
         String bucketName = bucket != null ? bucket.trim() : "community-images";
 
         if (endpoint.isBlank()) {
@@ -82,9 +67,9 @@ public class InfrastructureDetailsService {
             return stats;
         }
 
-        if (access.isBlank()) {
+        if (s3Client == null) {
             stats.put("status", "DOWN");
-            stats.put("error", "SUPABASE_ACCESS_KEY env var is missing");
+            stats.put("error", "S3Client bean is null. Check configuration.");
             return stats;
         }
 
@@ -99,15 +84,8 @@ public class InfrastructureDetailsService {
             stats.put("dns_resolution", "FAILED: " + e.getMessage());
         }
 
-        try (S3Client s3 = S3Client.builder()
-                .endpointOverride(URI.create(endpoint))
-                .region(Region.of(regionStr))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(access, secret)))
-                .serviceConfiguration(sc -> sc.pathStyleAccessEnabled(true))
-                .build()) {
-
-            ListObjectsV2Response res = s3.listObjectsV2(ListObjectsV2Request.builder()
+        try {
+            ListObjectsV2Response res = s3Client.listObjectsV2(ListObjectsV2Request.builder()
                     .bucket(bucketName).maxKeys(1).build());
 
             stats.put("status", "UP");
