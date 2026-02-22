@@ -15,7 +15,7 @@ export default defineConfig({
     workers: 1,
     reporter: [['line'], ['html', { open: 'never' }]],
     use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: process.env.BASE_URL || 'http://localhost:3000',
         trace: 'on',
         screenshot: 'on',
         video: 'on',
