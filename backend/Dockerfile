@@ -2,12 +2,11 @@
 FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 
-# Cache dependencies first (speeds up rebuilds if pom.xml hasn't changed)
+# Copy the POM and source code together
 COPY pom.xml .
-RUN mvn dependency:go-offline
-
-# Build the application
 COPY src ./src
+
+# Let Maven download only the strictly required dependencies during the package phase
 RUN mvn clean package -DskipTests
 
 # Stage 2: Run (Low Memory Alpine Image)
