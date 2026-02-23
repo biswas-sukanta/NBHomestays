@@ -44,10 +44,10 @@ export function CategoryFilterBar() {
     };
 
     return (
-        <div className="sticky top-[64px] z-40 bg-[#0a0a0a]/90 backdrop-blur-md supports-[backdrop-filter]:bg-[#0a0a0a]/80 border-b border-[#222] shadow-sm w-full">
+        <div className="sticky top-[64px] z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm w-full">
             <div className="container mx-auto">
                 <div
-                    className="flex gap-4 overflow-x-auto snap-x hide-scrollbar py-4 px-2 items-center scroll-smooth"
+                    className="flex justify-center gap-4 md:gap-8 overflow-x-auto snap-x hide-scrollbar py-3 px-4 items-center scroll-smooth"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {CATEGORIES.map((cat) => {
@@ -58,12 +58,12 @@ export function CategoryFilterBar() {
                                 key={cat.tag}
                                 onClick={() => handleCategoryClick(cat.tag)}
                                 className={`
-                                    flex flex-col items-center justify-center min-w-[80px] cursor-pointer transition-opacity gap-2
-                                    ${isSelected ? 'opacity-100 border-b-2 border-white pb-1' : 'opacity-60 hover:opacity-100'}
+                                    flex flex-col items-center justify-center min-w-[64px] cursor-pointer transition-colors gap-1.5
+                                    ${isSelected ? 'border-b-2 border-gray-900 pb-1' : 'hover:opacity-100 pb-1.5'}
                                 `}
                             >
-                                <Icon className={`w-6 h-6 ${isSelected ? 'stroke-[2.5px] text-white' : 'stroke-2 text-gray-400 hover:text-white'}`} />
-                                <span className={`text-sm font-medium whitespace-nowrap ${isSelected ? 'text-white' : 'text-gray-400 hover:text-white'}`}>
+                                <Icon className={`w-5 h-5 ${isSelected ? 'stroke-[2.5px] text-gray-900' : 'stroke-2 text-gray-500 group-hover:text-gray-800'}`} />
+                                <span className={`text-xs font-semibold whitespace-nowrap ${isSelected ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-800'}`}>
                                     {cat.label}
                                 </span>
                             </button>

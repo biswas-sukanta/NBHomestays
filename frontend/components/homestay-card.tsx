@@ -58,7 +58,7 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
         >
             <Link href={`/homestays/${homestay.id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
                 {/* Image Container */}
-                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-lg shadow-black/50 group-hover:shadow-xl group-hover:shadow-black/70 transition-all duration-300 bg-gray-800 mb-3">
+                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group-hover:shadow-md border border-gray-100 transition-all duration-300 bg-gray-50 mb-3">
                     <img
                         src={homestay.photoUrls?.[0] || FALLBACK_IMAGE}
                         alt={homestay.name}
@@ -105,15 +105,15 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
 
                 {/* Text Data */}
                 <div className="px-1 relative">
-                    <h3 className="text-lg font-semibold text-gray-100 truncate mt-3">
+                    <h3 className="text-lg font-semibold text-gray-900 truncate mt-3">
                         {homestay.name}
                     </h3>
-                    <p className="text-sm text-gray-400 truncate mb-1">
+                    <p className="text-sm text-gray-500 truncate mb-1">
                         North Bengal Hills
                     </p>
                     <div className="mt-1 flex items-center justify-between">
-                        <span className="font-semibold text-white">
-                            ₹{homestay.pricePerNight.toLocaleString()} <span className="font-normal text-gray-400">/night</span>
+                        <span className="font-semibold text-gray-900">
+                            ₹{homestay.pricePerNight.toLocaleString()} <span className="font-normal text-gray-500">/night</span>
                         </span>
                     </div>
                 </div>

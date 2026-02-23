@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CategoryFilterBar } from '@/components/category-filter-bar';
 import { HomestayCarousel } from '@/components/homestay-carousel';
@@ -22,10 +22,10 @@ const DESTINATIONS = [
 
 function DestinationCard({ dest }: { dest: { name: string; image: string } }) {
     return (
-        <Link href={`/search?tag=${encodeURIComponent(dest.name)}`} className="block w-[200px] shrink-0 snap-start group outline-none overflow-hidden rounded-2xl relative">
-            <div className="w-full aspect-square bg-gray-800 relative z-0">
+        <Link href={`/search?tag=${encodeURIComponent(dest.name)}`} className="block w-[200px] shrink-0 snap-start group outline-none overflow-hidden rounded-2xl relative shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-full aspect-square bg-gray-100 relative z-0">
                 <img src={dest.image} alt={dest.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors z-10" />
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
                 <div className="absolute inset-x-0 bottom-0 p-4 z-20">
                     <h3 className="text-xl font-bold text-white drop-shadow-md text-center">{dest.name}</h3>
                 </div>
@@ -42,7 +42,7 @@ function SearchResults() {
     const tag = searchParams?.get('tag') || '';
 
     const [searchTerm, setSearchTerm] = useState(query);
-    const [loading, setLoading] = useState(true);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
 
     // Dynamic View Grid
     const [searchGrid, setSearchGrid] = useState<HomestaySummary[]>([]);
@@ -52,13 +52,22 @@ function SearchResults() {
     const [offbeat, setOffbeat] = useState<HomestaySummary[]>([]);
     const [budgetFriendly, setBudgetFriendly] = useState<HomestaySummary[]>([]);
 
+    // Infinite Scroll States
+    const [allHomestays, setAllHomestays] = useState<HomestaySummary[]>([]);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [isFetchingPage, setIsFetchingPage] = useState(false);
+    const observerTarget = useRef<HTMLDivElement>(null);
+
+    // Sync input box when URL query changes
     useEffect(() => {
         setSearchTerm(query);
     }, [query]);
 
+    // Initial Data Fetch
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
+        const fetchInitialData = async () => {
+            setIsInitialLoading(true);
             try {
                 if (query || tag) {
                     // Standard search execution
@@ -69,7 +78,7 @@ function SearchResults() {
                     const res = await api.get(endpoint);
                     setSearchGrid(res.data);
                 } else {
-                    // Default Storefront Zostel Swimlanes
+                    // Default Storefront Light Theme Swimlanes
                     const [res1, res2, res3] = await Promise.all([
                         api.get('/api/homestays/search?tag=Trending Now&page=0&size=6'),
                         api.get('/api/homestays/search?tag=Explore Offbeat&page=0&size=6'),
@@ -82,12 +91,63 @@ function SearchResults() {
             } catch (err) {
                 console.error("Failed to fetch discovery feeds", err);
             } finally {
-                setLoading(false);
+                setIsInitialLoading(false);
             }
         };
 
-        fetchData();
+        fetchInitialData();
+        // Reset infinite scroll whenever query/tag changes
+        setAllHomestays([]);
+        setPage(0);
+        setHasMore(true);
     }, [query, tag]);
+
+    // Infinite Scroll Fetcher
+    const fetchNextPage = useCallback(async () => {
+        if (!hasMore || isFetchingPage) return;
+
+        // Only trigger infinite scroll if we are on the Storefront base view
+        if (query || tag) return;
+
+        setIsFetchingPage(true);
+        try {
+            const res = await api.get(`/api/homestays/search?page=${page}&size=12`);
+            const newData = res.data;
+
+            if (newData.length === 0) {
+                setHasMore(false);
+            } else {
+                setAllHomestays(prev => [...prev, ...newData]);
+                setPage(prev => prev + 1);
+                if (newData.length < 12) setHasMore(false);
+            }
+        } catch (error) {
+            console.error('Failed to fetch next page', error);
+        } finally {
+            setIsFetchingPage(false);
+        }
+    }, [hasMore, isFetchingPage, page, query, tag]);
+
+    // Intersection Observer Hook for Infinite Scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting) {
+                    fetchNextPage();
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        const target = observerTarget.current;
+        if (target) {
+            observer.observe(target);
+        }
+
+        return () => {
+            if (target) observer.unobserve(target);
+        };
+    }, [fetchNextPage]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -101,19 +161,19 @@ function SearchResults() {
     const isStorefront = !query && !tag;
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white">
-            {/* ── Search Banner ── */}
-            <div className="relative bg-gradient-to-br from-[#111] to-[#1a1a1a] py-12 px-4 overflow-hidden border-b border-[#222]">
-                <div className="container mx-auto max-w-4xl relative z-10">
+        <div className="min-h-screen bg-white text-gray-900 pb-20">
+            {/* ── Minimal Light Theme Search Banner ── */}
+            <div className="relative bg-gray-50 border-b border-gray-100">
+                <div className="flex flex-col items-center justify-center text-center max-w-3xl mx-auto pt-12 pb-6 px-4">
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-3"
+                        className="space-y-2 w-full"
                     >
-                        <p className="text-white/50 text-sm font-semibold tracking-widest uppercase">
+                        <p className="text-gray-500 text-sm font-bold tracking-widest uppercase">
                             {isStorefront ? 'Discover' : 'Results'}
                         </p>
-                        <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+                        <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
                             {query ? `"${query}"` : tag ? tag : 'Explore North Bengal'}
                         </h1>
                     </motion.div>
@@ -124,21 +184,21 @@ function SearchResults() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="mt-6 flex gap-2 max-w-2xl"
+                        className="mt-8 w-full flex gap-2"
                     >
-                        <div className="flex-1 flex items-center gap-3 bg-[#111] border border-[#333] px-4 py-3 rounded-xl focus-within:ring-2 focus-within:ring-primary/50 transition-all">
-                            <Search className="w-5 h-5 text-gray-500 flex-none" />
+                        <div className="flex-1 flex items-center gap-3 bg-white border border-gray-200 shadow-sm px-4 py-3.5 rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+                            <Search className="w-5 h-5 text-gray-400 flex-none" />
                             <input
                                 type="text"
                                 placeholder="Where do you want to go?"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="flex-1 bg-transparent text-white placeholder:text-gray-500 focus:outline-none text-base"
+                                className="flex-1 bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none text-base font-medium"
                             />
                         </div>
                         <button
                             type="submit"
-                            className="px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors"
+                            className="px-8 py-3.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
                         >
                             Search
                         </button>
@@ -146,33 +206,33 @@ function SearchResults() {
                 </div>
             </div>
 
-            {/* ── Category Filter Bar ── */}
+            {/* ── Ultra-Compact Category Filter Bar ── */}
             <CategoryFilterBar />
 
             {/* ── Dynamic Layout ── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                {loading ? (
+                {isInitialLoading ? (
                     <div className="w-full space-y-12">
                         <div className="flex gap-6 overflow-hidden pt-4 pb-8">
                             {[...Array(5)].map((_, i) => (
                                 <div key={i} className="flex flex-col space-y-3 w-[280px] shrink-0">
-                                    <Skeleton className="relative w-full aspect-[4/3] rounded-2xl bg-[#1a1a1a]" />
-                                    <Skeleton className="h-5 w-3/4 bg-[#1a1a1a]" />
-                                    <Skeleton className="h-4 w-1/2 bg-[#1a1a1a]" />
+                                    <Skeleton className="relative w-full aspect-[4/3] rounded-2xl bg-gray-100" />
+                                    <Skeleton className="h-5 w-3/4 bg-gray-100" />
+                                    <Skeleton className="h-4 w-1/2 bg-gray-100" />
                                 </div>
                             ))}
                         </div>
                     </div>
                 ) : isStorefront ? (
-                    /* ZOSTEL STOREFRONT SWIMLANES */
+                    /* AIRBNB LIGHT THEME SWIMLANES */
                     <div className="space-y-14">
                         {/* Top Destinations Section */}
                         <section>
-                            <div className="mb-4">
-                                <h2 className="text-3xl font-bold tracking-tight text-white mb-2">📍 Top Destinations</h2>
-                                <p className="text-gray-400 text-sm">Discover stays in the most sought-after hills.</p>
+                            <div className="mb-6">
+                                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-1">📍 Top Destinations</h2>
+                                <p className="text-gray-500 text-base">Unwind in the most sought-after hills.</p>
                             </div>
-                            <div className="flex gap-6 overflow-x-auto snap-x hide-scrollbar pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                            <div className="flex gap-6 overflow-x-auto snap-x hide-scrollbar pb-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                 {DESTINATIONS.map(d => <DestinationCard key={d.name} dest={d} />)}
                             </div>
                         </section>
@@ -189,12 +249,39 @@ function SearchResults() {
                             title="🎒 Budget Friendly"
                             homestays={budgetFriendly}
                         />
+
+                        {/* Infinite Scroll Grid: All Homestays */}
+                        <div className="pt-8 border-t border-gray-100">
+                            <h2 className="text-2xl md:text-3xl font-bold text-center mt-8 mb-8 text-gray-900">All Homestays</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 gap-y-10">
+                                {allHomestays.map((h, i) => (
+                                    <div key={h.id} className="flex justify-center h-full">
+                                        <HomestayCard homestay={h} index={i % 12} />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Sentinel and Loading States */}
+                            <div ref={observerTarget} className="w-full py-12 flex justify-center items-center">
+                                {isFetchingPage && (
+                                    <div className="flex space-x-2">
+                                        <div className="w-3 h-3 bg-gray-300 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                        <div className="w-3 h-3 bg-gray-300 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                        <div className="w-3 h-3 bg-gray-300 rounded-full animate-bounce"></div>
+                                    </div>
+                                )}
+                                {!hasMore && allHomestays.length > 0 && (
+                                    <p className="text-gray-500 font-medium text-sm">You have viewed all extraordinary stays.</p>
+                                )}
+                            </div>
+                        </div>
+
                     </div>
                 ) : (
                     /* FLAT GRID RESULTS */
                     <div className="w-full">
                         {searchGrid.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 gap-y-12">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 gap-y-10">
                                 {searchGrid.map((h, i) => (
                                     <div key={h.id} className="h-full flex justify-center">
                                         <HomestayCard homestay={h} index={i} />
@@ -202,13 +289,13 @@ function SearchResults() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-24 bg-[#111] rounded-3xl border border-[#222] border-dashed">
+                            <div className="text-center py-24 bg-gray-50 rounded-3xl border border-gray-200 border-dashed">
                                 <span className="text-5xl mb-4 block">🏡</span>
-                                <h3 className="text-2xl font-bold mb-2 text-white">No stays found</h3>
-                                <p className="text-gray-400 mb-6 max-w-md mx-auto">We couldn't find any properties matching your current filters. Try changing your destination or vibe.</p>
+                                <h3 className="text-2xl font-bold mb-2 text-gray-900">No stays found</h3>
+                                <p className="text-gray-500 mb-6 max-w-md mx-auto">We couldn't find any properties matching your current filters. Try changing your destination or vibe.</p>
                                 <button
                                     onClick={() => router.push('/search')}
-                                    className="px-6 py-2.5 rounded-full border-2 border-primary text-primary font-bold hover:bg-primary/10 transition-colors"
+                                    className="px-6 py-2.5 rounded-full border border-gray-300 bg-white text-gray-900 font-bold hover:bg-gray-50 transition-colors shadow-sm"
                                 >
                                     Clear all filters
                                 </button>
@@ -223,7 +310,7 @@ function SearchResults() {
 
 export default function SearchPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">Loading Discovery...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-900 font-medium">Loading Stays...</div>}>
             <SearchResults />
         </Suspense>
     );
