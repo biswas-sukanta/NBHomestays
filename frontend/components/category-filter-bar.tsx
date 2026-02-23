@@ -44,8 +44,8 @@ export function CategoryFilterBar() {
     };
 
     return (
-        <div className="w-full border-b border-gray-200 bg-white/95 backdrop-blur-md sticky top-[64px] z-40">
-            <div className="max-w-7xl mx-auto px-4 flex gap-8 overflow-x-auto snap-x hide-scrollbar py-3 items-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="w-full border-b border-gray-200 bg-white sticky top-[64px] z-40 flex justify-center px-4">
+            <div className="flex justify-center gap-6 md:gap-10 overflow-x-auto snap-x hide-scrollbar py-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {CATEGORIES.map((cat) => {
                     const Icon = cat.icon;
                     const isSelected = currentTag === cat.tag;

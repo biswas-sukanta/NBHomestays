@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { SharedPageBanner } from '@/components/shared-page-banner';
 
 // ── Types ─────────────────────────────────────────────────────
 interface Post {
@@ -315,13 +316,10 @@ export default function CommunityPage() {
     return (
         <div className="min-h-screen bg-background">
             {/* Banner */}
-            <div className="bg-gradient-to-br from-[oklch(0.20_0.10_150)] to-[oklch(0.28_0.14_155)] py-14 px-4 relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
-                <div className="container mx-auto max-w-2xl relative z-10">
-                    <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight mb-2">Community</h1>
-                    <p className="text-white/80 font-medium text-lg leading-snug">Stories, tips, and incredible moments from North Bengal travellers.</p>
-                </div>
-            </div>
+            <SharedPageBanner
+                title="Community"
+                subtitle="Stories, tips, and incredible moments from North Bengal travellers."
+            />
 
             {/* Feed Container */}
             <div className="container mx-auto max-w-2xl px-4 py-8 space-y-8">

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useTripBoard } from '@/store/useTripBoard';
+import { SharedPageBanner } from '@/components/shared-page-banner';
 
 // ── Types ─────────────────────────────────────────────────────
 interface Post {
@@ -179,22 +180,17 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen bg-background">
             {/* Profile header */}
-            <div className="bg-gradient-to-br from-[oklch(0.20_0.10_150)] to-[oklch(0.28_0.14_155)] pt-12 pb-6 px-4">
-                <div className="container mx-auto max-w-3xl flex items-end gap-5">
-                    <div className="w-20 h-20 rounded-2xl bg-white/20 border-2 border-white/40 flex items-center justify-center text-white text-2xl font-extrabold flex-none shadow-lg">
-                        {initials}
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-extrabold text-white leading-tight">
-                            {user?.firstName} {user?.lastName}
-                        </h1>
-                        <p className="text-white/60 text-sm mt-0.5">{user?.email}</p>
-                        <span className="mt-1.5 inline-block text-[10px] font-bold uppercase tracking-widest bg-white/15 text-white px-2.5 py-0.5 rounded-full">
+            <SharedPageBanner
+                title={`${user?.firstName} ${user?.lastName}`}
+                subtitle={
+                    <>
+                        <p className="text-white/80 text-lg leading-snug">{user?.email}</p>
+                        <span className="mt-2 inline-block text-xs font-bold uppercase tracking-widest bg-white/20 text-white px-3 py-1 rounded-full border border-white/10 shadow-sm">
                             {user?.role?.replace('ROLE_', '')}
                         </span>
-                    </div>
-                </div>
-            </div>
+                    </>
+                }
+            />
 
             {/* Tab bar */}
             <div className="border-b border-border bg-background sticky top-[68px] z-30">

@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import api from '@/lib/api';
 import Link from 'next/link';
+import { SharedPageBanner } from '@/components/shared-page-banner';
 
 // --- Destination Component ---
 const DESTINATIONS = [
@@ -55,7 +56,7 @@ function SearchResults() {
     const [allStays, setAllStays] = useState<HomestaySummary[]>([]);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
-    const [isFetchingPage, setIsFetchingPage] = useState(false);
+    const [loading, setLoading] = useState(false);
     const observerTarget = useRef<HTMLDivElement>(null);
 
     // Sync input box when URL query changes
@@ -100,15 +101,15 @@ function SearchResults() {
 
     // Paged "All Homestays" Loader
     const fetchNextPage = useCallback(async () => {
-        if (!hasMore || isFetchingPage) return;
+        if (!hasMore || loading) return;
 
         // Prevent generic grid loading if querying a specific tag or term
         if (query || tag) return;
 
-        setIsFetchingPage(true);
+        setLoading(true);
         try {
-            const res = await api.get(`/api/homestays/search?page=${page}&size=12`);
-            const newData = res.data; // Mapped to Spring Page<>
+            const res = await fetch(`/api/homestays/search?page=${page}&size=12`);
+            const newData = await res.json(); // Mapped to Spring Page<>
 
             const fetchedContent = newData.content || [];
 
@@ -122,9 +123,9 @@ function SearchResults() {
         } catch (error) {
             console.error('Failed to resolve paginated payload', error);
         } finally {
-            setIsFetchingPage(false);
+            setLoading(false);
         }
-    }, [hasMore, isFetchingPage, page, query, tag]);
+    }, [hasMore, loading, page, query, tag]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -136,6 +137,7 @@ function SearchResults() {
             { threshold: 0.1 }
         );
 
+        // Instead of a one-time bind, we poll slightly or just ensure it binds when ref exists
         const target = observerTarget.current;
         if (target) {
             observer.observe(target);
@@ -144,7 +146,7 @@ function SearchResults() {
         return () => {
             if (target) observer.unobserve(target);
         };
-    }, [fetchNextPage]);
+    }, [fetchNextPage, isInitialLoading, query, tag]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -160,16 +162,14 @@ function SearchResults() {
     return (
         <div className="min-h-screen bg-white text-gray-900 pb-20">
             {/* STEP 1: Global Brand Green Banner */}
-            <div className="w-full bg-[#004d00] text-white pt-32 pb-16 px-4 flex flex-col items-center justify-center text-center">
-                <h1 className="text-4xl md:text-5xl font-extrabold mb-8 tracking-tight drop-shadow-sm">
-                    {query ? `"${query}"` : tag ? tag : 'Discover North Bengal'}
-                </h1>
-
+            <SharedPageBanner
+                title={query ? `"${query}"` : tag ? tag : 'Discover North Bengal'}
+            >
                 <motion.form
                     onSubmit={handleSearch}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="w-full max-w-2xl flex gap-2 bg-white rounded-full p-2 shadow-2xl relative z-10"
+                    className="w-full max-w-2xl mx-auto flex gap-2 bg-white rounded-full p-2 shadow-2xl relative z-10"
                 >
                     <div className="flex-1 flex items-center gap-3 px-4">
                         <Search className="w-6 h-6 text-gray-400 flex-none" />
@@ -188,7 +188,7 @@ function SearchResults() {
                         Search
                     </button>
                 </motion.form>
-            </div>
+            </SharedPageBanner>
 
             {/* STEP 2: Sticky Edge-to-Edge Category Bar */}
             <CategoryFilterBar />
@@ -237,8 +237,8 @@ function SearchResults() {
                             </div>
 
                             {/* Scroll Listener Node */}
-                            <div ref={observerTarget} className="w-full py-12 flex justify-center items-center h-24">
-                                {isFetchingPage && (
+                            <div id="load-more-trigger" ref={observerTarget} className="w-full py-12 flex justify-center items-center h-24">
+                                {loading && (
                                     <div className="flex space-x-2">
                                         <div className="w-3 h-3 bg-gray-300 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                                         <div className="w-3 h-3 bg-gray-300 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
