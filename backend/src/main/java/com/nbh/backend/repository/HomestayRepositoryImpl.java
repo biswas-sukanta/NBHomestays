@@ -40,9 +40,15 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
             }
         }
 
-        // Tag Filter (JSONB Array contains element)
+        // Tag Filter (JSONB Array contains element OR location_name checks for legacy
+        // safety)
         if (tag != null && !tag.isBlank()) {
-            conditions.append("AND h.tags @> '[\"").append(tag.replace("'", "''")).append("\"]'::jsonb ");
+            String safeTag = tag.replace("'", "''");
+            conditions.append("AND (h.tags @> '[\"")
+                    .append(safeTag)
+                    .append("\"]'::jsonb OR lower(h.location_name) LIKE lower('%")
+                    .append(safeTag)
+                    .append("%')) ");
         }
 
         sql.append(conditions);

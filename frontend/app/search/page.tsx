@@ -21,9 +21,9 @@ const DESTINATIONS = [
     { name: 'Sittong', image: 'https://images.unsplash.com/photo-1681285312384-cbca6f2d5930?auto=format&fit=crop&q=80&w=800' },
 ];
 
-function DestinationCard({ dest }: { dest: { name: string; image: string } }) {
+function DestinationCard({ dest, isActive }: { dest: { name: string; image: string }, isActive: boolean }) {
     return (
-        <Link href={`/search?tag=${encodeURIComponent(dest.name)}`} className="block w-[260px] sm:w-[280px] shrink-0 snap-start group outline-none overflow-hidden rounded-2xl relative shadow-sm hover:shadow-lg transition-all">
+        <Link href={`/search?tag=${encodeURIComponent(dest.name)}`} data-active={isActive ? 'true' : undefined} className={`block w-[260px] sm:w-[280px] shrink-0 snap-start group outline-none overflow-hidden rounded-2xl relative shadow-sm hover:shadow-lg transition-all ${isActive ? 'ring-4 ring-[#004d00]/80 ring-offset-2' : ''}`}>
             <div className="w-full aspect-[4/3] bg-gray-100 relative z-0">
                 <img src={dest.image} alt={dest.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
@@ -216,7 +216,7 @@ function SearchResults() {
                                 <p className="text-gray-500 text-base">Unwind in the most sought-after hills.</p>
                             </div>
                             <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-6">
-                                {DESTINATIONS.map(d => <DestinationCard key={d.name} dest={d} />)}
+                                {DESTINATIONS.map(d => <DestinationCard key={d.name} dest={d} isActive={tag === d.name} />)}
                             </div>
                         </section>
 

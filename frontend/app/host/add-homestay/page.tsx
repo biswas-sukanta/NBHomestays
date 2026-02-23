@@ -68,6 +68,7 @@ export default function AddHomestayWizard() {
     // --- State Models ---
     const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '', photoUrls: '' });
     const [location, setLocation] = useState({ latitude: null as number | null, longitude: null as number | null, locationName: '' });
+    const [topDestination, setTopDestination] = useState<string>('');
     const [amenities, setAmenities] = useState<string[]>([]);
     const [tags, setTags] = useState<string[]>([]);
 
@@ -104,8 +105,8 @@ export default function AddHomestayWizard() {
     const removePolicy = (index: number) => setPolicies(prev => prev.filter((_, i) => i !== index));
 
     const handleSubmit = async () => {
-        if (!basicInfo.name || !basicInfo.pricePerNight || !location.latitude) {
-            toast.error("Please complete the required basic info and location.");
+        if (!basicInfo.name || !basicInfo.pricePerNight || !location.latitude || !topDestination) {
+            toast.error("Please complete the required basic info, location, and Top Destination.");
             return;
         }
 
@@ -119,7 +120,7 @@ export default function AddHomestayWizard() {
                 longitude: location.longitude,
                 locationName: location.locationName,
                 photoUrls: basicInfo.photoUrls.split(',').map(u => u.trim()).filter(Boolean),
-                tags: tags,
+                tags: Array.from(new Set([...tags, topDestination])),
                 // JSONB Conversions
                 amenities: amenities.reduce((acc, curr) => ({ ...acc, [curr]: true }), {}),
                 policies: policies.filter(p => p.trim() !== ''),
@@ -197,14 +198,33 @@ export default function AddHomestayWizard() {
 
                     {/* STEP 2: Location */}
                     {step === 2 && (
-                        <div className="space-y-4">
-                            <p className="text-sm text-muted-foreground">Search for your area and drag the pin to the exact spot. This ensures guests can find you via GPS.</p>
-                            <LocationPicker
-                                onLocationSelect={(lat, lng, addr) => setLocation({ latitude: lat, longitude: lng, locationName: addr })}
-                                initialLat={location.latitude || undefined}
-                                initialLng={location.longitude || undefined}
-                                initialAddress={location.locationName}
-                            />
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <Label>Top Destination Segment *</Label>
+                                <Select value={topDestination} onValueChange={setTopDestination}>
+                                    <SelectTrigger><SelectValue placeholder="Select primary locality (e.g. Darjeeling)" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Darjeeling">Darjeeling</SelectItem>
+                                        <SelectItem value="Kalimpong">Kalimpong</SelectItem>
+                                        <SelectItem value="Kurseong">Kurseong</SelectItem>
+                                        <SelectItem value="Mirik">Mirik</SelectItem>
+                                        <SelectItem value="Sittong">Sittong</SelectItem>
+                                        <SelectItem value="Dooars">Dooars</SelectItem>
+                                        <SelectItem value="Siliguri">Siliguri</SelectItem>
+                                        <SelectItem value="Lava">Lava</SelectItem>
+                                        <SelectItem value="Lolegaon">Lolegaon</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-4">
+                                <p className="text-sm text-muted-foreground">Search for your area and drag the pin to the exact spot. This ensures guests can find you via GPS.</p>
+                                <LocationPicker
+                                    onLocationSelect={(lat, lng, addr) => setLocation({ latitude: lat, longitude: lng, locationName: addr })}
+                                    initialLat={location.latitude || undefined}
+                                    initialLng={location.longitude || undefined}
+                                    initialAddress={location.locationName}
+                                />
+                            </div>
                         </div>
                     )}
 
