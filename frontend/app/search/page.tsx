@@ -22,12 +22,12 @@ const DESTINATIONS = [
 
 function DestinationCard({ dest }: { dest: { name: string; image: string } }) {
     return (
-        <Link href={`/search?tag=${encodeURIComponent(dest.name)}`} className="block w-[200px] shrink-0 snap-start group outline-none overflow-hidden rounded-2xl relative shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-full aspect-square bg-gray-100 relative z-0">
+        <Link href={`/search?tag=${encodeURIComponent(dest.name)}`} className="block w-[260px] sm:w-[280px] shrink-0 snap-start group outline-none overflow-hidden rounded-2xl relative shadow-sm hover:shadow-lg transition-all">
+            <div className="w-full aspect-[4/3] bg-gray-100 relative z-0">
                 <img src={dest.image} alt={dest.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
                 <div className="absolute inset-x-0 bottom-0 p-4 z-20">
-                    <h3 className="text-xl font-bold text-white drop-shadow-md text-center">{dest.name}</h3>
+                    <h3 className="text-xl font-bold text-white drop-shadow-md">{dest.name}</h3>
                 </div>
             </div>
         </Link>
@@ -161,10 +161,10 @@ function SearchResults() {
     const isStorefront = !query && !tag;
 
     return (
-        <div className="min-h-screen bg-white text-gray-900 pb-20">
+        <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
             {/* ── Minimal Light Theme Search Banner ── */}
-            <div className="relative bg-gray-50 border-b border-gray-100">
-                <div className="flex flex-col items-center justify-center text-center max-w-3xl mx-auto pt-12 pb-6 px-4">
+            <div className="relative mb-8">
+                <div className="flex flex-col items-center justify-center text-center max-w-3xl mx-auto pt-4 pb-6 px-4">
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -210,12 +210,12 @@ function SearchResults() {
             <CategoryFilterBar />
 
             {/* ── Dynamic Layout ── */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div className="py-8">
                 {isInitialLoading ? (
                     <div className="w-full space-y-12">
-                        <div className="flex gap-6 overflow-hidden pt-4 pb-8">
+                        <div className="flex gap-4 overflow-hidden pt-4 pb-8">
                             {[...Array(5)].map((_, i) => (
-                                <div key={i} className="flex flex-col space-y-3 w-[280px] shrink-0">
+                                <div key={i} className="flex flex-col space-y-3 w-[260px] sm:w-[280px] shrink-0">
                                     <Skeleton className="relative w-full aspect-[4/3] rounded-2xl bg-gray-100" />
                                     <Skeleton className="h-5 w-3/4 bg-gray-100" />
                                     <Skeleton className="h-4 w-1/2 bg-gray-100" />
@@ -225,14 +225,14 @@ function SearchResults() {
                     </div>
                 ) : isStorefront ? (
                     /* AIRBNB LIGHT THEME SWIMLANES */
-                    <div className="space-y-14">
+                    <div className="space-y-16">
                         {/* Top Destinations Section */}
                         <section>
-                            <div className="mb-6">
-                                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-1">📍 Top Destinations</h2>
+                            <div className="mb-4 text-left">
+                                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight">📍 Top Destinations</h2>
                                 <p className="text-gray-500 text-base">Unwind in the most sought-after hills.</p>
                             </div>
-                            <div className="flex gap-6 overflow-x-auto snap-x hide-scrollbar pb-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                 {DESTINATIONS.map(d => <DestinationCard key={d.name} dest={d} />)}
                             </div>
                         </section>
@@ -252,10 +252,10 @@ function SearchResults() {
 
                         {/* Infinite Scroll Grid: All Homestays */}
                         <div className="pt-8 border-t border-gray-100">
-                            <h2 className="text-2xl md:text-3xl font-bold text-center mt-8 mb-8 text-gray-900">All Homestays</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 gap-y-10">
+                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mt-12 mb-6 tracking-tight text-left">All Homestays</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {allHomestays.map((h, i) => (
-                                    <div key={h.id} className="flex justify-center h-full">
+                                    <div key={h.id} className="h-full flex justify-start">
                                         <HomestayCard homestay={h} index={i % 12} />
                                     </div>
                                 ))}
@@ -281,9 +281,9 @@ function SearchResults() {
                     /* FLAT GRID RESULTS */
                     <div className="w-full">
                         {searchGrid.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 gap-y-10">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {searchGrid.map((h, i) => (
-                                    <div key={h.id} className="h-full flex justify-center">
+                                    <div key={h.id} className="h-full flex justify-start">
                                         <HomestayCard homestay={h} index={i} />
                                     </div>
                                 ))}
@@ -304,13 +304,13 @@ function SearchResults() {
                     </div>
                 )}
             </div>
-        </div>
+        </main>
     );
 }
 
 export default function SearchPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-900 font-medium">Loading Stays...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-900 font-medium pt-24">Loading Stays...</div>}>
             <SearchResults />
         </Suspense>
     );

@@ -53,12 +53,12 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.05, ease: 'easeOut' }}
-            className="w-[280px] shrink-0 snap-start group cursor-pointer"
+            className="w-full sm:w-[280px] shrink-0 snap-start group cursor-pointer"
             data-testid="homestay-card"
         >
             <Link href={`/homestays/${homestay.id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
                 {/* Image Container */}
-                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group-hover:shadow-md border border-gray-100 transition-all duration-300 bg-gray-50 mb-3">
+                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group-hover:shadow-lg border border-gray-100 transition-shadow duration-300 bg-gray-50 mb-3">
                     <img
                         src={homestay.photoUrls?.[0] || FALLBACK_IMAGE}
                         alt={homestay.name}
