@@ -16,7 +16,8 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
     private EntityManager entityManager;
 
     @Override
-    public List<Homestay> search(String searchQuery, Map<String, Boolean> amenities, int limit, int offset) {
+    public List<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, int limit,
+            int offset) {
         StringBuilder sql = new StringBuilder("SELECT h.* FROM homestays h WHERE h.status = 'APPROVED' ");
 
         // Full Text Search
@@ -32,6 +33,11 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
                     sql.append("AND h.amenities ->> '").append(key).append("' = 'true' ");
                 }
             }
+        }
+
+        // Tag Filter (JSONB Array contains element)
+        if (tag != null && !tag.isBlank()) {
+            sql.append("AND h.tags @> '[\"").append(tag.replace("'", "''")).append("\"]'::jsonb ");
         }
 
         // Ranking (The Secret Sauce)

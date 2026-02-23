@@ -29,9 +29,10 @@ public class HomestayController {
     @GetMapping("/search")
     public List<HomestayDto.Response> search(
             @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "tag", required = false) String tag,
             @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
             @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice) {
-        return homestayService.searchHomestays(q);
+        return homestayService.searchHomestays(q, tag);
     }
 
     @GetMapping("/{id}")

@@ -1,145 +1,229 @@
 'use client';
 
+import React, { useEffect, useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { HeroSearch } from '@/components/hero-search';
-import { MapPin, Star, Shield, ArrowRight } from 'lucide-react';
+import { CategoryFilterBar } from '@/components/category-filter-bar';
+import { HomestayCarousel } from '@/components/homestay-carousel';
+import { HomestaySummary, HomestayCard } from '@/components/homestay-card';
+import { useSearchParams } from 'next/navigation';
+import api from '@/lib/api';
+import { ArrowRight, MountainSnow, ShieldCheck, HeartHandshake } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
+// --- Features ---
 const FEATURES = [
   {
-    emoji: '🏔️',
+    icon: MountainSnow,
     title: 'Curated by Vibe',
     desc: 'Every stay is handpicked and scored for its unique character — mountain views, jungle retreats, river vibes.',
     color: 'from-emerald-50 to-teal-50',
     border: 'border-emerald-100',
   },
   {
-    emoji: '✅',
+    icon: ShieldCheck,
     title: 'Verified Listings',
     desc: 'Our team physically visits and verifies every property so you can book with complete confidence.',
     color: 'from-amber-50 to-yellow-50',
     border: 'border-amber-100',
   },
   {
-    emoji: '💬',
+    icon: HeartHandshake,
     title: 'Direct to Host',
-    desc: 'No middlemen. Enquire via WhatsApp and connect directly with your host for the best, most personal experience.',
-    color: 'from-green-50 to-lime-50',
-    border: 'border-green-100',
+    desc: 'No middlemen. Enquire via WhatsApp and connect directly with your host for the best experience.',
+    color: 'from-blue-50 to-indigo-50',
+    border: 'border-blue-100',
   },
 ];
 
-const VIBES = [
-  { label: '🏔️ Mountain', href: '/search?query=Mountain' },
-  { label: '🌿 Forest', href: '/search?query=Forest' },
-  { label: '🏞️ River', href: '/search?query=River' },
-  { label: '🌄 Sunrise', href: '/search?query=Sunrise' },
-];
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const currentTag = searchParams?.get('tag');
 
-export default function Home() {
+  const [loading, setLoading] = useState(true);
+  const [searchGrid, setSearchGrid] = useState<HomestaySummary[]>([]);
+
+  // Swimlane States
+  const [trending, setTrending] = useState<HomestaySummary[]>([]);
+  const [workations, setWorkations] = useState<HomestaySummary[]>([]);
+  const [offbeat, setOffbeat] = useState<HomestaySummary[]>([]);
+
+  useEffect(() => {
+    const fetchFeeds = async () => {
+      setLoading(true);
+      try {
+        if (currentTag) {
+          const res = await api.get(`/api/homestays/search?tag=${encodeURIComponent(currentTag)}`);
+          setSearchGrid(res.data);
+        } else {
+          const [res1, res2, res3] = await Promise.all([
+            api.get('/api/homestays/search?tag=Trending Now'),
+            api.get('/api/homestays/search?tag=Workation'),
+            api.get('/api/homestays/search?tag=Explore Offbeat'),
+          ]);
+          setTrending(res1.data);
+          setWorkations(res2.data);
+          setOffbeat(res3.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch feeds:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeeds();
+  }, [currentTag]);
+
   return (
     <div className="relative -mt-[68px]">
       {/* ── Hero ── */}
       <HeroSearch />
 
-      {/* ── Explore by Vibe strip ── */}
-      <section className="py-12 bg-secondary/40">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-7"
-          >
-            <h2 className="text-2xl font-extrabold text-foreground">Explore by Vibe</h2>
-            <p className="text-muted-foreground mt-1.5 text-sm">Pick your kind of escape</p>
-          </motion.div>
-          <div className="flex flex-wrap justify-center gap-3">
-            {VIBES.map((v, i) => (
-              <motion.div
-                key={v.href}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-              >
-                <Link href={v.href} className="pill pill-default text-base hover:shadow-sm">
-                  {v.label}
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── Global Category Filter ── */}
+      <CategoryFilterBar />
 
-      {/* ── Features ── */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
-              Why NBHomestays
-            </span>
-            <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-3">
-              Travel that feels personal
-            </h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              We believe the best memories come from authentic places and genuine connections.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {FEATURES.map((f, i) => (
-              <motion.div
-                key={f.title}
-                initial={{ opacity: 0, y: 28 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12 }}
-                whileHover={{ y: -6, transition: { duration: 0.2 } }}
-                className={`
-                                    relative bg-gradient-to-br ${f.color}
-                                    border ${f.border}
-                                    rounded-2xl p-7 shadow-sm hover:shadow-lg
-                                    transition-shadow duration-300 overflow-hidden
-                                `}
-              >
-                <div className="text-4xl mb-4">{f.emoji}</div>
-                <h3 className="text-lg font-bold text-foreground mb-2">{f.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
-              </motion.div>
-            ))}
+      {/* ── Dynamic Content Feed ── */}
+      <div className="min-h-[500px] py-10">
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
           </div>
-        </div>
-      </section>
+        ) : currentTag ? (
+          /* TAG SELECTED: Grid Feed View */
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
+                {currentTag}
+              </h2>
+              <span className="text-muted-foreground">{searchGrid.length} stays found</span>
+            </div>
+
+            {searchGrid.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {searchGrid.map((h, i) => (
+                  <div key={h.id} className="h-full">
+                    <HomestayCard homestay={h} index={i} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed">
+                <h3 className="text-xl font-bold mb-2 text-foreground">No stays found for this vibe</h3>
+                <p className="text-muted-foreground">Try selecting a different category or exploring our trending stays.</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* NO TAG: Swimlane Layout */
+          <div className="space-y-4">
+            <HomestayCarousel
+              title="🔥 Trending Now"
+              description="The most booked and highly rated stays in North Bengal."
+              homestays={trending}
+            />
+            <HomestayCarousel
+              title="💻 Perfect for Workations"
+              description="High-speed WiFi and dedicated workspaces amidst nature."
+              homestays={workations}
+            />
+            <HomestayCarousel
+              title="⛰️ Explore Offbeat"
+              description="Hidden gems far away from the commercial hustle."
+              homestays={offbeat}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* ── Why NBHomestays Features ── */}
+      {!currentTag && (
+        <section className="py-20 bg-background border-t">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-14"
+            >
+              <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
+                Why NBHomestays?
+              </span>
+              <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-3">
+                Travel that feels personal
+              </h2>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                We believe the best memories come from authentic places and genuine connections.
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {FEATURES.map((f, i) => {
+                const Icon = f.icon;
+                return (
+                  <motion.div
+                    key={f.title}
+                    initial={{ opacity: 0, y: 28 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.12 }}
+                    whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                    className={`
+                                        relative bg-gradient-to-br ${f.color}
+                                        border ${f.border}
+                                        rounded-2xl p-7 shadow-sm hover:shadow-lg
+                                        transition-shadow duration-300 overflow-hidden group
+                                    `}
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                      <Icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-bold text-foreground mb-2">{f.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── CTA Banner ── */}
-      <section className="py-20 bg-gradient-to-br from-primary to-[oklch(0.28_0.14_155)]">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="container mx-auto px-4 text-center max-w-2xl"
-        >
-          <h2 className="text-3xl font-extrabold text-white mb-4 tracking-tight">
-            Ready to find your vibe?
-          </h2>
-          <p className="text-white/75 mb-8 text-lg">
-            Dozens of verified homestays waiting to be discovered in North Bengal.
-          </p>
-          <Link
-            href="/search"
-            id="explore-cta-btn"
-            className="inline-flex items-center gap-2 bg-white text-primary font-bold px-8 py-4 rounded-full text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200"
+      {!currentTag && (
+        <section className="py-20 bg-gradient-to-br from-primary to-[oklch(0.28_0.14_155)] border-t border-primary/20">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="container mx-auto px-4 text-center max-w-2xl"
           >
-            Explore All Stays <ArrowRight className="w-5 h-5" />
-          </Link>
-        </motion.div>
-      </section>
+            <h2 className="text-4xl font-extrabold text-white mb-6 tracking-tight">
+              Ready to find your vibe?
+            </h2>
+            <p className="text-white/80 mb-10 text-lg">
+              Dozens of verified homestays waiting to be discovered in the serene heights of North Bengal.
+            </p>
+            <Button
+              asChild
+              size="lg"
+              className="bg-white text-primary rounded-full hover:bg-gray-50 h-14 px-8 text-base shadow-xl hover:-translate-y-1 transition-all duration-300"
+            >
+              <Link href="/search" className="gap-2 font-bold">
+                See all listings <ArrowRight className="w-5 h-5" />
+              </Link>
+            </Button>
+          </motion.div>
+        </section>
+      )}
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen animate-pulse bg-gray-50 flex items-center justify-center">Loading NBHomestays...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

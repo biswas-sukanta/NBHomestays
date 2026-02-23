@@ -35,6 +35,12 @@ const AMENITY_CATEGORIES = {
     Unavailable: ['Lock on bedroom door', 'Exterior security cameras', 'TV', 'Air conditioning', 'Carbon monoxide alarm']
 };
 
+const TAG_CATEGORIES = {
+    Hype: ['Trending Now', 'Featured Stays', 'Top Rated', 'Budget Friendly', 'Premium'],
+    Vibe: ['Mountain View', 'Explore Offbeat', 'Nature & Eco', 'Heritage', 'Riverfront'],
+    Purpose: ['Workation', 'Long Stays', 'Pet Friendly', 'Couples Getaway', 'Group Friendly']
+};
+
 const DEFAULT_POLICIES = [
     '50% advance payment required; balance at check-in.',
     'Standard Check-in: 1 PM, Check-out: 10 AM (Early/late subject to fee).',
@@ -63,6 +69,7 @@ export default function AddHomestayWizard() {
     const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '', photoUrls: '' });
     const [location, setLocation] = useState({ latitude: null as number | null, longitude: null as number | null, locationName: '' });
     const [amenities, setAmenities] = useState<string[]>([]);
+    const [tags, setTags] = useState<string[]>([]);
 
     // Host Details
     const [hostDetails, setHostDetails] = useState({
@@ -82,6 +89,10 @@ export default function AddHomestayWizard() {
 
     const toggleAmenity = (amenity: string) => {
         setAmenities(prev => prev.includes(amenity) ? prev.filter(a => a !== amenity) : [...prev, amenity]);
+    };
+
+    const toggleTag = (tag: string) => {
+        setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
     };
 
     const addPolicy = () => setPolicies(prev => [...prev, '']);
@@ -108,6 +119,7 @@ export default function AddHomestayWizard() {
                 longitude: location.longitude,
                 locationName: location.locationName,
                 photoUrls: basicInfo.photoUrls.split(',').map(u => u.trim()).filter(Boolean),
+                tags: tags,
                 // JSONB Conversions
                 amenities: amenities.reduce((acc, curr) => ({ ...acc, [curr]: true }), {}),
                 policies: policies.filter(p => p.trim() !== ''),
@@ -149,7 +161,7 @@ export default function AddHomestayWizard() {
 
             {/* Progress Bar */}
             <div className="w-full bg-secondary h-2 rounded-full mb-8 overflow-hidden">
-                <div className="bg-primary h-full transition-all duration-300" style={{ width: `${(step / 6) * 100}%` }} />
+                <div className="bg-primary h-full transition-all duration-300" style={{ width: `${(step / 7) * 100}%` }} />
             </div>
 
             <Card className="border-border/50 shadow-lg">
@@ -158,9 +170,10 @@ export default function AddHomestayWizard() {
                         {step === 1 && "Basic Information"}
                         {step === 2 && "Location Pin"}
                         {step === 3 && "Amenities & Photos"}
-                        {step === 4 && "Property Policies"}
-                        {step === 5 && "Quick Facts / Know Before You Go"}
-                        {step === 6 && "Meet Your Host Profile"}
+                        {step === 4 && "Homestay Tags & Vibes"}
+                        {step === 5 && "Property Policies"}
+                        {step === 6 && "Quick Facts / Know Before You Go"}
+                        {step === 7 && "Meet Your Host Profile"}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -226,8 +239,33 @@ export default function AddHomestayWizard() {
                         </div>
                     )}
 
-                    {/* STEP 4: Policies */}
+                    {/* STEP 4: Tags & Vibes */}
                     {step === 4 && (
+                        <div className="space-y-6">
+                            <p className="text-sm text-muted-foreground mb-4">Select tags to help guests discover your property through high-visibility category swimlanes.</p>
+                            <ScrollArea className="h-[400px] pr-4">
+                                {Object.entries(TAG_CATEGORIES).map(([category, items]) => (
+                                    <div key={category} className="mb-6 bg-muted/20 p-4 rounded-xl border border-border/50">
+                                        <h3 className="font-bold text-lg mb-3 text-gray-800">{category}</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {items.map(item => (
+                                                <button
+                                                    key={item}
+                                                    onClick={() => toggleTag(item)}
+                                                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 border ${tags.includes(item) ? 'bg-primary text-primary-foreground border-primary shadow-md scale-105' : 'bg-background text-foreground border-border hover:border-primary/50 hover:bg-primary/5'}`}
+                                                >
+                                                    {item}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </ScrollArea>
+                        </div>
+                    )}
+
+                    {/* STEP 5: Policies */}
+                    {step === 5 && (
                         <div className="space-y-4">
                             <p className="text-sm text-muted-foreground mb-4">Edit or remove the default policies, or add your own custom rules.</p>
                             <ScrollArea className="h-[400px] pr-4">
@@ -248,8 +286,8 @@ export default function AddHomestayWizard() {
                         </div>
                     )}
 
-                    {/* STEP 5: Quick Facts */}
-                    {step === 5 && (
+                    {/* STEP 6: Quick Facts */}
+                    {step === 6 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label>Check-in Time</Label>
@@ -303,8 +341,8 @@ export default function AddHomestayWizard() {
                         </div>
                     )}
 
-                    {/* STEP 6: Host Details */}
-                    {step === 6 && (
+                    {/* STEP 7: Host Details */}
+                    {step === 7 && (
                         <div className="space-y-5">
                             <p className="text-sm text-muted-foreground mb-4">Introduce yourself to guests. This builds trust and increases bookings.</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -342,7 +380,7 @@ export default function AddHomestayWizard() {
                 </CardContent>
                 <CardFooter className="flex justify-between bg-muted/10 border-t border-border/50 p-6">
                     <Button variant="outline" onClick={handleBack} disabled={step === 1} className="w-24">Back</Button>
-                    {step < 6 ? (
+                    {step < 7 ? (
                         <Button onClick={handleNext} className="w-24">Next</Button>
                     ) : (
                         <Button onClick={handleSubmit} disabled={loading} className="w-32 bg-green-600 hover:bg-green-700 font-bold transition-all">

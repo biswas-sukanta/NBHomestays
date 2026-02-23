@@ -25,6 +25,7 @@ public class HomestayDto {
         private java.util.Map<String, Boolean> amenities;
         private java.util.List<String> policies;
         private java.util.Map<String, String> quickFacts;
+        private java.util.List<String> tags;
         private java.util.Map<String, Object> hostDetails;
         private java.util.List<String> photoUrls;
     }
@@ -45,6 +46,7 @@ public class HomestayDto {
         private java.util.Map<String, Boolean> amenities;
         private java.util.List<String> policies;
         private java.util.Map<String, String> quickFacts;
+        private java.util.List<String> tags;
         private java.util.Map<String, Object> hostDetails;
         private java.util.List<String> photoUrls;
         private Double vibeScore;

@@ -41,6 +41,7 @@ public class HomestayService {
                                 .amenities(request.getAmenities())
                                 .policies(request.getPolicies())
                                 .quickFacts(request.getQuickFacts())
+                                .tags(request.getTags())
                                 .hostDetails(request.getHostDetails())
                                 .photoUrls(request.getPhotoUrls())
                                 .status(status)
@@ -57,9 +58,9 @@ public class HomestayService {
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         @Cacheable(value = "homestaysSearch", key = "'all'", sync = true)
-        public List<HomestayDto.Response> searchHomestays(String query) {
-                // If query is empty, return all APPROVED homestays
-                if (query == null || query.trim().isEmpty()) {
+        public List<HomestayDto.Response> searchHomestays(String query, String tag) {
+                // If query is empty and tag is empty, return all APPROVED homestays
+                if ((query == null || query.trim().isEmpty()) && (tag == null || tag.trim().isEmpty())) {
                         return repository.findByStatus(Homestay.Status.APPROVED).stream()
                                         .map(this::mapToResponse)
                                         .collect(Collectors.toList());
@@ -67,7 +68,7 @@ public class HomestayService {
 
                 // Otherwise perform search
                 try {
-                        return repository.search(query, null, 20, 0).stream()
+                        return repository.search(query, null, tag, 20, 0).stream()
                                         .map(this::mapToResponse)
                                         .collect(Collectors.toList());
                 } catch (Exception e) {
@@ -135,6 +136,8 @@ public class HomestayService {
                         homestay.setPolicies(request.getPolicies());
                 if (request.getQuickFacts() != null)
                         homestay.setQuickFacts(request.getQuickFacts());
+                if (request.getTags() != null)
+                        homestay.setTags(request.getTags());
                 if (request.getHostDetails() != null)
                         homestay.setHostDetails(request.getHostDetails());
                 if (request.getPhotoUrls() != null)
@@ -213,6 +216,10 @@ public class HomestayService {
                                 ? new java.util.ArrayList<>(homestay.getPhotoUrls())
                                 : null;
 
+                java.util.List<String> tags = homestay.getTags() != null
+                                ? new java.util.ArrayList<>(homestay.getTags())
+                                : null;
+
                 return HomestayDto.Response.builder()
                                 .id(homestay.getId())
                                 .name(homestay.getName())
@@ -221,6 +228,7 @@ public class HomestayService {
                                 .amenities(amenities)
                                 .policies(policies)
                                 .quickFacts(quickFacts)
+                                .tags(tags)
                                 .hostDetails(hostDetails)
                                 .photoUrls(photoUrls)
                                 .vibeScore(homestay.getVibeScore())

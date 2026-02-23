@@ -62,6 +62,10 @@ public class Homestay {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
+    private java.util.List<String> tags;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private java.util.Map<String, Object> hostDetails;
 
     @ElementCollection

@@ -68,7 +68,7 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
                     group-hover:-translate-y-1.5
                 ">
                     {/* ── Image zone ── */}
-                    <div className="relative h-60 overflow-hidden bg-gray-100">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                         <img
                             src={homestay.photoUrls?.[0] || FALLBACK_IMAGE}
                             alt={homestay.name}

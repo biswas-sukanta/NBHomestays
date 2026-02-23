@@ -50,7 +50,7 @@ public class HomestayRepositoryTest {
         homestayRepository.save(homestay);
 
         // Test
-        List<Homestay> results = homestayRepository.search("Darjeeling", null, 10, 0);
+        List<Homestay> results = homestayRepository.search("Darjeeling", null, null, 10, 0);
 
         // Verify
         assertThat(results).isNotEmpty();
