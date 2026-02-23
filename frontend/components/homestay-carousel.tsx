@@ -35,7 +35,7 @@ export function HomestayCarousel({ title, description, homestays, viewAllLink }:
 
                 {/* Horizontal Scrolling Swimlane */}
                 <div
-                    className="flex gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-8 pt-4"
+                    className="flex gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar py-4 px-2"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {homestays.map((homestay, index) => (

@@ -45,9 +45,9 @@ export function CategoryFilterBar() {
 
     return (
         <div className="sticky top-[64px] z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b shadow-sm w-full">
-            <div className="container mx-auto px-4">
+            <div className="container mx-auto">
                 <div
-                    className="flex gap-10 overflow-x-auto py-6 items-center snap-x snap-mandatory scroll-smooth"
+                    className="flex gap-4 overflow-x-auto snap-x hide-scrollbar py-4 px-6 items-center scroll-smooth"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {CATEGORIES.map((cat) => {
@@ -58,19 +58,14 @@ export function CategoryFilterBar() {
                                 key={cat.tag}
                                 onClick={() => handleCategoryClick(cat.tag)}
                                 className={`
-                                    relative flex flex-col items-center justify-center gap-3 min-w-[72px] snap-start shrink-0 transition-all duration-200
-                                    hover:-translate-y-0.5
-                                    ${isSelected ? 'text-black' : 'text-gray-500 hover:text-black hover:opacity-100 opacity-80'}
+                                    flex flex-col items-center justify-center min-w-[80px] cursor-pointer transition-opacity
+                                    ${isSelected ? 'opacity-100 border-b-2 border-black pb-2' : 'opacity-60 hover:opacity-100 pb-[10px]'}
                                 `}
                             >
-                                <Icon className={`w-8 h-8 transition-transform ${isSelected ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+                                <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'stroke-[2.5px]' : 'stroke-2'}`} />
                                 <span className={`text-sm whitespace-nowrap ${isSelected ? 'font-bold' : 'font-semibold text-gray-700'}`}>
                                     {cat.label}
                                 </span>
-                                {/* Active Indicator Bar */}
-                                {isSelected && (
-                                    <div className="absolute -bottom-[25px] w-full h-[3px] bg-black rounded-t-full" />
-                                )}
                             </button>
                         );
                     })}
