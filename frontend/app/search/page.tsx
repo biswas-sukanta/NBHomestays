@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CategoryFilterBar } from '@/components/category-filter-bar';
-import { HomestayCarousel } from '@/components/homestay-carousel';
+import { HomestaySwimlane } from '@/components/homestay-swimlane';
 import { HomestayCard, HomestaySummary } from '@/components/homestay-card';
 import { Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -49,8 +49,9 @@ function SearchResults() {
     const [searchGrid, setSearchGrid] = useState<HomestaySummary[]>([]);
 
     // Swimlanes
-    const [trending, setTrending] = useState<HomestaySummary[]>([]);
-    const [offbeat, setOffbeat] = useState<HomestaySummary[]>([]);
+    const [trendingStays, setTrendingStays] = useState<HomestaySummary[]>([]);
+    const [offbeatStays, setOffbeatStays] = useState<HomestaySummary[]>([]);
+    const [featuredStays, setFeaturedStays] = useState<HomestaySummary[]>([]);
 
     // Infinite Scroll Integration
     const [allStays, setAllStays] = useState<HomestaySummary[]>([]);
@@ -78,12 +79,14 @@ function SearchResults() {
                     // Handle Page<HomestayDto.Response> structure
                     setSearchGrid(res.data.content || []);
                 } else {
-                    const [res1, res2] = await Promise.all([
+                    const [res1, res2, res3] = await Promise.all([
                         api.get('/api/homestays/search?tag=Trending Now&page=0&size=6'),
-                        api.get('/api/homestays/search?tag=Explore Offbeat&page=0&size=6')
+                        api.get('/api/homestays/search?tag=Explore Offbeat&page=0&size=6'),
+                        api.get('/api/homestays/search?tag=Featured Escapes&page=0&size=6')
                     ]);
-                    setTrending(res1.data.content || []);
-                    setOffbeat(res2.data.content || []);
+                    setTrendingStays(res1.data.content || []);
+                    setOffbeatStays(res2.data.content || []);
+                    setFeaturedStays(res3.data.content || []);
                 }
             } catch (err) {
                 console.error("Failed to fetch layout feeds", err);
@@ -169,21 +172,21 @@ function SearchResults() {
                     onSubmit={handleSearch}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="w-full max-w-2xl mx-auto flex gap-2 bg-white rounded-full p-2 shadow-2xl relative z-10"
+                    className="w-full max-w-3xl mx-auto flex flex-col sm:flex-row gap-2 bg-white rounded-2xl sm:rounded-full p-2 sm:p-2 shadow-xl relative z-10"
                 >
-                    <div className="flex-1 flex items-center gap-3 px-4">
+                    <div className="flex-1 flex items-center gap-3 px-4 py-2 sm:py-0 w-full sm:w-auto">
                         <Search className="w-6 h-6 text-gray-400 flex-none" />
                         <input
                             type="text"
                             placeholder="Where do you want to go?"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="flex-1 bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none text-lg font-medium"
+                            className="w-full bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none text-lg font-medium"
                         />
                     </div>
                     <button
                         type="submit"
-                        className="px-8 py-3.5 bg-[#004d00] text-white font-bold rounded-full hover:bg-[#003300] transition-colors shadow-sm"
+                        className="w-full sm:w-auto px-8 py-3.5 bg-[#004d00] text-white font-bold rounded-xl sm:rounded-full hover:bg-[#003300] transition-colors shadow-sm"
                     >
                         Search
                     </button>
@@ -194,7 +197,7 @@ function SearchResults() {
             <CategoryFilterBar />
 
             {/* STEP 3: Bounded Core UI Layout Area */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col gap-16">
+            <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col gap-12 md:gap-16">
                 {isInitialLoading ? (
                     <div className="flex gap-4 overflow-hidden">
                         {[...Array(4)].map((_, i) => (
@@ -217,13 +220,20 @@ function SearchResults() {
                             </div>
                         </section>
 
-                        <HomestayCarousel
+                        <HomestaySwimlane
                             title="Trending Now"
-                            homestays={trending}
+                            emoji="🔥"
+                            homestays={trendingStays}
                         />
-                        <HomestayCarousel
+                        <HomestaySwimlane
+                            title="Featured Escapes"
+                            emoji="⭐"
+                            homestays={featuredStays}
+                        />
+                        <HomestaySwimlane
                             title="Explore Offbeat"
-                            homestays={offbeat}
+                            emoji="🌿"
+                            homestays={offbeatStays}
                         />
 
                         {/* STEP 4: Proper Infinite Paginated Grid */}
