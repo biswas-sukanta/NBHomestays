@@ -34,14 +34,14 @@ export function HeroSearch() {
             <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/10" />
 
             {/* ── Content ── */}
-            <div className="relative z-10 flex h-full flex-col items-center justify-center pt-32 pb-12 px-4 text-center">
+            <div className="relative z-10 flex h-full flex-col items-center justify-center pt-32 md:pt-48 lg:pt-64 pb-12 px-4 text-center">
 
                 {/* Eyebrow label */}
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.7, delay: 0.1 }}
-                    className="mb-4 inline-flex items-center gap-2 rounded-full glass-dark px-4 py-1.5 text-white/90 text-sm font-semibold tracking-widest uppercase"
+                    className="mb-6 inline-flex items-center gap-2 rounded-full glass-dark px-4 py-1.5 text-white/90 text-sm font-semibold tracking-widest uppercase"
                 >
                     🌿 North Bengal Homestays
                 </motion.div>
