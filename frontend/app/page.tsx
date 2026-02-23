@@ -82,68 +82,70 @@ function HomeContent() {
       {/* ── Hero ── */}
       <HeroSearch />
 
-      {/* ── Global Category Filter ── */}
-      <CategoryFilterBar />
+      <div className="bg-[#0f172a] min-h-screen text-white pb-10">
+        {/* ── Global Category Filter ── */}
+        <CategoryFilterBar />
 
-      {/* ── Dynamic Content Feed ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-[500px]">
-        {loading ? (
-          <div className="w-full">
-            <div className="flex gap-6 overflow-hidden pt-4 pb-8">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex flex-col space-y-3 w-[280px] sm:w-[320px] shrink-0">
-                  <Skeleton className="relative w-full aspect-[4/3] rounded-2xl" />
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : currentTag ? (
-          /* TAG SELECTED: Grid Feed View */
-          <div className="w-full">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
-                {currentTag}
-              </h2>
-              <span className="text-muted-foreground">{searchGrid.length} stays found</span>
-            </div>
-
-            {searchGrid.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {searchGrid.map((h, i) => (
-                  <div key={h.id} className="h-full">
-                    <HomestayCard homestay={h} index={i} />
+        {/* ── Dynamic Content Feed ── */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-[500px]">
+          {loading ? (
+            <div className="w-full">
+              <div className="flex gap-6 overflow-hidden pt-4 pb-8">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex flex-col space-y-3 w-[280px] sm:w-[320px] shrink-0">
+                    <Skeleton className="relative w-full aspect-[4/3] rounded-2xl" />
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed">
-                <h3 className="text-xl font-bold mb-2 text-foreground">No stays found for this vibe</h3>
-                <p className="text-muted-foreground">Try selecting a different category or exploring our trending stays.</p>
+            </div>
+          ) : currentTag ? (
+            /* TAG SELECTED: Grid Feed View */
+            <div className="w-full">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-3xl font-extrabold text-white tracking-tight">
+                  {currentTag}
+                </h2>
+                <span className="text-gray-400">{searchGrid.length} stays found</span>
               </div>
-            )}
-          </div>
-        ) : (
-          /* NO TAG: Swimlane Layout */
-          <div className="space-y-4">
-            <HomestayCarousel
-              title="🔥 Trending Now"
-              description="The most booked and highly rated stays in North Bengal."
-              homestays={trending}
-            />
-            <HomestayCarousel
-              title="💻 Perfect for Workations"
-              description="High-speed WiFi and dedicated workspaces amidst nature."
-              homestays={workations}
-            />
-            <HomestayCarousel
-              title="⛰️ Explore Offbeat"
-              description="Hidden gems far away from the commercial hustle."
-              homestays={offbeat}
-            />
-          </div>
-        )}
+
+              {searchGrid.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {searchGrid.map((h, i) => (
+                    <div key={h.id} className="h-full">
+                      <HomestayCard homestay={h} index={i} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-20 bg-gray-800/30 rounded-2xl border border-gray-700 border-dashed">
+                  <h3 className="text-xl font-bold mb-2 text-white">No stays found for this vibe</h3>
+                  <p className="text-gray-400">Try selecting a different category or exploring our trending stays.</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* NO TAG: Swimlane Layout */
+            <div className="space-y-4">
+              <HomestayCarousel
+                title="🔥 Trending Now"
+                description="The most booked and highly rated stays in North Bengal."
+                homestays={trending}
+              />
+              <HomestayCarousel
+                title="💻 Perfect for Workations"
+                description="High-speed WiFi and dedicated workspaces amidst nature."
+                homestays={workations}
+              />
+              <HomestayCarousel
+                title="⛰️ Explore Offbeat"
+                description="Hidden gems far away from the commercial hustle."
+                homestays={offbeat}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Why NBHomestays Features ── */}

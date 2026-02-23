@@ -21,7 +21,7 @@ export function HeroSearch() {
     };
 
     return (
-        <div className="relative h-[50vh] min-h-[500px] w-full overflow-hidden select-none">
+        <div className="relative min-h-[60vh] md:min-h-[70vh] pb-16 w-full overflow-hidden select-none">
             {/* ── Ken Burns background ── */}
             <div
                 className="absolute inset-0 h-full w-full bg-cover bg-center animate-ken-burns"

@@ -18,13 +18,13 @@ export function HomestayCarousel({ title, description, homestays, viewAllLink }:
     const testId = `carousel-${title.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`;
 
     return (
-        <section className="py-2" data-testid={testId}>
+        <section data-testid={testId}>
             <div className="w-full">
                 {/* Header */}
                 <div className="flex items-end justify-between mb-2">
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-2">{title}</h2>
-                        {description && <p className="text-muted-foreground text-sm">{description}</p>}
+                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-4">{title}</h2>
+                        {description && <p className="text-gray-400 text-sm mb-6">{description}</p>}
                     </div>
                     {viewAllLink && (
                         <Link href={viewAllLink} className="text-primary font-semibold text-sm flex items-center gap-1 hover:underline shrink-0 ml-4 mb-2">
