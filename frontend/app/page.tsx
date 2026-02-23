@@ -86,14 +86,14 @@ function HomeContent() {
       <CategoryFilterBar />
 
       {/* ── Dynamic Content Feed ── */}
-      <div className="min-h-[500px] py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-[500px]">
         {loading ? (
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="flex flex-col space-y-3">
-                  <Skeleton className="h-[250px] w-full rounded-2xl" />
-                  <Skeleton className="h-4 w-3/4" />
+          <div className="w-full">
+            <div className="flex gap-6 overflow-hidden pt-4 pb-8">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex flex-col space-y-3 w-[280px] sm:w-[320px] shrink-0">
+                  <Skeleton className="relative w-full aspect-[4/3] rounded-2xl" />
+                  <Skeleton className="h-5 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
                 </div>
               ))}
@@ -101,7 +101,7 @@ function HomeContent() {
           </div>
         ) : currentTag ? (
           /* TAG SELECTED: Grid Feed View */
-          <div className="container mx-auto px-4">
+          <div className="w-full">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
                 {currentTag}

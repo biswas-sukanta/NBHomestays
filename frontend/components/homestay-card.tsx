@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { MapPin, Star, Scale } from 'lucide-react';
+import { Star, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompareStore } from '@/store/useCompareStore';
 import { TripBoardButton } from '@/components/trip-board-button';
@@ -39,9 +39,6 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
     };
 
     const vibeScore = homestay.vibeScore || 4.5;
-    const vibeClass =
-        vibeScore >= 4.5 ? 'vibe-high' :
-            vibeScore >= 3.5 ? 'vibe-mid' : 'vibe-low';
 
     const tripBoardItem = {
         id: homestay.id,
@@ -53,109 +50,68 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 28 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.08, ease: 'easeOut' }}
-            className="h-full"
+            transition={{ duration: 0.4, delay: index * 0.05, ease: 'easeOut' }}
+            className="w-[280px] sm:w-[320px] shrink-0 snap-start group cursor-pointer"
+            data-testid="homestay-card"
         >
-            <Link href={`/homestays/${homestay.id}`} className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
-                {/* Card wrapper */}
-                <div className="
-                    relative bg-white rounded-2xl overflow-hidden h-full flex flex-col
-                    border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)]
-                    transition-all duration-400
-                    group-hover:shadow-[0_12px_40px_rgba(0,0,0,0.14)]
-                    group-hover:-translate-y-1.5
-                ">
-                    {/* ── Image zone ── */}
-                    <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-                        <img
-                            src={homestay.photoUrls?.[0] || FALLBACK_IMAGE}
-                            alt={homestay.name}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            loading="lazy"
-                        />
-                        {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <Link href={`/homestays/${homestay.id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
+                {/* Image Container */}
+                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-gray-100">
+                    <img
+                        src={homestay.photoUrls?.[0] || FALLBACK_IMAGE}
+                        alt={homestay.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                    />
 
-                        {/* Top badges row */}
-                        <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                            {/* Compare toggle */}
-                            <Button
-                                variant="secondary"
-                                size="icon"
-                                className={cn(
-                                    'h-8 w-8 rounded-full shadow-md transition-all duration-200',
-                                    isSelected
-                                        ? 'bg-primary text-white hover:bg-primary/90 opacity-100'
-                                        : 'glass opacity-0 group-hover:opacity-100 text-gray-700'
-                                )}
-                                onClick={handleCompare}
-                                title="Add to Compare"
-                                aria-label="Compare this homestay"
-                            >
-                                <Scale className="w-3.5 h-3.5" />
-                            </Button>
+                    {/* Gradient overlay just at top/bottom edges for icons if needed */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                            {/* Vibe score badge */}
-                            <div className={cn(
-                                'flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold shadow-md',
-                                vibeClass
-                            )}>
-                                <Star className="w-3 h-3 fill-current" />
-                                {vibeScore.toFixed(1)}
-                            </div>
-                        </div>
-
-                        {/* Heart/Save — bottom-right on image */}
-                        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <TripBoardButton item={tripBoardItem} size="sm" />
-                        </div>
-
-                        {/* Price — bottom-left on image */}
-                        <div className="absolute bottom-3 left-3">
-                            <span className="glass text-gray-900 text-sm font-bold px-2.5 py-1 rounded-full shadow-md">
-                                ₹{homestay.pricePerNight.toLocaleString()}
-                                <span className="font-normal text-gray-600"> /night</span>
-                            </span>
-                        </div>
+                    {/* Top Left - Compare */}
+                    <div className="absolute top-3 left-3 z-10">
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            className={cn(
+                                'h-8 w-8 rounded-full shadow-md transition-all duration-200',
+                                isSelected
+                                    ? 'bg-primary text-white hover:bg-primary/90 opacity-100'
+                                    : 'bg-white/90 opacity-0 group-hover:opacity-100 text-gray-700 hover:bg-white'
+                            )}
+                            onClick={handleCompare}
+                            title="Add to Compare"
+                            aria-label="Compare this homestay"
+                        >
+                            <Scale className="w-3.5 h-3.5" />
+                        </Button>
                     </div>
 
-                    {/* ── Content zone ── */}
-                    <div className="p-4 flex flex-col flex-grow">
-                        {/* Location micro-label */}
-                        <div className="flex items-center gap-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase mb-1">
-                            <MapPin className="w-3 h-3" />
-                            North Bengal Hills
-                        </div>
+                    {/* Top Right - Rating Pill */}
+                    <div className="absolute top-3 right-3 bg-white/95 backdrop-blur shadow-sm px-2 py-1 rounded-full flex items-center gap-1 z-10 transition-transform duration-200 group-hover:-translate-y-0.5">
+                        <Star className="w-3.5 h-3.5 fill-gray-900 text-gray-900" />
+                        <span className="text-xs font-bold text-gray-900">{vibeScore.toFixed(1)}</span>
+                    </div>
 
-                        {/* Name */}
-                        <h3 className="text-[1.05rem] font-bold text-foreground truncate group-hover:text-primary transition-colors duration-200 mb-2">
-                            {homestay.name}
-                        </h3>
+                    {/* Bottom Right - Heart/Save */}
+                    <div className="absolute bottom-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <TripBoardButton item={tripBoardItem} size="sm" />
+                    </div>
+                </div>
 
-                        {/* Description */}
-                        <p className="text-muted-foreground text-sm line-clamp-2 leading-relaxed flex-grow">
-                            {homestay.description}
-                        </p>
-
-                        {/* Amenity pills (top 3) */}
-                        {Object.keys(homestay.amenities || {}).filter(k => homestay.amenities[k]).length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mt-3">
-                                {Object.keys(homestay.amenities).filter(k => homestay.amenities[k]).slice(0, 3).map((a) => (
-                                    <span key={a} className="text-[0.7rem] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium capitalize">
-                                        {a.replace(/([A-Z])/g, ' $1').trim()}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* CTA hint */}
-                        <div className="mt-3 flex items-center justify-end">
-                            <span className="text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1">
-                                View Stay →
-                            </span>
-                        </div>
+                {/* Text Data */}
+                <div className="px-1 relative">
+                    <h3 className="font-semibold text-lg text-gray-900 truncate">
+                        {homestay.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 truncate mb-1">
+                        North Bengal Hills
+                    </p>
+                    <div className="mt-1 flex items-center justify-between">
+                        <span className="font-medium text-gray-900">
+                            ₹{homestay.pricePerNight.toLocaleString()} <span className="font-normal text-gray-500">/night</span>
+                        </span>
                     </div>
                 </div>
             </Link>
