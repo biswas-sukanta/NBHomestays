@@ -31,8 +31,10 @@ public class HomestayController {
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "tag", required = false) String tag,
             @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
-            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice) {
-        return homestayService.searchHomestays(q, tag);
+            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "page", defaultValue = "0") int page) {
+        return homestayService.searchHomestays(q, tag, size, page);
     }
 
     @GetMapping("/{id}")

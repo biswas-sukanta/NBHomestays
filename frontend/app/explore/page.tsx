@@ -7,6 +7,30 @@ import { HomestaySummary, HomestayCard } from '@/components/homestay-card';
 import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
+
+// --- Destination Card Component ---
+const DESTINATIONS = [
+    { name: 'Darjeeling', image: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=800' },
+    { name: 'Kalimpong', image: 'https://images.unsplash.com/photo-1626621341517-bbf3e99c0b2c?auto=format&fit=crop&q=80&w=800' },
+    { name: 'Kurseong', image: 'https://plus.unsplash.com/premium_photo-1697729606869-e58f00db11ee?auto=format&fit=crop&q=80&w=800' },
+    { name: 'Mirik', image: 'https://images.unsplash.com/photo-1587595431973-160d0d94add1?auto=format&fit=crop&q=80&w=800' },
+    { name: 'Sittong', image: 'https://images.unsplash.com/photo-1681285312384-cbca6f2d5930?auto=format&fit=crop&q=80&w=800' },
+];
+
+function DestinationCard({ dest }: { dest: { name: string; image: string } }) {
+    return (
+        <Link href={`/explore?tag=${encodeURIComponent(dest.name)}`} className="block w-[200px] shrink-0 snap-start group outline-none overflow-hidden rounded-2xl relative">
+            <div className="w-full aspect-square bg-gray-800 relative z-0">
+                <img src={dest.image} alt={dest.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors z-10" />
+                <div className="absolute inset-x-0 bottom-0 p-4 z-20">
+                    <h3 className="text-xl font-bold text-white drop-shadow-md text-center">{dest.name}</h3>
+                </div>
+            </div>
+        </Link>
+    );
+}
 
 function ExploreContent() {
     const searchParams = useSearchParams();
@@ -15,7 +39,6 @@ function ExploreContent() {
     const [loading, setLoading] = useState(true);
 
     // Swimlane States
-    const [topDestinations, setTopDestinations] = useState<HomestaySummary[]>([]);
     const [trending, setTrending] = useState<HomestaySummary[]>([]);
     const [offbeat, setOffbeat] = useState<HomestaySummary[]>([]);
     const [budgetFriendly, setBudgetFriendly] = useState<HomestaySummary[]>([]);
@@ -26,20 +49,19 @@ function ExploreContent() {
             setLoading(true);
             try {
                 if (currentTag) {
-                    const res = await api.get(`/api/homestays/search?tag=${encodeURIComponent(currentTag)}`);
+                    // If a specific tag/destination is clicked, fetch up to 30 items
+                    const res = await api.get(`/api/homestays/search?tag=${encodeURIComponent(currentTag)}&page=0&size=30`);
                     setSearchGrid(res.data);
                 } else {
-                    // Fire multiple endpoints concurrently mapping correctly via tags
-                    const [res1, res2, res3, res4] = await Promise.all([
-                        api.get('/api/homestays/search?tag=Heritage'), // Map to Top Destinations logic later
-                        api.get('/api/homestays/search?tag=Trending Now'),
-                        api.get('/api/homestays/search?tag=Explore Offbeat'),
-                        api.get('/api/homestays/search?tag=Budget Friendly'),
+                    // Fire 3 endpoints concurrently, strictly limited to 6 items utilizing Spring Boot parameters
+                    const [res1, res2, res3] = await Promise.all([
+                        api.get('/api/homestays/search?tag=Trending Now&size=6'),
+                        api.get('/api/homestays/search?tag=Explore Offbeat&size=6'),
+                        api.get('/api/homestays/search?tag=Budget Friendly&size=6'),
                     ]);
-                    setTopDestinations(res1.data);
-                    setTrending(res2.data);
-                    setOffbeat(res3.data);
-                    setBudgetFriendly(res4.data);
+                    setTrending(res1.data);
+                    setOffbeat(res2.data);
+                    setBudgetFriendly(res3.data);
                 }
             } catch (err) {
                 console.error("Failed to fetch feeds:", err);
@@ -80,9 +102,9 @@ function ExploreContent() {
                         </div>
 
                         {searchGrid.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 gap-y-12">
                                 {searchGrid.map((h, i) => (
-                                    <div key={h.id} className="h-full">
+                                    <div key={h.id} className="h-full flex justify-center">
                                         <HomestayCard homestay={h} index={i} />
                                     </div>
                                 ))}
@@ -96,22 +118,33 @@ function ExploreContent() {
                     </div>
                 ) : (
                     /* NO TAG: Swimlane Layout */
-                    <div className="space-y-12">
-                        <HomestayCarousel
-                            title="📍 Top Destinations"
-                            homestays={topDestinations}
-                        />
+                    <div className="space-y-14">
+
+                        {/* Top Destinations Section */}
+                        <section>
+                            <div className="mb-2">
+                                <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">📍 Top Destinations</h2>
+                                <p className="text-gray-400 text-sm mb-6">Discover stays in the most sought-after hills.</p>
+                            </div>
+                            <div className="flex gap-6 overflow-x-auto snap-x hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                {DESTINATIONS.map(d => <DestinationCard key={d.name} dest={d} />)}
+                            </div>
+                        </section>
+
                         <HomestayCarousel
                             title="🔥 Trending Now"
                             homestays={trending}
+                            description="Our most booked and highly rated properties."
                         />
                         <HomestayCarousel
                             title="🍃 Explore Offbeat"
                             homestays={offbeat}
+                            description="Get away from the crowds and reconnect with nature."
                         />
                         <HomestayCarousel
                             title="🎒 Budget Friendly"
                             homestays={budgetFriendly}
+                            description="Incredible experiential stays under ₹2000/night."
                         />
                     </div>
                 )}

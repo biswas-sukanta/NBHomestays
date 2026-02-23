@@ -64,6 +64,9 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
                         alt={homestay.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
+                        onError={(e) => {
+                            e.currentTarget.src = FALLBACK_IMAGE;
+                        }}
                     />
 
                     {/* Gradient overlay just at top/bottom edges for icons if needed */}

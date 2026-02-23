@@ -58,7 +58,7 @@ public class HomestayService {
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         @Cacheable(value = "homestaysSearch", key = "'all'", sync = true)
-        public List<HomestayDto.Response> searchHomestays(String query, String tag) {
+        public List<HomestayDto.Response> searchHomestays(String query, String tag, int size, int page) {
                 // If query is empty and tag is empty, return all APPROVED homestays
                 if ((query == null || query.trim().isEmpty()) && (tag == null || tag.trim().isEmpty())) {
                         return repository.findByStatus(Homestay.Status.APPROVED).stream()
@@ -68,7 +68,7 @@ public class HomestayService {
 
                 // Otherwise perform search
                 try {
-                        return repository.search(query, null, tag, 20, 0).stream()
+                        return repository.search(query, null, tag, size, page * size).stream()
                                         .map(this::mapToResponse)
                                         .collect(Collectors.toList());
                 } catch (Exception e) {
