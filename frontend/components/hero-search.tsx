@@ -34,7 +34,7 @@ export function HeroSearch() {
             <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/10" />
 
             {/* ── Content ── */}
-            <div className="relative z-10 flex h-full flex-col items-center justify-center pt-32 md:pt-48 lg:pt-64 pb-12 px-4 text-center">
+            <div className="relative z-10 flex h-full flex-col items-center justify-center pt-24 md:pt-28 lg:pt-32 pb-12 px-4 text-center">
 
                 {/* Eyebrow label */}
                 <motion.div

@@ -44,7 +44,7 @@ export function CategoryFilterBar() {
     };
 
     return (
-        <div className="sticky top-[64px] z-40 bg-[#0f172a]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0f172a]/80 border-b border-gray-800 shadow-sm w-full">
+        <div className="sticky top-[64px] z-40 bg-[#0a0a0a]/90 backdrop-blur-md supports-[backdrop-filter]:bg-[#0a0a0a]/80 border-b border-[#222] shadow-sm w-full">
             <div className="container mx-auto">
                 <div
                     className="flex gap-4 overflow-x-auto snap-x hide-scrollbar py-4 px-2 items-center scroll-smooth"

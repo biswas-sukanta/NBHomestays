@@ -23,7 +23,7 @@ export function HomestayCarousel({ title, description, homestays, viewAllLink }:
                 {/* Header */}
                 <div className="flex items-end justify-between mb-2">
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-4">{title}</h2>
+                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">{title}</h2>
                         {description && <p className="text-gray-400 text-sm mb-6">{description}</p>}
                     </div>
                     {viewAllLink && (
@@ -35,7 +35,7 @@ export function HomestayCarousel({ title, description, homestays, viewAllLink }:
 
                 {/* Horizontal Scrolling Swimlane */}
                 <div
-                    className="flex gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar py-4 px-2"
+                    className="flex gap-6 overflow-x-auto snap-x hide-scrollbar"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {homestays.map((homestay, index) => (

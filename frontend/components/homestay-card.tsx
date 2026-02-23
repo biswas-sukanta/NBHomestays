@@ -53,7 +53,7 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.05, ease: 'easeOut' }}
-            className="w-[280px] sm:w-[300px] shrink-0 snap-start group cursor-pointer"
+            className="w-[280px] shrink-0 snap-start group cursor-pointer"
             data-testid="homestay-card"
         >
             <Link href={`/homestays/${homestay.id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
