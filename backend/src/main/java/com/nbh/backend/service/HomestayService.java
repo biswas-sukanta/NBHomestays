@@ -12,6 +12,10 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -58,24 +62,30 @@ public class HomestayService {
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         @Cacheable(value = "homestaysSearch", key = "'all'", sync = true)
-        public List<HomestayDto.Response> searchHomestays(String query, String tag, int size, int page) {
+        public Page<HomestayDto.Response> searchHomestays(String query, String tag, int size, int page) {
+                Pageable pageable = PageRequest.of(page, size);
+
                 // If query is empty and tag is empty, return all APPROVED homestays
                 if ((query == null || query.trim().isEmpty()) && (tag == null || tag.trim().isEmpty())) {
-                        return repository.findByStatus(Homestay.Status.APPROVED).stream()
+                        List<HomestayDto.Response> allApproved = repository.findByStatus(Homestay.Status.APPROVED)
+                                        .stream()
                                         .map(this::mapToResponse)
                                         .collect(Collectors.toList());
+                        // Simple manual pagination for the fallback list
+                        int start = (int) pageable.getOffset();
+                        int end = Math.min((start + pageable.getPageSize()), allApproved.size());
+                        List<HomestayDto.Response> pagedList = start > allApproved.size() ? List.of()
+                                        : allApproved.subList(start, end);
+                        return new PageImpl<>(pagedList, pageable, allApproved.size());
                 }
 
                 // Otherwise perform search
                 try {
-                        return repository.search(query, null, tag, size, page * size).stream()
-                                        .map(this::mapToResponse)
-                                        .collect(Collectors.toList());
+                        Page<Homestay> homestayPage = repository.search(query, null, tag, pageable);
+                        return homestayPage.map(this::mapToResponse);
                 } catch (Exception e) {
-                        // Fallback: return only APPROVED listings
-                        return repository.findByStatus(Homestay.Status.APPROVED).stream()
-                                        .map(this::mapToResponse)
-                                        .collect(Collectors.toList());
+                        // Fallback: return empty page
+                        return new PageImpl<>(List.of(), pageable, 0);
                 }
         }
 

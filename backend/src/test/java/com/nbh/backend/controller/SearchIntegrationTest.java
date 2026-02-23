@@ -15,6 +15,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,15 +57,15 @@ public class SearchIntegrationTest {
                                 .owner(owner)
                                 .build();
 
-                when(homestayRepository.search(anyString(), any(), any(), anyInt(), anyInt()))
-                                .thenReturn(List.of(homestay));
+                when(homestayRepository.search(anyString(), any(), any(), any()))
+                                .thenReturn(new PageImpl<>(List.of(homestay), PageRequest.of(0, 20), 1));
 
                 mockMvc.perform(get("/api/homestays/search")
                                 .param("query", "Test"))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$[0].name").value("Test Stay"));
 
-                verify(homestayRepository).search(eq("Test"), any(), eq(null), eq(20), eq(0));
+                verify(homestayRepository).search(eq("Test"), any(), eq(null), eq(PageRequest.of(0, 20)));
         }
 
         @Test

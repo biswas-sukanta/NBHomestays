@@ -11,7 +11,7 @@ import { motion } from 'framer-motion';
 import api from '@/lib/api';
 import Link from 'next/link';
 
-// --- Destination Card Component ---
+// --- Destination Component ---
 const DESTINATIONS = [
     { name: 'Darjeeling', image: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=800' },
     { name: 'Kalimpong', image: 'https://images.unsplash.com/photo-1626621341517-bbf3e99c0b2c?auto=format&fit=crop&q=80&w=800' },
@@ -44,16 +44,15 @@ function SearchResults() {
     const [searchTerm, setSearchTerm] = useState(query);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-    // Dynamic View Grid
+    // Dynamic Top Grid
     const [searchGrid, setSearchGrid] = useState<HomestaySummary[]>([]);
 
-    // Swimlane default states
+    // Swimlanes
     const [trending, setTrending] = useState<HomestaySummary[]>([]);
     const [offbeat, setOffbeat] = useState<HomestaySummary[]>([]);
-    const [budgetFriendly, setBudgetFriendly] = useState<HomestaySummary[]>([]);
 
-    // Infinite Scroll States
-    const [allHomestays, setAllHomestays] = useState<HomestaySummary[]>([]);
+    // Infinite Scroll Integration
+    const [allStays, setAllStays] = useState<HomestaySummary[]>([]);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [isFetchingPage, setIsFetchingPage] = useState(false);
@@ -64,71 +63,69 @@ function SearchResults() {
         setSearchTerm(query);
     }, [query]);
 
-    // Initial Data Fetch
+    // Fast Initial Fetch
     useEffect(() => {
         const fetchInitialData = async () => {
             setIsInitialLoading(true);
             try {
                 if (query || tag) {
-                    // Standard search execution
                     const endpoint = query
                         ? `/api/homestays/search?q=${encodeURIComponent(query)}&page=0&size=50`
                         : `/api/homestays/search?tag=${encodeURIComponent(tag)}&page=0&size=50`;
 
                     const res = await api.get(endpoint);
-                    setSearchGrid(res.data);
+                    // Handle Page<HomestayDto.Response> structure
+                    setSearchGrid(res.data.content || []);
                 } else {
-                    // Default Storefront Light Theme Swimlanes
-                    const [res1, res2, res3] = await Promise.all([
+                    const [res1, res2] = await Promise.all([
                         api.get('/api/homestays/search?tag=Trending Now&page=0&size=6'),
-                        api.get('/api/homestays/search?tag=Explore Offbeat&page=0&size=6'),
-                        api.get('/api/homestays/search?tag=Budget Friendly&page=0&size=6'),
+                        api.get('/api/homestays/search?tag=Explore Offbeat&page=0&size=6')
                     ]);
-                    setTrending(res1.data);
-                    setOffbeat(res2.data);
-                    setBudgetFriendly(res3.data);
+                    setTrending(res1.data.content || []);
+                    setOffbeat(res2.data.content || []);
                 }
             } catch (err) {
-                console.error("Failed to fetch discovery feeds", err);
+                console.error("Failed to fetch layout feeds", err);
             } finally {
                 setIsInitialLoading(false);
             }
         };
 
         fetchInitialData();
-        // Reset infinite scroll whenever query/tag changes
-        setAllHomestays([]);
+        // Reset infinite scroll engine
+        setAllStays([]);
         setPage(0);
         setHasMore(true);
     }, [query, tag]);
 
-    // Infinite Scroll Fetcher
+    // Paged "All Homestays" Loader
     const fetchNextPage = useCallback(async () => {
         if (!hasMore || isFetchingPage) return;
 
-        // Only trigger infinite scroll if we are on the Storefront base view
+        // Prevent generic grid loading if querying a specific tag or term
         if (query || tag) return;
 
         setIsFetchingPage(true);
         try {
             const res = await api.get(`/api/homestays/search?page=${page}&size=12`);
-            const newData = res.data;
+            const newData = res.data; // Mapped to Spring Page<>
 
-            if (newData.length === 0) {
+            const fetchedContent = newData.content || [];
+
+            setAllStays(prev => [...prev, ...fetchedContent]);
+
+            if (newData.last || fetchedContent.length === 0) {
                 setHasMore(false);
             } else {
-                setAllHomestays(prev => [...prev, ...newData]);
                 setPage(prev => prev + 1);
-                if (newData.length < 12) setHasMore(false);
             }
         } catch (error) {
-            console.error('Failed to fetch next page', error);
+            console.error('Failed to resolve paginated payload', error);
         } finally {
             setIsFetchingPage(false);
         }
     }, [hasMore, isFetchingPage, page, query, tag]);
 
-    // Intersection Observer Hook for Infinite Scroll
     useEffect(() => {
         const observer = new IntersectionObserver(
             entries => {
@@ -161,108 +158,86 @@ function SearchResults() {
     const isStorefront = !query && !tag;
 
     return (
-        <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
-            {/* ── Minimal Light Theme Search Banner ── */}
-            <div className="relative mb-8">
-                <div className="flex flex-col items-center justify-center text-center max-w-3xl mx-auto pt-4 pb-6 px-4">
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-2 w-full"
-                    >
-                        <p className="text-gray-500 text-sm font-bold tracking-widest uppercase">
-                            {isStorefront ? 'Discover' : 'Results'}
-                        </p>
-                        <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
-                            {query ? `"${query}"` : tag ? tag : 'Explore North Bengal'}
-                        </h1>
-                    </motion.div>
+        <div className="min-h-screen bg-white text-gray-900 pb-20">
+            {/* STEP 1: Global Brand Green Banner */}
+            <div className="w-full bg-[#004d00] text-white pt-32 pb-16 px-4 flex flex-col items-center justify-center text-center">
+                <h1 className="text-4xl md:text-5xl font-extrabold mb-8 tracking-tight drop-shadow-sm">
+                    {query ? `"${query}"` : tag ? tag : 'Discover North Bengal'}
+                </h1>
 
-                    {/* Search bar */}
-                    <motion.form
-                        onSubmit={handleSearch}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="mt-8 w-full flex gap-2"
+                <motion.form
+                    onSubmit={handleSearch}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full max-w-2xl flex gap-2 bg-white rounded-full p-2 shadow-2xl relative z-10"
+                >
+                    <div className="flex-1 flex items-center gap-3 px-4">
+                        <Search className="w-6 h-6 text-gray-400 flex-none" />
+                        <input
+                            type="text"
+                            placeholder="Where do you want to go?"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="flex-1 bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none text-lg font-medium"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        className="px-8 py-3.5 bg-[#004d00] text-white font-bold rounded-full hover:bg-[#003300] transition-colors shadow-sm"
                     >
-                        <div className="flex-1 flex items-center gap-3 bg-white border border-gray-200 shadow-sm px-4 py-3.5 rounded-xl focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
-                            <Search className="w-5 h-5 text-gray-400 flex-none" />
-                            <input
-                                type="text"
-                                placeholder="Where do you want to go?"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="flex-1 bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none text-base font-medium"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            className="px-8 py-3.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
-                        >
-                            Search
-                        </button>
-                    </motion.form>
-                </div>
+                        Search
+                    </button>
+                </motion.form>
             </div>
 
-            {/* ── Ultra-Compact Category Filter Bar ── */}
+            {/* STEP 2: Sticky Edge-to-Edge Category Bar */}
             <CategoryFilterBar />
 
-            {/* ── Dynamic Layout ── */}
-            <div className="py-8">
+            {/* STEP 3: Bounded Core UI Layout Area */}
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col gap-16">
                 {isInitialLoading ? (
-                    <div className="w-full space-y-12">
-                        <div className="flex gap-4 overflow-hidden pt-4 pb-8">
-                            {[...Array(5)].map((_, i) => (
-                                <div key={i} className="flex flex-col space-y-3 w-[260px] sm:w-[280px] shrink-0">
-                                    <Skeleton className="relative w-full aspect-[4/3] rounded-2xl bg-gray-100" />
-                                    <Skeleton className="h-5 w-3/4 bg-gray-100" />
-                                    <Skeleton className="h-4 w-1/2 bg-gray-100" />
-                                </div>
-                            ))}
-                        </div>
+                    <div className="flex gap-4 overflow-hidden">
+                        {[...Array(4)].map((_, i) => (
+                            <div key={i} className="flex flex-col space-y-3 w-[280px] shrink-0">
+                                <Skeleton className="relative w-full aspect-[4/3] rounded-2xl bg-gray-100" />
+                                <Skeleton className="h-5 w-3/4 bg-gray-100" />
+                                <Skeleton className="h-4 w-1/2 bg-gray-100" />
+                            </div>
+                        ))}
                     </div>
                 ) : isStorefront ? (
-                    /* AIRBNB LIGHT THEME SWIMLANES */
-                    <div className="space-y-16">
-                        {/* Top Destinations Section */}
+                    <>
                         <section>
-                            <div className="mb-4 text-left">
-                                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight">📍 Top Destinations</h2>
+                            <div className="mb-6 text-left">
+                                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight">Top Destinations</h2>
                                 <p className="text-gray-500 text-base">Unwind in the most sought-after hills.</p>
                             </div>
-                            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-6">
                                 {DESTINATIONS.map(d => <DestinationCard key={d.name} dest={d} />)}
                             </div>
                         </section>
 
                         <HomestayCarousel
-                            title="🔥 Trending Now"
+                            title="Trending Now"
                             homestays={trending}
                         />
                         <HomestayCarousel
-                            title="🍃 Explore Offbeat"
+                            title="Explore Offbeat"
                             homestays={offbeat}
                         />
-                        <HomestayCarousel
-                            title="🎒 Budget Friendly"
-                            homestays={budgetFriendly}
-                        />
 
-                        {/* Infinite Scroll Grid: All Homestays */}
-                        <div className="pt-8 border-t border-gray-100">
-                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mt-12 mb-6 tracking-tight text-left">All Homestays</h2>
+                        {/* STEP 4: Proper Infinite Paginated Grid */}
+                        <div className="border-t border-gray-100 pt-16">
+                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight mb-8">All Homestays</h2>
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                {allHomestays.map((h, i) => (
-                                    <div key={h.id} className="h-full flex justify-start">
-                                        <HomestayCard homestay={h} index={i % 12} />
-                                    </div>
+                                {allStays.map((h, i) => (
+                                    <HomestayCard key={`${h.id}-${i}`} homestay={h} index={i % 12} />
                                 ))}
                             </div>
 
-                            {/* Sentinel and Loading States */}
-                            <div ref={observerTarget} className="w-full py-12 flex justify-center items-center">
+                            {/* Scroll Listener Node */}
+                            <div ref={observerTarget} className="w-full py-12 flex justify-center items-center h-24">
                                 {isFetchingPage && (
                                     <div className="flex space-x-2">
                                         <div className="w-3 h-3 bg-gray-300 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
@@ -270,22 +245,19 @@ function SearchResults() {
                                         <div className="w-3 h-3 bg-gray-300 rounded-full animate-bounce"></div>
                                     </div>
                                 )}
-                                {!hasMore && allHomestays.length > 0 && (
-                                    <p className="text-gray-500 font-medium text-sm">You have viewed all extraordinary stays.</p>
+                                {!hasMore && allStays.length > 0 && (
+                                    <p className="text-gray-500 font-medium text-sm">You have reached the end of the line.</p>
                                 )}
                             </div>
                         </div>
-
-                    </div>
+                    </>
                 ) : (
-                    /* FLAT GRID RESULTS */
+                    /* Search Term Direct Results */
                     <div className="w-full">
                         {searchGrid.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {searchGrid.map((h, i) => (
-                                    <div key={h.id} className="h-full flex justify-start">
-                                        <HomestayCard homestay={h} index={i} />
-                                    </div>
+                                    <HomestayCard key={h.id} homestay={h} index={i} />
                                 ))}
                             </div>
                         ) : (
@@ -303,14 +275,14 @@ function SearchResults() {
                         )}
                     </div>
                 )}
-            </div>
-        </main>
+            </main>
+        </div>
     );
 }
 
 export default function SearchPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-900 font-medium pt-24">Loading Stays...</div>}>
+        <Suspense fallback={<div className="min-h-screen pt-32 text-center font-medium">Loading Stays...</div>}>
             <SearchResults />
         </Suspense>
     );

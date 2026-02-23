@@ -10,6 +10,9 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Collections;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,7 +53,9 @@ public class HomestayRepositoryTest {
         homestayRepository.save(homestay);
 
         // Test
-        List<Homestay> results = homestayRepository.search("Darjeeling", null, null, 10, 0);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Homestay> pagedResults = homestayRepository.search("Darjeeling", null, null, pageable);
+        List<Homestay> results = pagedResults.getContent();
 
         // Verify
         assertThat(results).isNotEmpty();

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.data.domain.Page;
 import java.util.UUID;
 
 @RestController
@@ -27,7 +28,7 @@ public class HomestayController {
     }
 
     @GetMapping("/search")
-    public List<HomestayDto.Response> search(
+    public Page<HomestayDto.Response> search(
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "tag", required = false) String tag,
             @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,

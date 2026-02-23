@@ -44,32 +44,27 @@ export function CategoryFilterBar() {
     };
 
     return (
-        <div className="sticky top-[64px] z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm w-full">
-            <div className="container mx-auto">
-                <div
-                    className="flex gap-6 overflow-x-auto snap-x hide-scrollbar py-2 mb-8 border-b border-gray-100 items-center scroll-smooth"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                    {CATEGORIES.map((cat) => {
-                        const Icon = cat.icon;
-                        const isSelected = currentTag === cat.tag;
-                        return (
-                            <div
-                                key={cat.tag}
-                                onClick={() => handleCategoryClick(cat.tag)}
-                                className={`
+        <div className="w-full border-b border-gray-200 bg-white/95 backdrop-blur-md sticky top-[64px] z-40">
+            <div className="max-w-7xl mx-auto px-4 flex gap-8 overflow-x-auto snap-x hide-scrollbar py-3 items-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {CATEGORIES.map((cat) => {
+                    const Icon = cat.icon;
+                    const isSelected = currentTag === cat.tag;
+                    return (
+                        <div
+                            key={cat.tag}
+                            onClick={() => handleCategoryClick(cat.tag)}
+                            className={`
                                     flex flex-col items-center gap-1 cursor-pointer min-w-[60px] opacity-70 hover:opacity-100 transition-opacity
                                     ${isSelected ? 'opacity-100 border-b-2 border-gray-900 pb-1' : 'pb-1.5'}
                                 `}
-                            >
-                                <span className="text-xl">{cat.icon}</span>
-                                <span className={`text-xs font-semibold whitespace-nowrap ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
-                                    {cat.label}
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
+                        >
+                            <span className="text-xl">{cat.icon}</span>
+                            <span className={`text-xs font-semibold whitespace-nowrap ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                                {cat.label}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

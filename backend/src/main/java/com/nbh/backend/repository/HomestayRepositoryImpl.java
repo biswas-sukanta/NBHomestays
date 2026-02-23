@@ -4,6 +4,9 @@ import com.nbh.backend.model.Homestay;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,13 +19,15 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
     private EntityManager entityManager;
 
     @Override
-    public List<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, int limit,
-            int offset) {
+    public Page<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, Pageable pageable) {
         StringBuilder sql = new StringBuilder("SELECT h.* FROM homestays h WHERE h.status = 'APPROVED' ");
+        StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM homestays h WHERE h.status = 'APPROVED' ");
+
+        StringBuilder conditions = new StringBuilder();
 
         // Full Text Search
         if (searchQuery != null && !searchQuery.isBlank()) {
-            sql.append(
+            conditions.append(
                     "AND (to_tsvector('english', COALESCE(h.name, '') || ' ' || COALESCE(h.description, '') || ' ' || COALESCE(h.address, '')) @@ plainto_tsquery('english', :query)) ");
         }
 
@@ -30,21 +35,20 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         if (amenities != null && !amenities.isEmpty()) {
             for (String key : amenities.keySet()) {
                 if (Boolean.TRUE.equals(amenities.get(key))) {
-                    sql.append("AND h.amenities ->> '").append(key).append("' = 'true' ");
+                    conditions.append("AND h.amenities ->> '").append(key).append("' = 'true' ");
                 }
             }
         }
 
         // Tag Filter (JSONB Array contains element)
         if (tag != null && !tag.isBlank()) {
-            sql.append("AND h.tags @> '[\"").append(tag.replace("'", "''")).append("\"]'::jsonb ");
+            conditions.append("AND h.tags @> '[\"").append(tag.replace("'", "''")).append("\"]'::jsonb ");
         }
 
-        // Ranking (The Secret Sauce)
-        // distance not implemented in this snippet as we don't have user location input
-        // yet in search params,
-        // defaulting distance factor to 0 or 1 for now.
-        // Formula: (ts_rank(...) * 0.4 + vibe_score * 0.4)
+        sql.append(conditions);
+        countSql.append(conditions);
+
+        // Ranking
         if (searchQuery != null && !searchQuery.isBlank()) {
             sql.append(
                     "ORDER BY (ts_rank(to_tsvector('english', COALESCE(h.name, '') || ' ' || COALESCE(h.description, '') || ' ' || COALESCE(h.address, '')), plainto_tsquery('english', :query)) * 0.4 + COALESCE(h.vibe_score, 0) * 0.4) DESC ");
@@ -56,15 +60,20 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         sql.append("LIMIT :limit OFFSET :offset");
 
         Query nativeQuery = entityManager.createNativeQuery(sql.toString(), Homestay.class);
+        Query nativeCountQuery = entityManager.createNativeQuery(countSql.toString());
 
         if (searchQuery != null && !searchQuery.isBlank()) {
             nativeQuery.setParameter("query", searchQuery);
+            nativeCountQuery.setParameter("query", searchQuery);
         }
-        nativeQuery.setParameter("limit", limit);
-        nativeQuery.setParameter("offset", offset);
+
+        nativeQuery.setParameter("limit", pageable.getPageSize());
+        nativeQuery.setParameter("offset", pageable.getOffset());
 
         @SuppressWarnings("unchecked")
         List<Homestay> result = nativeQuery.getResultList();
-        return result;
+        long total = ((Number) nativeCountQuery.getSingleResult()).longValue();
+
+        return new PageImpl<>(result, pageable, total);
     }
 }

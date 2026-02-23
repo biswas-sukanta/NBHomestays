@@ -4,6 +4,9 @@ import com.nbh.backend.model.Homestay;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 public interface HomestayRepositoryCustom {
-    List<Homestay> search(String query, Map<String, Boolean> amenities, String tag, int limit, int offset);
+    Page<Homestay> search(String query, Map<String, Boolean> amenities, String tag, Pageable pageable);
 }
