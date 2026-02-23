@@ -21,7 +21,7 @@ export function HeroSearch() {
     };
 
     return (
-        <div className="relative h-screen w-full overflow-hidden select-none">
+        <div className="relative h-[50vh] min-h-[500px] w-full overflow-hidden select-none">
             {/* ── Ken Burns background ── */}
             <div
                 className="absolute inset-0 h-full w-full bg-cover bg-center animate-ken-burns"
@@ -30,8 +30,8 @@ export function HeroSearch() {
             />
 
             {/* ── Layered overlays for editorial depth ── */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/50 to-black/70" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/10" />
 
             {/* ── Content ── */}
             <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">

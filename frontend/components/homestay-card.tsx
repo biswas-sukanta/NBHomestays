@@ -130,7 +130,7 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
                         </div>
 
                         {/* Name */}
-                        <h3 className="text-[1.05rem] font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors duration-200 mb-2">
+                        <h3 className="text-[1.05rem] font-bold text-foreground truncate group-hover:text-primary transition-colors duration-200 mb-2">
                             {homestay.name}
                         </h3>
 

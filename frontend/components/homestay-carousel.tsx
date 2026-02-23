@@ -20,9 +20,9 @@ export function HomestayCarousel({ title, description, homestays, viewAllLink }:
             <div className="container mx-auto px-4">
                 {/* Header */}
                 <div className="flex items-end justify-between mb-6">
-                    <div>
-                        <h2 className="text-2xl font-extrabold tracking-tight text-foreground">{title}</h2>
-                        {description && <p className="text-muted-foreground text-sm mt-1">{description}</p>}
+                    <div className="mb-2">
+                        <h2 className="text-3xl font-bold tracking-tight text-foreground">{title}</h2>
+                        {description && <p className="text-muted-foreground text-base mt-1">{description}</p>}
                     </div>
                     {viewAllLink && (
                         <Link href={viewAllLink} className="text-primary font-semibold text-sm flex items-center gap-1 hover:underline">

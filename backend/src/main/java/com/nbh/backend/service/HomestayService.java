@@ -200,25 +200,26 @@ public class HomestayService {
 
         private HomestayDto.Response mapToResponse(Homestay homestay) {
                 // CRITICAL CACHE RULE: Deep copy collections to prevent Hibernate Proxy leaks
+                // AND null crashes
                 java.util.Map<String, Boolean> amenities = homestay.getAmenities() != null
                                 ? new java.util.HashMap<>(homestay.getAmenities())
-                                : null;
+                                : new java.util.HashMap<>();
                 java.util.List<String> policies = homestay.getPolicies() != null
                                 ? new java.util.ArrayList<>(homestay.getPolicies())
-                                : null;
+                                : new java.util.ArrayList<>();
                 java.util.Map<String, String> quickFacts = homestay.getQuickFacts() != null
                                 ? new java.util.HashMap<>(homestay.getQuickFacts())
-                                : null;
+                                : new java.util.HashMap<>();
                 java.util.Map<String, Object> hostDetails = homestay.getHostDetails() != null
                                 ? new java.util.HashMap<>(homestay.getHostDetails())
-                                : null;
+                                : new java.util.HashMap<>();
                 java.util.List<String> photoUrls = homestay.getPhotoUrls() != null
                                 ? new java.util.ArrayList<>(homestay.getPhotoUrls())
-                                : null;
+                                : new java.util.ArrayList<>();
 
                 java.util.List<String> tags = homestay.getTags() != null
                                 ? new java.util.ArrayList<>(homestay.getTags())
-                                : null;
+                                : new java.util.ArrayList<>();
 
                 return HomestayDto.Response.builder()
                                 .id(homestay.getId())

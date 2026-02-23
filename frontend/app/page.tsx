@@ -11,6 +11,7 @@ import api from '@/lib/api';
 import { ArrowRight, MountainSnow, ShieldCheck, HeartHandshake } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // --- Features ---
 const FEATURES = [
@@ -87,8 +88,16 @@ function HomeContent() {
       {/* ── Dynamic Content Feed ── */}
       <div className="min-h-[500px] py-10">
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="flex flex-col space-y-3">
+                  <Skeleton className="h-[250px] w-full rounded-2xl" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : currentTag ? (
           /* TAG SELECTED: Grid Feed View */
