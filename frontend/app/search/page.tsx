@@ -80,8 +80,8 @@ function SearchResults() {
                     setSearchGrid(res.data.content || []);
                 } else {
                     const [res1, res2, res3] = await Promise.all([
-                        api.get('/api/homestays/search?tag=Trending Now&page=0&size=6'),
-                        api.get('/api/homestays/search?tag=Explore Offbeat&page=0&size=6'),
+                        api.get('/api/homestays/search?tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6'),
+                        api.get('/api/homestays/search?tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6'),
                         api.get('/api/homestays/search?isFeatured=true&page=0&size=8')
                     ]);
                     setTrendingStays(res1.data.content || []);

@@ -106,7 +106,7 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
 
                 {/* Text Data */}
                 <div className="px-1 relative">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate mt-3">
+                    <h3 className="text-lg font-semibold text-gray-900 truncate mt-3" data-slot="card-title">
                         {homestay.name}
                     </h3>
                     <p className="text-sm text-gray-500 truncate mb-1" data-testid="location-text">

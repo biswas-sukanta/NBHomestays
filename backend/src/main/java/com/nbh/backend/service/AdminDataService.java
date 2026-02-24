@@ -142,9 +142,17 @@ public class AdminDataService {
                         double lat = 26.5 + (random.nextDouble() * 0.8);
                         double lng = 88.0 + (random.nextDouble() * 0.5);
 
+                        List<String> dynamicTags = new ArrayList<>(List.of(destination, "Verified"));
+                        if (random.nextDouble() > 0.7)
+                                dynamicTags.add("Trending Now");
+                        if (random.nextDouble() > 0.7)
+                                dynamicTags.add("Explore Offbeat");
+                        if (random.nextDouble() > 0.8)
+                                dynamicTags.add("Featured Stays");
+
                         seedData.add(createHomestay(owner, title, description, price, lat, lng,
                                         destination + ", West Bengal",
-                                        List.of(destination, "Verified"),
+                                        dynamicTags,
                                         photos));
                 }
 
