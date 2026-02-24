@@ -82,7 +82,7 @@ function SearchResults() {
                     const [res1, res2, res3] = await Promise.all([
                         api.get('/api/homestays/search?tag=Trending Now&page=0&size=6'),
                         api.get('/api/homestays/search?tag=Explore Offbeat&page=0&size=6'),
-                        api.get('/api/homestays/search?tag=Featured Escapes&page=0&size=6')
+                        api.get('/api/homestays/search?isFeatured=true&page=0&size=8')
                     ]);
                     setTrendingStays(res1.data.content || []);
                     setOffbeatStays(res2.data.content || []);
@@ -111,8 +111,8 @@ function SearchResults() {
 
         setLoading(true);
         try {
-            const res = await fetch(`/api/homestays/search?page=${page}&size=12`);
-            const newData = await res.json(); // Mapped to Spring Page<>
+            const res = await api.get(`/api/homestays/search?page=${page}&size=12`);
+            const newData = res.data; // Mapped to Spring Page<>
 
             const fetchedContent = newData.content || [];
 

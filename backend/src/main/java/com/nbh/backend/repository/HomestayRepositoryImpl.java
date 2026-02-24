@@ -19,11 +19,18 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
     private EntityManager entityManager;
 
     @Override
-    public Page<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, Pageable pageable) {
+    public Page<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, Boolean isFeatured,
+            Pageable pageable) {
         StringBuilder sql = new StringBuilder("SELECT h.id FROM homestays h WHERE h.status = 'APPROVED' ");
         StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM homestays h WHERE h.status = 'APPROVED' ");
 
         StringBuilder conditions = new StringBuilder();
+
+        if (Boolean.TRUE.equals(isFeatured)) {
+            conditions.append("AND h.featured = true ");
+        } else if (Boolean.FALSE.equals(isFeatured)) {
+            conditions.append("AND (h.featured = false OR h.featured IS NULL) ");
+        }
 
         // Full Text Search
         if (searchQuery != null && !searchQuery.isBlank()) {

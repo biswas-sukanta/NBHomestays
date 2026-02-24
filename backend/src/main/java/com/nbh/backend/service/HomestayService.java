@@ -61,12 +61,15 @@ public class HomestayService {
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
-        @Cacheable(value = "homestaysSearch", key = "(#query ?: 'null') + '-' + (#tag ?: 'null') + '-' + #size + '-' + #page", sync = true)
-        public Page<HomestayDto.Response> searchHomestays(String query, String tag, int size, int page) {
+        @Cacheable(value = "homestaysSearch", key = "(#query ?: 'null') + '-' + (#tag ?: 'null') + '-' + (#isFeatured ?: 'null') + '-' + #size + '-' + #page", sync = true)
+        public Page<HomestayDto.Response> searchHomestays(String query, String tag, Boolean isFeatured, int size,
+                        int page) {
                 Pageable pageable = PageRequest.of(page, size);
 
-                // If query is empty and tag is empty, return all APPROVED homestays
-                if ((query == null || query.trim().isEmpty()) && (tag == null || tag.trim().isEmpty())) {
+                // If query is empty and tag is empty and isFeatured is null, return all
+                // APPROVED homestays
+                if ((query == null || query.trim().isEmpty()) && (tag == null || tag.trim().isEmpty())
+                                && isFeatured == null) {
                         List<HomestayDto.Response> allApproved = repository.findByStatus(Homestay.Status.APPROVED)
                                         .stream()
                                         .map(this::mapToResponse)
@@ -81,7 +84,9 @@ public class HomestayService {
 
                 // Otherwise perform search
                 try {
-                        Page<Homestay> homestayPage = repository.search(query, null, tag, pageable);
+                        Page<Homestay> homestayPage = repository.search(query, new java.util.HashMap<String, Boolean>(),
+                                        tag,
+                                        isFeatured, pageable);
                         return homestayPage.map(this::mapToResponse);
                 } catch (Exception e) {
                         // Fallback: return empty page
@@ -249,6 +254,7 @@ public class HomestayService {
                                 .locationName(homestay.getAddress())
                                 .ownerId(homestay.getOwner().getId())
                                 .ownerEmail(homestay.getOwner().getEmail())
+                                .featured(homestay.getFeatured())
                                 .build();
         }
 }

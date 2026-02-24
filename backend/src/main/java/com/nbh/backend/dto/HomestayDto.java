@@ -71,5 +71,6 @@ public class HomestayDto {
         private Homestay.Status status;
         private UUID ownerId;
         private String ownerEmail;
+        private Boolean featured;
     }
 }

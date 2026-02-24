@@ -144,7 +144,7 @@ public class AdminDataService {
 
                         seedData.add(createHomestay(owner, title, description, price, lat, lng,
                                         destination + ", West Bengal",
-                                        List.of(destination, "Trending Now", "Verified"),
+                                        List.of(destination, "Verified"),
                                         photos));
                 }
 
@@ -176,7 +176,7 @@ public class AdminDataService {
                                 .hostDetails(Map.of("reviewsCount", 15, "rating", 4.8, "yearsHosting", 3, "languages",
                                                 List.of("English", "Hindi", "Bengali")))
                                 .status(Homestay.Status.APPROVED)
-                                .featured(tags.contains("Featured Stays") || tags.contains("Trending Now"))
+                                .featured(tags.contains("Featured Stays"))
                                 .vibeScore(Math.random() * 5 + 90) // 90 to 95 vibe score
                                 .build();
         }

@@ -41,6 +41,7 @@ export default function AdminPage() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [activeTab, setActiveTab] = useState<Tab>('pending');
     const [loading, setLoading] = useState(true);
+    const [togglingId, setTogglingId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isLoading) {
@@ -88,15 +89,23 @@ export default function AdminPage() {
     const handleDeletePost = async (postId: string) => {
         setPosts(prev => prev.filter(p => p.id !== postId));
         toast.success('Post deleted.');
-        try { await fetch(`${API}/api/admin/posts/${postId}`, { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} }); }
+        try { await api.delete(`/api/admin/posts/${postId}`); }
         catch { toast.error('Failed to delete post'); fetchData(); }
     };
 
     const handleToggleFeatured = async (id: string, currentFeatured: boolean) => {
+        setTogglingId(id);
+        const originalState = [...allHomestays];
         setAllHomestays(prev => prev.map(h => h.id === id ? { ...h, featured: !currentFeatured } : h));
-        toast.success(currentFeatured ? 'Removed from featured.' : 'Added to featured! ⭐');
-        try { await api.put(`/api/admin/homestays/${id}/feature`); }
-        catch { toast.error('Failed to toggle featured'); fetchData(); }
+        try {
+            await api.put(`/api/admin/homestays/${id}/feature`);
+            toast.success(currentFeatured ? 'Removed from featured.' : 'Added to featured! ⭐');
+        } catch {
+            toast.error('Failed to toggle featured');
+            setAllHomestays(originalState);
+        } finally {
+            setTogglingId(null);
+        }
     };
 
     if (isLoading || loading) return <div className="p-8 text-center">Loading Admin Dashboard...</div>;
@@ -200,8 +209,9 @@ export default function AdminPage() {
                                     <p className="text-xs text-muted-foreground mb-3">₹{h.pricePerNight}/night · {h.ownerEmail}</p>
                                     <Button size="sm" variant={h.featured ? 'destructive' : 'default'}
                                         onClick={() => handleToggleFeatured(h.id, !!h.featured)}
-                                        className="w-full">
-                                        {h.featured ? 'Remove from Featured' : '⭐ Feature this Stay'}
+                                        className="w-full"
+                                        disabled={togglingId === h.id}>
+                                        {togglingId === h.id ? 'Saving...' : h.featured ? 'Remove from Featured' : '⭐ Feature this Stay'}
                                     </Button>
                                 </CardContent>
                             </Card>

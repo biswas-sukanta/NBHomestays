@@ -24,6 +24,7 @@ interface AuthContextType {
     logout: () => void;
     isAuthenticated: boolean;
     isLoading: boolean;
+    token: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [token, setToken] = useState<string | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -49,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     role: decoded.role
                 });
                 setIsAuthenticated(true);
+                setToken(token);
             } catch (e) {
                 console.error("Invalid token", e);
                 localStorage.removeItem('token');
@@ -68,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: decoded.role
         });
         setIsAuthenticated(true);
+        setToken(token);
         router.refresh();
     };
 
@@ -86,7 +90,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             login,
             logout,
             isAuthenticated,
-            isLoading
+            isLoading,
+            token
         }}>
             {children}
         </AuthContext.Provider>

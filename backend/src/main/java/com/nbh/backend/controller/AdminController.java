@@ -17,6 +17,7 @@ import org.springframework.cache.annotation.Caching;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
+@org.springframework.transaction.annotation.Transactional
 public class AdminController {
 
     private final HomestayRepository homestayRepository;
