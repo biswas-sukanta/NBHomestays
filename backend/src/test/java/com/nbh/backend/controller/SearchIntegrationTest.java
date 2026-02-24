@@ -57,7 +57,7 @@ public class SearchIntegrationTest {
                                 .owner(owner)
                                 .build();
 
-                when(homestayRepository.search(anyString(), any(), any(), any()))
+                when(homestayRepository.search(anyString(), any(), any(), any(), any()))
                                 .thenReturn(new PageImpl<>(List.of(homestay), PageRequest.of(0, 20), 1));
 
                 mockMvc.perform(get("/api/homestays/search")
@@ -65,7 +65,7 @@ public class SearchIntegrationTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.content[0].name").value("Test Stay"));
 
-                verify(homestayRepository).search(eq("Test"), any(), eq(null), eq(PageRequest.of(0, 20)));
+                verify(homestayRepository).search(eq("Test"), any(), eq(null), eq(null), eq(PageRequest.of(0, 20)));
         }
 
         @Test

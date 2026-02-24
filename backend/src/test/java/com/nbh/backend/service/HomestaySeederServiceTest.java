@@ -42,14 +42,14 @@ public class HomestaySeederServiceTest {
 
         // 2. Query for Darjeeling specifically
         Page<Homestay> darjeelingStays = homestayRepository.search(
-                "", new HashMap<>(), "Darjeeling", PageRequest.of(0, 10));
+                "", new HashMap<>(), "Darjeeling", null, PageRequest.of(0, 10));
 
         assertEquals(2, darjeelingStays.getTotalElements(), "Should have exactly 2 Darjeeling tags.");
         assertTrue(darjeelingStays.getContent().stream().anyMatch(h -> h.getName().contains("Cloud 9")));
 
         // 3. Query for Mirik specifically (verifying tag casing logic)
         Page<Homestay> mirikStays = homestayRepository.search(
-                "", new HashMap<>(), "Mirik", PageRequest.of(0, 10));
+                "", new HashMap<>(), "Mirik", null, PageRequest.of(0, 10));
 
         assertEquals(2, mirikStays.getTotalElements(), "Should have exactly 2 Mirik tags.");
         assertTrue(mirikStays.getContent().stream().anyMatch(h -> h.getName().contains("Lakeview")));
