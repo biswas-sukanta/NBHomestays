@@ -56,7 +56,7 @@ public class AdminController {
             @CacheEvict(value = "postsList", allEntries = true),
             @CacheEvict(value = "adminStats", allEntries = true)
     })
-    public ResponseEntity<Void> adminDeletePost(@PathVariable UUID id) {
+    public ResponseEntity<Void> adminDeletePost(@PathVariable("id") UUID id) {
         if (!postRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
@@ -68,10 +68,10 @@ public class AdminController {
     @PutMapping("/homestays/{id}/feature")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Caching(evict = {
-            @CacheEvict(value = "homestay", key = "#id"),
+            @CacheEvict(value = "homestay", key = "#p0"),
             @CacheEvict(value = "homestaysSearch", allEntries = true)
     })
-    public ResponseEntity<Map<String, Object>> toggleFeatured(@PathVariable UUID id) {
+    public ResponseEntity<Map<String, Object>> toggleFeatured(@PathVariable("id") UUID id) {
         Homestay homestay = homestayRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Homestay not found"));
         boolean newState = !Boolean.TRUE.equals(homestay.getFeatured());

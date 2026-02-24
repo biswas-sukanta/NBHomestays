@@ -95,7 +95,7 @@ export default function AdminPage() {
     const handleToggleFeatured = async (id: string, currentFeatured: boolean) => {
         setAllHomestays(prev => prev.map(h => h.id === id ? { ...h, featured: !currentFeatured } : h));
         toast.success(currentFeatured ? 'Removed from featured.' : 'Added to featured! ⭐');
-        try { await fetch(`${API}/api/admin/homestays/${id}/feature`, { method: 'PUT', headers: token ? { Authorization: `Bearer ${token}` } : {} }); }
+        try { await api.put(`/api/admin/homestays/${id}/feature`); }
         catch { toast.error('Failed to toggle featured'); fetchData(); }
     };
 

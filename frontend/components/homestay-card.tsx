@@ -20,6 +20,7 @@ export interface HomestaySummary {
     photoUrls: string[];
     vibeScore: number;
     status: string;
+    locationName?: string;
 }
 
 interface HomestayCardProps {
@@ -44,7 +45,7 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
         id: homestay.id,
         name: homestay.name,
         imageUrl: homestay.photoUrls?.[0] || FALLBACK_IMAGE,
-        locationName: 'North Bengal Hills',
+        locationName: homestay.locationName || 'North Bengal Hills',
         pricePerNight: homestay.pricePerNight,
     };
 
@@ -108,8 +109,8 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
                     <h3 className="text-lg font-semibold text-gray-900 truncate mt-3">
                         {homestay.name}
                     </h3>
-                    <p className="text-sm text-gray-500 truncate mb-1">
-                        North Bengal Hills
+                    <p className="text-sm text-gray-500 truncate mb-1" data-testid="location-text">
+                        {homestay.locationName || 'North Bengal Hills'}
                     </p>
                     <div className="mt-1 flex items-center justify-between">
                         <span className="font-semibold text-gray-900">
