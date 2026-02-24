@@ -20,7 +20,7 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
 
     @Override
     public Page<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, Pageable pageable) {
-        StringBuilder sql = new StringBuilder("SELECT h.* FROM homestays h WHERE h.status = 'APPROVED' ");
+        StringBuilder sql = new StringBuilder("SELECT h.id FROM homestays h WHERE h.status = 'APPROVED' ");
         StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM homestays h WHERE h.status = 'APPROVED' ");
 
         StringBuilder conditions = new StringBuilder();
@@ -65,7 +65,7 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         // Pagination
         sql.append("LIMIT :limit OFFSET :offset");
 
-        Query nativeQuery = entityManager.createNativeQuery(sql.toString(), Homestay.class);
+        Query nativeQuery = entityManager.createNativeQuery(sql.toString());
         Query nativeCountQuery = entityManager.createNativeQuery(countSql.toString());
 
         if (searchQuery != null && !searchQuery.isBlank()) {
@@ -77,8 +77,32 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         nativeQuery.setParameter("offset", pageable.getOffset());
 
         @SuppressWarnings("unchecked")
-        List<Homestay> result = nativeQuery.getResultList();
+        List<Object> rawIds = nativeQuery.getResultList();
+        List<java.util.UUID> ids = rawIds.stream()
+                .map(obj -> {
+                    if (obj instanceof java.util.UUID)
+                        return (java.util.UUID) obj;
+                    return java.util.UUID.fromString(obj.toString());
+                })
+                .collect(java.util.stream.Collectors.toList());
         long total = ((Number) nativeCountQuery.getSingleResult()).longValue();
+
+        if (ids.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, total);
+        }
+
+        // N+1 Fix: Fetch entities with JOIN FETCH to eagerly load proxies
+        List<Homestay> unsorted = entityManager.createQuery(
+                "SELECT h FROM Homestay h LEFT JOIN FETCH h.owner LEFT JOIN FETCH h.photoUrls WHERE h.id IN :ids",
+                Homestay.class).setParameter("ids", ids).getResultList();
+
+        // Sort unsorted list based on the order of the initially ranked native 'ids'
+        Map<java.util.UUID, Homestay> homestayMap = unsorted.stream()
+                .collect(java.util.stream.Collectors.toMap(Homestay::getId, h -> h));
+        List<Homestay> result = ids.stream()
+                .map(homestayMap::get)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toList());
 
         return new PageImpl<>(result, pageable, total);
     }

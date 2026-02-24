@@ -61,7 +61,7 @@ public class HomestayService {
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
-        @Cacheable(value = "homestaysSearch", key = "'all'", sync = true)
+        @Cacheable(value = "homestaysSearch", key = "(#query ?: 'null') + '-' + (#tag ?: 'null') + '-' + #size + '-' + #page", sync = true)
         public Page<HomestayDto.Response> searchHomestays(String query, String tag, int size, int page) {
                 Pageable pageable = PageRequest.of(page, size);
 
@@ -208,7 +208,7 @@ public class HomestayService {
                                 .toList();
         }
 
-        private HomestayDto.Response mapToResponse(Homestay homestay) {
+        public HomestayDto.Response mapToResponse(Homestay homestay) {
                 // CRITICAL CACHE RULE: Deep copy collections to prevent Hibernate Proxy leaks
                 // AND null crashes
                 java.util.Map<String, Boolean> amenities = homestay.getAmenities() != null

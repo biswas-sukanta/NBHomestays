@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,8 +20,9 @@ public class HomestayController {
 
     private final HomestayService homestayService;
 
-    @PostMapping
-    public HomestayDto.Response createHomestay(@RequestBody HomestayDto.Request request,
+    @PostMapping("/add")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_HOST') or hasAuthority('ROLE_ADMIN')")
+    public HomestayDto.Response createHomestay(@Valid @RequestBody HomestayDto.Request request,
             Authentication authentication) {
         // Extract owner email from Security Context
         String userEmail = authentication.getName();

@@ -12,11 +12,20 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class TripBoardService {
 
     private final TripBoardSaveRepository tripBoardSaveRepository;
     private final HomestayRepository homestayRepository;
+
+    // Use HomestayService to map entities to safe DTOs to prevent Data Leakage
+    private final HomestayService homestayService;
+
+    public TripBoardService(TripBoardSaveRepository tripBoardSaveRepository, HomestayRepository homestayRepository,
+            @org.springframework.context.annotation.Lazy HomestayService homestayService) {
+        this.tripBoardSaveRepository = tripBoardSaveRepository;
+        this.homestayRepository = homestayRepository;
+        this.homestayService = homestayService;
+    }
 
     /** Toggle save: returns true if now saved, false if removed. */
     @Transactional
@@ -45,14 +54,16 @@ public class TripBoardService {
     }
 
     /**
-     * Returns full homestay summaries for the user's board.
+     * Returns full homestay summaries for the user's board limit to safe DTOs.
      * This is the server-side sync endpoint — the frontend Zustand store
      * is the source of truth offline, this syncs on login.
      */
     @Transactional(readOnly = true)
-    public List<Homestay> getSavedHomestays(UUID userId) {
+    public List<com.nbh.backend.dto.HomestayDto.Response> getSavedHomestays(UUID userId) {
         List<UUID> savedIds = tripBoardSaveRepository.findHomestayIdsByUserId(userId);
-        return homestayRepository.findAllById(savedIds);
+        return homestayRepository.findAllById(savedIds).stream()
+                .map(homestayService::mapToResponse)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Transactional(readOnly = true)

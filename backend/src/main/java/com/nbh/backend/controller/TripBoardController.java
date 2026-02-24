@@ -51,7 +51,7 @@ public class TripBoardController {
     /** Full homestay objects for Trip Board display. */
     @GetMapping("/homestays")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<Homestay>> getSavedHomestays(
+    public ResponseEntity<List<com.nbh.backend.dto.HomestayDto.Response>> getSavedHomestays(
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(tripBoardService.getSavedHomestays(currentUser.getId()));
     }

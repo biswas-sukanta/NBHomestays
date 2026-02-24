@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -18,19 +19,19 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthDto.AuthenticationResponse> register(
-            @RequestBody AuthDto.RegisterRequest request) {
+            @Valid @RequestBody AuthDto.RegisterRequest request) {
         return ResponseEntity.ok(service.register(request));
     }
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthDto.AuthenticationResponse> authenticate(
-            @RequestBody AuthDto.AuthenticationRequest request) {
+            @Valid @RequestBody AuthDto.AuthenticationRequest request) {
         return ResponseEntity.ok(service.authenticate(request));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthDto.AuthenticationResponse> login(
-            @RequestBody AuthDto.AuthenticationRequest request) {
+            @Valid @RequestBody AuthDto.AuthenticationRequest request) {
         return ResponseEntity.ok(service.authenticate(request));
     }
 }

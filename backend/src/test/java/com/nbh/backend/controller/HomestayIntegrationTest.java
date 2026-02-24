@@ -50,9 +50,10 @@ public class HomestayIntegrationTest {
                                 .pricePerNight(1500)
                                 .latitude(27.0)
                                 .longitude(88.0)
+                                .locationName("Darjeeling")
                                 .build();
 
-                mockMvc.perform(post("/api/homestays")
+                mockMvc.perform(post("/api/homestays/add")
                                 .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -81,9 +82,9 @@ public class HomestayIntegrationTest {
                 homestayRepository.save(h);
 
                 mockMvc.perform(get("/api/homestays/search")
-                                .param("query", "Kanchenjunga"))
+                                .param("q", "Kanchenjunga"))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$[0].name").value("Mountain View"));
+                                .andExpect(jsonPath("$.content[0].name").value("Mountain View"));
         }
 
         private String registerUser(String email, User.Role role) throws Exception {
