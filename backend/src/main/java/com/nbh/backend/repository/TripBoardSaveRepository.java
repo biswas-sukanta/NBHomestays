@@ -16,6 +16,8 @@ public interface TripBoardSaveRepository extends JpaRepository<TripBoardSave, Tr
 
     void deleteByUserIdAndHomestayId(UUID userId, UUID homestayId);
 
+    void deleteByHomestayId(UUID homestayId);
+
     /** Return all homestay IDs saved by a user (for frontend sync). */
     @Query("SELECT t.homestayId FROM TripBoardSave t WHERE t.userId = :userId ORDER BY t.savedAt DESC")
     List<UUID> findHomestayIdsByUserId(@Param("userId") UUID userId);

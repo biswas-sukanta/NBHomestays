@@ -29,7 +29,13 @@ public class S3Config {
     @Bean
     public S3Client s3Client() {
         if (s3Endpoint == null || s3Endpoint.isBlank() || accessKey.isBlank()) {
-            return null;
+            // Return a dummy client to satisfy autowiring during local dev where AWS is
+            // unset
+            return S3Client.builder()
+                    .region(Region.US_EAST_1)
+                    .credentialsProvider(StaticCredentialsProvider.create(
+                            AwsBasicCredentials.create("dummy-access-key", "dummy-secret-key")))
+                    .build();
         }
 
         // SUPABASE S3 Proxy compatibility: Force us-east-1 for the signing region

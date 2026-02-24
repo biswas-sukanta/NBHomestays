@@ -1,6 +1,6 @@
 import { test, expect, APIRequestContext, APIResponse } from '@playwright/test';
 
-export const API_BASE = process.env.API_BASE_URL || 'https://thoughtful-jemie-droidmaniac-8802977f.koyeb.app';
+export const API_BASE = process.env.API_BASE_URL || 'http://localhost:8080';
 
 /** Permanent Regression Suite — Central API Client Wrapper */
 export class ApiClient {

@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 
@@ -33,7 +32,6 @@ public class AdminController {
     /** Platform-wide analytics for the admin dashboard */
     @GetMapping("/stats")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Cacheable(value = "adminStats", sync = true)
     public ResponseEntity<Map<String, Object>> getStats() {
         long totalUsers = userRepository.count();
         long totalPosts = postRepository.count();

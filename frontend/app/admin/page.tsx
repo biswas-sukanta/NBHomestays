@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Users, FileText, Home, Star, TrendingUp, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import AdminDataManagement from '@/components/admin/AdminDataManagement';
 
 interface Homestay {
     id: string; name: string; description: string; pricePerNight: number;
@@ -22,7 +23,7 @@ interface Stats {
     pendingHomestays: number; approvedHomestays: number; featuredHomestays: number;
 }
 
-type Tab = 'pending' | 'all' | 'community' | 'featured' | 'analytics';
+type Tab = 'pending' | 'all' | 'community' | 'featured' | 'analytics' | 'data';
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 const statusColor: Record<string, string> = {
@@ -106,6 +107,7 @@ export default function AdminPage() {
         { key: 'community', label: 'Community', count: posts.length },
         { key: 'featured', label: 'Featured' },
         { key: 'analytics', label: 'Analytics' },
+        { key: 'data', label: 'Data Management' },
     ];
 
     return (
@@ -232,6 +234,11 @@ export default function AdminPage() {
                         </Card>
                     ))}
                 </div>
+            )}
+
+            {/* ── Data Management ──────────────────────────────── */}
+            {activeTab === 'data' && (
+                <AdminDataManagement />
             )}
         </div>
     );

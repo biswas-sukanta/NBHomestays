@@ -46,7 +46,7 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
             String safeTag = tag.replace("'", "''");
             conditions.append("AND (h.tags @> '[\"")
                     .append(safeTag)
-                    .append("\"]'::jsonb OR lower(h.location_name) LIKE lower('%")
+                    .append("\"]'::jsonb OR lower(h.address) LIKE lower('%")
                     .append(safeTag)
                     .append("%')) ");
         }
