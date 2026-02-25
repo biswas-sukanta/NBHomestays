@@ -14,6 +14,7 @@ import dynamic from 'next/dynamic';
 import { LayoutGrid, Map as MapIcon, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
     ssr: false,
@@ -159,12 +160,12 @@ function SearchResults() {
 
             const fetchedContent = newData.content || [];
 
-            setAllStays(prev => [...prev, ...fetchedContent]);
+            setAllStays((prev: HomestaySummary[]) => [...prev, ...fetchedContent]);
 
             if (newData.last || fetchedContent.length === 0) {
                 setHasMore(false);
             } else {
-                setPage(prev => prev + 1);
+                setPage((prev: number) => prev + 1);
             }
         } catch (error) {
             console.error('Failed to resolve paginated payload', error);
