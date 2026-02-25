@@ -240,26 +240,6 @@ function SearchResults() {
             <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between py-2">
                     <CategoryFilterBar />
-                    <div className="flex bg-secondary/20 p-1 rounded-full border border-border/50 ml-4 hidden md:flex">
-                        <Button
-                            variant={viewType === 'grid' ? 'secondary' : 'ghost'}
-                            size="sm"
-                            className="rounded-full h-8 px-4"
-                            onClick={() => setViewType('grid')}
-                        >
-                            <LayoutGrid className="w-4 h-4 mr-2" />
-                            Grid
-                        </Button>
-                        <Button
-                            variant={viewType === 'map' ? 'secondary' : 'ghost'}
-                            size="sm"
-                            className="rounded-full h-8 px-4"
-                            onClick={() => setViewType('map')}
-                        >
-                            <MapIcon className="w-4 h-4 mr-2" />
-                            Map
-                        </Button>
-                    </div>
                 </div>
             </div>
 
@@ -305,7 +285,39 @@ function SearchResults() {
 
                         {/* STEP 4: Proper Infinite Paginated Grid */}
                         <div className="border-t border-gray-100 pt-16">
-                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight mb-8">All Homestays</h2>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight italic relative">
+                                    All Homestays
+                                    <span className="absolute -bottom-1 left-0 w-12 h-1 bg-[#004d00] rounded-full"></span>
+                                </h2>
+
+                                <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm self-end sm:self-auto">
+                                    <button
+                                        onClick={() => setViewType('grid')}
+                                        className={cn(
+                                            "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300",
+                                            viewType === 'grid'
+                                                ? "bg-white text-[#004d00] shadow-md scale-105"
+                                                : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+                                        )}
+                                    >
+                                        <LayoutGrid className={cn("w-4 h-4", viewType === 'grid' ? "animate-pulse" : "")} />
+                                        Grid
+                                    </button>
+                                    <button
+                                        onClick={() => setViewType('map')}
+                                        className={cn(
+                                            "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300",
+                                            viewType === 'map'
+                                                ? "bg-white text-[#004d00] shadow-md scale-105"
+                                                : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+                                        )}
+                                    >
+                                        <MapIcon className={cn("w-4 h-4", viewType === 'map' ? "animate-pulse" : "")} />
+                                        Map
+                                    </button>
+                                </div>
+                            </div>
 
                             {viewType === 'map' ? (
                                 <div className="h-[600px] w-full mb-12">
@@ -337,25 +349,36 @@ function SearchResults() {
                 ) : (
                     /* Search Term Direct Results */
                     <div className="w-full">
-                        <div className="flex justify-between items-center mb-8">
-                            <h2 className="text-xl font-bold">Search Results</h2>
-                            <div className="flex bg-secondary/20 p-1 rounded-full border border-border/50 md:hidden">
-                                <Button
-                                    variant={viewType === 'grid' ? 'secondary' : 'ghost'}
-                                    size="sm"
-                                    className="rounded-full h-8"
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                            <h2 className="text-2xl font-bold italic relative">
+                                Search Results
+                                <span className="absolute -bottom-1 left-0 w-12 h-1 bg-[#004d00] rounded-full"></span>
+                            </h2>
+                            <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm self-end sm:self-auto">
+                                <button
                                     onClick={() => setViewType('grid')}
+                                    className={cn(
+                                        "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300",
+                                        viewType === 'grid'
+                                            ? "bg-white text-[#004d00] shadow-md scale-105"
+                                            : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+                                    )}
                                 >
-                                    <LayoutGrid className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                    variant={viewType === 'map' ? 'secondary' : 'ghost'}
-                                    size="sm"
-                                    className="rounded-full h-8"
+                                    <LayoutGrid className={cn("w-4 h-4", viewType === 'grid' ? "animate-pulse" : "")} />
+                                    Grid
+                                </button>
+                                <button
                                     onClick={() => setViewType('map')}
+                                    className={cn(
+                                        "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300",
+                                        viewType === 'map'
+                                            ? "bg-white text-[#004d00] shadow-md scale-105"
+                                            : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+                                    )}
                                 >
-                                    <MapIcon className="w-4 h-4" />
-                                </Button>
+                                    <MapIcon className={cn("w-4 h-4", viewType === 'map' ? "animate-pulse" : "")} />
+                                    Map
+                                </button>
                             </div>
                         </div>
 
