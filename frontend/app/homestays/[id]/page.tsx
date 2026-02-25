@@ -164,7 +164,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {/* ── Meet Your Host ── */}
                     {homestay.hostDetails && Object.keys(homestay.hostDetails).length > 0 && (
-                        <HostProfile ownerName={ownerNameDisplay} hostDetails={homestay.hostDetails} />
+                        <HostProfile ownerId={homestay.ownerId} ownerName={ownerNameDisplay} hostDetails={homestay.hostDetails} />
                     )}
 
                     {/* ── Map ── */}

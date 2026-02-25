@@ -32,7 +32,7 @@ public class TripBoardController {
     @PostMapping("/{homestayId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Boolean>> toggleSave(
-            @PathVariable UUID homestayId,
+            @PathVariable("homestayId") UUID homestayId,
             @AuthenticationPrincipal User currentUser) {
         boolean saved = tripBoardService.toggleSave(homestayId, currentUser.getId());
         return ResponseEntity.ok(Map.of("saved", saved));
@@ -42,7 +42,7 @@ public class TripBoardController {
     @GetMapping("/{homestayId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Boolean>> isSaved(
-            @PathVariable UUID homestayId,
+            @PathVariable("homestayId") UUID homestayId,
             @AuthenticationPrincipal User currentUser) {
         boolean saved = tripBoardService.isSaved(homestayId, currentUser.getId());
         return ResponseEntity.ok(Map.of("saved", saved));

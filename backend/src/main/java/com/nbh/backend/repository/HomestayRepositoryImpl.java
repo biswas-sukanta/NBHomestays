@@ -20,6 +20,7 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
 
     @Override
     public Page<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, Boolean isFeatured,
+            Double minLat, Double maxLat, Double minLng, Double maxLng,
             Pageable pageable) {
         StringBuilder sql = new StringBuilder("SELECT h.id FROM homestays h WHERE h.status = 'APPROVED' ");
         StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM homestays h WHERE h.status = 'APPROVED' ");
@@ -50,12 +51,13 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         // Tag Filter (JSONB Array contains element OR location_name checks for legacy
         // safety)
         if (tag != null && !tag.isBlank()) {
-            String safeTag = tag.replace("'", "''");
-            conditions.append("AND (h.tags @> '[\"")
-                    .append(safeTag)
-                    .append("\"]'::jsonb OR lower(h.address) LIKE lower('%")
-                    .append(safeTag)
-                    .append("%')) ");
+            conditions.append("AND (h.tags @> CAST(:tagJson AS jsonb) OR lower(h.address) LIKE lower(:tagLike)) ");
+        }
+
+        // Bounding Box
+        if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
+            conditions.append("AND h.latitude BETWEEN :minLat AND :maxLat ")
+                    .append("AND h.longitude BETWEEN :minLng AND :maxLng ");
         }
 
         sql.append(conditions);
@@ -78,6 +80,26 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         if (searchQuery != null && !searchQuery.isBlank()) {
             nativeQuery.setParameter("query", searchQuery);
             nativeCountQuery.setParameter("query", searchQuery);
+        }
+
+        if (tag != null && !tag.isBlank()) {
+            String tagJson = "[\"" + tag.replace("\"", "\\\"") + "\"]";
+            String tagLike = "%" + tag + "%";
+            nativeQuery.setParameter("tagJson", tagJson);
+            nativeQuery.setParameter("tagLike", tagLike);
+            nativeCountQuery.setParameter("tagJson", tagJson);
+            nativeCountQuery.setParameter("tagLike", tagLike);
+        }
+
+        if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
+            nativeQuery.setParameter("minLat", minLat);
+            nativeQuery.setParameter("maxLat", maxLat);
+            nativeQuery.setParameter("minLng", minLng);
+            nativeQuery.setParameter("maxLng", maxLng);
+            nativeCountQuery.setParameter("minLat", minLat);
+            nativeCountQuery.setParameter("maxLat", maxLat);
+            nativeCountQuery.setParameter("minLng", minLng);
+            nativeCountQuery.setParameter("maxLng", maxLng);
         }
 
         nativeQuery.setParameter("limit", pageable.getPageSize());

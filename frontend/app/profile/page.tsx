@@ -143,13 +143,18 @@ function SettingsTab() {
     const { user, logout } = useAuth() as any;
     return (
         <div className="max-w-md space-y-6">
-            <div className="bg-secondary/40 rounded-xl p-4 space-y-3">
-                <h3 className="font-semibold text-sm text-foreground">Account</h3>
-                <div className="text-sm text-muted-foreground space-y-1">
-                    <p><span className="font-medium text-foreground">Name:</span> {user?.firstName} {user?.lastName}</p>
-                    <p><span className="font-medium text-foreground">Email:</span> {user?.email}</p>
-                    <p><span className="font-medium text-foreground">Role:</span> {user?.role?.replace('ROLE_', '')}</p>
-                </div>
+            <div className="bg-secondary/40 rounded-xl p-4 space-y-4">
+                <h3 className="font-semibold text-sm text-foreground">Public Bio</h3>
+                <Textarea
+                    placeholder="Tell the community about yourself..."
+                    defaultValue={user?.bio}
+                    className="bg-white border-border/50 text-sm italic"
+                    onBlur={(e) => {
+                        api.put('/api/users/profile', { bio: e.target.value })
+                            .then(() => toast.success('Bio updated!'))
+                            .catch(() => toast.error('Failed to update bio'));
+                    }}
+                />
             </div>
             <Button
                 variant="destructive"

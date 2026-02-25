@@ -25,7 +25,7 @@ public class HomestayQuestionController {
     @PostMapping("/homestays/{id}/questions")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<HomestayQuestionDto> askQuestion(
-            @PathVariable UUID id,
+            @PathVariable("id") UUID id,
             @RequestBody QnAContentRequest request,
             Authentication authentication) {
         return ResponseEntity.ok(questionService.askQuestion(id, request.getText(), authentication.getName()));
@@ -34,7 +34,7 @@ public class HomestayQuestionController {
     @PutMapping("/questions/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<HomestayQuestionDto> updateQuestion(
-            @PathVariable UUID id,
+            @PathVariable("id") UUID id,
             @RequestBody QnAContentRequest request,
             Authentication authentication) {
         return ResponseEntity.ok(questionService.updateQuestion(id, request.getText(), authentication.getName()));
@@ -43,14 +43,14 @@ public class HomestayQuestionController {
     @DeleteMapping("/questions/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteQuestion(
-            @PathVariable UUID id,
+            @PathVariable("id") UUID id,
             Authentication authentication) {
         questionService.deleteQuestion(id, authentication.getName());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/homestays/{id}/questions")
-    public ResponseEntity<List<HomestayQuestionDto>> getQuestions(@PathVariable UUID id) {
+    public ResponseEntity<List<HomestayQuestionDto>> getQuestions(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(questionService.getQuestionsByHomestay(id));
     }
 
@@ -59,7 +59,7 @@ public class HomestayQuestionController {
     @PostMapping("/questions/{id}/answers")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<HomestayAnswerDto> answerQuestion(
-            @PathVariable UUID id,
+            @PathVariable("id") UUID id,
             @RequestBody QnAContentRequest request,
             Authentication authentication) {
         return ResponseEntity.ok(questionService.answerQuestion(id, request.getText(), authentication.getName()));
@@ -68,7 +68,7 @@ public class HomestayQuestionController {
     @PutMapping("/answers/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<HomestayAnswerDto> updateAnswer(
-            @PathVariable UUID id,
+            @PathVariable("id") UUID id,
             @RequestBody QnAContentRequest request,
             Authentication authentication) {
         return ResponseEntity.ok(questionService.updateAnswer(id, request.getText(), authentication.getName()));
@@ -77,7 +77,7 @@ public class HomestayQuestionController {
     @DeleteMapping("/answers/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteAnswer(
-            @PathVariable UUID id,
+            @PathVariable("id") UUID id,
             Authentication authentication) {
         questionService.deleteAnswer(id, authentication.getName());
         return ResponseEntity.ok().build();

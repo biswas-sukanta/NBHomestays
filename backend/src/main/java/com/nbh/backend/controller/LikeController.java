@@ -25,7 +25,7 @@ public class LikeController {
     @PostMapping("/{postId}/like")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> toggleLike(
-            @PathVariable UUID postId,
+            @PathVariable("postId") UUID postId,
             @AuthenticationPrincipal User currentUser) {
         boolean liked = likeService.toggle(postId, currentUser.getId());
         long count = likeService.countLikes(postId);
@@ -35,7 +35,7 @@ public class LikeController {
     /** Get like count + whether the current user liked this post. */
     @GetMapping("/{postId}/like")
     public ResponseEntity<Map<String, Object>> getLike(
-            @PathVariable UUID postId,
+            @PathVariable("postId") UUID postId,
             @AuthenticationPrincipal User currentUser) {
         long count = likeService.countLikes(postId);
         boolean liked = currentUser != null && likeService.isLikedByUser(postId, currentUser.getId());

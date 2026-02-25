@@ -9,5 +9,6 @@ import org.springframework.data.domain.Pageable;
 
 public interface HomestayRepositoryCustom {
     Page<Homestay> search(String query, Map<String, Boolean> amenities, String tag, Boolean isFeatured,
+            Double minLat, Double maxLat, Double minLng, Double maxLng,
             Pageable pageable);
 }

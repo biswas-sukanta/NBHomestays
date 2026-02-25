@@ -5,12 +5,20 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CategoryFilterBar } from '@/components/category-filter-bar';
 import { HomestaySwimlane } from '@/components/homestay-swimlane';
 import { HomestayCard, HomestaySummary } from '@/components/homestay-card';
-import { Search } from 'lucide-react';
+import type L from 'leaflet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
-import api from '@/lib/api';
 import Link from 'next/link';
 import { SharedPageBanner } from '@/components/shared-page-banner';
+import dynamic from 'next/dynamic';
+import { LayoutGrid, Map as MapIcon, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import api from '@/lib/api';
+
+const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
+    ssr: false,
+    loading: () => <div className="h-[600px] w-full bg-secondary/10 animate-pulse rounded-2xl flex items-center justify-center text-muted-foreground">Loading Discovery Map...</div>
+});
 
 // --- Destination Component ---
 const DESTINATIONS = [
@@ -60,6 +68,9 @@ function SearchResults() {
     const [loading, setLoading] = useState(false);
     const observerTarget = useRef<HTMLDivElement>(null);
 
+    const [viewType, setViewType] = useState<'grid' | 'map'>('grid');
+    const [mapBounds, setMapBounds] = useState<{ minLat: number, maxLat: number, minLng: number, maxLng: number } | null>(null);
+
     // Sync input box when URL query changes
     useEffect(() => {
         setSearchTerm(query);
@@ -100,6 +111,38 @@ function SearchResults() {
         setAllStays([]);
         setPage(0);
         setHasMore(true);
+        setMapBounds(null); // Clear bounds on fresh query/tag search
+    }, [query, tag]);
+
+    // Handle Map Movement
+    const handleMapChange = useCallback(async (bounds: L.LatLngBounds) => {
+        const newBounds = {
+            minLat: bounds.getSouth(),
+            maxLat: bounds.getNorth(),
+            minLng: bounds.getWest(),
+            maxLng: bounds.getEast()
+        };
+        setMapBounds(newBounds);
+
+        setLoading(true);
+        try {
+            const queryPart = query ? `&q=${encodeURIComponent(query)}` : '';
+            const tagPart = tag ? `&tag=${encodeURIComponent(tag)}` : '';
+            const res = await api.get(`/api/homestays/search?minLat=${newBounds.minLat}&maxLat=${newBounds.maxLat}&minLng=${newBounds.minLng}&maxLng=${newBounds.maxLng}${queryPart}${tagPart}&size=100`);
+
+            // For map view, we update both if searching specifically in area
+            const homestaysInArea = res.data.content || [];
+            if (query || tag) {
+                setSearchGrid(homestaysInArea);
+            } else {
+                setAllStays(homestaysInArea);
+                setHasMore(false); // Stop infinite scroll when browsing by map bounds
+            }
+        } catch (err) {
+            console.error("Map search failed", err);
+        } finally {
+            setLoading(false);
+        }
     }, [query, tag]);
 
     // Paged "All Homestays" Loader
@@ -194,7 +237,31 @@ function SearchResults() {
             </SharedPageBanner>
 
             {/* STEP 2: Sticky Edge-to-Edge Category Bar */}
-            <CategoryFilterBar />
+            <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4">
+                <div className="max-w-7xl mx-auto flex items-center justify-between py-2">
+                    <CategoryFilterBar />
+                    <div className="flex bg-secondary/20 p-1 rounded-full border border-border/50 ml-4 hidden md:flex">
+                        <Button
+                            variant={viewType === 'grid' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className="rounded-full h-8 px-4"
+                            onClick={() => setViewType('grid')}
+                        >
+                            <LayoutGrid className="w-4 h-4 mr-2" />
+                            Grid
+                        </Button>
+                        <Button
+                            variant={viewType === 'map' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className="rounded-full h-8 px-4"
+                            onClick={() => setViewType('map')}
+                        >
+                            <MapIcon className="w-4 h-4 mr-2" />
+                            Map
+                        </Button>
+                    </div>
+                </div>
+            </div>
 
             {/* STEP 3: Bounded Core UI Layout Area */}
             <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col gap-12 md:gap-16">
@@ -240,11 +307,17 @@ function SearchResults() {
                         <div className="border-t border-gray-100 pt-16">
                             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight mb-8">All Homestays</h2>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                {allStays.map((h, i) => (
-                                    <HomestayCard key={`${h.id}-${i}`} homestay={h} index={i % 12} />
-                                ))}
-                            </div>
+                            {viewType === 'map' ? (
+                                <div className="h-[600px] w-full mb-12">
+                                    <HomestayMapView homestays={allStays} onMapChange={handleMapChange} />
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {allStays.map((h, i) => (
+                                        <HomestayCard key={`${h.id}-${i}`} homestay={h} index={i % 12} />
+                                    ))}
+                                </div>
+                            )}
 
                             {/* Scroll Listener Node */}
                             <div id="load-more-trigger" ref={observerTarget} className="w-full py-12 flex justify-center items-center h-24">
@@ -264,7 +337,33 @@ function SearchResults() {
                 ) : (
                     /* Search Term Direct Results */
                     <div className="w-full">
-                        {searchGrid.length > 0 ? (
+                        <div className="flex justify-between items-center mb-8">
+                            <h2 className="text-xl font-bold">Search Results</h2>
+                            <div className="flex bg-secondary/20 p-1 rounded-full border border-border/50 md:hidden">
+                                <Button
+                                    variant={viewType === 'grid' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className="rounded-full h-8"
+                                    onClick={() => setViewType('grid')}
+                                >
+                                    <LayoutGrid className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    variant={viewType === 'map' ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className="rounded-full h-8"
+                                    onClick={() => setViewType('map')}
+                                >
+                                    <MapIcon className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
+
+                        {viewType === 'map' ? (
+                            <div className="h-[600px] w-full mb-12">
+                                <HomestayMapView homestays={searchGrid} onMapChange={handleMapChange} />
+                            </div>
+                        ) : searchGrid.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {searchGrid.map((h, i) => (
                                     <HomestayCard key={h.id} homestay={h} index={i} />

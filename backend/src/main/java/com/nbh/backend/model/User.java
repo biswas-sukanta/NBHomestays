@@ -10,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,6 +40,18 @@ public class User implements UserDetails {
     // Additional fields for user profile can be added here
     private String firstName;
     private String lastName;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
+    @Builder.Default
+    private Integer communityPoints = 0;
+
+    @ElementCollection
+    @CollectionTable(name = "user_badges", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "badge")
+    @Builder.Default
+    private List<String> badges = new ArrayList<>();
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude

@@ -1,11 +1,14 @@
 import { User, Shield, GraduationCap, Briefcase, Globe, Star } from 'lucide-react';
 
 interface HostProfileProps {
+    ownerId?: string;
     ownerName?: string;
     hostDetails?: Record<string, any>;
 }
 
-export function HostProfile({ ownerName = 'Host', hostDetails }: HostProfileProps) {
+import Link from 'next/link';
+
+export function HostProfile({ ownerId, ownerName = 'Host', hostDetails }: HostProfileProps) {
     if (!hostDetails) return null;
 
     const {
@@ -85,6 +88,15 @@ export function HostProfile({ ownerName = 'Host', hostDetails }: HostProfileProp
                         </div>
                     )}
                 </div>
+
+                {ownerId && (
+                    <Link
+                        href={`/profile/${ownerId}`}
+                        className="mt-8 text-sm font-bold text-primary hover:underline flex items-center gap-1 z-10"
+                    >
+                        View full profile →
+                    </Link>
+                )}
             </div>
         </div>
     );

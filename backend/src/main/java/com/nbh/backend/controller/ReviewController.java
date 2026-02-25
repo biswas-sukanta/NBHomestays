@@ -26,7 +26,7 @@ public class ReviewController {
     }
 
     @GetMapping("/homestay/{homestayId}")
-    public ResponseEntity<List<ReviewDto.Response>> getReviews(@PathVariable UUID homestayId) {
+    public ResponseEntity<List<ReviewDto.Response>> getReviews(@PathVariable("homestayId") UUID homestayId) {
         return ResponseEntity.ok(reviewService.getReviewsByHomestay(homestayId));
     }
 }

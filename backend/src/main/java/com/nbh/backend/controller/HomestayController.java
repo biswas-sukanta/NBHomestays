@@ -36,9 +36,13 @@ public class HomestayController {
             @RequestParam(value = "isFeatured", required = false) Boolean isFeatured,
             @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
             @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
+            @RequestParam(value = "minLat", required = false) Double minLat,
+            @RequestParam(value = "maxLat", required = false) Double maxLat,
+            @RequestParam(value = "minLng", required = false) Double minLng,
+            @RequestParam(value = "maxLng", required = false) Double maxLng,
             @RequestParam(value = "size", defaultValue = "20") int size,
             @RequestParam(value = "page", defaultValue = "0") int page) {
-        return homestayService.searchHomestays(q, tag, isFeatured, size, page);
+        return homestayService.searchHomestays(q, tag, isFeatured, minLat, maxLat, minLng, maxLng, size, page);
     }
 
     @GetMapping("/{id}")

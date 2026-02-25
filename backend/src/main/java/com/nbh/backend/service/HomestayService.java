@@ -62,8 +62,9 @@ public class HomestayService {
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         @Cacheable(value = "homestaysSearch", key = "(#query ?: 'null') + '-' + (#tag ?: 'null') + '-' + (#isFeatured ?: 'null') + '-' + #size + '-' + #page", sync = true)
-        public Page<HomestayDto.Response> searchHomestays(String query, String tag, Boolean isFeatured, int size,
-                        int page) {
+        public Page<HomestayDto.Response> searchHomestays(String query, String tag, Boolean isFeatured,
+                        Double minLat, Double maxLat, Double minLng, Double maxLng,
+                        int size, int page) {
                 Pageable pageable = PageRequest.of(page, size);
 
                 // If query is empty and tag is empty and isFeatured is null, return all
@@ -86,7 +87,9 @@ public class HomestayService {
                 try {
                         Page<Homestay> homestayPage = repository.search(query, new java.util.HashMap<String, Boolean>(),
                                         tag,
-                                        isFeatured, pageable);
+                                        isFeatured,
+                                        minLat, maxLat, minLng, maxLng,
+                                        pageable);
                         return homestayPage.map(this::mapToResponse);
                 } catch (Exception e) {
                         // Fallback: return empty page

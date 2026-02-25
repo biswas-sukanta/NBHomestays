@@ -23,9 +23,9 @@ public class CommentController {
     /** Paginated top-level comments (with embedded first-level replies). */
     @GetMapping("/posts/{postId}/comments")
     public Page<CommentDto> getComments(
-            @PathVariable UUID postId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @PathVariable("postId") UUID postId,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         return commentService.getComments(postId, page, size);
     }
 
@@ -43,8 +43,8 @@ public class CommentController {
     @PostMapping("/posts/{postId}/comments/{parentId}/replies")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CommentDto> addReply(
-            @PathVariable UUID postId,
-            @PathVariable UUID parentId,
+            @PathVariable("postId") UUID postId,
+            @PathVariable("parentId") UUID parentId,
             @RequestBody Map<String, String> body,
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(commentService.addReply(postId, parentId, body.get("body"), currentUser));
@@ -54,7 +54,7 @@ public class CommentController {
     @DeleteMapping("/comments/{commentId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteComment(
-            @PathVariable UUID commentId,
+            @PathVariable("commentId") UUID commentId,
             @AuthenticationPrincipal User currentUser) {
         commentService.deleteComment(commentId, currentUser);
         return ResponseEntity.noContent().build();
