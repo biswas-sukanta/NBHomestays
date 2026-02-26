@@ -1,6 +1,5 @@
 package com.nbh.backend.service;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,10 +24,13 @@ import java.util.UUID;
  * https://<project>.supabase.co/storage/v1/object/public
  */
 @Service
-@RequiredArgsConstructor
 public class UploadService {
 
     private final S3Client s3Client;
+
+    public UploadService(S3Client s3Client) {
+        this.s3Client = s3Client;
+    }
 
     @Value("${SUPABASE_BUCKET:community-images}")
     private String bucket;
