@@ -36,11 +36,23 @@ const AMENITY_CATEGORIES = {
     Unavailable: ['Lock on bedroom door', 'Exterior security cameras', 'TV', 'Air conditioning', 'Carbon monoxide alarm']
 };
 
-const TAG_CATEGORIES = {
-    Hype: ['Trending Now', 'Featured Stays', 'Top Rated', 'Budget Friendly', 'Premium'],
-    Vibe: ['Mountain View', 'Explore Offbeat', 'Nature & Eco', 'Heritage', 'Riverfront'],
-    Purpose: ['Workation', 'Long Stays', 'Pet Friendly', 'Couples Getaway', 'Group Friendly']
-};
+const TAG_CATEGORIES = [
+    {
+        title: "Vibe & Atmosphere",
+        subtitle: "What does it feel like to stay here?",
+        tags: ['Mountain View', 'Explore Offbeat', 'Nature & Eco', 'Heritage', 'Riverfront', 'Peaceful', 'Party', 'Rustic']
+    },
+    {
+        title: "Purpose & Ideal For",
+        subtitle: "Who is this space best suited for?",
+        tags: ['Workation', 'Long Stays', 'Pet Friendly', 'Couples Getaway', 'Group Friendly', 'Digital Nomads', 'Families']
+    },
+    {
+        title: "Hype & Unique Selling Points",
+        subtitle: "What makes this place go viral?",
+        tags: ['Trending Now', 'Featured Stays', 'Top Rated', 'Budget Friendly', 'Premium', 'Infinity Pool', 'Glasshouse', '360° Views']
+    }
+];
 
 const DEFAULT_POLICIES = [
     '50% advance payment required; balance at check-in.',
@@ -70,6 +82,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [isFetching, setIsFetching] = useState(false);
 
     // --- State Models ---
     const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '' });
@@ -95,7 +108,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
 
     useEffect(() => {
         if (isEditMode && id) {
-            setLoading(true);
+            setIsFetching(true);
             api.get(`/api/homestays/${id}`).then(res => {
                 const data = res.data;
                 setBasicInfo({ name: data.name || '', description: data.description || '', pricePerNight: data.pricePerNight?.toString() || '' });
@@ -134,13 +147,19 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                 console.error(err);
                 toast.error("Failed to load homestay data.");
             }).finally(() => {
-                setLoading(false);
+                setIsFetching(false);
             });
         }
     }, [isEditMode, id]);
 
     const handleNext = () => setStep(prev => prev + 1);
-    const handleBack = () => setStep(prev => Math.max(1, prev - 1));
+    const handleBack = () => {
+        if (step === 1) {
+            router.push('/host/dashboard'); // Route back completely
+        } else {
+            setStep(prev => prev - 1);
+        }
+    };
 
     const toggleAmenity = (amenity: string) => {
         setAmenities(prev => prev.includes(amenity) ? prev.filter(a => a !== amenity) : [...prev, amenity]);
@@ -243,6 +262,15 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
         }
     };
 
+    if (isFetching) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#004d00] mb-4"></div>
+                <p className="text-muted-foreground font-medium animate-pulse">Loading Homestay Data...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="container mx-auto px-4 py-8 max-w-3xl">
             <h1 className="text-3xl font-extrabold mb-6 text-center tracking-tight">
@@ -251,10 +279,10 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
 
             {/* Progress Bar */}
             <div className="w-full bg-secondary h-2 rounded-full mb-8 overflow-hidden">
-                <div className="bg-primary h-full transition-all duration-300" style={{ width: `${(step / 7) * 100}%` }} />
+                <div className="bg-[#004d00] h-full transition-all duration-500 ease-in-out" style={{ width: `${(step / 7) * 100}%` }} />
             </div>
 
-            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+            <Card className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 mb-12 overflow-hidden">
                 <CardHeader className="bg-muted/30 border-b border-border/50">
                     <CardTitle className="text-xl">
                         {step === 1 && "Basic Information"}
@@ -272,15 +300,15 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                         <div className="space-y-5">
                             <div className="space-y-2">
                                 <Label htmlFor="name">Property Name *</Label>
-                                <Input id="name" value={basicInfo.name} onChange={e => setBasicInfo({ ...basicInfo, name: e.target.value })} placeholder="e.g. Cloud 9 Villa" />
+                                <Input id="name" value={basicInfo.name} onChange={e => setBasicInfo({ ...basicInfo, name: e.target.value })} placeholder="e.g. Cloud 9 Villa" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="description">Description</Label>
-                                <Textarea id="description" className="h-32" value={basicInfo.description} onChange={e => setBasicInfo({ ...basicInfo, description: e.target.value })} placeholder="Describe the vibe and surroundings..." />
+                                <Textarea id="description" value={basicInfo.description} onChange={e => setBasicInfo({ ...basicInfo, description: e.target.value })} placeholder="Describe the vibe and surroundings..." className="h-32 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="price">Price per Night (₹) *</Label>
-                                <Input id="price" type="number" value={basicInfo.pricePerNight} onChange={e => setBasicInfo({ ...basicInfo, pricePerNight: e.target.value })} placeholder="2500" />
+                                <Input id="price" type="number" value={basicInfo.pricePerNight} onChange={e => setBasicInfo({ ...basicInfo, pricePerNight: e.target.value })} placeholder="2500" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                             </div>
                         </div>
                     )}
@@ -364,15 +392,16 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                         <div className="space-y-6">
                             <p className="text-sm text-muted-foreground mb-4">Select tags to help guests discover your property through high-visibility category swimlanes.</p>
                             <ScrollArea className="h-[400px] pr-4">
-                                {Object.entries(TAG_CATEGORIES).map(([category, items]) => (
-                                    <div key={category} className="mb-6 bg-muted/20 p-4 rounded-xl border border-border/50">
-                                        <h3 className="font-bold text-lg mb-3 text-gray-800">{category}</h3>
-                                        <div className="flex flex-wrap gap-2">
-                                            {items.map(item => (
+                                {TAG_CATEGORIES.map((category) => (
+                                    <div key={category.title} className="mb-6 bg-muted/20 p-5 rounded-2xl border border-border/50 shadow-sm">
+                                        <h3 className="font-bold text-xl text-gray-800">{category.title}</h3>
+                                        <p className="text-sm text-muted-foreground mb-4">{category.subtitle}</p>
+                                        <div className="flex flex-wrap gap-3">
+                                            {category.tags.map(item => (
                                                 <button
                                                     key={item}
                                                     onClick={() => toggleTag(item)}
-                                                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 border ${tags.includes(item) ? 'bg-primary text-primary-foreground border-primary shadow-md scale-105' : 'bg-background text-foreground border-border hover:border-primary/50 hover:bg-primary/5'}`}
+                                                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors cursor-pointer border ${tags.includes(item) ? 'bg-[#004d00] text-white border-[#004d00]' : 'bg-white text-gray-700 border-gray-200 hover:border-[#004d00] hover:bg-[#004d00]/5'}`}
                                                 >
                                                     {item}
                                                 </button>
@@ -411,19 +440,19 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label>Check-in Time</Label>
-                                <Input type="time" value={quickFacts.checkIn} onChange={e => setQuickFacts({ ...quickFacts, checkIn: e.target.value })} />
+                                <Input type="time" value={quickFacts.checkIn} onChange={e => setQuickFacts({ ...quickFacts, checkIn: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                             </div>
                             <div className="space-y-2">
                                 <Label>Check-out Time</Label>
-                                <Input type="time" value={quickFacts.checkOut} onChange={e => setQuickFacts({ ...quickFacts, checkOut: e.target.value })} />
+                                <Input type="time" value={quickFacts.checkOut} onChange={e => setQuickFacts({ ...quickFacts, checkOut: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                             </div>
                             <div className="space-y-2">
                                 <Label>Location Type</Label>
-                                <Input placeholder="e.g. Remote, Village Center" value={quickFacts.locationType} onChange={e => setQuickFacts({ ...quickFacts, locationType: e.target.value })} />
+                                <Input placeholder="e.g. Remote, Village Center" value={quickFacts.locationType} onChange={e => setQuickFacts({ ...quickFacts, locationType: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                             </div>
                             <div className="space-y-2">
                                 <Label>Hike / Walk to Property</Label>
-                                <Input placeholder="e.g. 150m hike, None" value={quickFacts.hike} onChange={e => setQuickFacts({ ...quickFacts, hike: e.target.value })} />
+                                <Input placeholder="e.g. 150m hike, None" value={quickFacts.hike} onChange={e => setQuickFacts({ ...quickFacts, hike: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                             </div>
                             <div className="space-y-2">
                                 <Label>Alcohol</Label>
@@ -468,31 +497,31 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Years Hosting (Number)</Label>
-                                    <Input type="number" value={hostDetails.yearsHosting} onChange={e => setHostDetails({ ...hostDetails, yearsHosting: e.target.value })} />
+                                    <Input type="number" value={hostDetails.yearsHosting} onChange={e => setHostDetails({ ...hostDetails, yearsHosting: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Reviews Count (Dummy/Migration)</Label>
-                                    <Input type="number" value={hostDetails.reviewsCount} onChange={e => setHostDetails({ ...hostDetails, reviewsCount: e.target.value })} />
+                                    <Input type="number" value={hostDetails.reviewsCount} onChange={e => setHostDetails({ ...hostDetails, reviewsCount: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>School / Education</Label>
-                                    <Input value={hostDetails.school} onChange={e => setHostDetails({ ...hostDetails, school: e.target.value })} />
+                                    <Input value={hostDetails.school} onChange={e => setHostDetails({ ...hostDetails, school: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Work / Profession</Label>
-                                    <Input value={hostDetails.work} onChange={e => setHostDetails({ ...hostDetails, work: e.target.value })} />
+                                    <Input value={hostDetails.work} onChange={e => setHostDetails({ ...hostDetails, work: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <Label>Languages Spoken (Comma separated)</Label>
-                                    <Input value={hostDetails.languages} onChange={e => setHostDetails({ ...hostDetails, languages: e.target.value })} placeholder="English, Hindi, Bengali" />
+                                    <Input value={hostDetails.languages} onChange={e => setHostDetails({ ...hostDetails, languages: e.target.value })} placeholder="English, Hindi, Bengali" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <Label>Current Origin Location</Label>
-                                    <Input value={hostDetails.currentLocation} onChange={e => setHostDetails({ ...hostDetails, currentLocation: e.target.value })} placeholder="e.g. Siliguri, India" />
+                                    <Input value={hostDetails.currentLocation} onChange={e => setHostDetails({ ...hostDetails, currentLocation: e.target.value })} placeholder="e.g. Siliguri, India" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <Label>Bio / Tagline</Label>
-                                    <Textarea value={hostDetails.bio} onChange={e => setHostDetails({ ...hostDetails, bio: e.target.value })} placeholder="A short welcoming message to your guests..." className="h-24" />
+                                    <Textarea value={hostDetails.bio} onChange={e => setHostDetails({ ...hostDetails, bio: e.target.value })} placeholder="A short welcoming message to your guests..." className="h-24 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                                 </div>
                             </div>
                         </div>
