@@ -6,7 +6,9 @@ import com.nbh.backend.model.User;
 import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -91,9 +93,8 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        if (!post.getUser().getEmail().equals(userEmail)) { // No admin override for posts mentioned, but could add if
-                                                            // needed
-            throw new RuntimeException("Unauthorized");
+        if (!post.getUser().getEmail().equals(userEmail)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to update this post.");
         }
 
         if (request.getLocationName() != null)
@@ -116,7 +117,7 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
         if (!post.getUser().getEmail().equals(userEmail)) {
-            throw new RuntimeException("Unauthorized");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to delete this post.");
         }
 
         postRepository.delete(post);

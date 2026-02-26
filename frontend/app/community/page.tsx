@@ -17,7 +17,9 @@ import api from '@/lib/api';
 // ── Types ─────────────────────────────────────────────────────
 interface Post {
     id: string;
-    user: { id: string; firstName: string; lastName: string; avatarUrl?: string };
+    userId: string;
+    userName: string;
+    userEmail?: string; // Optional if provided by backend
     locationName: string;
     textContent: string;
     imageUrls: string[];
@@ -267,9 +269,9 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
 
 // ── Post Card ─────────────────────────────────────────────────
 function PostCard({ post, user, onUpdate, onDelete }: { post: Post; user: any; onUpdate: (p: Post) => void; onDelete: (id: string) => void; }) {
-    const authorName = [post.user?.firstName, post.user?.lastName].filter(Boolean).join(' ') || 'Traveller';
+    const authorName = post.userName || 'Traveller';
     const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    const isOwner = user?.id === post.user?.id || user?.role === 'ROLE_ADMIN';
+    const isOwner = user?.id === post.userId || user?.role === 'ROLE_ADMIN';
     const [isEditing, setIsEditing] = useState(false);
 
     if (isEditing) {
@@ -303,7 +305,7 @@ function PostCard({ post, user, onUpdate, onDelete }: { post: Post; user: any; o
             <div className="p-5 sm:p-6 relative z-10 pointer-events-none">
                 <div className="flex items-start gap-4 mb-4">
                     <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-green-400 to-green-600 flex items-center justify-center text-white text-[15px] font-bold flex-none shadow-md">
-                        {post.user?.avatarUrl ? <img src={post.user.avatarUrl} alt={authorName} className="w-full h-full rounded-full object-cover" /> : initials}
+                        {initials}
                     </div>
                     <div className="flex-1 min-w-0 flex justify-between items-start pt-0.5">
                         <div>
@@ -412,7 +414,7 @@ export default function CommunityPage() {
         !searchQuery ||
         p.textContent.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.locationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        [p.user?.firstName, p.user?.lastName].join(' ').toLowerCase().includes(searchQuery.toLowerCase())
+        (p.userName || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
