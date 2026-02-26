@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Trash2, Plus } from 'lucide-react';
+import ImageDropzone from '@/components/host/ImageDropzone';
 
 // Dynamically import LocationPicker to avoid SSR issues with Leaflet
 const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
@@ -66,7 +67,8 @@ export default function AddHomestayWizard() {
     const [loading, setLoading] = useState(false);
 
     // --- State Models ---
-    const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '', photoUrls: [''] });
+    const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '' });
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [location, setLocation] = useState({ latitude: null as number | null, longitude: null as number | null, locationName: '' });
     const [topDestination, setTopDestination] = useState<string>('');
     const [amenities, setAmenities] = useState<string[]>([]);
@@ -117,9 +119,26 @@ export default function AddHomestayWizard() {
             toast.error("Please complete the required basic info, location, and Top Destination.");
             return;
         }
+        if (imageFiles.length === 0) {
+            toast.error("Please provide at least 1 photo for your homestay.");
+            return;
+        }
 
         setLoading(true);
         try {
+            // STEP A: Upload Images First
+            const formData = new FormData();
+            imageFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            toast.info("Uploading images, please wait...");
+            const uploadResponse = await api.post('/api/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const uploadedUrls: string[] = uploadResponse.data;
+
+            // STEP B: Submit the Homestay Payload
             const payload = {
                 name: basicInfo.name,
                 description: basicInfo.description,
@@ -127,7 +146,7 @@ export default function AddHomestayWizard() {
                 latitude: location.latitude,
                 longitude: location.longitude,
                 locationName: location.locationName,
-                photoUrls: basicInfo.photoUrls.filter(u => u.trim() !== ''),
+                photoUrls: uploadedUrls,
                 tags: Array.from(new Set([...tags, topDestination])),
                 // JSONB Conversions
                 amenities: amenities.reduce((acc, curr) => ({ ...acc, [curr]: true }), {}),
@@ -158,7 +177,7 @@ export default function AddHomestayWizard() {
             router.push('/host/dashboard');
         } catch (error: any) {
             console.error("Submission Error:", error.response?.data || error.message);
-            toast.error("Failed to create homestay.");
+            toast.error("Failed to create homestay. Check your connection.");
         } finally {
             setLoading(false);
         }
@@ -240,33 +259,8 @@ export default function AddHomestayWizard() {
                     {step === 3 && (
                         <div className="space-y-8">
                             <div className="space-y-4">
-                                <Label className="text-lg font-bold">Photo URLs</Label>
-                                {basicInfo.photoUrls.map((url, idx) => (
-                                    <div key={idx} className="flex items-center gap-2">
-                                        <Input
-                                            type="url"
-                                            value={url}
-                                            onChange={e => {
-                                                const newUrls = [...basicInfo.photoUrls];
-                                                newUrls[idx] = e.target.value;
-                                                setBasicInfo({ ...basicInfo, photoUrls: newUrls });
-                                            }}
-                                            placeholder="https://..."
-                                            className="flex-1"
-                                        />
-                                        {basicInfo.photoUrls.length > 1 && (
-                                            <Button variant="outline" size="icon" onClick={() => {
-                                                const newUrls = basicInfo.photoUrls.filter((_, i) => i !== idx);
-                                                setBasicInfo({ ...basicInfo, photoUrls: newUrls });
-                                            }} className="text-destructive hover:bg-destructive/10 shrink-0">
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                ))}
-                                <Button variant="ghost" className="w-full border-dashed border-2 hover:bg-primary/5 text-primary transition-all py-6 rounded-xl" onClick={() => setBasicInfo({ ...basicInfo, photoUrls: [...basicInfo.photoUrls, ''] })}>
-                                    <Plus className="w-5 h-5 mr-2" /> Add another photo
-                                </Button>
+                                <Label className="text-lg font-bold">Property Photos</Label>
+                                <ImageDropzone files={imageFiles} setFiles={setImageFiles} maxFiles={10} />
                             </div>
 
                             <div className="space-y-4">
