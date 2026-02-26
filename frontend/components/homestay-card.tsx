@@ -30,7 +30,7 @@ interface HomestayCardProps {
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3';
 
-export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
+export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardProps) => {
     const { addToCompare, selectedIds } = useCompareStore();
     const isSelected = selectedIds.includes(homestay.id);
 
@@ -67,8 +67,10 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
                       Example: \`${homestay.photoUrls?.[0]}?tr=w-400,h-300\` 
                     */}
                     <img
-                        src={homestay.photoUrls?.[0] || FALLBACK_IMAGE}
+                        src={`${homestay.photoUrls?.[0] || FALLBACK_IMAGE}?tr=w-600,h-450,cm-extract`}
                         alt={homestay.name}
+                        width={600}
+                        height={450}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                         onError={(e) => {
@@ -127,4 +129,6 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
             </Link>
         </motion.div>
     );
-}
+});
+
+HomestayCard.displayName = 'HomestayCard';

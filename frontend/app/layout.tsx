@@ -6,6 +6,7 @@ import "./globals.css";
 import QueryProvider from "@/components/query-provider";
 import { CompareDrawer } from "@/components/compare-drawer";
 import { Toaster } from "@/components/ui/sonner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,9 @@ export default function RootLayout({
           <QueryProvider>
             <Navbar />
             <main className="min-h-screen">
-              {children}
+              <ErrorBoundary name="Global App Context">
+                {children}
+              </ErrorBoundary>
             </main>
             <CompareDrawer />
             <Toaster />

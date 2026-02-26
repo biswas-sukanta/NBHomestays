@@ -15,6 +15,7 @@ import { LayoutGrid, Map as MapIcon, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
     ssr: false,
@@ -30,11 +31,11 @@ const DESTINATIONS = [
     { name: 'Sittong', image: 'https://images.unsplash.com/photo-1681285312384-cbca6f2d5930?auto=format&fit=crop&q=80&w=800' },
 ];
 
-function DestinationCard({ dest, isActive }: { dest: { name: string; image: string }, isActive: boolean }) {
+const DestinationCard = React.memo(({ dest, isActive }: { dest: { name: string; image: string }, isActive: boolean }) => {
     return (
         <Link href={`/search?tag=${encodeURIComponent(dest.name)}`} data-active={isActive ? 'true' : undefined} className={`block w-[260px] sm:w-[280px] shrink-0 snap-start group outline-none overflow-hidden rounded-2xl relative shadow-sm hover:shadow-lg transition-all ${isActive ? 'ring-4 ring-[#004d00]/80 ring-offset-2' : ''}`}>
             <div className="w-full aspect-[4/3] bg-gray-100 relative z-0">
-                <img src={dest.image} alt={dest.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                <img src={dest.image} alt={dest.name} width={400} height={300} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
                 <div className="absolute inset-x-0 bottom-0 p-4 z-20">
                     <h3 className="text-xl font-bold text-white drop-shadow-md">{dest.name}</h3>
@@ -42,7 +43,9 @@ function DestinationCard({ dest, isActive }: { dest: { name: string; image: stri
             </div>
         </Link>
     );
-}
+});
+
+DestinationCard.displayName = 'DestinationCard';
 
 function SearchResults() {
     const searchParams = useSearchParams();
@@ -322,7 +325,9 @@ function SearchResults() {
 
                             {viewType === 'map' ? (
                                 <div className="h-[600px] w-full mb-12">
-                                    <HomestayMapView homestays={allStays} onMapChange={handleMapChange} />
+                                    <ErrorBoundary name="Discovery Map" fallback={<div className="h-[600px] w-full bg-red-50 rounded-2xl flex items-center justify-center text-red-600 font-medium border border-red-100 italic">Map failed to initialize. Please refresh or try again later.</div>}>
+                                        <HomestayMapView homestays={allStays} onMapChange={handleMapChange} />
+                                    </ErrorBoundary>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -385,7 +390,9 @@ function SearchResults() {
 
                         {viewType === 'map' ? (
                             <div className="h-[600px] w-full mb-12">
-                                <HomestayMapView homestays={searchGrid} onMapChange={handleMapChange} />
+                                <ErrorBoundary name="Search Results Map">
+                                    <HomestayMapView homestays={searchGrid} onMapChange={handleMapChange} />
+                                </ErrorBoundary>
                             </div>
                         ) : searchGrid.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
