@@ -7,10 +7,12 @@ import { toast } from 'sonner';
 interface ImageDropzoneProps {
     files: File[];
     setFiles: React.Dispatch<React.SetStateAction<File[]>>;
+    existingUrls?: string[];
+    setExistingUrls?: React.Dispatch<React.SetStateAction<string[]>>;
     maxFiles?: number;
 }
 
-export default function ImageDropzone({ files, setFiles, maxFiles = 10 }: ImageDropzoneProps) {
+export default function ImageDropzone({ files, setFiles, existingUrls = [], setExistingUrls, maxFiles = 10 }: ImageDropzoneProps) {
     const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
         if (fileRejections.length > 0) {
             fileRejections.forEach(rejection => {
@@ -24,14 +26,21 @@ export default function ImageDropzone({ files, setFiles, maxFiles = 10 }: ImageD
         }
 
         setFiles(prev => {
-            const newFiles = [...prev, ...acceptedFiles];
-            if (newFiles.length > maxFiles) {
-                toast.error(`Maximum ${maxFiles} files allowed. Truncating excess.`);
-                return newFiles.slice(0, maxFiles);
+            const currentTotal = prev.length + existingUrls.length;
+            const remainingSlots = maxFiles - currentTotal;
+            if (remainingSlots <= 0) {
+                toast.error(`Maximum ${maxFiles} files allowed.`);
+                return prev;
             }
-            return newFiles;
+
+            let newFiles = acceptedFiles;
+            if (acceptedFiles.length > remainingSlots) {
+                toast.error(`Maximum ${maxFiles} files allowed. Truncating excess.`);
+                newFiles = acceptedFiles.slice(0, remainingSlots);
+            }
+            return [...prev, ...newFiles];
         });
-    }, [setFiles, maxFiles]);
+    }, [setFiles, existingUrls, maxFiles]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
@@ -46,6 +55,12 @@ export default function ImageDropzone({ files, setFiles, maxFiles = 10 }: ImageD
 
     const removeFile = (index: number) => {
         setFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const removeExistingUrl = (index: number) => {
+        if (setExistingUrls) {
+            setExistingUrls(prev => prev.filter((_, i) => i !== index));
+        }
     };
 
     return (
@@ -65,10 +80,36 @@ export default function ImageDropzone({ files, setFiles, maxFiles = 10 }: ImageD
                 </p>
             </div>
 
-            {files.length > 0 && (
+            {(files.length > 0 || existingUrls.length > 0) && (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
+                    {/* Render Existing URLs */}
+                    {existingUrls.map((url, index) => (
+                        <div key={`existing-${index}`} className="relative group rounded-lg overflow-hidden border border-border shadow-sm aspect-square bg-gray-100 flex items-center justify-center">
+                            <img
+                                src={url}
+                                alt={`Existing Preview ${index}`}
+                                className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full shadow-lg"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        removeExistingUrl(index);
+                                    }}
+                                >
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Render Local Files */}
                     {files.map((file, index) => (
-                        <div key={index} className="relative group rounded-lg overflow-hidden border border-border shadow-sm aspect-square bg-gray-100 flex items-center justify-center">
+                        <div key={`local-${index}`} className="relative group rounded-lg overflow-hidden border border-border shadow-sm aspect-square bg-gray-100 flex items-center justify-center">
                             <img
                                 src={URL.createObjectURL(file)}
                                 alt={`Preview ${index}`}
@@ -81,6 +122,7 @@ export default function ImageDropzone({ files, setFiles, maxFiles = 10 }: ImageD
                                     size="icon"
                                     className="h-8 w-8 rounded-full shadow-lg"
                                     onClick={(e) => {
+                                        e.preventDefault();
                                         e.stopPropagation();
                                         removeFile(index);
                                     }}

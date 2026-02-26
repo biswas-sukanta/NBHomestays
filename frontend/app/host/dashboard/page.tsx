@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
     Dialog,
     DialogContent,
@@ -14,8 +15,6 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 interface Homestay {
     id: string;
@@ -26,14 +25,11 @@ interface Homestay {
 }
 
 export default function HostDashboard() {
+    const router = useRouter();
     const [listings, setListings] = useState<Homestay[]>([]);
     const [loading, setLoading] = useState(true);
-    const [editHomestay, setEditHomestay] = useState<Homestay | null>(null);
-    const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [homestayToDelete, setHomestayToDelete] = useState<string | null>(null);
-
-    const [editForm, setEditForm] = useState({ name: '', pricePerNight: '' });
 
     const fetchListings = async () => {
         try {
@@ -58,31 +54,13 @@ export default function HostDashboard() {
         fetchListings();
     }, []);
 
-    const handleEditClick = (homestay: Homestay) => {
-        setEditHomestay(homestay);
-        setEditForm({ name: homestay.name, pricePerNight: homestay.pricePerNight.toString() });
-        setIsEditOpen(true);
+    const handleEditClick = (id: string) => {
+        router.push(`/host/edit-homestay/${id}`);
     };
 
     const handleDeleteClick = (id: string) => {
         setHomestayToDelete(id);
         setIsDeleteOpen(true);
-    };
-
-    const handleUpdate = async () => {
-        if (!editHomestay) return;
-        try {
-            await homestayApi.updateHomestay(editHomestay.id, {
-                name: editForm.name,
-                pricePerNight: parseFloat(editForm.pricePerNight)
-            } as any);
-            toast.success("Homestay updated");
-            setIsEditOpen(false);
-            fetchListings();
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to update homestay");
-        }
     };
 
     const handleDelete = async () => {
@@ -136,7 +114,7 @@ export default function HostDashboard() {
                                 </span>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleEditClick(homestay)}>
+                                <Button variant="outline" size="sm" onClick={() => handleEditClick(homestay.id)}>
                                     <Pencil className="w-4 h-4 mr-1" /> Edit
                                 </Button>
                                 <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(homestay.id)}>
@@ -147,29 +125,6 @@ export default function HostDashboard() {
                     ))}
                 </div>
             )}
-
-            {/* Edit Modal */}
-            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Listing</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div>
-                            <Label>Name</Label>
-                            <Input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} />
-                        </div>
-                        <div>
-                            <Label>Price per Night</Label>
-                            <Input type="number" value={editForm.pricePerNight} onChange={e => setEditForm({ ...editForm, pricePerNight: e.target.value })} />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-                        <Button onClick={handleUpdate}>Save Changes</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             {/* Delete Confirmation */}
             <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
