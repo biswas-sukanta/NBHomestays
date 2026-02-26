@@ -82,7 +82,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
-    const [isFetching, setIsFetching] = useState(false);
+    const [isFetching, setIsFetching] = useState(isEditMode);
 
     // --- State Models ---
     const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '' });
@@ -111,6 +111,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
             setIsFetching(true);
             api.get(`/api/homestays/${id}`).then(res => {
                 const data = res.data;
+                console.log("Fetched Homestay Data:", data);
                 setBasicInfo({ name: data.name || '', description: data.description || '', pricePerNight: data.pricePerNight?.toString() || '' });
                 setLocation({ latitude: data.latitude, longitude: data.longitude, locationName: data.locationName || '' });
                 if (data.tags && data.tags.length > 0) {
