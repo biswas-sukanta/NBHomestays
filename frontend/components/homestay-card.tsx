@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Star, Scale } from 'lucide-react';
+import { Star, Scale, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompareStore } from '@/store/useCompareStore';
 import { TripBoardButton } from '@/components/trip-board-button';
@@ -33,10 +33,22 @@ const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1518780664697-55e3ad93
 export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardProps) => {
     const { addToCompare, selectedIds } = useCompareStore();
     const isSelected = selectedIds.includes(homestay.id);
+    const [currentIndex, setCurrentIndex] = React.useState(0);
+    const images = homestay.photoUrls?.length > 0 ? homestay.photoUrls : [FALLBACK_IMAGE];
 
     const handleCompare = (e: React.MouseEvent) => {
         e.preventDefault();
         addToCompare(homestay.id);
+    };
+
+    const nextImage = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (currentIndex < images.length - 1) setCurrentIndex(prev => prev + 1);
+    };
+
+    const prevImage = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
     };
 
     const vibeScore = homestay.vibeScore || 4.5;
@@ -67,7 +79,7 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
                       Example: \`${homestay.photoUrls?.[0]}?tr=w-400,h-300\` 
                     */}
                     <img
-                        src={`${homestay.photoUrls?.[0] || FALLBACK_IMAGE}?tr=w-600,h-450,cm-extract`}
+                        src={`${images[currentIndex]}?tr=w-600,h-450,cm-extract`}
                         alt={homestay.name}
                         width={600}
                         height={450}
@@ -77,6 +89,45 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
                             e.currentTarget.src = FALLBACK_IMAGE;
                         }}
                     />
+
+                    {/* Premium Navigation Arrows */}
+                    {images.length > 1 && (
+                        <>
+                            <button
+                                onClick={prevImage}
+                                className={cn(
+                                    'absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 shadow-md flex items-center justify-center text-gray-800 transition-all duration-300 transform',
+                                    currentIndex === 0 ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'
+                                )}
+                                aria-label="Previous image"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={nextImage}
+                                className={cn(
+                                    'absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 shadow-md flex items-center justify-center text-gray-800 transition-all duration-300 transform',
+                                    currentIndex === images.length - 1 ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'
+                                )}
+                                aria-label="Next image"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+
+                            {/* Indicator Dots */}
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                {images.map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className={cn(
+                                            'w-1.5 h-1.5 rounded-full transition-all duration-300',
+                                            i === currentIndex ? 'bg-white scale-125' : 'bg-white/50'
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
 
                     {/* Gradient overlay just at top/bottom edges for icons if needed */}
                     <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
