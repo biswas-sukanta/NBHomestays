@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Trash2, Plus } from 'lucide-react';
-import ImageDropzone from '@/components/host/ImageDropzone';
+import ImageDropzone, { StagedFile } from '@/components/host/ImageDropzone';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Dynamically import LocationPicker to avoid SSR issues with Leaflet
 const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
@@ -86,7 +87,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
 
     // --- State Models ---
     const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '' });
-    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [imageFiles, setImageFiles] = useState<StagedFile[]>([]);
     const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
     const [location, setLocation] = useState({ latitude: null as number | null, longitude: null as number | null, locationName: '' });
     const [topDestination, setTopDestination] = useState<string>('');
@@ -210,11 +211,11 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
             let finalPhotoUrls = [...existingPhotoUrls];
             if (imageFiles.length > 0) {
                 const formData = new FormData();
-                imageFiles.forEach(file => {
-                    formData.append('files', file);
+                imageFiles.forEach(staged => {
+                    formData.append('files', staged.file);
                 });
 
-                toast.info("Uploading new images, please wait...");
+                toast.info("Uploading framed images, please wait...");
                 const uploadResponse = await api.post('/api/upload', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
