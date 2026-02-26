@@ -119,6 +119,11 @@
 			<artifactId>s3</artifactId>
 			<version>2.25.60</version>
 		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>url-connection-client</artifactId>
+			<version>2.25.60</version>
+		</dependency>
 
 		<!-- ── Jackson JSR-310 for Redis JSON serialization ── -->
 		<dependency>
