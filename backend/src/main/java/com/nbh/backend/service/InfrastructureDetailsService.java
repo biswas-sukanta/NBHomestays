@@ -4,9 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +19,8 @@ public class InfrastructureDetailsService {
 
     /** Clear all keys from the current Redis database. */
     public void clearAllCaches() {
-        if (redisTemplate.getConnectionFactory() != null) {
+        if (redisTemplate.getConnectionFactory() != null
+                && redisTemplate.getConnectionFactory().getConnection() != null) {
             redisTemplate.getConnectionFactory().getConnection().serverCommands().flushDb();
         }
     }
