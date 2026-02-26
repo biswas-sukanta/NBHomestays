@@ -26,7 +26,7 @@ public class DiagnosticsController {
     public ResponseEntity<Map<String, Object>> runDiagnostics() {
         Map<String, Object> report = new HashMap<>();
         report.put("redis", detailsService.checkRedis());
-        report.put("supabase_s3", detailsService.checkS3());
+        report.put("imageKit", detailsService.checkImageKit());
         return ResponseEntity.ok(report);
     }
 

@@ -27,16 +27,12 @@ public class InfrastructureHealthCheck implements CommandLineRunner {
             log.error("❌ Redis Integration: DOWN - {}", redis.get("error"));
         }
 
-        // 2. S3
-        Map<String, Object> s3 = detailsService.checkS3();
-        if ("UP".equals(s3.get("status"))) {
-            log.info("✅ Supabase S3 Integration: UP - Bucket: {}, Objects: {}", s3.get("bucket"),
-                    s3.get("object_count"));
-        } else if ("SKIPPED".equals(s3.get("status"))) {
-            log.warn("⚠️ Supabase S3 Integration: SKIPPED - {}", s3.get("message"));
+        // 2. ImageKit
+        Map<String, Object> imageKit = detailsService.checkImageKit();
+        if ("UP".equals(imageKit.get("status"))) {
+            log.info("✅ ImageKit Integration: UP - Endpoint: {}", imageKit.get("endpoint"));
         } else {
-            log.error("❌ Supabase S3 Integration: DOWN - {}", s3.get("error"));
-            log.info("💡 Tip: {}", s3.get("tip"));
+            log.error("❌ ImageKit Integration: DOWN - {}", imageKit.get("error"));
         }
 
         log.info("🏁 Infrastructure Connectivity Check Complete.");
