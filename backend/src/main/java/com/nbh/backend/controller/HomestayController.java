@@ -20,7 +20,7 @@ public class HomestayController {
 
     private final HomestayService homestayService;
 
-    @PostMapping("/add")
+    @PostMapping
     @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_HOST') or hasAuthority('ROLE_ADMIN')")
     public HomestayDto.Response createHomestay(@Valid @RequestBody HomestayDto.Request request,
             Authentication authentication) {

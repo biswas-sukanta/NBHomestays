@@ -66,7 +66,7 @@ export default function AddHomestayWizard() {
     const [loading, setLoading] = useState(false);
 
     // --- State Models ---
-    const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '', photoUrls: '' });
+    const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '', photoUrls: [''] });
     const [location, setLocation] = useState({ latitude: null as number | null, longitude: null as number | null, locationName: '' });
     const [topDestination, setTopDestination] = useState<string>('');
     const [amenities, setAmenities] = useState<string[]>([]);
@@ -90,6 +90,14 @@ export default function AddHomestayWizard() {
 
     const toggleAmenity = (amenity: string) => {
         setAmenities(prev => prev.includes(amenity) ? prev.filter(a => a !== amenity) : [...prev, amenity]);
+    };
+
+    const selectAllAmenitiesPreview = (categoryItems: string[]) => {
+        setAmenities(prev => Array.from(new Set([...prev, ...categoryItems])));
+    };
+
+    const selectNoneAmenitiesPreview = (categoryItems: string[]) => {
+        setAmenities(prev => prev.filter(a => !categoryItems.includes(a)));
     };
 
     const toggleTag = (tag: string) => {
@@ -119,7 +127,7 @@ export default function AddHomestayWizard() {
                 latitude: location.latitude,
                 longitude: location.longitude,
                 locationName: location.locationName,
-                photoUrls: basicInfo.photoUrls.split(',').map(u => u.trim()).filter(Boolean),
+                photoUrls: basicInfo.photoUrls.filter(u => u.trim() !== ''),
                 tags: Array.from(new Set([...tags, topDestination])),
                 // JSONB Conversions
                 amenities: amenities.reduce((acc, curr) => ({ ...acc, [curr]: true }), {}),
@@ -165,7 +173,7 @@ export default function AddHomestayWizard() {
                 <div className="bg-primary h-full transition-all duration-300" style={{ width: `${(step / 7) * 100}%` }} />
             </div>
 
-            <Card className="border-border/50 shadow-lg">
+            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
                 <CardHeader className="bg-muted/30 border-b border-border/50">
                     <CardTitle className="text-xl">
                         {step === 1 && "Basic Information"}
@@ -177,7 +185,7 @@ export default function AddHomestayWizard() {
                         {step === 7 && "Meet Your Host Profile"}
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-6">
+                <CardContent className="pt-6 md:p-8">
                     {/* STEP 1: Basic Info */}
                     {step === 1 && (
                         <div className="space-y-5">
@@ -230,32 +238,68 @@ export default function AddHomestayWizard() {
 
                     {/* STEP 3: Amenities & Photos */}
                     {step === 3 && (
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="photos">Photo URLs (comma separated)</Label>
-                                <Textarea id="photos" value={basicInfo.photoUrls} onChange={e => setBasicInfo({ ...basicInfo, photoUrls: e.target.value })} placeholder="URL 1, URL 2..." />
-                            </div>
-                            <ScrollArea className="h-[400px] border rounded-lg p-4 bg-muted/10">
-                                {Object.entries(AMENITY_CATEGORIES).map(([category, items]) => (
-                                    <div key={category} className="mb-6">
-                                        <h3 className="font-semibold text-sm mb-3 text-primary">{category}</h3>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            {items.map(item => (
-                                                <div key={item} className="flex items-start space-x-2">
-                                                    <input
-                                                        type="checkbox"
-                                                        id={item}
-                                                        checked={amenities.includes(item)}
-                                                        onChange={() => toggleAmenity(item)}
-                                                        className={`h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary ${category === 'Unavailable' ? 'text-destructive border-destructive focus:ring-destructive' : ''}`}
-                                                    />
-                                                    <Label htmlFor={item} className={`text-sm leading-tight cursor-pointer ${category === 'Unavailable' && amenities.includes(item) ? 'line-through text-muted-foreground' : ''}`}>{item}</Label>
-                                                </div>
-                                            ))}
-                                        </div>
+                        <div className="space-y-8">
+                            <div className="space-y-4">
+                                <Label className="text-lg font-bold">Photo URLs</Label>
+                                {basicInfo.photoUrls.map((url, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                        <Input
+                                            type="url"
+                                            value={url}
+                                            onChange={e => {
+                                                const newUrls = [...basicInfo.photoUrls];
+                                                newUrls[idx] = e.target.value;
+                                                setBasicInfo({ ...basicInfo, photoUrls: newUrls });
+                                            }}
+                                            placeholder="https://..."
+                                            className="flex-1"
+                                        />
+                                        {basicInfo.photoUrls.length > 1 && (
+                                            <Button variant="outline" size="icon" onClick={() => {
+                                                const newUrls = basicInfo.photoUrls.filter((_, i) => i !== idx);
+                                                setBasicInfo({ ...basicInfo, photoUrls: newUrls });
+                                            }} className="text-destructive hover:bg-destructive/10 shrink-0">
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        )}
                                     </div>
                                 ))}
-                            </ScrollArea>
+                                <Button variant="ghost" className="w-full border-dashed border-2 hover:bg-primary/5 text-primary transition-all py-6 rounded-xl" onClick={() => setBasicInfo({ ...basicInfo, photoUrls: [...basicInfo.photoUrls, ''] })}>
+                                    <Plus className="w-5 h-5 mr-2" /> Add another photo
+                                </Button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <Label className="text-lg font-bold">Amenities & Features</Label>
+                                <ScrollArea className="h-[400px] border rounded-lg p-2 bg-muted/10">
+                                    {Object.entries(AMENITY_CATEGORIES).map(([category, items]) => (
+                                        <div key={category} className="mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h3 className="font-bold text-lg text-primary">{category}</h3>
+                                                <div className="flex space-x-2 items-center">
+                                                    <button onClick={() => selectAllAmenitiesPreview(items)} className="text-xs text-green-700 hover:underline font-medium">Select All</button>
+                                                    <span className="text-gray-300">|</span>
+                                                    <button onClick={() => selectNoneAmenitiesPreview(items)} className="text-xs text-gray-500 hover:underline font-medium">Select None</button>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {items.map(item => (
+                                                    <div key={item} className="flex items-start space-x-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            id={item}
+                                                            checked={amenities.includes(item)}
+                                                            onChange={() => toggleAmenity(item)}
+                                                            className={`mt-1 h-4 w-4 rounded border-gray-300 text-green-700 accent-green-700 focus:ring-green-700 transition-all ${category === 'Unavailable' ? 'text-destructive accent-destructive border-destructive focus:ring-destructive' : ''}`}
+                                                        />
+                                                        <Label htmlFor={item} className={`text-sm leading-snug cursor-pointer font-medium text-gray-700 ${category === 'Unavailable' && amenities.includes(item) ? 'line-through text-muted-foreground' : ''}`}>{item}</Label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </ScrollArea>
+                            </div>
                         </div>
                     )}
 
