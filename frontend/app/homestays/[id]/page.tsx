@@ -93,6 +93,12 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                 GALLERY (Bento desktop / Snap-scroll mobile)
             ════════════════════════════════════════ */}
             <div className="md:container md:mx-auto md:px-4 md:pt-6">
+                {/* 
+                  Note: The Image URLs are now served by ImageKit.io. 
+                  To optimize gallery load times, you can dynamically append query parameters 
+                  to the photoUrl string for on-the-fly transformations inside the BentoGallery component. 
+                  Example: \`${url}?tr=w-800,h-600\` 
+                */}
                 <BentoGallery
                     photoUrls={homestay.photoUrls || []}
                     name={homestay.name}

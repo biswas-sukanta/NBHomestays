@@ -113,29 +113,11 @@
 			<version>2.5.0</version>
 		</dependency>
 
-		<!-- ── AWS SDK v2 S3 (Supabase Storage compatible) ── -->
+		<!-- ── ImageKit (Image Uploads) ── -->
 		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>s3</artifactId>
-			<version>2.25.60</version>
-		</dependency>
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>url-connection-client</artifactId>
-			<version>2.25.60</version>
-		</dependency>
-
-		<!-- ── Jackson JSR-310 for Redis JSON serialization ── -->
-		<dependency>
-			<groupId>com.fasterxml.jackson.datatype</groupId>
-			<artifactId>jackson-datatype-jsr310</artifactId>
-		</dependency>
-
-		<!-- ── Cloudinary (Image Uploads) ── -->
-		<dependency>
-			<groupId>com.cloudinary</groupId>
-			<artifactId>cloudinary-http44</artifactId>
-			<version>1.38.0</version>
+    		<groupId>io.imagekit</groupId>
+    		<artifactId>imagekit-java</artifactId>
+    		<version>3.0.0</version>
 		</dependency>
 	</dependencies>
 

@@ -60,6 +60,12 @@ export function HomestayCard({ homestay, index = 0 }: HomestayCardProps) {
             <Link href={`/homestays/${homestay.id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
                 {/* Image Container */}
                 <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group-hover:shadow-lg border border-gray-100 transition-shadow duration-300 bg-gray-50 mb-3">
+                    {/* 
+                      Note: The Image URLs are now served by ImageKit.io.
+                      To optimize load times, you can dynamically append query parameters 
+                      to the photoUrl string for on-the-fly transformations. 
+                      Example: \`${homestay.photoUrls?.[0]}?tr=w-400,h-300\` 
+                    */}
                     <img
                         src={homestay.photoUrls?.[0] || FALLBACK_IMAGE}
                         alt={homestay.name}
