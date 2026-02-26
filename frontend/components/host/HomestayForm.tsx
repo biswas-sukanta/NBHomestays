@@ -106,12 +106,16 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
         checkIn: '13:00', checkOut: '10:00', locationType: 'Remote', alcohol: 'Allowed only in common area', hike: 'None', mobileNetwork: 'Good Connectivity', outsiders: 'Not Allowed'
     });
 
+    console.log("[EDIT FLOW] Extracted ID from Props:", id);
+    console.log("[EDIT FLOW] Mode:", isEditMode ? "EDIT" : "CREATE");
+
     useEffect(() => {
         if (isEditMode && id) {
             setIsFetching(true);
             api.get(`/api/homestays/${id}`).then(res => {
                 const data = res.data;
-                console.log("Fetched Homestay Data:", data);
+                console.log("[EDIT FLOW] API Success. Data received:", data);
+                // ... rest of mapping
                 setBasicInfo({ name: data.name || '', description: data.description || '', pricePerNight: data.pricePerNight?.toString() || '' });
                 setLocation({ latitude: data.latitude, longitude: data.longitude, locationName: data.locationName || '' });
                 if (data.tags && data.tags.length > 0) {
@@ -145,11 +149,15 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                     });
                 }
             }).catch(err => {
-                console.error(err);
+                console.error("[EDIT FLOW] API Error:", err);
                 toast.error("Failed to load homestay data.");
             }).finally(() => {
                 setIsFetching(false);
             });
+        } else if (isEditMode && !id) {
+            console.error("[EDIT FLOW] Logic Error: Mount in Edit mode but ID is missing.");
+            toast.error("Invalid homestay ID.");
+            setIsFetching(false);
         }
     }, [isEditMode, id]);
 
