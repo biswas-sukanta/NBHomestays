@@ -188,7 +188,7 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
 }
 
 // ── Public API ────────────────────────────────────────────────
-export function CommentsSection({ postId }: { postId: string }) {
+export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalClose }: { postId: string, hideTrigger?: boolean, externalOpen?: boolean, onExternalClose?: () => void }) {
     const { isAuthenticated, user } = useAuth() as any;
     // AuthContext stores under 'token'
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -196,7 +196,8 @@ export function CommentsSection({ postId }: { postId: string }) {
     const [loading, setLoading] = useState(true);
     const [newComment, setNewComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    const open = externalOpen !== undefined ? externalOpen : internalOpen;
     const [stagedFiles, setStagedFiles] = useState<{ id: string, file: File, previewUrl: string }[]>([]);
     const fileRef = React.useRef<HTMLInputElement>(null);
 
@@ -283,15 +284,22 @@ export function CommentsSection({ postId }: { postId: string }) {
         } catch (e) { console.error(e); }
     };
 
+    const handleClose = () => {
+        if (onExternalClose) onExternalClose();
+        else setInternalOpen(false);
+    };
+
     return (
-        <div className="mt-2">
-            <button
-                onClick={() => setOpen(true)}
-                className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors"
-            >
-                <MessageCircle className="w-5 h-5" />
-                <span>{`Comments (${comments.length})`}</span>
-            </button>
+        <div className={cn(hideTrigger ? "" : "mt-2")}>
+            {!hideTrigger && (
+                <button
+                    onClick={() => setInternalOpen(true)}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors"
+                >
+                    <MessageCircle className="w-5 h-5" />
+                    <span>{`Comments (${comments.length})`}</span>
+                </button>
+            )}
 
             <AnimatePresence>
                 {open && (
@@ -302,7 +310,7 @@ export function CommentsSection({ postId }: { postId: string }) {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                            onClick={() => setOpen(false)}
+                            onClick={handleClose}
                         />
                         {/* Drawer */}
                         <motion.div
@@ -315,7 +323,7 @@ export function CommentsSection({ postId }: { postId: string }) {
                             {/* Header */}
                             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
                                 <h2 className="font-extrabold text-lg text-gray-900">Comments</h2>
-                                <button onClick={() => setOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors">
+                                <button onClick={handleClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors">
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>

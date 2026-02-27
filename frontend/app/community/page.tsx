@@ -12,6 +12,7 @@ import { SharedPageBanner } from '@/components/shared-page-banner';
 import { ImageCropModal } from '@/components/host/ImageCropModal';
 import { StagedFile } from '@/components/host/ImageDropzone';
 import { PostCard, CommunityPost } from '@/components/community/PostCard';
+import { CustomCombobox } from '@/components/ui/combobox';
 import api from '@/lib/api';
 import { MapPin } from 'lucide-react';
 
@@ -187,20 +188,13 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
                         />
                     </div>
 
-                    <div className="relative group min-w-[130px]">
-                        <select
+                    <div className="relative group min-w-[130px] flex-1 sm:flex-none">
+                        <CustomCombobox
+                            options={homestays}
                             value={selectedHomestay}
-                            onChange={e => setSelectedHomestay(e.target.value)}
-                            className={cn(
-                                "w-full bg-emerald-50 border-none rounded-full px-3 py-2 text-sm font-semibold appearance-none focus:outline-none focus:ring-0 transition-all text-emerald-700",
-                                selectedHomestay ? "text-emerald-700" : "text-emerald-600/70"
-                            )}
-                        >
-                            <option value="">Tag Homestay</option>
-                            {homestays.map(h => (
-                                <option key={h.id} value={h.id}>{h.name.length > 15 ? h.name.slice(0, 15) + '...' : h.name}</option>
-                            ))}
-                        </select>
+                            onChange={setSelectedHomestay}
+                            placeholder="Tag Homestay"
+                        />
                     </div>
                 </div>
 

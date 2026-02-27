@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from '@/lib/utils';
 import { ImageCollage } from '@/components/community/ImageCollage';
 import { ImageLightbox } from '@/components/community/ImageLightbox';
+import { CommentsSection } from '@/components/comments-section';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 
@@ -109,6 +110,7 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [shareCount, setShareCount] = useState<number>(Number(post.shareCount) || 0);
     const [sharing, setSharing] = useState(false);
+    const [isCommentDrawerOpen, setIsCommentDrawerOpen] = useState(false);
     const { isAuthenticated } = useAuth() as any;
 
     // Share handler: native Web Share API → clipboard fallback → backend metric
@@ -237,9 +239,9 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
             {!isQuoted && (
                 <div className="flex items-center justify-between px-2 py-1 border-t border-gray-100 pointer-events-auto bg-white relative z-10">
                     <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} />
-                    <Link href={`/community/post/${post.id}`} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold">
+                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsCommentDrawerOpen(true); }} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold">
                         <MessageCircle className="w-5 h-5" /><span>{Math.max(0, Number(post.commentCount) || 0)}</span>
-                    </Link>
+                    </button>
                     {/* Repost */}
                     <button onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Repost">
                         <Repeat2 className="w-5 h-5" />
@@ -250,6 +252,14 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                     </button>
                 </div>
             )}
+
+            {/* Slide-Up Comments */}
+            <CommentsSection
+                postId={post.id}
+                hideTrigger={true}
+                externalOpen={isCommentDrawerOpen}
+                onExternalClose={() => setIsCommentDrawerOpen(false)}
+            />
 
             {/* Lightbox */}
             {lightboxIndex !== null && post.imageUrls && post.imageUrls.length > 0 && (
