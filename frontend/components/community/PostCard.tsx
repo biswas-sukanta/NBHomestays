@@ -66,10 +66,12 @@ interface PostCardProps {
     isQuoted?: boolean;
     /** Callback to open the global comment drawer */
     onOpenComments?: (postId: string) => void;
+    /** Callback to instantly sync global state when a repost is created */
+    onNewPost?: (p: CommunityPost) => void;
 }
 
 // ── LikeButton ────────────────────────────────────────────────────────────────
-function LikeButton({ postId, initialLiked, initialCount, darkMode }: { postId: string; initialLiked: boolean; initialCount: number; darkMode?: boolean }) {
+function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle }: { postId: string; initialLiked: boolean; initialCount: number; darkMode?: boolean; onLikeToggle?: (loveCount: number, isLiked: boolean) => void }) {
     const { isAuthenticated } = useAuth() as any;
     const [liked, setLiked] = useState<boolean>(Boolean(initialLiked));
     const [count, setCount] = useState<number>(Number(initialCount) || 0);
@@ -83,6 +85,9 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode }: { postId: 
             const res = await api.post(`/api/posts/${postId}/like`);
             setCount(res.data.loveCount);
             setLiked(res.data.isLiked);
+            if (onLikeToggle) {
+                onLikeToggle(res.data.loveCount, res.data.isLiked);
+            }
         } catch (error) {
             console.error("Failed to action post", error);
         }
@@ -107,7 +112,7 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode }: { postId: 
 }
 
 // ── PostCard ──────────────────────────────────────────────────────────────────
-export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQuoted = false, onOpenComments }: PostCardProps) {
+export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQuoted = false, onOpenComments, onNewPost }: PostCardProps) {
     const authorName = post.userName || 'Traveller';
     const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     const isOwner = currentUser?.id === post.userId || currentUser?.role === 'ROLE_ADMIN';
@@ -154,6 +159,13 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
         } else {
             // Self-sufficient: open internal repost composer
             setInternalRepostQuote(quote);
+        }
+    };
+
+    const handleInternalRepostSuccess = (newPost?: CommunityPost) => {
+        setInternalRepostQuote(null);
+        if (newPost && onNewPost) {
+            onNewPost(newPost);
         }
     };
 
@@ -248,8 +260,17 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
 
                 return (
                     <div className="flex items-center justify-between px-3 py-2 border-t border-gray-100 pointer-events-auto bg-white relative z-10">
-                        {/* Like — already state-aware internally */}
-                        <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} />
+                        {/* Like — instantly dispatches update to global state array on success */}
+                        <LikeButton
+                            postId={post.id}
+                            initialLiked={post.isLikedByCurrentUser}
+                            initialCount={Math.max(0, Number(post.loveCount) || 0)}
+                            onLikeToggle={(newLoveCount, newIsLiked) => {
+                                if (onUpdate) {
+                                    onUpdate({ ...post, loveCount: newLoveCount, isLikedByCurrentUser: newIsLiked });
+                                }
+                            }}
+                        />
 
                         {/* Comment — dynamic fill when comments exist */}
                         <button
@@ -313,7 +334,7 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
                 {internalRepostQuote && (
                     <InternalMiniRepostComposer
                         quote={internalRepostQuote}
-                        onSuccess={() => setInternalRepostQuote(null)}
+                        onSuccess={handleInternalRepostSuccess}
                         onCancel={() => setInternalRepostQuote(null)}
                     />
                 )}
@@ -328,7 +349,7 @@ import { CustomCombobox } from '@/components/ui/combobox';
 
 interface HomestayOpt { id: string; name: string; }
 
-function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: QuotePost; onSuccess: () => void; onCancel: () => void }) {
+function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: QuotePost; onSuccess: (post?: CommunityPost) => void; onCancel: () => void }) {
     const [text, setText] = useState('');
     const [location, setLocation] = useState('North Bengal');
     const [submitting, setSubmitting] = useState(false);
@@ -368,10 +389,10 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                 repostedFromPostId: quote.id,
             };
             if (selectedHomestay) payload.homestayId = selectedHomestay;
-            await api.post('/api/posts', payload);
+            const res = await api.post('/api/posts', payload);
             toast.success('Reposted!');
             stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
-            onSuccess();
+            onSuccess(res.data);
         } catch {
             toast.error('Repost failed');
         } finally {
