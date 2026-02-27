@@ -417,7 +417,7 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                 </div>
 
                 {/* Tier 2: Body — flex-1 scrollable, min-h-0 */}
-                <div className="flex-1 overflow-y-auto px-5 py-5 overscroll-contain min-h-0 flex flex-col gap-4">
+                <div className="flex-1 overflow-y-auto px-5 py-5 overscroll-contain min-h-0 space-y-4">
                     {/* Quoted Preview */}
                     <div className="border border-green-300 rounded-xl p-4 bg-green-50">
                         <p className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-1 flex items-center gap-1">
@@ -428,8 +428,10 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                     <textarea
                         value={text}
                         onChange={e => setText(e.target.value)}
+                        onInput={e => { const t = e.target as HTMLTextAreaElement; t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }}
                         placeholder="Add your thoughts..."
-                        className="flex-1 min-h-[120px] w-full text-base font-medium text-gray-900 placeholder:text-gray-400 resize-none focus:ring-0 focus:outline-none border border-gray-200 rounded-xl p-4 bg-gray-50 focus:bg-white focus:border-green-400 transition-all"
+                        rows={3}
+                        className="w-full min-h-[80px] text-lg font-medium text-gray-900 placeholder:text-gray-400 resize-none focus:ring-0 focus:outline-none bg-transparent border-none p-0"
                     />
                     {/* Image staging */}
                     {stagedFiles.length > 0 && (
@@ -448,7 +450,7 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                 </div>
 
                 {/* Tier 3: Footer — shrink-0, anchored to bottom, 2-row layout */}
-                <div className="shrink-0 px-5 py-4 border-t border-gray-100 bg-white flex flex-col gap-3 pb-[env(safe-area-inset-bottom,16px)]">
+                <div className="shrink-0 px-5 py-3 border-t border-gray-100 bg-white flex flex-col gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                     {/* Row 1: Tool buttons */}
                     <div className="flex items-center gap-2 overflow-x-auto">
                         <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
