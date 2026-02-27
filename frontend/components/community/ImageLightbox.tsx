@@ -9,10 +9,9 @@ interface ImageLightboxProps {
     images: string[];
     initialIndex: number;
     onClose: () => void;
-    footer?: React.ReactNode;
 }
 
-export function ImageLightbox({ images, initialIndex, onClose, footer }: ImageLightboxProps) {
+export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxProps) {
     const [current, setCurrent] = useState(initialIndex);
     const thumbnailRef = useRef<HTMLDivElement>(null);
     const touchStartX = useRef<number | null>(null);
@@ -137,12 +136,6 @@ export function ImageLightbox({ images, initialIndex, onClose, footer }: ImageLi
                     </div>
                 )}
 
-                {/* Injected Footer (e.g. Post Action Bar) */}
-                {footer && (
-                    <div className="w-full">
-                        {footer}
-                    </div>
-                )}
             </div>
         </div>,
         document.body

@@ -298,30 +298,6 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
                     images={post.imageUrls}
                     initialIndex={lightboxIndex}
                     onClose={() => setLightboxIndex(null)}
-                    footer={
-                        <div className="w-full flex flex-col p-4 bg-gradient-to-t from-black via-black/80 to-transparent">
-                            <div className="flex items-center gap-3 mb-4 px-2 pointer-events-none">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-green-500 to-green-700 flex items-center justify-center text-white text-sm font-bold shadow-sm flex-none">
-                                    {initials}
-                                </div>
-                                <span className="font-bold text-sm text-white drop-shadow-md">{authorName}</span>
-                            </div>
-                            <div className="flex items-center justify-between px-1 pt-2 border-t border-white/20 pointer-events-auto">
-                                <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} darkMode />
-                                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenComments?.(post.id); }} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-white hover:bg-white/10 transition-colors active:scale-95 text-sm font-semibold">
-                                    <MessageCircle className="w-5 h-5" /><span>{Math.max(0, Number(post.commentCount) || 0)}</span>
-                                </button>
-                                {/* Repost */}
-                                <button onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-white hover:bg-white/10 transition-colors active:scale-95 text-sm font-semibold" aria-label="Repost">
-                                    <Repeat2 className="w-5 h-5" />
-                                </button>
-                                {/* Share */}
-                                <button onClick={handleShare} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-white hover:bg-white/10 transition-colors active:scale-95 text-sm font-semibold" aria-label="Share post">
-                                    <Share2 className="w-5 h-5" /> <span>{Math.max(0, Number(shareCount) || 0)}</span>
-                                </button>
-                            </div>
-                        </div>
-                    }
                 />
             )}
         </motion.article>
