@@ -385,15 +385,17 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
             className="fixed inset-0 z-[9999] flex flex-col md:items-center md:justify-center bg-white md:bg-black/40 md:backdrop-blur-sm"
         >
             <div className="hidden md:block absolute inset-0" onClick={onCancel} />
-            <div className="relative z-10 bg-white md:rounded-2xl md:border md:border-gray-100 md:shadow-2xl flex flex-col h-[100dvh] md:h-auto md:max-h-[85vh] w-full md:max-w-lg overflow-hidden">
-                {/* Tier 1: Header — shrink-0, border-b */}
-                <div className="shrink-0 px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
-                    <p className="font-extrabold text-gray-900 text-lg flex items-center gap-2"><Repeat2 className="w-4 h-4 text-green-600" /> Repost Story</p>
-                    <button onClick={onCancel} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-all active:scale-95 shadow-sm"><X className="w-5 h-5" /></button>
+            <div className="relative z-10 bg-white md:rounded-2xl md:border md:border-gray-100 md:shadow-2xl flex flex-col h-[100dvh] md:h-auto md:max-h-[85vh] w-full md:max-w-base overflow-hidden">
+                {/* Tier 1: Restored Explicit Header */}
+                <div className="flex-none p-4 flex justify-between items-center bg-white border-b border-gray-100 sticky top-0 z-20">
+                    <p className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat2 className="w-4 h-4 text-green-600" /> Repost Story</p>
+                    <button onClick={onCancel} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close">
+                        <X size={20} className="text-gray-600" />
+                    </button>
                 </div>
 
-                {/* Tier 2: Body — flex-1 scrollable, min-h-0 */}
-                <div className="flex-1 overflow-y-auto px-5 py-5 overscroll-contain min-h-0 space-y-4">
+                {/* Tier 2: Protected Scrollable Body */}
+                <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 min-h-0 overscroll-contain">
                     {/* Quoted Preview */}
                     <div className="border border-green-300 rounded-xl p-4 bg-green-50">
                         <p className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-1 flex items-center gap-1">

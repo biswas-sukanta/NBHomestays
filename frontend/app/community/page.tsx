@@ -135,15 +135,23 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
     };
 
     return (
-        <div className="bg-white md:rounded-2xl md:shadow-lg md:border md:border-gray-100 z-50 relative flex flex-col h-[100dvh] md:h-auto md:max-h-[85vh] w-full">
-            {/* Tier 1: Header — shrink-0, border-b, dynamic title */}
-            <div className="shrink-0 px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
-                <h2 className="font-extrabold text-gray-900 tracking-tight text-lg">{postData ? 'Edit Your Story' : repostTarget ? 'Repost Story' : 'Share Your Journey'}</h2>
-                <button onClick={onCancel} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-all active:scale-95 shadow-sm"><X className="w-5 h-5" /></button>
+        <div className="fixed inset-0 z-[100] w-full h-[100dvh] bg-white flex flex-col md:h-auto md:max-h-[85vh] md:w-[600px] md:rounded-2xl md:relative md:border md:border-gray-100 md:shadow-lg">
+            {/* Tier 1: Restored Explicit Header */}
+            <div className="flex-none p-4 flex justify-between items-center bg-white border-b border-gray-100 sticky top-0 z-20">
+                <h2 className="text-lg font-bold text-gray-800">
+                    {postData ? 'Edit Your Story' : repostTarget ? 'Repost Story' : 'Share Your Journey'}
+                </h2>
+                <button
+                    onClick={onCancel}
+                    className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                    aria-label="Close"
+                >
+                    <X size={20} className="text-gray-600" />
+                </button>
             </div>
 
-            {/* Tier 2: Body — flex-1 scrollable, min-h-0 for zoom safety */}
-            <div className="flex-1 overflow-y-auto p-5 overscroll-contain min-h-0 space-y-4">
+            {/* Tier 2: Protected Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 min-h-0 overscroll-contain">
 
                 {/* Repost Quote Preview */}
                 {repostTarget && (
