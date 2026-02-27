@@ -63,30 +63,33 @@ export function ImageCollage({ images, onImageClick }: ImageCollageProps) {
 
     if (count === 4) {
         return (
-            <div className="grid grid-cols-2 gap-0.5 w-full">
-                <CollageImg src={images[0]} className="col-span-2 h-56 sm:h-64" onClick={() => onImageClick(0)} />
-                {images.slice(1, 4).map((url, i) => (
-                    <CollageImg key={i + 1} src={url} className="h-40 sm:h-48" onClick={() => onImageClick(i + 1)} />
-                ))}
+            <div className="flex flex-col gap-0.5 w-full rounded-sm overflow-hidden border border-gray-100">
+                <CollageImg src={images[0]} className="w-full h-56 sm:h-72" onClick={() => onImageClick(0)} />
+                <div className="grid grid-cols-3 gap-0.5 w-full h-28 sm:h-40">
+                    <CollageImg src={images[1]} className="h-full w-full" onClick={() => onImageClick(1)} />
+                    <CollageImg src={images[2]} className="h-full w-full" onClick={() => onImageClick(2)} />
+                    <CollageImg src={images[3]} className="h-full w-full" onClick={() => onImageClick(3)} />
+                </div>
             </div>
         );
     }
 
-    // 5+ images
+    // 5+ images (LinkedIn style 4-visible config)
+    const extraForFour = count - 4;
     return (
-        <div className="grid grid-cols-2 gap-0.5 w-full">
-            <CollageImg src={images[0]} className="col-span-2 h-56 sm:h-64" onClick={() => onImageClick(0)} />
-            <CollageImg src={images[1]} className="h-40 sm:h-48" onClick={() => onImageClick(1)} />
-            <CollageImg src={images[2]} className="h-40 sm:h-48" onClick={() => onImageClick(2)} />
-            <CollageImg src={images[3]} className="h-40 sm:h-48" onClick={() => onImageClick(3)} />
-            {/* Last visible with +N overlay */}
-            <div className="relative h-40 sm:h-48 overflow-hidden cursor-pointer" onClick={() => onImageClick(4)}>
-                <CollageImg src={images[4]} className="h-full w-full" onClick={() => onImageClick(4)} />
-                {extra > 0 && (
-                    <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] flex items-center justify-center rounded-br-none">
-                        <span className="text-white font-extrabold text-3xl tracking-tight drop-shadow-xl">+{extra}</span>
-                    </div>
-                )}
+        <div className="flex flex-col gap-0.5 w-full rounded-sm overflow-hidden border border-gray-100">
+            <CollageImg src={images[0]} className="w-full h-56 sm:h-72" onClick={() => onImageClick(0)} />
+            <div className="grid grid-cols-3 gap-0.5 w-full h-28 sm:h-40">
+                <CollageImg src={images[1]} className="h-full w-full" onClick={() => onImageClick(1)} />
+                <CollageImg src={images[2]} className="h-full w-full" onClick={() => onImageClick(2)} />
+                <div className="relative h-full w-full overflow-hidden cursor-pointer" onClick={() => onImageClick(3)}>
+                    <CollageImg src={images[3]} className="h-full w-full" onClick={() => onImageClick(3)} />
+                    {extraForFour > 0 && (
+                        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                            <span className="text-white font-semibold text-2xl tracking-tight">+{extraForFour}</span>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

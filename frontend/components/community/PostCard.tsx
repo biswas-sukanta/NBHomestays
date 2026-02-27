@@ -63,7 +63,7 @@ interface PostCardProps {
 }
 
 // ── LikeButton ────────────────────────────────────────────────────────────────
-function LikeButton({ postId, initialLiked, initialCount }: { postId: string; initialLiked: boolean; initialCount: number }) {
+function LikeButton({ postId, initialLiked, initialCount, darkMode }: { postId: string; initialLiked: boolean; initialCount: number; darkMode?: boolean }) {
     const { isAuthenticated } = useAuth() as any;
     const [liked, setLiked] = useState<boolean>(Boolean(initialLiked));
     const [count, setCount] = useState<number>(Number(initialCount) || 0);
@@ -89,10 +89,14 @@ function LikeButton({ postId, initialLiked, initialCount }: { postId: string; in
     return (
         <button
             onClick={toggle}
-            className={cn('flex items-center gap-1.5 text-sm font-semibold transition-colors duration-200 group relative z-10', liked ? 'text-rose-500' : 'text-muted-foreground hover:text-rose-400')}
+            className={cn('flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-colors duration-200 active:scale-95 text-sm font-semibold group',
+                liked ? 'text-rose-600 hover:bg-rose-50' :
+                    darkMode ? 'text-white hover:bg-white/10' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100')}
             aria-label={liked ? 'Unlike post' : 'Like post'}
         >
-            <Heart className={cn('w-5 h-5 transition-all duration-200', liked ? 'fill-rose-500 stroke-rose-500' : 'fill-transparent group-hover:stroke-rose-400', popping && 'scale-125')} />
+            <Heart className={cn('w-5 h-5 transition-all duration-200',
+                liked ? 'fill-rose-600 stroke-rose-600' :
+                    darkMode ? 'fill-transparent group-hover:stroke-white' : 'fill-transparent group-hover:stroke-gray-700', popping && 'scale-125')} />
             <span>{count}</span>
         </button>
     );
@@ -145,8 +149,8 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
     };
 
     const articleClassName = cn(
-        'group bg-card border border-border/70 rounded-[28px] overflow-hidden shadow-sm transition-all duration-300 relative',
-        !isDetailView && 'hover:border-green-300 hover:shadow-xl hover:shadow-green-500/5 cursor-pointer'
+        'bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-4 relative transition-all duration-300',
+        !isDetailView && 'cursor-pointer'
     );
 
     const content = (
@@ -168,95 +172,114 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                 </div>
             )}
 
-            {/* Homestay Tag Mini-Card */}
-            {post.homestayId && post.homestayName && (
-                <div className="mx-5 mt-4 flex items-center gap-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl px-4 py-2.5 relative z-10 pointer-events-auto">
-                    <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center flex-none">
-                        <MapPin className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-[11px] font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">Tagged Homestay</p>
-                        <p className="text-sm font-extrabold text-foreground truncate">{post.homestayName}</p>
-                    </div>
-                    <Link href={`/homestays/${post.homestayId}`} className="ml-auto shrink-0 text-[11px] font-extrabold text-green-700 dark:text-green-400 hover:text-green-900 transition-colors uppercase tracking-wider pointer-events-auto">
-                        Book →
-                    </Link>
-                </div>
-            )}
-
-            <div className="p-5 sm:p-6 relative z-10 pointer-events-none">
-                <div className="flex items-start gap-4 mb-4">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-green-400 to-green-600 flex items-center justify-center text-white text-[15px] font-bold flex-none shadow-md">
-                        {initials}
-                    </div>
-                    <div className="flex-1 min-w-0 flex justify-between items-start pt-0.5">
-                        <div>
-                            <p className="font-extrabold text-[15px] text-foreground tracking-tight">{authorName}</p>
-                            <div className="flex items-center gap-1.5 mt-1 text-[13px] font-semibold text-muted-foreground">
-                                <MapPin className="w-3.5 h-3.5 text-green-600 flex-none" />
-                                <span className="truncate">{post.locationName}</span>
-                                <span className="mx-1 text-gray-300">•</span>
-                                <span className="flex-none font-medium">{formatRelative(post.createdAt)}</span>
-                            </div>
+            <div className="p-4 relative z-10 pointer-events-none">
+                {/* Header Sequence */}
+                <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-green-500 to-green-700 flex items-center justify-center text-white text-sm font-bold flex-none shadow-sm">
+                            {initials}
                         </div>
+                        <div className="flex flex-col">
+                            <span className="font-bold text-sm text-gray-900 hover:underline cursor-pointer pointer-events-auto leading-tight">{authorName}</span>
+                            <span className="text-xs text-gray-500 leading-tight flex items-center gap-1 mt-0.5">
+                                {formatRelative(post.createdAt)} • <MapPin className="w-3 h-3 inline-block" /> {post.locationName}
+                            </span>
 
-                        {/* Edit/Delete dropdown (owner/admin, feed only) */}
-                        {isOwner && onDelete && onUpdate && (
-                            <div className="pointer-events-auto">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button className="w-8 h-8 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors flex justify-center items-center">
-                                            <MoreHorizontal className="w-5 h-5" />
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-36 rounded-xl font-medium">
-                                        <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                                            <Pencil className="w-4 h-4 mr-2" /> Edit
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => onDelete(post.id)}>
-                                            <Trash2 className="w-4 h-4 mr-2" /> Delete
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        )}
+                            {/* Homestay Tag Mini-Pill */}
+                            {post.homestayId && post.homestayName && (
+                                <div className="mt-1.5 pointer-events-auto">
+                                    <Link href={`/homestays/${post.homestayId}`} className="inline-flex items-center gap-1 bg-green-50 hover:bg-green-100 text-green-700 text-[11px] py-0.5 px-2 rounded-full font-semibold transition-colors border border-green-100">
+                                        <MapPin className="w-3 h-3" />
+                                        Linked to: {post.homestayName}
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
                     </div>
+
+                    {/* Edit/Delete dropdown */}
+                    {isOwner && onDelete && onUpdate && (
+                        <div className="pointer-events-auto">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors flex justify-center items-center">
+                                        <MoreHorizontal className="w-5 h-5" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-36 rounded-xl font-medium border-gray-200">
+                                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                                        <Pencil className="w-4 h-4 mr-2" /> Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => onDelete(post.id)}>
+                                        <Trash2 className="w-4 h-4 mr-2" /> Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    )}
                 </div>
 
-                <p className="text-[15px] text-foreground/90 leading-[1.6] whitespace-pre-line mb-4 font-medium">{post.textContent}</p>
+                <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line mb-3 font-normal">{post.textContent}</p>
 
                 {/* Recursive Nested Repost */}
                 {post.repostedPost && (
-                    <div className="mb-5 mt-2 rounded-2xl border-2 border-border/60 bg-secondary/20 hover:bg-secondary/40 transition-colors">
+                    <div className="mb-3 mt-2 rounded-lg border border-gray-300 bg-gray-50 pointer-events-auto overflow-hidden">
                         <PostCard
                             post={post.repostedPost}
-                            isDetailView={true} // prevent deep nesting links
+                            isDetailView={true}
                             currentUser={currentUser}
                         />
                     </div>
                 )}
+            </div>
 
-                {/* Actions Bar */}
-                <div className="flex items-center gap-5 pt-4 border-t border-border/40 pointer-events-auto">
-                    <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={post.loveCount} />
-                    <Link href={`/community/post/${post.id}`} className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
-                        <MessageCircle className="w-5 h-5" /><span>{post.commentCount ?? 0}</span>
-                    </Link>
-                    {/* Repost */}
-                    <button onClick={handleRepost} className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-green-600 transition-colors" aria-label="Repost">
-                        <Repeat2 className="w-4 h-4" />
-                    </button>
-                    {/* Share */}
-                    <button onClick={handleShare} className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-green-600 transition-colors ml-auto" aria-label="Share post">
-                        {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
-                        {shareCount > 0 && <span className="text-xs">{shareCount}</span>}
-                    </button>
-                </div>
+            {/* Actions Bar */}
+            <div className="flex items-center justify-between px-2 py-1 border-t border-gray-100 pointer-events-auto bg-white relative z-10">
+                <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} />
+                <Link href={`/community/post/${post.id}`} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold">
+                    <MessageCircle className="w-5 h-5" /><span>{Math.max(0, Number(post.commentCount) || 0)}</span>
+                </Link>
+                {/* Repost */}
+                <button onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Repost">
+                    <Repeat2 className="w-5 h-5" />
+                </button>
+                {/* Share */}
+                <button onClick={handleShare} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Share post">
+                    <Share2 className="w-5 h-5" /> <span>{Math.max(0, Number(shareCount) || 0)}</span>
+                </button>
             </div>
 
             {/* Lightbox */}
-            {lightboxIndex !== null && post.imageUrls.length > 0 && (
-                <ImageLightbox images={post.imageUrls} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+            {lightboxIndex !== null && post.imageUrls && post.imageUrls.length > 0 && (
+                <ImageLightbox
+                    images={post.imageUrls}
+                    initialIndex={lightboxIndex}
+                    onClose={() => setLightboxIndex(null)}
+                    footer={
+                        <div className="w-full flex flex-col p-4 bg-gradient-to-t from-black via-black/80 to-transparent">
+                            <div className="flex items-center gap-3 mb-4 px-2 pointer-events-none">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-green-500 to-green-700 flex items-center justify-center text-white text-sm font-bold shadow-sm flex-none">
+                                    {initials}
+                                </div>
+                                <span className="font-bold text-sm text-white drop-shadow-md">{authorName}</span>
+                            </div>
+                            <div className="flex items-center justify-between px-1 pt-2 border-t border-white/20 pointer-events-auto">
+                                <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} darkMode />
+                                <Link onClick={e => e.stopPropagation()} href={`/community/post/${post.id}`} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-white hover:bg-white/10 transition-colors active:scale-95 text-sm font-semibold">
+                                    <MessageCircle className="w-5 h-5" /><span>{Math.max(0, Number(post.commentCount) || 0)}</span>
+                                </Link>
+                                {/* Repost */}
+                                <button onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-white hover:bg-white/10 transition-colors active:scale-95 text-sm font-semibold" aria-label="Repost">
+                                    <Repeat2 className="w-5 h-5" />
+                                </button>
+                                {/* Share */}
+                                <button onClick={handleShare} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-white hover:bg-white/10 transition-colors active:scale-95 text-sm font-semibold" aria-label="Share post">
+                                    <Share2 className="w-5 h-5" /> <span>{Math.max(0, Number(shareCount) || 0)}</span>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                />
             )}
         </motion.article>
     );

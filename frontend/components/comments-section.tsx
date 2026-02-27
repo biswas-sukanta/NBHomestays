@@ -286,90 +286,120 @@ export function CommentsSection({ postId }: { postId: string }) {
     return (
         <div className="mt-2">
             <button
-                onClick={() => setOpen(o => !o)}
-                className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors"
+                onClick={() => setOpen(true)}
+                className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors"
             >
-                <MessageCircle className="w-4 h-4" />
-                <span>{open ? 'Hide comments' : `Comments (${comments.length})`}</span>
+                <MessageCircle className="w-5 h-5" />
+                <span>{`Comments (${comments.length})`}</span>
             </button>
 
             <AnimatePresence>
                 {open && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="mt-4 space-y-4"
-                    >
-                        {loading ? (
-                            <div className="space-y-2">
-                                {[1, 2].map(i => <div key={i} className="h-10 rounded-xl skeleton-shimmer" />)}
+                    <div className="fixed inset-0 z-[100] flex justify-center items-end sm:items-center">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                            onClick={() => setOpen(false)}
+                        />
+                        {/* Drawer */}
+                        <motion.div
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            exit={{ y: "100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="relative w-full max-w-2xl h-[90vh] sm:h-[650px] bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                        >
+                            {/* Header */}
+                            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+                                <h2 className="font-extrabold text-lg text-gray-900">Comments</h2>
+                                <button onClick={() => setOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors">
+                                    <X className="w-4 h-4" />
+                                </button>
                             </div>
-                        ) : (
-                            comments.map(c => (
-                                <SingleComment
-                                    key={c.id}
-                                    comment={c}
-                                    postId={postId}
-                                    onDelete={deleteComment}
-                                    currentUserId={user?.id}
-                                    token={token || undefined}
-                                />
-                            ))
-                        )}
 
-                        {/* New comment input */}
-                        {isAuthenticated && (
-                            <div className="flex flex-col gap-2 pt-2">
-                                {/* Staging Area */}
-                                {stagedFiles.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 px-1">
-                                        {stagedFiles.map(file => (
-                                            <div key={file.id} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
-                                                <img src={file.previewUrl} alt="preview" className="w-full h-full object-cover" />
-                                                <button onClick={() => removeStaged(file.id)} className="absolute top-1 right-1 p-0.5 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-sm transition-colors">
-                                                    <X className="w-3 h-3" />
-                                                </button>
-                                            </div>
+                            {/* Comment List */}
+                            <div className="flex-1 overflow-y-auto px-5 py-6 bg-gray-50/50">
+                                {loading ? (
+                                    <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+                                ) : comments.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-16 h-full text-center">
+                                        <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-4 ring-8 ring-green-50/50">
+                                            <MessageCircle className="w-10 h-10 text-green-600" />
+                                        </div>
+                                        <h3 className="text-base font-bold text-gray-900 mb-1">No comments yet</h3>
+                                        <p className="text-sm text-gray-500 max-w-[200px]">Be the first to share your thoughts on this story!</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {comments.map(c => (
+                                            <SingleComment
+                                                key={c.id}
+                                                comment={c}
+                                                postId={postId}
+                                                onDelete={deleteComment}
+                                                currentUserId={user?.id}
+                                                token={token || undefined}
+                                            />
                                         ))}
                                     </div>
                                 )}
-
-                                <div className="flex gap-2 items-end">
-                                    <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-                                    <button
-                                        onClick={() => fileRef.current?.click()}
-                                        disabled={submitting}
-                                        className="p-2.5 rounded-xl bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors disabled:opacity-50 flex-none"
-                                        aria-label="Add photo"
-                                    >
-                                        <ImageIcon className="w-5 h-5" />
-                                    </button>
-                                    <textarea
-                                        value={newComment}
-                                        onChange={e => setNewComment(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), submitComment())}
-                                        placeholder="Add a comment..."
-                                        rows={1}
-                                        className="flex-1 text-sm bg-secondary/60 border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none min-h-[44px]"
-                                    />
-                                    <button
-                                        onClick={submitComment}
-                                        disabled={(!newComment.trim() && stagedFiles.length === 0) || submitting}
-                                        className="p-2.5 rounded-xl bg-primary text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors flex-none"
-                                        aria-label="Post comment"
-                                    >
-                                        {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                                    </button>
-                                </div>
                             </div>
-                        )}
-                        {!isAuthenticated && (
-                            <p className="text-xs text-muted-foreground text-center py-1">
-                                <a href="/login" className="text-primary font-semibold hover:underline">Login</a> to join the conversation
-                            </p>
-                        )}
-                    </motion.div>
+
+                            {/* Fixed Bottom Input Area */}
+                            <div className="p-4 border-t border-gray-100 bg-white shrink-0">
+                                {isAuthenticated ? (
+                                    <div className="flex flex-col gap-3">
+                                        {/* Staging Area */}
+                                        {stagedFiles.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 px-1">
+                                                {stagedFiles.map(file => (
+                                                    <div key={file.id} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                                                        <img src={file.previewUrl} alt="preview" className="w-full h-full object-cover" />
+                                                        <button onClick={() => removeStaged(file.id)} className="absolute top-1 right-1 p-0.5 bg-black/60 hover:bg-black/80 rounded-full text-white backdrop-blur-sm transition-colors">
+                                                            <X className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 flex-none rounded-full bg-gradient-to-tr from-green-500 to-green-700 flex items-center justify-center text-white text-[13px] font-bold shadow-sm">
+                                                {user?.firstName?.[0] || 'U'}
+                                            </div>
+                                            <div className="flex-1 flex items-center bg-gray-100 rounded-full px-4 py-2 border border-transparent focus-within:border-gray-300 focus-within:bg-white transition-all shadow-inner relative">
+                                                <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                                                <input
+                                                    value={newComment}
+                                                    onChange={e => setNewComment(e.target.value)}
+                                                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), submitComment())}
+                                                    placeholder="Add a comment..."
+                                                    className="flex-1 bg-transparent text-[15px] font-medium text-gray-900 focus:outline-none placeholder:text-gray-500"
+                                                />
+                                                <button onClick={() => fileRef.current?.click()} className="text-gray-400 hover:text-green-600 transition-colors ml-2" aria-label="Attach photo">
+                                                    <ImageIcon className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                            <button
+                                                onClick={submitComment}
+                                                disabled={(!newComment.trim() && stagedFiles.length === 0) || submitting}
+                                                className="w-10 h-10 flex-none rounded-full bg-green-600 text-white flex items-center justify-center disabled:opacity-50 hover:bg-green-700 transition-all shadow-md active:scale-95"
+                                            >
+                                                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-[13px] text-gray-500 text-center py-2 font-medium">
+                                        <a href="/login" className="text-green-600 font-bold hover:underline content-center">Login</a> to join the conversation
+                                    </p>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
         </div>

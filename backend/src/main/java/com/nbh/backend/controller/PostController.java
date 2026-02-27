@@ -4,6 +4,7 @@ import com.nbh.backend.dto.PostDto;
 import com.nbh.backend.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,6 +36,7 @@ public class PostController {
     }
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.Response> createPost(
             @RequestBody PostDto.Request request,
             Authentication authentication) {
@@ -42,11 +44,13 @@ public class PostController {
     }
 
     @GetMapping("/my-posts")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PostDto.Response>> getMyPosts(Authentication authentication) {
         return ResponseEntity.ok(postService.getPostsByUser(authentication.getName()));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.Response> updatePost(
             @PathVariable("id") java.util.UUID id,
             @RequestBody PostDto.Request request,
@@ -55,6 +59,7 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deletePost(
             @PathVariable("id") java.util.UUID id,
             Authentication authentication) {
@@ -63,6 +68,7 @@ public class PostController {
     }
 
     @PostMapping("/{id}/like")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.LikeResponse> toggleLike(
             @PathVariable("id") java.util.UUID id,
             Authentication authentication) {

@@ -8,9 +8,10 @@ interface ImageLightboxProps {
     images: string[];
     initialIndex: number;
     onClose: () => void;
+    footer?: React.ReactNode;
 }
 
-export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxProps) {
+export function ImageLightbox({ images, initialIndex, onClose, footer }: ImageLightboxProps) {
     const [current, setCurrent] = useState(initialIndex);
     const thumbnailRef = useRef<HTMLDivElement>(null);
     const touchStartX = useRef<number | null>(null);
@@ -54,7 +55,7 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
 
     return (
         <div
-            className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-between py-4"
+            className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-between pt-4 overflow-hidden"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
             {/* Close button */}
@@ -120,6 +121,13 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
                             <img src={thumb(url)} alt="" className="w-full h-full object-cover" />
                         </button>
                     ))}
+                </div>
+            )}
+
+            {/* Injected Footer (e.g. Post Action Bar) */}
+            {footer && (
+                <div className="w-full shrink-0 mt-auto">
+                    {footer}
                 </div>
             )}
         </div>
