@@ -384,16 +384,16 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
     if (!mounted) return null;
 
     return createPortal(
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed inset-0 z-[9999] flex flex-col md:items-center md:justify-center bg-white md:bg-black/40 md:backdrop-blur-sm"
-        >
-            <div className="hidden md:block absolute inset-0" onClick={onCancel} />
-            <div className="fixed inset-0 z-[9999] bg-white w-full h-[100dvh] flex flex-col md:relative md:w-[600px] md:h-auto md:max-h-[85vh] md:rounded-2xl md:mx-auto md:mt-20 shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-[9999] bg-black/60 flex flex-col justify-end md:justify-center md:items-center">
+            <div className="hidden md:block absolute inset-0 -z-10" onClick={onCancel} />
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 30 }}
+                className="bg-white w-full h-[100dvh] flex flex-col md:w-[600px] md:h-auto md:max-h-[85vh] md:rounded-2xl shadow-2xl overflow-hidden relative z-10"
+            >
                 {/* Tier 1: Safe-Area Header (flex-none) */}
-                <div className="flex-none pt-[max(1rem,env(safe-area-inset-top))] pb-4 px-4 flex justify-between items-center bg-white border-b border-gray-100">
+                <div className="flex-none pt-[max(1.5rem,env(safe-area-inset-top))] md:pt-4 pb-4 px-4 flex justify-between items-center border-b border-gray-200 bg-white">
                     <p className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat2 className="w-4 h-4 text-green-600" /> Repost Story</p>
                     <button onClick={onCancel} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0" aria-label="Close">
                         <X size={20} className="text-gray-600" />
@@ -453,8 +453,8 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                         {submitting ? 'Posting...' : 'Repost'}
                     </button>
                 </div>
-            </div>
-        </motion.div>,
+            </motion.div>
+        </div>,
         document.body
     );
 }

@@ -141,112 +141,119 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
     if (!mounted) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] bg-white w-full h-[100dvh] flex flex-col md:relative md:w-[600px] md:h-auto md:max-h-[85vh] md:rounded-2xl md:mx-auto md:mt-20 shadow-2xl overflow-hidden">
-            <div className="hidden md:block absolute inset-0 bg-black/40 backdrop-blur-sm -z-10" onClick={onCancel} />
-            {/* Tier 1: Safe-Area Header (flex-none) */}
-            <div className="flex-none pt-[max(1rem,env(safe-area-inset-top))] pb-4 px-4 flex justify-between items-center bg-white border-b border-gray-100">
-                <h2 className="text-lg font-bold text-gray-800">
-                    {postData ? 'Edit Your Story' : repostTarget ? 'Repost Story' : 'Share Your Journey'}
-                </h2>
-                <button
-                    onClick={onCancel}
-                    className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
-                    aria-label="Close"
-                >
-                    <X size={20} className="text-gray-600" />
-                </button>
-            </div>
-
-            {/* Tier 2: The Contained Body (flex-1 min-h-0) */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-4">
-
-                {/* Repost Quote Preview */}
-                {repostTarget && (
-                    <div className="border border-green-300 rounded-xl p-4 bg-green-50">
-                        <p className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-1 flex items-center gap-1">
-                            <Share2 className="w-3.5 h-3.5" /> Reposting {repostTarget.authorName}&apos;s story
-                        </p>
-                        <p className="text-sm text-gray-700 line-clamp-3">{repostTarget.textContent}</p>
-                    </div>
-                )}
-
-                <textarea
-                    data-testid="post-textarea"
-                    value={text}
-                    onChange={e => setText(e.target.value)}
-                    placeholder={repostTarget ? 'Add your thoughts...' : "What's the atmosphere like? Tell the community..."}
-                    className="w-full h-32 md:h-40 p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-inner focus:bg-white focus:ring-2 focus:ring-green-500/40 focus:border-transparent resize-none text-base font-medium text-gray-900 placeholder-gray-400 transition-all duration-200"
-                />
-
-                {/* Staging Area */}
-                {(stagedFiles.length > 0 || existingUrls.length > 0) && (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300">
-                        {existingUrls.map((url, i) => (
-                            <div key={`ex-${i}`} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm">
-                                <img src={url} alt="existing" className="w-full h-full object-cover" />
-                                <button onClick={() => setExistingUrls(prev => prev.filter((_, idx) => idx !== i))}
-                                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                                    <X className="w-6 h-6 text-white" />
-                                </button>
-                            </div>
-                        ))}
-                        {stagedFiles.map((staged, i) => (
-                            <div key={staged.id} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm border-2 border-green-500/20">
-                                <img src={staged.previewUrl} alt="preview" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
-                                    <button onClick={() => setCropModal({ isOpen: true, imageIdx: i })} className="p-2 bg-white rounded-full text-gray-900 hover:scale-110 transition-transform"><Scissors className="w-4 h-4" /></button>
-                                    <button onClick={() => removeStaged(staged.id)} className="p-2 bg-rose-500 rounded-full text-white hover:scale-110 transition-transform"><X className="w-4 h-4" /></button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {cropModal.isOpen && cropModal.imageIdx !== null && (
-                    <ImageCropModal
-                        isOpen={cropModal.isOpen}
-                        onClose={() => setCropModal({ isOpen: false, imageIdx: null })}
-                        imageSrc={stagedFiles[cropModal.imageIdx].previewUrl}
-                        onCropComplete={handleCropComplete}
-                    />
-                )}
-
-                {/* Tools Row — Photo & Location side by side */}
-                <div className="flex items-center gap-3">
-                    <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-                    <button data-testid="add-photo-btn" onClick={() => fileRef.current?.click()} disabled={submitting}
-                        className="flex-1 flex justify-center items-center gap-2 border border-gray-200 rounded-xl py-2.5 bg-white text-blue-600 text-sm font-semibold hover:bg-gray-50 shadow-sm transition-colors" title="Add Photos">
-                        <ImageIcon className="w-4 h-4" />
-                        <span>Photo</span>
+        <div className="fixed inset-0 z-[9999] bg-black/60 flex flex-col justify-end md:justify-center md:items-center">
+            <div className="hidden md:block absolute inset-0 -z-10" onClick={onCancel} />
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 30 }}
+                className="bg-white w-full h-[100dvh] flex flex-col md:w-[600px] md:h-auto md:max-h-[85vh] md:rounded-2xl shadow-2xl overflow-hidden relative z-10"
+            >
+                {/* Tier 1: Safe-Area Header (flex-none) */}
+                <div className="flex-none pt-[max(1.5rem,env(safe-area-inset-top))] md:pt-4 pb-4 px-4 flex justify-between items-center border-b border-gray-200 bg-white">
+                    <h2 className="text-lg font-bold text-gray-800">
+                        {postData ? 'Edit Your Story' : repostTarget ? 'Repost Story' : 'Share Your Journey'}
+                    </h2>
+                    <button
+                        onClick={onCancel}
+                        className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+                        aria-label="Close"
+                    >
+                        <X size={20} className="text-gray-600" />
                     </button>
-                    <div className="flex-1 relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500" />
-                        <input
-                            value={location}
-                            onChange={e => setLocation(e.target.value)}
-                            placeholder="Location..."
-                            className="w-full border border-gray-200 bg-white text-rose-700 placeholder-rose-400 rounded-xl pl-9 pr-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-rose-200 focus:border-transparent focus:outline-none shadow-sm transition-all"
+                </div>
+
+                {/* Tier 2: The Contained Body (flex-1 min-h-0) */}
+                <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-4">
+
+                    {/* Repost Quote Preview */}
+                    {repostTarget && (
+                        <div className="border border-green-300 rounded-xl p-4 bg-green-50">
+                            <p className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                <Share2 className="w-3.5 h-3.5" /> Reposting {repostTarget.authorName}&apos;s story
+                            </p>
+                            <p className="text-sm text-gray-700 line-clamp-3">{repostTarget.textContent}</p>
+                        </div>
+                    )}
+
+                    <textarea
+                        data-testid="post-textarea"
+                        value={text}
+                        onChange={e => setText(e.target.value)}
+                        placeholder={repostTarget ? 'Add your thoughts...' : "What's the atmosphere like? Tell the community..."}
+                        className="w-full h-32 md:h-40 p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-inner focus:bg-white focus:ring-2 focus:ring-green-500/40 focus:border-transparent resize-none text-base font-medium text-gray-900 placeholder-gray-400 transition-all duration-200"
+                    />
+
+                    {/* Staging Area */}
+                    {(stagedFiles.length > 0 || existingUrls.length > 0) && (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300">
+                            {existingUrls.map((url, i) => (
+                                <div key={`ex-${i}`} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm">
+                                    <img src={url} alt="existing" className="w-full h-full object-cover" />
+                                    <button onClick={() => setExistingUrls(prev => prev.filter((_, idx) => idx !== i))}
+                                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                        <X className="w-6 h-6 text-white" />
+                                    </button>
+                                </div>
+                            ))}
+                            {stagedFiles.map((staged, i) => (
+                                <div key={staged.id} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm border-2 border-green-500/20">
+                                    <img src={staged.previewUrl} alt="preview" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
+                                        <button onClick={() => setCropModal({ isOpen: true, imageIdx: i })} className="p-2 bg-white rounded-full text-gray-900 hover:scale-110 transition-transform"><Scissors className="w-4 h-4" /></button>
+                                        <button onClick={() => removeStaged(staged.id)} className="p-2 bg-rose-500 rounded-full text-white hover:scale-110 transition-transform"><X className="w-4 h-4" /></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {cropModal.isOpen && cropModal.imageIdx !== null && (
+                        <ImageCropModal
+                            isOpen={cropModal.isOpen}
+                            onClose={() => setCropModal({ isOpen: false, imageIdx: null })}
+                            imageSrc={stagedFiles[cropModal.imageIdx].previewUrl}
+                            onCropComplete={handleCropComplete}
+                        />
+                    )}
+
+                    {/* Tools Row — Photo & Location side by side */}
+                    <div className="flex items-center gap-3">
+                        <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                        <button data-testid="add-photo-btn" onClick={() => fileRef.current?.click()} disabled={submitting}
+                            className="flex-1 flex justify-center items-center gap-2 border border-gray-200 rounded-xl py-2.5 bg-white text-blue-600 text-sm font-semibold hover:bg-gray-50 shadow-sm transition-colors" title="Add Photos">
+                            <ImageIcon className="w-4 h-4" />
+                            <span>Photo</span>
+                        </button>
+                        <div className="flex-1 relative">
+                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500" />
+                            <input
+                                value={location}
+                                onChange={e => setLocation(e.target.value)}
+                                placeholder="Location..."
+                                className="w-full border border-gray-200 bg-white text-rose-700 placeholder-rose-400 rounded-xl pl-9 pr-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-rose-200 focus:border-transparent focus:outline-none shadow-sm transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Tag Homestay */}
+                    <div className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                        <CustomCombobox
+                            options={homestays}
+                            value={selectedHomestay}
+                            onChange={setSelectedHomestay}
+                            placeholder="Tag Homestay"
                         />
                     </div>
-                </div>
 
-                {/* Tag Homestay */}
-                <div className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                    <CustomCombobox
-                        options={homestays}
-                        value={selectedHomestay}
-                        onChange={setSelectedHomestay}
-                        placeholder="Tag Homestay"
-                    />
+                    {/* Submit */}
+                    <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0)}
+                        className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md active:scale-[0.98] disabled:opacity-50 transition-all text-base mt-1">
+                        {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
+                        {submitting ? 'Sharing...' : (postData ? 'Update' : repostTarget ? 'Repost' : 'Post')}
+                    </button>
                 </div>
-
-                {/* Submit */}
-                <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0)}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md active:scale-[0.98] disabled:opacity-50 transition-all text-base mt-1">
-                    {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {submitting ? 'Sharing...' : (postData ? 'Update' : repostTarget ? 'Repost' : 'Post')}
-                </button>
-            </div>
+            </motion.div>
         </div>,
         document.body
     );
