@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle, MapPin, Pencil, MoreHorizontal, Trash2, Share2, Loader2, Repeat2 } from 'lucide-react';
+import { Heart, MessageCircle, MapPin, Pencil, MoreHorizontal, Trash2, Share2, Loader2, Repeat2, X, Send } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,6 +12,7 @@ import { ImageLightbox } from '@/components/community/ImageLightbox';
 import { CommentsSection } from '@/components/comments-section';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { AnimatePresence } from 'framer-motion';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 export interface CommunityPost {
@@ -138,14 +139,19 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
         }
     };
 
+    // ── Internal Repost State (self-sufficient when no onRepost prop) ──
+    const [internalRepostQuote, setInternalRepostQuote] = useState<QuotePost | null>(null);
+
     const handleRepost = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         if (!isAuthenticated) { toast.error('Sign in to repost stories'); return; }
+        const quote: QuotePost = { id: post.id, authorName, textContent: post.textContent };
         if (onRepost) {
-            onRepost({ id: post.id, authorName, textContent: post.textContent });
+            onRepost(quote);
         } else {
-            toast.info('Open the community feed to repost.');
+            // Self-sufficient: open internal repost composer
+            setInternalRepostQuote(quote);
         }
     };
 
@@ -298,14 +304,85 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
         </motion.article>
     );
 
-    // In edit mode (feed only), swap the card for the inline editor
-    if (isEditing && onUpdate && onDelete) {
-        // Dynamic import avoids circular deps — PostComposerInline lives in community/page.tsx
-        // We signal back via a custom event that the parent can listen to.
-        // Since we're extracting this component, the edit flow is handled by the parent feed page.
-        // This branch is only relevant when onUpdate/onDelete are injected (feed mode).
-        return content; // Parent handles edit toggling
-    }
+    return (
+        <>
+            {content}
+            {/* Self-contained Repost Composer (when no external onRepost is wired) */}
+            <AnimatePresence>
+                {internalRepostQuote && (
+                    <InternalMiniRepostComposer
+                        quote={internalRepostQuote}
+                        onSuccess={() => setInternalRepostQuote(null)}
+                        onCancel={() => setInternalRepostQuote(null)}
+                    />
+                )}
+            </AnimatePresence>
+        </>
+    );
+}
 
-    return content;
+// ── InternalMiniRepostComposer ──────────────────────────────────────────────
+// Lightweight repost modal embedded directly into PostCard for self-sufficiency.
+
+function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: QuotePost; onSuccess: () => void; onCancel: () => void }) {
+    const [text, setText] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleSubmit = async () => {
+        if (submitting) return;
+        setSubmitting(true);
+        try {
+            await api.post('/api/posts', {
+                textContent: text,
+                locationName: 'North Bengal',
+                imageUrls: [],
+                repostedFromPostId: quote.id,
+            });
+            toast.success('Reposted!');
+            onSuccess();
+        } catch {
+            toast.error('Repost failed');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
+        >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
+            <div className="relative z-10 w-full max-w-lg bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                    <p className="font-extrabold text-gray-900 flex items-center gap-2"><Repeat2 className="w-4 h-4 text-green-600" /> Repost Story</p>
+                    <button onClick={onCancel} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors"><X className="w-4 h-4" /></button>
+                </div>
+                <div className="px-6 py-5 space-y-4">
+                    {/* Quoted Preview */}
+                    <div className="border border-green-300 rounded-xl p-4 bg-green-50">
+                        <p className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                            <Repeat2 className="w-3.5 h-3.5" /> Reposting {quote.authorName}&apos;s story
+                        </p>
+                        <p className="text-sm text-gray-700 line-clamp-2">{quote.textContent}</p>
+                    </div>
+                    <textarea
+                        value={text}
+                        onChange={e => setText(e.target.value)}
+                        placeholder="Add your thoughts..."
+                        rows={3}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-400 transition-all"
+                    />
+                </div>
+                <div className="flex items-center justify-end px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                    <button onClick={handleSubmit} disabled={submitting} className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-all disabled:opacity-50 active:scale-95">
+                        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        {submitting ? 'Posting...' : 'Repost'}
+                    </button>
+                </div>
+            </div>
+        </motion.div>
+    );
 }
