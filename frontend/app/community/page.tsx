@@ -43,6 +43,14 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
         imageIdx: null,
     });
     const fileRef = useRef<HTMLInputElement>(null);
+    const [homestays, setHomestays] = useState<HomestayOption[]>([]);
+    const [selectedHomestay, setSelectedHomestay] = useState(postData?.homestayId || '');
+
+    useEffect(() => {
+        api.get('/api/homestays')
+            .then(res => setHomestays(res.data.content || res.data || []))
+            .catch(err => console.error("Failed to fetch homestays for tagging:", err));
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -98,11 +106,14 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
             }
 
             // 2. Submit Post
-            const payload = {
+            const payload: any = {
                 textContent: text,
                 locationName: location || 'North Bengal',
                 imageUrls: finalImageUrls
             };
+            if (selectedHomestay) {
+                payload.homestayId = selectedHomestay;
+            }
 
             const endpoint = postData ? `/api/posts/${postData.id}` : '/api/posts';
             const res = postData ? await api.put(endpoint, payload) : await api.post(endpoint, payload);
@@ -136,14 +147,34 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
                     rows={4}
                     className="w-full bg-secondary/30 border border-border rounded-2xl px-5 py-4 text-[15px] font-medium text-foreground placeholder:text-muted-foreground/60 resize-none focus:outline-none focus:ring-4 focus:ring-green-600/10 focus:border-green-600/30 transition-all shadow-inner"
                 />
-                <div className="relative group">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-green-600 transition-colors" />
-                    <input
-                        value={location}
-                        onChange={e => setLocation(e.target.value)}
-                        placeholder="Location (e.g. Darjeeling, Sittong...)"
-                        className="w-full bg-secondary/30 border border-border rounded-2xl pl-11 pr-5 py-3.5 text-[15px] font-bold text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-4 focus:ring-green-600/10 focus:border-green-600/30 transition-all"
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="relative group">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-green-600 transition-colors" />
+                        <input
+                            value={location}
+                            onChange={e => setLocation(e.target.value)}
+                            placeholder="Location (e.g. Darjeeling, Sittong...)"
+                            className="w-full bg-secondary/30 border border-border rounded-2xl pl-11 pr-5 py-3.5 text-[15px] font-bold text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-4 focus:ring-green-600/10 focus:border-green-600/30 transition-all"
+                        />
+                    </div>
+                    <div className="relative group">
+                        <select
+                            value={selectedHomestay}
+                            onChange={e => setSelectedHomestay(e.target.value)}
+                            className={cn(
+                                "w-full bg-secondary/30 border border-border rounded-2xl px-5 py-3.5 text-[15px] font-bold appearance-none focus:outline-none focus:ring-4 focus:ring-green-600/10 focus:border-green-600/30 transition-all",
+                                selectedHomestay ? "text-foreground" : "text-muted-foreground/60"
+                            )}
+                        >
+                            <option value="">Tag a Homestay (Optional)</option>
+                            {homestays.map(h => (
+                                <option key={h.id} value={h.id}>{h.name}</option>
+                            ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground group-focus-within:text-green-600 transition-colors">
+                            ▼
+                        </div>
+                    </div>
                 </div>
 
                 {/* Staging Area */}

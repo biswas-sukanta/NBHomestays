@@ -28,24 +28,32 @@ public class PostService {
     private final com.nbh.backend.repository.HomestayRepository homestayRepository;
     private final com.nbh.backend.repository.PostLikeRepository postLikeRepository;
 
-    @CacheEvict(value = "postsList", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "postsList", allEntries = true)
+    })
     public PostDto.Response createPost(PostDto.Request request, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         com.nbh.backend.model.Homestay homestay = null;
         if (request.getHomestayId() != null) {
-            homestay = homestayRepository.findById(request.getHomestayId())
-                    .orElseThrow(() -> new RuntimeException("Homestay not found"));
+            homestay = homestayRepository.findById(request.getHomestayId()).orElse(null);
+        }
+
+        Post repostedPost = null;
+        if (request.getRepostedFromPostId() != null) {
+            repostedPost = postRepository.findById(request.getRepostedFromPostId()).orElse(null);
         }
 
         Post post = Post.builder()
-                .user(user)
                 .locationName(request.getLocationName())
                 .textContent(request.getTextContent())
-                .imageUrls(request.getImageUrls())
+                .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new java.util.ArrayList<>())
+                .user(user)
                 .homestay(homestay)
-                .createdAt(LocalDateTime.now())
+                .repostedPost(repostedPost)
+                .createdAt(LocalDateTime.now()) // Kept this from original, as snippet removed it but instruction didn't
+                                                // say to.
                 .build();
 
         Post saved = postRepository.save(post);
@@ -164,15 +172,29 @@ public class PostService {
         return PostDto.LikeResponse.builder().loveCount(post.getLoveCount()).isLiked(false).build();
     }
 
-    // ── Private Mappers ───────────────────────────────────────
-    private PostDto.Response mapToResponse(Post post, String currentUserEmail) {
+    // ── Mapping Helper ────────────────────────────────────────
+    private PostDto.Response mapToResponse(Post post) {
+        return mapToResponse(post, null);
+    }
+
+    private PostDto.Response mapToResponse(Post post, String userEmail) {
+        return mapToResponse(post, userEmail, true);
+    }
+
+    private PostDto.Response mapToResponse(Post post, String userEmail, boolean includeRepost) {
         boolean isLiked = false;
-        if (currentUserEmail != null) {
-            java.util.Optional<User> currentUser = userRepository.findByEmail(currentUserEmail);
-            if (currentUser.isPresent()) {
-                isLiked = postLikeRepository.existsByUserIdAndPostId(currentUser.get().getId(), post.getId());
+        if (userEmail != null) {
+            User user = userRepository.findByEmail(userEmail).orElse(null);
+            if (user != null) {
+                isLiked = postLikeRepository.existsByUserIdAndPostId(user.getId(), post.getId());
             }
         }
+
+        PostDto.Response repostedDto = null;
+        if (includeRepost && post.getRepostedPost() != null) {
+            repostedDto = mapToResponse(post.getRepostedPost(), userEmail, false); // prevent infinite recursion
+        }
+
         return PostDto.Response.builder()
                 .id(post.getId())
                 .userId(post.getUser().getId())
@@ -185,12 +207,8 @@ public class PostService {
                 .loveCount(post.getLoveCount())
                 .shareCount(post.getShareCount())
                 .isLikedByCurrentUser(isLiked)
+                .repostedPost(repostedDto)
                 .createdAt(post.getCreatedAt())
                 .build();
-    }
-
-    // Kept for backward compat with caching calls that do not have user context
-    private PostDto.Response mapToResponse(Post post) {
-        return mapToResponse(post, null);
     }
 }

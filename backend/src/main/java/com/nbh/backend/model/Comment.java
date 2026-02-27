@@ -53,6 +53,12 @@ public class Comment {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String body;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "comment_images", joinColumns = @JoinColumn(name = "comment_id"))
+    @Column(name = "image_url")
+    @Builder.Default
+    private List<String> imageUrls = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -9,15 +9,17 @@ import com.nbh.backend.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.CacheEvict;
 
 @Service
 @RequiredArgsConstructor
@@ -29,14 +31,15 @@ public class CommentService {
         // ── Add top-level comment ──────────────────────────────────
         @Transactional
         @CacheEvict(value = "postComments", allEntries = true)
-        public CommentDto addComment(UUID postId, String body, User currentUser) {
+        public CommentDto addComment(UUID postId, CommentDto.Request request, User currentUser) {
                 Post post = postRepository.findById(postId)
                                 .orElseThrow(() -> new RuntimeException("Post not found: " + postId));
 
                 Comment comment = Comment.builder()
                                 .post(post)
                                 .user(currentUser)
-                                .body(body.trim())
+                                .body(request.getBody() != null ? request.getBody().trim() : "")
+                                .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new ArrayList<>())
                                 .build();
 
                 return toDto(commentRepository.save(comment), true);
@@ -45,7 +48,7 @@ public class CommentService {
         // ── Add reply ──────────────────────────────────────────────
         @Transactional
         @CacheEvict(value = "postComments", allEntries = true)
-        public CommentDto addReply(UUID postId, UUID parentId, String body, User currentUser) {
+        public CommentDto addReply(UUID postId, UUID parentId, CommentDto.Request request, User currentUser) {
                 Post post = postRepository.findById(postId)
                                 .orElseThrow(() -> new RuntimeException("Post not found: " + postId));
                 Comment parent = commentRepository.findById(parentId)
@@ -55,7 +58,8 @@ public class CommentService {
                                 .post(post)
                                 .user(currentUser)
                                 .parent(parent)
-                                .body(body.trim())
+                                .body(request.getBody() != null ? request.getBody().trim() : "")
+                                .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new ArrayList<>())
                                 .build();
 
                 return toDto(commentRepository.save(reply), false);
@@ -81,7 +85,7 @@ public class CommentService {
                 boolean isAdmin = currentUser.getRole().name().equals("ROLE_ADMIN");
 
                 if (!isOwner && !isAdmin) {
-                        throw new AccessDeniedException("You cannot delete this comment");
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot delete this comment");
                 }
                 commentRepository.delete(comment);
         }
@@ -107,6 +111,7 @@ public class CommentService {
                                 .authorName(authorName.isBlank() ? "Anonymous" : authorName.trim())
                                 .authorAvatarUrl(null) // TODO: wire when User.avatarUrl is populated
                                 .body(c.getBody())
+                                .imageUrls(c.getImageUrls() != null ? c.getImageUrls() : new ArrayList<>())
                                 .createdAt(c.getCreatedAt())
                                 .replies(replies)
                                 .replyCount(replies.size())

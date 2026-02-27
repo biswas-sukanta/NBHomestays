@@ -28,10 +28,12 @@ export interface CommunityPost {
     commentCount?: number;
     homestayId?: string;
     homestayName?: string;
+    repostedPost?: CommunityPost;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 export function formatRelative(isoDate: string) {
+    if (!isoDate) return '';
     const diff = (Date.now() - new Date(isoDate).getTime()) / 1000;
     if (diff < 60) return 'just now';
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
@@ -63,15 +65,15 @@ interface PostCardProps {
 // ── LikeButton ────────────────────────────────────────────────────────────────
 function LikeButton({ postId, initialLiked, initialCount }: { postId: string; initialLiked: boolean; initialCount: number }) {
     const { isAuthenticated } = useAuth() as any;
-    const [liked, setLiked] = useState(initialLiked);
-    const [count, setCount] = useState(initialCount);
+    const [liked, setLiked] = useState<boolean>(Boolean(initialLiked));
+    const [count, setCount] = useState<number>(Number(initialCount) || 0);
     const [popping, setPopping] = useState(false);
 
     const toggle = async () => {
         if (!isAuthenticated) { toast.error('Sign in to love this story'); return; }
         const prev = { liked, count };
         setLiked(l => !l);
-        setCount(c => liked ? c - 1 : c + 1);
+        setCount(c => liked ? Math.max(0, c - 1) : c + 1);
         setPopping(true);
         setTimeout(() => setPopping(false), 420);
         try {
@@ -103,12 +105,14 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
     const isOwner = currentUser?.id === post.userId || currentUser?.role === 'ROLE_ADMIN';
     const [isEditing, setIsEditing] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-    const [shareCount, setShareCount] = useState(post.shareCount ?? 0);
+    const [shareCount, setShareCount] = useState<number>(Number(post.shareCount) || 0);
     const [sharing, setSharing] = useState(false);
+    const { isAuthenticated } = useAuth() as any;
 
     // Share handler: native Web Share API → clipboard fallback → backend metric
     const handleShare = async (e: React.MouseEvent) => {
         e.preventDefault();
+        e.stopPropagation();
         if (sharing) return;
         setSharing(true);
         const url = `${window.location.origin}/community/post/${post.id}`;
@@ -131,6 +135,8 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
 
     const handleRepost = (e: React.MouseEvent) => {
         e.preventDefault();
+        e.stopPropagation();
+        if (!isAuthenticated) { toast.error('Sign in to repost stories'); return; }
         if (onRepost) {
             onRepost({ id: post.id, authorName, textContent: post.textContent });
         } else {
@@ -217,7 +223,18 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                     </div>
                 </div>
 
-                <p className="text-[15px] text-foreground/90 leading-[1.6] whitespace-pre-line mb-5 font-medium">{post.textContent}</p>
+                <p className="text-[15px] text-foreground/90 leading-[1.6] whitespace-pre-line mb-4 font-medium">{post.textContent}</p>
+
+                {/* Recursive Nested Repost */}
+                {post.repostedPost && (
+                    <div className="mb-5 mt-2 rounded-2xl border-2 border-border/60 bg-secondary/20 hover:bg-secondary/40 transition-colors">
+                        <PostCard
+                            post={post.repostedPost}
+                            isDetailView={true} // prevent deep nesting links
+                            currentUser={currentUser}
+                        />
+                    </div>
+                )}
 
                 {/* Actions Bar */}
                 <div className="flex items-center gap-5 pt-4 border-t border-border/40 pointer-events-auto">

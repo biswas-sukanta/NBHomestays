@@ -16,6 +16,15 @@ import java.util.UUID;
 @NoArgsConstructor
 public class CommentDto {
 
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Request {
+        private String body;
+        private List<String> imageUrls;
+    }
+
     private UUID id;
     private UUID postId;
     private UUID parentId;
@@ -26,6 +35,7 @@ public class CommentDto {
     private String authorAvatarUrl;
 
     private String body;
+    private List<String> imageUrls;
     private LocalDateTime createdAt;
 
     /** First-level replies (populated only for top-level comments). */

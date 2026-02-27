@@ -10,7 +10,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -34,9 +33,9 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CommentDto> addComment(
             @PathVariable UUID postId,
-            @RequestBody Map<String, String> body,
+            @RequestBody CommentDto.Request request,
             @AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(commentService.addComment(postId, body.get("body"), currentUser));
+        return ResponseEntity.ok(commentService.addComment(postId, request, currentUser));
     }
 
     /** Reply to an existing comment. */
@@ -45,9 +44,9 @@ public class CommentController {
     public ResponseEntity<CommentDto> addReply(
             @PathVariable("postId") UUID postId,
             @PathVariable("parentId") UUID parentId,
-            @RequestBody Map<String, String> body,
+            @RequestBody CommentDto.Request request,
             @AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(commentService.addReply(postId, parentId, body.get("body"), currentUser));
+        return ResponseEntity.ok(commentService.addReply(postId, parentId, request, currentUser));
     }
 
     /** Delete a comment (owner or admin). */

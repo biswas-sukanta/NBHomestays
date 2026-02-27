@@ -27,6 +27,10 @@ public class Post {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reposted_from_post_id")
+    private Post repostedPost;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "homestay_id")
     private Homestay homestay;
 

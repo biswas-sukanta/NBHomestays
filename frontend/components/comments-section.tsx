@@ -5,6 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Send, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { Image as ImageIcon, X, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { ImageCollage } from '@/components/community/ImageCollage';
+import { ImageLightbox } from '@/components/community/ImageLightbox';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -18,6 +22,7 @@ interface Comment {
     createdAt: string;
     replies?: Comment[];
     replyCount?: number;
+    imageUrls?: string[];
 }
 
 function formatTime(iso: string) {
@@ -51,6 +56,7 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
     const [replyBody, setReplyBody] = useState('');
     const [localReplies, setLocalReplies] = useState<Comment[]>(comment.replies || []);
     const [submitting, setSubmitting] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
     const submitReply = async () => {
         if (!replyBody.trim() || submitting) return;
@@ -86,6 +92,11 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                     <div className="bg-secondary/60 rounded-xl px-3 py-2.5 text-sm">
                         <span className="font-semibold text-foreground text-xs mr-1.5">{comment.authorName}</span>
                         <span className="text-foreground leading-relaxed">{comment.body}</span>
+                        {comment.imageUrls && comment.imageUrls.length > 0 && (
+                            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                                <ImageCollage images={comment.imageUrls} onImageClick={(i) => setLightboxIndex(i)} />
+                            </div>
+                        )}
                     </div>
                     {/* Meta row */}
                     <div className="flex items-center gap-3 mt-1 px-1">
@@ -163,12 +174,15 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                             postId={postId}
                             depth={depth + 1}
                             onDelete={onDelete}
-                            currentUserId={currentUserId}
-                            token={token}
                         />
                     </motion.div>
                 ))}
             </AnimatePresence>
+
+            {/* Lightbox */}
+            {lightboxIndex !== null && comment.imageUrls && comment.imageUrls.length > 0 && (
+                <ImageLightbox images={comment.imageUrls} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+            )}
         </div>
     );
 }
@@ -176,12 +190,39 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
 // ── Public API ────────────────────────────────────────────────
 export function CommentsSection({ postId }: { postId: string }) {
     const { isAuthenticated, user } = useAuth() as any;
-    const token = typeof window !== 'undefined' ? localStorage.getItem('jwtToken') : null;
+    // AuthContext stores under 'token'
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState(true);
     const [newComment, setNewComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [open, setOpen] = useState(false);
+    const [stagedFiles, setStagedFiles] = useState<{ id: string, file: File, previewUrl: string }[]>([]);
+    const fileRef = React.useRef<HTMLInputElement>(null);
+
+    // ... cleanup preview URLs
+    useEffect(() => {
+        return () => stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
+    }, [stagedFiles]);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        const newStaged = Array.from(e.target.files).map(f => ({
+            id: Math.random().toString(36).substring(7),
+            file: f,
+            previewUrl: URL.createObjectURL(f)
+        }));
+        setStagedFiles(prev => [...prev, ...newStaged]);
+        if (fileRef.current) fileRef.current.value = '';
+    };
+
+    const removeStaged = (id: string) => {
+        setStagedFiles(prev => {
+            const f = prev.find(st => st.id === id);
+            if (f) URL.revokeObjectURL(f.previewUrl);
+            return prev.filter(st => st.id !== id);
+        });
+    };
 
     useEffect(() => {
         if (!open) return;
@@ -193,22 +234,42 @@ export function CommentsSection({ postId }: { postId: string }) {
     }, [postId, open]);
 
     const submitComment = async () => {
-        if (!newComment.trim() || submitting) return;
+        if ((!newComment.trim() && stagedFiles.length === 0) || submitting) return;
         setSubmitting(true);
         try {
+            // 1. Upload Images to ImageKit if any
+            let finalUrls: string[] = [];
+            if (stagedFiles.length > 0) {
+                const formData = new FormData();
+                stagedFiles.forEach(s => formData.append('files', s.file));
+                const uploadRes = await fetch(`${API}/api/images/upload-multiple`, {
+                    method: 'POST',
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    body: formData,
+                });
+                if (!uploadRes.ok) throw new Error('Image upload failed');
+                finalUrls = await uploadRes.json();
+            }
+
+            // 2. Submit Comment
             const res = await fetch(`${API}/api/posts/${postId}/comments`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ body: newComment.trim() }),
+                body: JSON.stringify({ body: newComment.trim(), imageUrls: finalUrls }),
             });
             if (res.ok) {
                 const c: Comment = await res.json();
                 setComments(prev => [...prev, c]);
                 setNewComment('');
+                setStagedFiles([]);
+            } else {
+                toast.error('Failed to post comment');
             }
+        } catch (e: any) {
+            toast.error(e.message || 'An error occurred');
         } finally { setSubmitting(false); }
     };
 
@@ -259,22 +320,48 @@ export function CommentsSection({ postId }: { postId: string }) {
 
                         {/* New comment input */}
                         {isAuthenticated && (
-                            <div className="flex gap-2 pt-2">
-                                <input
-                                    value={newComment}
-                                    onChange={e => setNewComment(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && submitComment()}
-                                    placeholder="Add a comment..."
-                                    className="flex-1 text-sm bg-secondary/60 border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                />
-                                <button
-                                    onClick={submitComment}
-                                    disabled={!newComment.trim() || submitting}
-                                    className="p-2.5 rounded-xl bg-primary text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors"
-                                    aria-label="Post comment"
-                                >
-                                    <Send className="w-4 h-4" />
-                                </button>
+                            <div className="flex flex-col gap-2 pt-2">
+                                {/* Staging Area */}
+                                {stagedFiles.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 px-1">
+                                        {stagedFiles.map(file => (
+                                            <div key={file.id} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                                                <img src={file.previewUrl} alt="preview" className="w-full h-full object-cover" />
+                                                <button onClick={() => removeStaged(file.id)} className="absolute top-1 right-1 p-0.5 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-sm transition-colors">
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="flex gap-2 items-end">
+                                    <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                                    <button
+                                        onClick={() => fileRef.current?.click()}
+                                        disabled={submitting}
+                                        className="p-2.5 rounded-xl bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors disabled:opacity-50 flex-none"
+                                        aria-label="Add photo"
+                                    >
+                                        <ImageIcon className="w-5 h-5" />
+                                    </button>
+                                    <textarea
+                                        value={newComment}
+                                        onChange={e => setNewComment(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), submitComment())}
+                                        placeholder="Add a comment..."
+                                        rows={1}
+                                        className="flex-1 text-sm bg-secondary/60 border border-border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none min-h-[44px]"
+                                    />
+                                    <button
+                                        onClick={submitComment}
+                                        disabled={(!newComment.trim() && stagedFiles.length === 0) || submitting}
+                                        className="p-2.5 rounded-xl bg-primary text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors flex-none"
+                                        aria-label="Post comment"
+                                    >
+                                        {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                                    </button>
+                                </div>
                             </div>
                         )}
                         {!isAuthenticated && (
