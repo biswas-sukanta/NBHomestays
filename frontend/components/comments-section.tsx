@@ -308,24 +308,19 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
 
             <AnimatePresence>
                 {open && (
-                    <div className="fixed inset-0 z-[100] flex flex-col justify-end md:justify-center md:items-center">
-                        {/* Backdrop */}
+                    <div className="fixed inset-0 z-[100] flex flex-col md:items-center md:justify-center bg-white md:bg-black/40 md:backdrop-blur-sm md:p-4">
+                        {/* Backdrop — desktop only click-to-close */}
+                        <div className="hidden md:block absolute inset-0" onClick={handleClose} />
+
+                        {/* Drawer — transplanted from AddPostModal shell */}
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                            onClick={handleClose}
-                        />
-                        {/* Drawer */}
-                        <motion.div
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="relative w-full md:max-w-2xl h-[90dvh] md:h-[80vh] md:min-h-[500px] md:max-h-[800px] bg-white rounded-t-3xl md:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                            className="relative z-10 w-full md:max-w-2xl h-[100dvh] md:h-auto md:min-h-[500px] md:max-h-[85vh] bg-white md:rounded-2xl md:border md:border-gray-200 md:shadow-2xl flex flex-col overflow-hidden"
                         >
-                            {/* Header — always pinned */}
+                            {/* Tier 1: Header — shrink-0, always pinned */}
                             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
                                 <h2 className="font-extrabold text-lg text-gray-900">Comments</h2>
                                 <button onClick={handleClose} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all active:scale-95 shadow-sm" aria-label="Close comments">
@@ -333,12 +328,12 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                 </button>
                             </div>
 
-                            {/* Comment List */}
+                            {/* Tier 2: Comment List — flex-1 scrollable */}
                             <div className="flex-1 overflow-y-auto px-5 py-6 bg-gray-50/50 overscroll-contain">
                                 {loading ? (
-                                    <div className="flex-1 flex items-center justify-center min-h-[200px]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+                                    <div className="flex items-center justify-center h-full min-h-[200px]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
                                 ) : comments.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-16 h-full text-center">
+                                    <div className="flex flex-col items-center justify-center h-full text-center">
                                         <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-4 ring-8 ring-green-50/50">
                                             <MessageCircle className="w-10 h-10 text-green-600" />
                                         </div>
@@ -361,7 +356,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                 )}
                             </div>
 
-                            {/* Fixed Bottom Input Area */}
+                            {/* Tier 3: Fixed Bottom Input Area — shrink-0, always pinned */}
                             <div className="p-4 border-t border-gray-100 bg-white shrink-0">
                                 {isAuthenticated ? (
                                     <div className="flex flex-col gap-3">
