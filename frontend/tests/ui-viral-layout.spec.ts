@@ -129,7 +129,7 @@ test.describe('Desktop Chrome (1280×720)', () => {
 // ── Mobile Tests ───────────────────────────────────────────────────────────
 
 test.describe('iPhone 13 (390×844)', () => {
-    test.use(devices['iPhone 13']);
+    test.use({ viewport: { width: 390, height: 844 }, isMobile: true });
 
     test('Homepage hero renders on mobile', async ({ page }) => {
         await page.goto(LOCALHOST);

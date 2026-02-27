@@ -114,10 +114,10 @@ function MyPostsTab() {
     return (
         <div className="grid gap-4 sm:grid-cols-2">
             {posts.map(post => (
-                <Link key={post.id} href={`/community/post/${post.id}`}>
+                <div key={post.id}>
                     <motion.div
                         whileHover={{ scale: 1.01 }}
-                        className="group bg-card border border-border/80 hover:border-green-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer h-full flex flex-col"
+                        className="group bg-card border border-border/80 hover:border-green-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all h-full flex flex-col"
                     >
                         <div className="flex items-center gap-2 text-xs font-semibold text-green-700/80 uppercase tracking-wider mb-2">
                             <MapPin className="w-3.5 h-3.5" />
@@ -126,13 +126,10 @@ function MyPostsTab() {
                             <span className="text-gray-500 font-medium">{new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                         </div>
                         <p className="text-sm font-medium text-foreground leading-relaxed line-clamp-3 group-hover:text-green-900 transition-colors">
-                            "{post.textContent}"
+                            &quot;{post.textContent}&quot;
                         </p>
-                        <div className="mt-auto pt-4 flex items-center text-xs font-bold text-gray-400 group-hover:text-green-600 transition-colors">
-                            View Thread →
-                        </div>
                     </motion.div>
-                </Link>
+                </div>
             ))}
         </div>
     );

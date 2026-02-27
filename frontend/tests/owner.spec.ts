@@ -3,6 +3,26 @@ import { test, expect } from '@playwright/test';
 test.describe('Community Feed - Owner Actions', () => {
 
     test.beforeEach(async ({ page }) => {
+        // Intercept the backend Auth verification so our frontend AuthProvider stays logged in
+        await page.route('**/api/users/me', async route => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    id: 'e2e-owner-123',
+                    firstName: 'Admin',
+                    lastName: 'User',
+                    email: 'admin@nbhomestays.com',
+                    role: 'ROLE_ADMIN'
+                })
+            });
+        });
+
+        // Also intercept the generic auth endpoint just in case
+        await page.route('**/api/auth/me', async route => {
+            await route.fulfill({ status: 200, body: JSON.stringify({ id: 'e2e-owner-123', role: 'ROLE_ADMIN' }) });
+        });
+
         // Authenticate as a user who owns specific posts, or ROLE_ADMIN
         await page.addInitScript(() => {
             window.localStorage.setItem('token', 'mock_e2e_admin_token');

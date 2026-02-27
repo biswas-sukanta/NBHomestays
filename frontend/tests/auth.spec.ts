@@ -3,6 +3,24 @@ import { test, expect } from '@playwright/test';
 test.describe('Community Feed - Authenticated User', () => {
 
     test.beforeEach(async ({ page }) => {
+        // Intercept Auth Provider backend validation check
+        await page.route('**/api/users/me', async route => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    id: 'e2e-user-123',
+                    firstName: 'Test',
+                    lastName: 'User',
+                    email: 'test@example.com',
+                    role: 'ROLE_USER'
+                })
+            });
+        });
+        await page.route('**/api/auth/me', async route => {
+            await route.fulfill({ status: 200, body: JSON.stringify({ id: 'e2e-user-123', role: 'ROLE_USER' }) });
+        });
+
         // Inject a mock auth token to bypass the actual login page flow
         // and trigger the "isAuthenticated" boolean in our AuthContext.
         await page.addInitScript(() => {

@@ -59,7 +59,6 @@ interface PostCardProps {
     /** Passed from feed page for owner comparison */
     currentUser?: any;
     /** In detail view: disable card-level link, disable hover lift */
-    isDetailView?: boolean;
     /** Callback to open composer in "Repost" mode */
     onRepost?: (quote: QuotePost) => void;
     /** Is this post being rendered as a quoted repost inside another post? */
@@ -106,7 +105,7 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode }: { postId: 
 }
 
 // ── PostCard ──────────────────────────────────────────────────────────────────
-export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView = false, onRepost, isQuoted = false, onOpenComments }: PostCardProps) {
+export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQuoted = false, onOpenComments }: PostCardProps) {
     const authorName = post.userName || 'Traveller';
     const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     const isOwner = currentUser?.id === post.userId || currentUser?.role === 'ROLE_ADMIN';
@@ -159,7 +158,6 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
     const articleClassName = cn(
         'bg-white border rounded-xl overflow-hidden transition-all duration-300',
         isQuoted ? "border-gray-200 mt-3 hover:bg-gray-50/50" : "border-gray-200 mb-4 shadow-sm hover:shadow-md",
-        isDetailView && !isQuoted && "shadow-none border-t border-x-0 border-b-0 rounded-none mb-0"
     );
 
     const content = (
@@ -167,13 +165,9 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
             data-testid={isQuoted ? "quoted-post-card" : "post-card"}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            {...(!isDetailView && !isQuoted ? { whileHover: { y: -3, scale: 1.005 }, transition: { type: 'spring', stiffness: 400, damping: 30 } } : {})}
+            {...(!isQuoted ? { whileHover: { y: -3, scale: 1.005 }, transition: { type: 'spring', stiffness: 400, damping: 30 } } : {})}
             className={articleClassName}
         >
-            {/* Card-level link (feed only) */}
-            {!isDetailView && (
-                <Link href={`/community/post/${post.id}`} className="absolute inset-0 z-0" aria-label={`View post by ${authorName}`} />
-            )}
 
             {/* Dynamic Image Collage */}
             {post.imageUrls?.length > 0 && (
@@ -236,7 +230,6 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                     <div className="mb-3 mt-2 rounded-lg border border-gray-300 bg-gray-50 pointer-events-auto overflow-hidden">
                         <PostCard
                             post={post.originalPost}
-                            isDetailView={true}
                             isQuoted={true}
                             currentUser={currentUser}
                         />
@@ -315,9 +308,9 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                             </div>
                             <div className="flex items-center justify-between px-1 pt-2 border-t border-white/20 pointer-events-auto">
                                 <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} darkMode />
-                                <Link onClick={e => e.stopPropagation()} href={`/community/post/${post.id}`} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-white hover:bg-white/10 transition-colors active:scale-95 text-sm font-semibold">
+                                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenComments?.(post.id); }} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-white hover:bg-white/10 transition-colors active:scale-95 text-sm font-semibold">
                                     <MessageCircle className="w-5 h-5" /><span>{Math.max(0, Number(post.commentCount) || 0)}</span>
-                                </Link>
+                                </button>
                                 {/* Repost */}
                                 <button onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-white hover:bg-white/10 transition-colors active:scale-95 text-sm font-semibold" aria-label="Repost">
                                     <Repeat2 className="w-5 h-5" />
