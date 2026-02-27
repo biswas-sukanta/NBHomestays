@@ -41,7 +41,13 @@ public class CommentController {
         if (currentUser == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to comment");
         }
-        return ResponseEntity.ok(commentService.addComment(postId, request, currentUser));
+        try {
+            return ResponseEntity.ok(commentService.addComment(postId, request, currentUser));
+        } catch (Exception e) {
+            System.err.println("CRITICAL ERROR IN ADD COMMENT: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     /** Reply to an existing comment. */
@@ -55,7 +61,13 @@ public class CommentController {
         if (currentUser == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to reply");
         }
-        return ResponseEntity.ok(commentService.addReply(postId, parentId, request, currentUser));
+        try {
+            return ResponseEntity.ok(commentService.addReply(postId, parentId, request, currentUser));
+        } catch (Exception e) {
+            System.err.println("CRITICAL ERROR IN ADD REPLY: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     /** Delete a comment (owner or admin). */

@@ -79,8 +79,14 @@ public class PostController {
         if (currentUser == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to like this post");
         }
-        PostDto.LikeResponse resp = postService.toggleLike(id, currentUser.getEmail());
-        return ResponseEntity.ok(resp);
+        try {
+            PostDto.LikeResponse resp = postService.toggleLike(id, currentUser.getEmail());
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            System.err.println("CRITICAL ERROR IN TOGGLE LIKE: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @PostMapping("/{id}/share")

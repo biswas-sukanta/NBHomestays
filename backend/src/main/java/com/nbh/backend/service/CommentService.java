@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
+import com.nbh.backend.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ public class CommentService {
 
         private final CommentRepository commentRepository;
         private final PostRepository postRepository;
+        private final UserRepository userRepository;
 
         // ── Add top-level comment ──────────────────────────────────
         @Transactional
@@ -34,10 +36,13 @@ public class CommentService {
         public CommentDto addComment(UUID postId, CommentDto.Request request, User currentUser) {
                 Post post = postRepository.findById(postId)
                                 .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
+                User user = userRepository.findById(currentUser.getId())
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "User not found: " + currentUser.getId()));
 
                 Comment comment = Comment.builder()
                                 .post(post)
-                                .user(currentUser)
+                                .user(user)
                                 .body(request.getBody() != null ? request.getBody().trim() : "")
                                 .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new ArrayList<>())
                                 .build();
@@ -54,10 +59,13 @@ public class CommentService {
                 Comment parent = commentRepository.findById(parentId)
                                 .orElseThrow(() -> new IllegalArgumentException(
                                                 "Parent comment not found: " + parentId));
+                User user = userRepository.findById(currentUser.getId())
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "User not found: " + currentUser.getId()));
 
                 Comment reply = Comment.builder()
                                 .post(post)
-                                .user(currentUser)
+                                .user(user)
                                 .parent(parent)
                                 .body(request.getBody() != null ? request.getBody().trim() : "")
                                 .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new ArrayList<>())

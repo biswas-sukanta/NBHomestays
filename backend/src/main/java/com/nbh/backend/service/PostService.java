@@ -140,8 +140,11 @@ public class PostService {
             @CacheEvict(value = "postDetail", key = "#postId")
     })
     public PostDto.LikeResponse toggleLike(java.util.UUID postId, String userEmail) {
+        // 1. Fetch the actual Post entity
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        // 2. Fetch the actual User entity explicitly from the DB to attach to Hibernate
+        // session
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -151,7 +154,11 @@ public class PostService {
             post.setLoveCount(Math.max(0, post.getLoveCount() - 1));
             isLiked = false;
         } else {
-            postLikeRepository.save(PostLike.builder().userId(user.getId()).postId(postId).build());
+            // 3. Perform the Like logic using the explicitly fetched entities
+            PostLike newLike = new PostLike();
+            newLike.setPostId(postId);
+            newLike.setUserId(user.getId());
+            postLikeRepository.save(newLike);
             post.setLoveCount(post.getLoveCount() + 1);
             isLiked = true;
         }
