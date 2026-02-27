@@ -445,29 +445,26 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                             ))}
                         </div>
                     )}
-                </div>
 
-                {/* Tier 3: Footer — shrink-0, anchored to bottom */}
-                <div className="shrink-0 px-5 py-4 border-t border-gray-100 bg-white flex flex-col gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                    {/* Row 1: Tool buttons — pill-shaped with borders */}
-                    <div className="flex items-center gap-2 overflow-x-auto">
+                    {/* Tools Row — Photo & Location side by side */}
+                    <div className="flex items-center gap-3">
                         <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-                        <button onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white text-blue-600 text-sm font-semibold hover:bg-blue-50 shadow-sm transition-colors shrink-0">
+                        <button onClick={() => fileRef.current?.click()} className="flex-1 flex justify-center items-center gap-2 border border-gray-200 rounded-xl py-2.5 bg-white text-blue-600 text-sm font-semibold hover:bg-gray-50 shadow-sm transition-colors">
                             <ImageIcon className="w-4 h-4" /> Photo
                         </button>
-                        <div className="relative shrink-0">
+                        <div className="flex-1 relative">
                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-500" />
-                            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location..." className="border border-gray-200 bg-white text-rose-700 placeholder-rose-400 rounded-full pl-8 pr-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-rose-200 focus:border-transparent focus:outline-none w-[120px] shadow-sm transition-all" />
+                            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location..." className="w-full border border-gray-200 bg-white text-rose-700 placeholder-rose-400 rounded-xl pl-8 pr-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-rose-200 focus:border-transparent focus:outline-none shadow-sm transition-all" />
                         </div>
                     </div>
 
-                    {/* Row 2: Tag Homestay — bordered */}
-                    <div className="relative min-w-0 border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    {/* Tag Homestay */}
+                    <div className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                         <CustomCombobox options={homestays} value={selectedHomestay} onChange={setSelectedHomestay} placeholder="Tag Homestay" />
                     </div>
 
-                    {/* Row 3: Submit */}
-                    <button onClick={handleSubmit} disabled={submitting} className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 text-white text-base font-semibold rounded-xl shadow-md hover:bg-green-700 transition-all disabled:opacity-50 active:scale-[0.98]">
+                    {/* Submit */}
+                    <button onClick={handleSubmit} disabled={submitting} className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 text-white text-base font-semibold rounded-xl shadow-md hover:bg-green-700 transition-all disabled:opacity-50 active:scale-[0.98] mt-1">
                         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         {submitting ? 'Posting...' : 'Repost'}
                     </button>

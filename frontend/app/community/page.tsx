@@ -195,32 +195,28 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                         onCropComplete={handleCropComplete}
                     />
                 )}
-            </div>
 
-            {/* Tier 3: Footer — shrink-0, anchored to bottom */}
-            <div className="shrink-0 px-5 py-4 border-t border-gray-100 bg-white flex flex-col gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                {/* Row 1: Tool buttons — pill-shaped with borders */}
-                <div className="flex items-center gap-2 overflow-x-auto">
+                {/* Tools Row — Photo & Location side by side */}
+                <div className="flex items-center gap-3">
                     <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
                     <button data-testid="add-photo-btn" onClick={() => fileRef.current?.click()} disabled={submitting}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white text-blue-600 text-sm font-semibold hover:bg-blue-50 shadow-sm transition-colors shrink-0" title="Add Photos">
+                        className="flex-1 flex justify-center items-center gap-2 border border-gray-200 rounded-xl py-2.5 bg-white text-blue-600 text-sm font-semibold hover:bg-gray-50 shadow-sm transition-colors" title="Add Photos">
                         <ImageIcon className="w-4 h-4" />
                         <span>Photo</span>
                     </button>
-
-                    <div className="relative shrink-0">
+                    <div className="flex-1 relative">
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500" />
                         <input
                             value={location}
                             onChange={e => setLocation(e.target.value)}
                             placeholder="Location..."
-                            className="border border-gray-200 bg-white text-rose-700 placeholder-rose-400 rounded-full pl-9 pr-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-rose-200 focus:border-transparent focus:outline-none w-[130px] shadow-sm transition-all"
+                            className="w-full border border-gray-200 bg-white text-rose-700 placeholder-rose-400 rounded-xl pl-9 pr-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-rose-200 focus:border-transparent focus:outline-none shadow-sm transition-all"
                         />
                     </div>
                 </div>
 
-                {/* Row 2: Tag Homestay — bordered */}
-                <div className="relative min-w-0 border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                {/* Tag Homestay */}
+                <div className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                     <CustomCombobox
                         options={homestays}
                         value={selectedHomestay}
@@ -229,9 +225,9 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                     />
                 </div>
 
-                {/* Row 3: Submit */}
+                {/* Submit */}
                 <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0)}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md active:scale-[0.98] disabled:opacity-50 transition-all text-base">
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md active:scale-[0.98] disabled:opacity-50 transition-all text-base mt-1">
                     {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
                     {submitting ? 'Sharing...' : (postData ? 'Update' : repostTarget ? 'Repost' : 'Post')}
                 </button>
