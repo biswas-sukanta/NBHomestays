@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -59,7 +60,7 @@ export function ImageLightbox({ images, initialIndex, onClose, footer }: ImageLi
     const optimized = (src: string) => src.includes('ik.imagekit.io') ? `${src}?tr=w-1600,q-85` : src;
     const thumb = (src: string) => src.includes('ik.imagekit.io') ? `${src}?tr=w-160,h-120,cm-extract` : src;
 
-    return (
+    return createPortal(
         <div
             className="fixed inset-0 z-[9999] flex flex-col bg-black/95 backdrop-blur-sm w-screen h-screen overflow-hidden"
             onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -143,6 +144,7 @@ export function ImageLightbox({ images, initialIndex, onClose, footer }: ImageLi
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
