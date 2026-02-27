@@ -130,13 +130,14 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
     };
 
     return (
-        <div className="bg-white sm:rounded-2xl rounded-xl overflow-hidden shadow-lg p-6 border border-gray-100 z-50 relative">
+        <div className="bg-white sm:rounded-2xl rounded-xl shadow-lg p-6 border border-gray-100 z-50 relative">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="font-extrabold text-gray-900 tracking-tight text-xl">{postData ? 'Edit Your Story' : 'Share Your Journey'}</h2>
                 <button onClick={onCancel} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors"><X className="w-5 h-5" /></button>
             </div>
 
             <textarea
+                data-testid="post-textarea"
                 value={text}
                 onChange={e => setText(e.target.value)}
                 placeholder="What's the atmosphere like? Tell the community..."
@@ -171,8 +172,8 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-100">
                 {/* Left Side: Buttons and Inputs */}
                 <div className="flex flex-wrap items-center gap-2">
-                    <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-                    <button onClick={() => fileRef.current?.click()} disabled={submitting}
+                    <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                    <button data-testid="add-photo-btn" onClick={() => fileRef.current?.click()} disabled={submitting}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold hover:bg-blue-100 transition-colors" title="Add Photos">
                         <ImageIcon className="w-4 h-4" />
                         <span className="hidden sm:inline">Photo</span>
@@ -188,7 +189,7 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
                         />
                     </div>
 
-                    <div className="relative group min-w-[130px] flex-1 sm:flex-none">
+                    <div className="relative min-w-[160px] flex-1 sm:flex-none">
                         <CustomCombobox
                             options={homestays}
                             value={selectedHomestay}
@@ -199,7 +200,7 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
                 </div>
 
                 {/* Right Side: Submit */}
-                <button onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0)}
+                <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0)}
                     className="flex shrink-0 items-center justify-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full transition-transform active:scale-95 disabled:opacity-50 shadow-sm ml-auto">
                     {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
                     {submitting ? 'Sharing...' : (postData ? 'Update' : 'Post')}
@@ -367,7 +368,7 @@ export default function CommunityPage() {
             {/* Floating Compose Button */}
             <AnimatePresence>
                 {isAuthenticated && !composerOpen && (
-                    <motion.button key="fab" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                    <motion.button data-testid="fab-add-post" key="fab" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                         onClick={() => setComposerOpen(true)}
                         className="fixed bottom-24 right-5 sm:bottom-10 sm:right-10 w-16 h-16 rounded-full bg-green-600 focus:ring-4 focus:ring-green-600/30 text-white shadow-xl shadow-green-900/20 flex items-center justify-center hover:bg-green-700 transition-all z-40"
                         aria-label="Write a Story">
