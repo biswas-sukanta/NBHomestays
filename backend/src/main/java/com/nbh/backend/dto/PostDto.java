@@ -38,6 +38,7 @@ public class PostDto {
         private String homestayName;
         private int loveCount;
         private int shareCount;
+        private int commentCount;
         private boolean isLikedByCurrentUser;
         private Response originalPost;
         private LocalDateTime createdAt;

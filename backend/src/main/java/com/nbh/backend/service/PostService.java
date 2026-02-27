@@ -141,9 +141,9 @@ public class PostService {
     })
     public PostDto.LikeResponse toggleLike(java.util.UUID postId, String userEmail) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         boolean isLiked;
         if (postLikeRepository.existsByUserIdAndPostId(user.getId(), postId)) {
@@ -235,6 +235,7 @@ public class PostService {
                 .homestayName(post.getHomestay() != null ? post.getHomestay().getName() : null)
                 .loveCount(post.getLoveCount())
                 .shareCount(post.getShareCount())
+                .commentCount(post.getComments() != null ? post.getComments().size() : 0)
                 .isLikedByCurrentUser(isLiked)
                 .originalPost(originalPostDto)
                 .createdAt(post.getCreatedAt())

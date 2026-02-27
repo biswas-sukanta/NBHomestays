@@ -91,15 +91,16 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode }: { postId: 
         <button
             data-testid="like-btn"
             onClick={toggle}
-            className={cn('flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-colors duration-200 active:scale-95 text-sm font-semibold group',
-                liked ? 'text-rose-600 hover:bg-rose-50' :
+            className={cn('flex-1 flex justify-center items-center gap-2 rounded-lg transition-transform duration-200 active:scale-75 text-sm font-semibold group cursor-pointer min-h-10',
+                (liked || count > 0) ? 'text-red-500 hover:bg-red-50' :
                     darkMode ? 'text-white hover:bg-white/10' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100')}
             aria-label={liked ? 'Unlike post' : 'Like post'}
         >
             <Heart className={cn('w-5 h-5 transition-all duration-200',
-                liked ? 'fill-rose-600 stroke-rose-600' :
-                    darkMode ? 'fill-transparent group-hover:stroke-white' : 'fill-transparent group-hover:stroke-gray-700', popping && 'scale-125')} />
-            <span>{count}</span>
+                popping ? 'scale-125 bounce-pop' : '',
+                (liked || count > 0) ? 'fill-red-500 stroke-red-500 animate-in zoom-in-75 duration-300' :
+                    darkMode ? 'stroke-white' : 'stroke-gray-500 group-hover:stroke-gray-700')} />
+            <span>{Number(count) || 0}</span>
         </button>
     );
 }
@@ -249,17 +250,17 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
                         {/* Like — already state-aware internally */}
                         <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} />
 
-                        {/* Comment — blue fill when comments exist */}
+                        {/* Comment — dynamic fill when comments exist */}
                         <button
                             data-testid="comment-btn"
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenComments?.(post.id); }}
                             className={cn(
-                                'flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-all duration-200 active:scale-95 text-sm font-semibold group',
-                                hasComments ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                                'flex-1 flex justify-center items-center gap-2 min-h-10 rounded-lg transition-transform duration-200 active:scale-75 text-sm font-semibold group cursor-pointer',
+                                hasComments ? 'text-green-600 hover:bg-green-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                             )}
                         >
-                            <MessageCircle className={cn('w-5 h-5 transition-all duration-200', hasComments && 'fill-blue-600/20 stroke-blue-600')} />
-                            <span>{commentCount}</span>
+                            <MessageCircle className={cn('w-5 h-5 transition-all duration-200', hasComments && 'fill-green-600 stroke-green-600 scale-110')} />
+                            <span>{Number(post.commentCount) || 0}</span>
                         </button>
 
                         {/* Repost — green tint when post has original */}
