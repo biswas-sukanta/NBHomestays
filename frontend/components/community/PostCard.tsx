@@ -428,10 +428,8 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                     <textarea
                         value={text}
                         onChange={e => setText(e.target.value)}
-                        onInput={e => { const t = e.target as HTMLTextAreaElement; t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }}
                         placeholder="Add your thoughts..."
-                        rows={3}
-                        className="w-full min-h-[80px] text-lg font-medium text-gray-900 placeholder:text-gray-400 resize-none focus:ring-0 focus:outline-none bg-transparent border-none p-0"
+                        className="w-full h-32 md:h-40 p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-inner focus:bg-white focus:ring-2 focus:ring-green-500/40 focus:border-transparent resize-none text-base font-medium text-gray-900 placeholder:text-gray-400 transition-all duration-200"
                     />
                     {/* Image staging */}
                     {stagedFiles.length > 0 && (
@@ -449,30 +447,30 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                     )}
                 </div>
 
-                {/* Tier 3: Footer — shrink-0, anchored to bottom, 2-row layout */}
-                <div className="shrink-0 px-5 py-3 border-t border-gray-100 bg-white flex flex-col gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                    {/* Row 1: Tool buttons */}
+                {/* Tier 3: Footer — shrink-0, anchored to bottom */}
+                <div className="shrink-0 px-5 py-4 border-t border-gray-100 bg-white flex flex-col gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                    {/* Row 1: Tool buttons — pill-shaped with borders */}
                     <div className="flex items-center gap-2 overflow-x-auto">
                         <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-                        <button onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold hover:bg-blue-100 transition-colors shrink-0">
+                        <button onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white text-blue-600 text-sm font-semibold hover:bg-blue-50 shadow-sm transition-colors shrink-0">
                             <ImageIcon className="w-4 h-4" /> Photo
                         </button>
                         <div className="relative shrink-0">
                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-500" />
-                            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location..." className="bg-rose-50 text-rose-700 placeholder-rose-400 border-none rounded-full pl-8 pr-3 py-2 text-sm font-semibold focus:ring-0 focus:outline-none w-[120px] transition-all" />
+                            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location..." className="border border-gray-200 bg-white text-rose-700 placeholder-rose-400 rounded-full pl-8 pr-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-rose-200 focus:border-transparent focus:outline-none w-[120px] shadow-sm transition-all" />
                         </div>
                     </div>
 
-                    {/* Row 2: Tag + Submit */}
-                    <div className="flex flex-col gap-2">
-                        <div className="relative min-w-0">
-                            <CustomCombobox options={homestays} value={selectedHomestay} onChange={setSelectedHomestay} placeholder="Tag Homestay" />
-                        </div>
-                        <button onClick={handleSubmit} disabled={submitting} className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-green-600 text-white text-base font-bold hover:bg-green-700 transition-all disabled:opacity-50 active:scale-95 shadow-sm">
-                            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                            {submitting ? 'Posting...' : 'Repost'}
-                        </button>
+                    {/* Row 2: Tag Homestay — bordered */}
+                    <div className="relative min-w-0 border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                        <CustomCombobox options={homestays} value={selectedHomestay} onChange={setSelectedHomestay} placeholder="Tag Homestay" />
                     </div>
+
+                    {/* Row 3: Submit */}
+                    <button onClick={handleSubmit} disabled={submitting} className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 text-white text-base font-semibold rounded-xl shadow-md hover:bg-green-700 transition-all disabled:opacity-50 active:scale-[0.98]">
+                        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        {submitting ? 'Posting...' : 'Repost'}
+                    </button>
                 </div>
             </div>
         </motion.div>

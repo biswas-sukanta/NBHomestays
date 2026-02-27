@@ -159,10 +159,8 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                     data-testid="post-textarea"
                     value={text}
                     onChange={e => setText(e.target.value)}
-                    onInput={e => { const t = e.target as HTMLTextAreaElement; t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }}
                     placeholder={repostTarget ? 'Add your thoughts...' : "What's the atmosphere like? Tell the community..."}
-                    rows={3}
-                    className="w-full min-h-[80px] text-lg font-medium text-gray-900 placeholder-gray-400 resize-none focus:ring-0 focus:outline-none bg-transparent border-none p-0"
+                    className="w-full h-32 md:h-40 p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-inner focus:bg-white focus:ring-2 focus:ring-green-500/40 focus:border-transparent resize-none text-base font-medium text-gray-900 placeholder-gray-400 transition-all duration-200"
                 />
 
                 {/* Staging Area */}
@@ -199,13 +197,13 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                 )}
             </div>
 
-            {/* Tier 3: Footer — shrink-0, anchored to bottom, 2-row layout */}
-            <div className="shrink-0 px-5 py-3 border-t border-gray-100 bg-white flex flex-col gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                {/* Row 1: Tool buttons */}
+            {/* Tier 3: Footer — shrink-0, anchored to bottom */}
+            <div className="shrink-0 px-5 py-4 border-t border-gray-100 bg-white flex flex-col gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                {/* Row 1: Tool buttons — pill-shaped with borders */}
                 <div className="flex items-center gap-2 overflow-x-auto">
                     <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
                     <button data-testid="add-photo-btn" onClick={() => fileRef.current?.click()} disabled={submitting}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold hover:bg-blue-100 transition-colors shrink-0" title="Add Photos">
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white text-blue-600 text-sm font-semibold hover:bg-blue-50 shadow-sm transition-colors shrink-0" title="Add Photos">
                         <ImageIcon className="w-4 h-4" />
                         <span>Photo</span>
                     </button>
@@ -216,28 +214,27 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                             value={location}
                             onChange={e => setLocation(e.target.value)}
                             placeholder="Location..."
-                            className="bg-rose-50 text-rose-700 placeholder-rose-400 border-none rounded-full pl-9 pr-3 py-2 text-sm font-semibold focus:ring-0 focus:outline-none w-[130px] transition-all"
+                            className="border border-gray-200 bg-white text-rose-700 placeholder-rose-400 rounded-full pl-9 pr-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-rose-200 focus:border-transparent focus:outline-none w-[130px] shadow-sm transition-all"
                         />
                     </div>
                 </div>
 
-                {/* Row 2: Tag + Submit */}
-                <div className="flex flex-col gap-2">
-                    <div className="relative min-w-0">
-                        <CustomCombobox
-                            options={homestays}
-                            value={selectedHomestay}
-                            onChange={setSelectedHomestay}
-                            placeholder="Tag Homestay"
-                        />
-                    </div>
-
-                    <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0)}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-full transition-all active:scale-95 disabled:opacity-50 shadow-sm text-base">
-                        {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
-                        {submitting ? 'Sharing...' : (postData ? 'Update' : repostTarget ? 'Repost' : 'Post')}
-                    </button>
+                {/* Row 2: Tag Homestay — bordered */}
+                <div className="relative min-w-0 border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <CustomCombobox
+                        options={homestays}
+                        value={selectedHomestay}
+                        onChange={setSelectedHomestay}
+                        placeholder="Tag Homestay"
+                    />
                 </div>
+
+                {/* Row 3: Submit */}
+                <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0)}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md active:scale-[0.98] disabled:opacity-50 transition-all text-base">
+                    {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
+                    {submitting ? 'Sharing...' : (postData ? 'Update' : repostTarget ? 'Repost' : 'Post')}
+                </button>
             </div>
         </div>
     );
