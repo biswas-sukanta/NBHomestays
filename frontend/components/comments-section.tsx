@@ -294,6 +294,14 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
         else setInternalOpen(false);
     };
 
+    // ── Scroll Lock: prevent background scrolling when drawer is open ──
+    useEffect(() => {
+        if (open) {
+            document.body.style.overflow = 'hidden';
+            return () => { document.body.style.overflow = 'unset'; };
+        }
+    }, [open]);
+
     return (
         <div className={cn(hideTrigger ? "" : "mt-2")}>
             {!hideTrigger && (
@@ -308,17 +316,23 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
 
             <AnimatePresence>
                 {open && (
-                    <div className="fixed inset-0 z-[100] flex flex-col md:items-center md:justify-center bg-white md:bg-black/40 md:backdrop-blur-sm md:p-4">
-                        {/* Backdrop — desktop only click-to-close */}
-                        <div className="hidden md:block absolute inset-0" onClick={handleClose} />
+                    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
+                        {/* Backdrop — full interaction blocker */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            onClick={handleClose}
+                        />
 
-                        {/* Drawer — transplanted from AddPostModal shell */}
+                        {/* Drawer container */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 20 }}
+                            exit={{ opacity: 0, y: 30 }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="relative z-10 w-full md:max-w-2xl h-[100dvh] md:h-auto md:min-h-[500px] md:max-h-[85vh] bg-white md:rounded-2xl md:border md:border-gray-200 md:shadow-2xl flex flex-col overflow-hidden"
+                            className="relative z-10 w-full md:max-w-2xl h-[90dvh] md:h-auto md:min-h-[500px] md:max-h-[85vh] bg-white rounded-t-3xl md:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
                         >
                             {/* Tier 1: Header — shrink-0, always pinned */}
                             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">

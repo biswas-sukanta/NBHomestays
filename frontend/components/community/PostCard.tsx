@@ -64,6 +64,8 @@ interface PostCardProps {
     onRepost?: (quote: QuotePost) => void;
     /** Is this post being rendered as a quoted repost inside another post? */
     isQuoted?: boolean;
+    /** Callback to open the global comment drawer */
+    onOpenComments?: (postId: string) => void;
 }
 
 // ── LikeButton ────────────────────────────────────────────────────────────────
@@ -104,7 +106,7 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode }: { postId: 
 }
 
 // ── PostCard ──────────────────────────────────────────────────────────────────
-export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView = false, onRepost, isQuoted = false }: PostCardProps) {
+export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView = false, onRepost, isQuoted = false, onOpenComments }: PostCardProps) {
     const authorName = post.userName || 'Traveller';
     const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     const isOwner = currentUser?.id === post.userId || currentUser?.role === 'ROLE_ADMIN';
@@ -112,8 +114,6 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [shareCount, setShareCount] = useState<number>(Number(post.shareCount) || 0);
     const [sharing, setSharing] = useState(false);
-    const [isCommentDrawerOpen, setIsCommentDrawerOpen] = useState(false);
-    const [liveCommentCount, setLiveCommentCount] = useState<number>(Math.max(0, Number(post.commentCount) || 0));
     const { isAuthenticated } = useAuth() as any;
 
     // Share handler: native Web Share API → clipboard fallback → backend metric
@@ -246,8 +246,9 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
 
             {/* ── Premium Action Bar (Hidden if quoting) ── */}
             {!isQuoted && (() => {
+                const commentCount = Math.max(0, Number(post.commentCount) || 0);
                 const safeShareCount = Math.max(0, Number(shareCount) || 0);
-                const hasComments = liveCommentCount > 0;
+                const hasComments = commentCount > 0;
                 const hasShares = safeShareCount > 0;
 
                 return (
@@ -258,14 +259,14 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                         {/* Comment — blue fill when comments exist */}
                         <button
                             data-testid="comment-btn"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsCommentDrawerOpen(true); }}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenComments?.(post.id); }}
                             className={cn(
                                 'flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-all duration-200 active:scale-95 text-sm font-semibold group',
                                 hasComments ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                             )}
                         >
                             <MessageCircle className={cn('w-5 h-5 transition-all duration-200', hasComments && 'fill-blue-600/20 stroke-blue-600')} />
-                            <span>{liveCommentCount}</span>
+                            <span>{commentCount}</span>
                         </button>
 
                         {/* Repost — green tint when post has original */}
@@ -297,15 +298,6 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                     </div>
                 );
             })()}
-
-            {/* Slide-Up Comments */}
-            <CommentsSection
-                postId={post.id}
-                hideTrigger={true}
-                externalOpen={isCommentDrawerOpen}
-                onExternalClose={() => setIsCommentDrawerOpen(false)}
-                onCommentCountChange={(count) => setLiveCommentCount(count)}
-            />
 
             {/* Lightbox */}
             {lightboxIndex !== null && post.imageUrls && post.imageUrls.length > 0 && (

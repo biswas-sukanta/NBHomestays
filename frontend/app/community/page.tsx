@@ -12,6 +12,7 @@ import { SharedPageBanner } from '@/components/shared-page-banner';
 import { ImageCropModal } from '@/components/host/ImageCropModal';
 import { StagedFile } from '@/components/host/ImageDropzone';
 import { PostCard, CommunityPost } from '@/components/community/PostCard';
+import { CommentsSection } from '@/components/comments-section';
 import { CustomCombobox } from '@/components/ui/combobox';
 import api from '@/lib/api';
 import { MapPin } from 'lucide-react';
@@ -239,7 +240,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
 
 // ── Feed PostCard Wrapper ──────────────────────────────────────
 // Thin wrapper: handles the edit-mode toggle locally, then delegates to the universal PostCard.
-function FeedPostCard({ post, user, onUpdate, onDelete }: { post: Post; user: any; onUpdate: (p: Post) => void; onDelete: (id: string) => void; }) {
+function FeedPostCard({ post, user, onUpdate, onDelete, onOpenComments }: { post: Post; user: any; onUpdate: (p: Post) => void; onDelete: (id: string) => void; onOpenComments: (postId: string) => void; }) {
     const [isEditing, setIsEditing] = useState(false);
 
     if (isEditing) {
@@ -260,6 +261,7 @@ function FeedPostCard({ post, user, onUpdate, onDelete }: { post: Post; user: an
             currentUser={user}
             onUpdate={onUpdate}
             onDelete={onDelete}
+            onOpenComments={onOpenComments}
         />
     );
 }
@@ -273,6 +275,7 @@ export default function CommunityPage() {
     const [loading, setLoading] = useState(false);
     const [composerOpen, setComposerOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
     const observerRef = useRef<HTMLDivElement>(null);
 
     const fetchPosts = useCallback(async (pageNum: number) => {
@@ -355,7 +358,7 @@ export default function CommunityPage() {
 
                 <AnimatePresence>
                     {filteredPosts.map(post => (
-                        <FeedPostCard key={post.id} post={post} user={user} onUpdate={handleUpdatePost} onDelete={handleDeletePost} />
+                        <FeedPostCard key={post.id} post={post} user={user} onUpdate={handleUpdatePost} onDelete={handleDeletePost} onOpenComments={(postId) => setActiveCommentPostId(postId)} />
                     ))}
                 </AnimatePresence>
 
@@ -406,6 +409,16 @@ export default function CommunityPage() {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Global Comment Drawer — single instance outside .map loop */}
+            {activeCommentPostId && (
+                <CommentsSection
+                    postId={activeCommentPostId}
+                    hideTrigger={true}
+                    externalOpen={true}
+                    onExternalClose={() => setActiveCommentPostId(null)}
+                />
+            )}
         </div>
     );
 }
