@@ -243,23 +243,60 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                 )}
             </div>
 
-            {/* Actions Bar (Hidden if quoting) */}
-            {!isQuoted && (
-                <div className="flex items-center justify-between px-2 py-1 border-t border-gray-100 pointer-events-auto bg-white relative z-10">
-                    <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} />
-                    <button data-testid="comment-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsCommentDrawerOpen(true); }} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold">
-                        <MessageCircle className="w-5 h-5" /><span>{Math.max(0, Number(post.commentCount) || 0)}</span>
-                    </button>
-                    {/* Repost */}
-                    <button data-testid="repost-btn" onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Repost">
-                        <Repeat2 className="w-5 h-5" />
-                    </button>
-                    {/* Share */}
-                    <button data-testid="share-btn" onClick={handleShare} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Share post">
-                        <Share2 className="w-5 h-5" /> <span>{Math.max(0, Number(shareCount) || 0)}</span>
-                    </button>
-                </div>
-            )}
+            {/* ── Premium Action Bar (Hidden if quoting) ── */}
+            {!isQuoted && (() => {
+                const commentCount = Math.max(0, Number(post.commentCount) || 0);
+                const safeShareCount = Math.max(0, Number(shareCount) || 0);
+                const hasComments = commentCount > 0;
+                const hasShares = safeShareCount > 0;
+
+                return (
+                    <div className="flex items-center justify-between px-3 py-2 border-t border-gray-100 pointer-events-auto bg-white relative z-10">
+                        {/* Like — already state-aware internally */}
+                        <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} />
+
+                        {/* Comment — blue fill when comments exist */}
+                        <button
+                            data-testid="comment-btn"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsCommentDrawerOpen(true); }}
+                            className={cn(
+                                'flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-all duration-200 active:scale-95 text-sm font-semibold group',
+                                hasComments ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                            )}
+                        >
+                            <MessageCircle className={cn('w-5 h-5 transition-all duration-200', hasComments && 'fill-blue-600/20 stroke-blue-600')} />
+                            <span>{commentCount}</span>
+                        </button>
+
+                        {/* Repost — green tint when post has original */}
+                        <button
+                            data-testid="repost-btn"
+                            onClick={handleRepost}
+                            className={cn(
+                                'flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-all duration-200 active:scale-95 text-sm font-semibold group',
+                                post.originalPost ? 'text-green-600 hover:bg-green-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                            )}
+                            aria-label="Repost"
+                        >
+                            <Repeat2 className={cn('w-5 h-5 transition-all duration-200', post.originalPost && 'text-green-600')} />
+                        </button>
+
+                        {/* Share — purple accent when shared */}
+                        <button
+                            data-testid="share-btn"
+                            onClick={handleShare}
+                            className={cn(
+                                'flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-all duration-200 active:scale-95 text-sm font-semibold group',
+                                hasShares ? 'text-violet-600 hover:bg-violet-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                            )}
+                            aria-label="Share post"
+                        >
+                            <Share2 className={cn('w-5 h-5 transition-all duration-200', hasShares && 'text-violet-600')} />
+                            <span>{safeShareCount}</span>
+                        </button>
+                    </div>
+                );
+            })()}
 
             {/* Slide-Up Comments */}
             <CommentsSection

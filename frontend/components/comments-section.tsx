@@ -303,7 +303,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
 
             <AnimatePresence>
                 {open && (
-                    <div className="fixed inset-0 z-[100] flex justify-center items-end sm:items-center">
+                    <div className="fixed inset-0 z-[100] flex justify-center items-end sm:items-center p-4">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -318,13 +318,13 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="relative w-full max-w-2xl h-[90vh] sm:h-[650px] bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                            className="relative w-full max-w-2xl max-h-[85vh] sm:max-h-[650px] bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
                         >
-                            {/* Header */}
+                            {/* Header — always pinned */}
                             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
                                 <h2 className="font-extrabold text-lg text-gray-900">Comments</h2>
-                                <button onClick={handleClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors">
-                                    <X className="w-4 h-4" />
+                                <button onClick={handleClose} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all active:scale-95 shadow-sm" aria-label="Close comments">
+                                    <X className="w-5 h-5" />
                                 </button>
                             </div>
 
