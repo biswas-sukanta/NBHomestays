@@ -9,6 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
 
 import java.util.UUID;
 
@@ -33,8 +36,11 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CommentDto> addComment(
             @PathVariable UUID postId,
-            @RequestBody CommentDto.Request request,
+            @Valid @RequestBody CommentDto.Request request,
             @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to comment");
+        }
         return ResponseEntity.ok(commentService.addComment(postId, request, currentUser));
     }
 
@@ -44,8 +50,11 @@ public class CommentController {
     public ResponseEntity<CommentDto> addReply(
             @PathVariable("postId") UUID postId,
             @PathVariable("parentId") UUID parentId,
-            @RequestBody CommentDto.Request request,
+            @Valid @RequestBody CommentDto.Request request,
             @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to reply");
+        }
         return ResponseEntity.ok(commentService.addReply(postId, parentId, request, currentUser));
     }
 

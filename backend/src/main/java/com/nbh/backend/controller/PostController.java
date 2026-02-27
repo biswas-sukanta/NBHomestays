@@ -5,8 +5,12 @@ import com.nbh.backend.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import com.nbh.backend.model.User;
 
 import java.util.List;
 
@@ -71,8 +75,11 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.LikeResponse> toggleLike(
             @PathVariable("id") java.util.UUID id,
-            Authentication authentication) {
-        PostDto.LikeResponse resp = postService.toggleLike(id, authentication.getName());
+            @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to like this post");
+        }
+        PostDto.LikeResponse resp = postService.toggleLike(id, currentUser);
         return ResponseEntity.ok(resp);
     }
 

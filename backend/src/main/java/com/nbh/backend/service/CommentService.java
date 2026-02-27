@@ -33,7 +33,7 @@ public class CommentService {
         @CacheEvict(value = "postComments", allEntries = true)
         public CommentDto addComment(UUID postId, CommentDto.Request request, User currentUser) {
                 Post post = postRepository.findById(postId)
-                                .orElseThrow(() -> new RuntimeException("Post not found: " + postId));
+                                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
 
                 Comment comment = Comment.builder()
                                 .post(post)
@@ -50,9 +50,10 @@ public class CommentService {
         @CacheEvict(value = "postComments", allEntries = true)
         public CommentDto addReply(UUID postId, UUID parentId, CommentDto.Request request, User currentUser) {
                 Post post = postRepository.findById(postId)
-                                .orElseThrow(() -> new RuntimeException("Post not found: " + postId));
+                                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
                 Comment parent = commentRepository.findById(parentId)
-                                .orElseThrow(() -> new RuntimeException("Parent comment not found: " + parentId));
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "Parent comment not found: " + parentId));
 
                 Comment reply = Comment.builder()
                                 .post(post)
@@ -79,7 +80,7 @@ public class CommentService {
         @CacheEvict(value = "postComments", allEntries = true)
         public void deleteComment(UUID commentId, User currentUser) {
                 Comment comment = commentRepository.findById(commentId)
-                                .orElseThrow(() -> new RuntimeException("Comment not found: " + commentId));
+                                .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
 
                 boolean isOwner = comment.getUser().getId().equals(currentUser.getId());
                 boolean isAdmin = currentUser.getRole().name().equals("ROLE_ADMIN");
