@@ -188,7 +188,7 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
 }
 
 // ── Public API ────────────────────────────────────────────────
-export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalClose }: { postId: string, hideTrigger?: boolean, externalOpen?: boolean, onExternalClose?: () => void }) {
+export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalClose, onCommentCountChange }: { postId: string, hideTrigger?: boolean, externalOpen?: boolean, onExternalClose?: () => void, onCommentCountChange?: (count: number) => void }) {
     const { isAuthenticated, user } = useAuth() as any;
     // AuthContext stores under 'token'
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -266,6 +266,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                 setComments(prev => [...prev, c]);
                 setNewComment('');
                 setStagedFiles([]);
+                onCommentCountChange?.(comments.length + 1);
             } else {
                 toast.error('Failed to post comment');
             }
@@ -280,7 +281,11 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                 method: 'DELETE',
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
-            setComments(prev => prev.filter(c => c.id !== commentId));
+            setComments(prev => {
+                const next = prev.filter(c => c.id !== commentId);
+                onCommentCountChange?.(next.length);
+                return next;
+            });
         } catch (e) { console.error(e); }
     };
 
@@ -318,7 +323,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="relative w-full md:max-w-2xl h-[90dvh] md:h-auto md:max-h-[650px] bg-white rounded-t-3xl md:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                            className="relative w-full md:max-w-2xl h-[90dvh] md:h-[80vh] md:min-h-[500px] md:max-h-[800px] bg-white rounded-t-3xl md:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
                         >
                             {/* Header — always pinned */}
                             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
@@ -331,7 +336,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                             {/* Comment List */}
                             <div className="flex-1 overflow-y-auto px-5 py-6 bg-gray-50/50 overscroll-contain">
                                 {loading ? (
-                                    <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+                                    <div className="flex-1 flex items-center justify-center min-h-[200px]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
                                 ) : comments.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-16 h-full text-center">
                                         <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-4 ring-8 ring-green-50/50">

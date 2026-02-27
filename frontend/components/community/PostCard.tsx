@@ -113,6 +113,7 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
     const [shareCount, setShareCount] = useState<number>(Number(post.shareCount) || 0);
     const [sharing, setSharing] = useState(false);
     const [isCommentDrawerOpen, setIsCommentDrawerOpen] = useState(false);
+    const [liveCommentCount, setLiveCommentCount] = useState<number>(Math.max(0, Number(post.commentCount) || 0));
     const { isAuthenticated } = useAuth() as any;
 
     // Share handler: native Web Share API → clipboard fallback → backend metric
@@ -245,9 +246,8 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
 
             {/* ── Premium Action Bar (Hidden if quoting) ── */}
             {!isQuoted && (() => {
-                const commentCount = Math.max(0, Number(post.commentCount) || 0);
                 const safeShareCount = Math.max(0, Number(shareCount) || 0);
-                const hasComments = commentCount > 0;
+                const hasComments = liveCommentCount > 0;
                 const hasShares = safeShareCount > 0;
 
                 return (
@@ -265,7 +265,7 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                             )}
                         >
                             <MessageCircle className={cn('w-5 h-5 transition-all duration-200', hasComments && 'fill-blue-600/20 stroke-blue-600')} />
-                            <span>{commentCount}</span>
+                            <span>{liveCommentCount}</span>
                         </button>
 
                         {/* Repost — green tint when post has original */}
@@ -304,6 +304,7 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                 hideTrigger={true}
                 externalOpen={isCommentDrawerOpen}
                 onExternalClose={() => setIsCommentDrawerOpen(false)}
+                onCommentCountChange={(count) => setLiveCommentCount(count)}
             />
 
             {/* Lightbox */}
