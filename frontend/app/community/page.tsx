@@ -2,37 +2,21 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, MapPin, Image as ImageIcon, Send, X, Pencil, MoreHorizontal, Trash2, Search, Loader2, Scissors, Share2 } from 'lucide-react';
+import { Image as ImageIcon, Send, X, Pencil, Search, Loader2, Scissors, Share2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { SharedPageBanner } from '@/components/shared-page-banner';
 import { ImageCropModal } from '@/components/host/ImageCropModal';
 import { StagedFile } from '@/components/host/ImageDropzone';
-import { ImageCollage } from '@/components/community/ImageCollage';
-import { ImageLightbox } from '@/components/community/ImageLightbox';
+import { PostCard, CommunityPost } from '@/components/community/PostCard';
 import api from '@/lib/api';
+import { MapPin } from 'lucide-react';
 
-// ── Types ─────────────────────────────────────────────────────
-interface Post {
-    id: string;
-    userId: string;
-    userName: string;
-    userEmail?: string;
-    locationName: string;
-    textContent: string;
-    imageUrls: string[];
-    createdAt: string;
-    loveCount: number;
-    shareCount: number;
-    isLikedByCurrentUser: boolean;
-    commentCount?: number;
-    homestayId?: string;
-    homestayName?: string;
-}
+// Re-export for local use — the canonical definition lives in PostCard.tsx
+type Post = CommunityPost;
 interface HomestayOption { id: string; name: string; address?: string; }
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -46,67 +30,6 @@ function formatRelative(isoDate: string) {
     return `${Math.floor(diff / 86400)}d ago`;
 }
 
-// ── Blur-up Image ─────────────────────────────────────────────
-function BlurImage({ src, alt, className, transform = true }: { src: string; alt: string; className?: string; transform?: boolean }) {
-    const [loaded, setLoaded] = useState(false);
-    const [error, setError] = useState(false);
-
-    // Apply ImageKit transformations for optimized delivery
-    const optimizedSrc = transform && src.includes('ik.imagekit.io')
-        ? `${src}?tr=w-800,h-500,fo-auto,c-at_max`
-        : src;
-
-    if (error) return null; // Defensive collapse on broken images
-
-    return (
-        <div className={cn('relative overflow-hidden bg-secondary/30', className)}>
-            <img
-                src={optimizedSrc}
-                alt={alt}
-                className={cn('absolute inset-0 w-full h-full object-cover scale-110 blur-xl filter transition-opacity duration-700', loaded ? 'opacity-0' : 'opacity-100')}
-                aria-hidden="true"
-            />
-            <img
-                src={optimizedSrc}
-                alt={alt}
-                onLoad={() => setLoaded(true)}
-                onError={() => setError(true)}
-                className={cn('relative w-full h-full object-cover transition-opacity duration-700', loaded ? 'opacity-100' : 'opacity-0')}
-            />
-        </div>
-    );
-}
-
-// ── Like Button ───────────────────────────────────────────────
-function LikeButton({ postId, initialLiked, initialCount }: { postId: string; initialLiked: boolean; initialCount: number; }) {
-    const { isAuthenticated } = useAuth() as any;
-    const [liked, setLiked] = useState(initialLiked);
-    const [count, setCount] = useState(initialCount);
-    const [popping, setPopping] = useState(false);
-
-    const toggle = async () => {
-        if (!isAuthenticated) { toast.error('Sign in to love this story'); return; }
-        const prev = { liked, count };
-        setLiked(!liked);
-        setCount(c => liked ? c - 1 : c + 1);
-        setPopping(true);
-        setTimeout(() => setPopping(false), 420);
-        try {
-            const res = await api.post(`/api/posts/${postId}/like`);
-            setCount(res.data.loveCount);
-            setLiked(res.data.isLiked);
-        } catch {
-            setLiked(prev.liked); setCount(prev.count);
-        }
-    };
-
-    return (
-        <button onClick={toggle} className={cn('flex items-center gap-1.5 text-sm font-semibold transition-colors duration-200 group relative z-10', liked ? 'text-rose-500' : 'text-muted-foreground hover:text-rose-400')} aria-label={liked ? 'Unlike post' : 'Like post'}>
-            <Heart className={cn('w-5 h-5 transition-all duration-200', liked ? 'fill-rose-500 stroke-rose-500' : 'fill-transparent group-hover:stroke-rose-400', popping && 'scale-125')} />
-            <span>{count}</span>
-        </button>
-    );
-}
 
 // ── Post Composer Inline ───────────────────────────────────────
 function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post; onSuccess: (post: Post) => void; onCancel: () => void; }) {
@@ -273,128 +196,30 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
     );
 }
 
-// ── Post Card ─────────────────────────────────────────────────
-function PostCard({ post, user, onUpdate, onDelete }: { post: Post; user: any; onUpdate: (p: Post) => void; onDelete: (id: string) => void; }) {
-    const authorName = post.userName || 'Traveller';
-    const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    const isOwner = user?.id === post.userId || user?.role === 'ROLE_ADMIN';
+// ── Feed PostCard Wrapper ──────────────────────────────────────
+// Thin wrapper: handles the edit-mode toggle locally, then delegates to the universal PostCard.
+function FeedPostCard({ post, user, onUpdate, onDelete }: { post: Post; user: any; onUpdate: (p: Post) => void; onDelete: (id: string) => void; }) {
     const [isEditing, setIsEditing] = useState(false);
-    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-    const [shareCount, setShareCount] = useState(post.shareCount ?? 0);
-    const [sharing, setSharing] = useState(false);
 
     if (isEditing) {
         return (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="z-10 relative">
-                <PostComposerInline postData={post} onSuccess={(p) => { onUpdate(p); setIsEditing(false); toast.success('Post updated!'); }} onCancel={() => setIsEditing(false)} />
+                <PostComposerInline
+                    postData={post}
+                    onSuccess={(p) => { onUpdate(p); setIsEditing(false); toast.success('Post updated!'); }}
+                    onCancel={() => setIsEditing(false)}
+                />
             </motion.div>
         );
     }
 
     return (
-        <motion.article
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -3, scale: 1.005 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="group block bg-card border border-border/70 hover:border-green-300 rounded-[28px] overflow-hidden shadow-sm hover:shadow-xl hover:shadow-green-500/5 transition-all duration-300 relative"
-        >
-            <Link href={`/community/post/${post.id}`} className="absolute inset-0 z-0" aria-label={`View post by ${authorName}`} />
-
-            {/* Dynamic Image Collage */}
-            {post.imageUrls && post.imageUrls.length > 0 && (
-                <div className="relative z-10">
-                    <ImageCollage images={post.imageUrls} onImageClick={(i) => setLightboxIndex(i)} />
-                </div>
-            )}
-
-            {/* Homestay Tag Mini-Card */}
-            {post.homestayId && post.homestayName && (
-                <div className="mx-5 mt-4 flex items-center gap-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl px-4 py-2.5 relative z-10 pointer-events-auto">
-                    <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center flex-none">
-                        <MapPin className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-[11px] font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">Tagged Homestay</p>
-                        <p className="text-sm font-extrabold text-foreground truncate">{post.homestayName}</p>
-                    </div>
-                    <Link href={`/homestays/${post.homestayId}`} className="ml-auto shrink-0 text-[11px] font-extrabold text-green-700 dark:text-green-400 hover:text-green-900 transition-colors uppercase tracking-wider">
-                        Book →
-                    </Link>
-                </div>
-            )}
-
-            <div className="p-5 sm:p-6 relative z-10 pointer-events-none">
-                <div className="flex items-start gap-4 mb-4">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-green-400 to-green-600 flex items-center justify-center text-white text-[15px] font-bold flex-none shadow-md">
-                        {initials}
-                    </div>
-                    <div className="flex-1 min-w-0 flex justify-between items-start pt-0.5">
-                        <div>
-                            <p className="font-extrabold text-[15px] text-foreground tracking-tight">{authorName}</p>
-                            <div className="flex items-center gap-1.5 mt-1 text-[13px] font-semibold text-muted-foreground">
-                                <MapPin className="w-3.5 h-3.5 text-green-600 flex-none" />
-                                <span className="truncate">{post.locationName}</span>
-                                <span className="mx-1 text-gray-300">•</span>
-                                <span className="flex-none font-medium">{formatRelative(post.createdAt)}</span>
-                            </div>
-                        </div>
-
-                        {/* Actions (Owner/Admin) */}
-                        {isOwner && (
-                            <div className="pointer-events-auto">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button className="w-8 h-8 rounded-full hover:bg-secondary flexItemsCenter text-muted-foreground hover:text-foreground transition-colors flex justify-center items-center">
-                                            <MoreHorizontal className="w-5 h-5" />
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-36 rounded-xl font-medium">
-                                        <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                                            <Pencil className="w-4 h-4 mr-2" /> Edit
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => onDelete(post.id)}>
-                                            <Trash2 className="w-4 h-4 mr-2" /> Delete
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                <p className="text-[15px] text-foreground/90 leading-[1.6] whitespace-pre-line mb-5 font-medium">{post.textContent}</p>
-                <div className="flex items-center gap-6 pt-4 border-t border-border/40 pointer-events-auto">
-                    <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={post.loveCount} />
-                    <Link href={`/community/post/${post.id}`} className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
-                        <MessageCircle className="w-5 h-5" /><span>{post.commentCount ?? 0}</span>
-                    </Link>
-                    {/* Share Button */}
-                    <button
-                        onClick={async (e) => {
-                            e.preventDefault();
-                            if (sharing) return;
-                            setSharing(true);
-                            try {
-                                await api.post(`/api/posts/${post.id}/share`);
-                                setShareCount(c => c + 1);
-                                toast.success('Shared!');
-                            } catch { toast.error('Share failed'); }
-                            finally { setSharing(false); }
-                        }}
-                        className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-green-600 transition-colors ml-auto relative z-10"
-                        aria-label="Share post"
-                    >
-                        {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
-                        <span className="text-xs">{shareCount > 0 ? shareCount : ''}</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Lightbox */}
-            {lightboxIndex !== null && post.imageUrls.length > 0 && (
-                <ImageLightbox images={post.imageUrls} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
-            )}
-        </motion.article>
+        <PostCard
+            post={post}
+            currentUser={user}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+        />
     );
 }
 
@@ -489,7 +314,7 @@ export default function CommunityPage() {
 
                 <AnimatePresence>
                     {filteredPosts.map(post => (
-                        <PostCard key={post.id} post={post} user={user} onUpdate={handleUpdatePost} onDelete={handleDeletePost} />
+                        <FeedPostCard key={post.id} post={post} user={user} onUpdate={handleUpdatePost} onDelete={handleDeletePost} />
                     ))}
                 </AnimatePresence>
 
