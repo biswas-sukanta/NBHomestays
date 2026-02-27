@@ -35,6 +35,18 @@ public class PostDto {
         private List<String> imageUrls;
         private UUID homestayId;
         private String homestayName;
+        private int loveCount;
+        private int shareCount;
+        private boolean isLikedByCurrentUser;
         private LocalDateTime createdAt;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class LikeResponse {
+        private int loveCount;
+        private boolean isLiked;
     }
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, MapPin, Image as ImageIcon, Send, X, Pencil, MoreHorizontal, Trash2, Search, Loader2, Scissors } from 'lucide-react';
+import { Heart, MessageCircle, MapPin, Image as ImageIcon, Send, X, Pencil, MoreHorizontal, Trash2, Search, Loader2, Scissors, Share2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { SharedPageBanner } from '@/components/shared-page-banner';
 import { ImageCropModal } from '@/components/host/ImageCropModal';
 import { StagedFile } from '@/components/host/ImageDropzone';
+import { ImageCollage } from '@/components/community/ImageCollage';
+import { ImageLightbox } from '@/components/community/ImageLightbox';
 import api from '@/lib/api';
 
 // ── Types ─────────────────────────────────────────────────────
@@ -19,14 +21,17 @@ interface Post {
     id: string;
     userId: string;
     userName: string;
-    userEmail?: string; // Optional if provided by backend
+    userEmail?: string;
     locationName: string;
     textContent: string;
     imageUrls: string[];
     createdAt: string;
-    likeCount?: number;
+    loveCount: number;
+    shareCount: number;
+    isLikedByCurrentUser: boolean;
     commentCount?: number;
-    isLiked?: boolean;
+    homestayId?: string;
+    homestayName?: string;
 }
 interface HomestayOption { id: string; name: string; address?: string; }
 
@@ -80,15 +85,16 @@ function LikeButton({ postId, initialLiked, initialCount }: { postId: string; in
     const [popping, setPopping] = useState(false);
 
     const toggle = async () => {
-        if (!isAuthenticated) return;
+        if (!isAuthenticated) { toast.error('Sign in to love this story'); return; }
         const prev = { liked, count };
         setLiked(!liked);
         setCount(c => liked ? c - 1 : c + 1);
         setPopping(true);
         setTimeout(() => setPopping(false), 420);
         try {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            await fetch(`${API}/api/posts/${postId}/like`, { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+            const res = await api.post(`/api/posts/${postId}/like`);
+            setCount(res.data.loveCount);
+            setLiked(res.data.isLiked);
         } catch {
             setLiked(prev.liked); setCount(prev.count);
         }
@@ -96,7 +102,7 @@ function LikeButton({ postId, initialLiked, initialCount }: { postId: string; in
 
     return (
         <button onClick={toggle} className={cn('flex items-center gap-1.5 text-sm font-semibold transition-colors duration-200 group relative z-10', liked ? 'text-rose-500' : 'text-muted-foreground hover:text-rose-400')} aria-label={liked ? 'Unlike post' : 'Like post'}>
-            <Heart className={cn('w-5 h-5 transition-all duration-200', liked ? 'fill-rose-500 stroke-rose-500' : 'fill-transparent group-hover:stroke-rose-400', popping && 'animate-heart-pop')} />
+            <Heart className={cn('w-5 h-5 transition-all duration-200', liked ? 'fill-rose-500 stroke-rose-500' : 'fill-transparent group-hover:stroke-rose-400', popping && 'scale-125')} />
             <span>{count}</span>
         </button>
     );
@@ -273,6 +279,9 @@ function PostCard({ post, user, onUpdate, onDelete }: { post: Post; user: any; o
     const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     const isOwner = user?.id === post.userId || user?.role === 'ROLE_ADMIN';
     const [isEditing, setIsEditing] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+    const [shareCount, setShareCount] = useState(post.shareCount ?? 0);
+    const [sharing, setSharing] = useState(false);
 
     if (isEditing) {
         return (
@@ -292,15 +301,28 @@ function PostCard({ post, user, onUpdate, onDelete }: { post: Post; user: any; o
         >
             <Link href={`/community/post/${post.id}`} className="absolute inset-0 z-0" aria-label={`View post by ${authorName}`} />
 
-            {/* Edge-to-Edge Images (Defensive Rendering) */}
-            {post.imageUrls && post.imageUrls.length > 0 ? (
-                <div className={cn('grid gap-1 bg-secondary/20', post.imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2')}>
-                    {post.imageUrls.slice(0, 4).map((url, i) => (
-                        <BlurImage key={i} src={url} alt={`Post image ${i + 1}`}
-                            className={cn(post.imageUrls.length === 1 ? 'h-80 sm:h-96' : 'h-48 sm:h-60', i === 0 && post.imageUrls.length >= 3 ? 'col-span-2 h-64 sm:h-80' : '')} />
-                    ))}
+            {/* Dynamic Image Collage */}
+            {post.imageUrls && post.imageUrls.length > 0 && (
+                <div className="relative z-10">
+                    <ImageCollage images={post.imageUrls} onImageClick={(i) => setLightboxIndex(i)} />
                 </div>
-            ) : null}
+            )}
+
+            {/* Homestay Tag Mini-Card */}
+            {post.homestayId && post.homestayName && (
+                <div className="mx-5 mt-4 flex items-center gap-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl px-4 py-2.5 relative z-10 pointer-events-auto">
+                    <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center flex-none">
+                        <MapPin className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">Tagged Homestay</p>
+                        <p className="text-sm font-extrabold text-foreground truncate">{post.homestayName}</p>
+                    </div>
+                    <Link href={`/homestays/${post.homestayId}`} className="ml-auto shrink-0 text-[11px] font-extrabold text-green-700 dark:text-green-400 hover:text-green-900 transition-colors uppercase tracking-wider">
+                        Book →
+                    </Link>
+                </div>
+            )}
 
             <div className="p-5 sm:p-6 relative z-10 pointer-events-none">
                 <div className="flex items-start gap-4 mb-4">
@@ -342,12 +364,36 @@ function PostCard({ post, user, onUpdate, onDelete }: { post: Post; user: any; o
                 </div>
                 <p className="text-[15px] text-foreground/90 leading-[1.6] whitespace-pre-line mb-5 font-medium">{post.textContent}</p>
                 <div className="flex items-center gap-6 pt-4 border-t border-border/40 pointer-events-auto">
-                    <LikeButton postId={post.id} initialLiked={post.isLiked ?? false} initialCount={post.likeCount ?? 0} />
+                    <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={post.loveCount} />
                     <Link href={`/community/post/${post.id}`} className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
                         <MessageCircle className="w-5 h-5" /><span>{post.commentCount ?? 0}</span>
                     </Link>
+                    {/* Share Button */}
+                    <button
+                        onClick={async (e) => {
+                            e.preventDefault();
+                            if (sharing) return;
+                            setSharing(true);
+                            try {
+                                await api.post(`/api/posts/${post.id}/share`);
+                                setShareCount(c => c + 1);
+                                toast.success('Shared!');
+                            } catch { toast.error('Share failed'); }
+                            finally { setSharing(false); }
+                        }}
+                        className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-green-600 transition-colors ml-auto relative z-10"
+                        aria-label="Share post"
+                    >
+                        {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                        <span className="text-xs">{shareCount > 0 ? shareCount : ''}</span>
+                    </button>
                 </div>
             </div>
+
+            {/* Lightbox */}
+            {lightboxIndex !== null && post.imageUrls.length > 0 && (
+                <ImageLightbox images={post.imageUrls} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+            )}
         </motion.article>
     );
 }

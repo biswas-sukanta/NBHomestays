@@ -61,4 +61,19 @@ public class PostController {
         postService.deletePost(id, authentication.getName());
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/{id}/like")
+    public ResponseEntity<PostDto.LikeResponse> toggleLike(
+            @PathVariable("id") java.util.UUID id,
+            Authentication authentication) {
+        PostDto.LikeResponse resp = postService.toggleLike(id, authentication.getName());
+        return ResponseEntity.ok(resp);
+    }
+
+    @PostMapping("/{id}/share")
+    public ResponseEntity<PostDto.LikeResponse> sharePost(
+            @PathVariable("id") java.util.UUID id) {
+        PostDto.LikeResponse resp = postService.incrementShare(id);
+        return ResponseEntity.ok(resp);
+    }
 }

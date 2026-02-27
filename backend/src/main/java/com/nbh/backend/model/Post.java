@@ -50,7 +50,11 @@ public class Post {
     @lombok.EqualsAndHashCode.Exclude
     private List<com.nbh.backend.model.Comment> comments;
 
-    // PostLike uses raw UUID fields (not @ManyToOne), so @OneToMany mappedBy is
-    // incompatible.
-    // Likes are managed via LikeService + PostLikeRepository directly.
+    @Column(name = "love_count", nullable = false, columnDefinition = "integer default 0")
+    @Builder.Default
+    private int loveCount = 0;
+
+    @Column(name = "share_count", nullable = false, columnDefinition = "integer default 0")
+    @Builder.Default
+    private int shareCount = 0;
 }
