@@ -303,7 +303,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
 
             <AnimatePresence>
                 {open && (
-                    <div className="fixed inset-0 z-[100] flex justify-center items-end sm:items-center p-4">
+                    <div className="fixed inset-0 z-[100] flex flex-col justify-end md:justify-center md:items-center">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -318,7 +318,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="relative w-full max-w-2xl max-h-[85vh] sm:max-h-[650px] bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                            className="relative w-full md:max-w-2xl h-[90dvh] md:h-auto md:max-h-[650px] bg-white rounded-t-3xl md:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
                         >
                             {/* Header — always pinned */}
                             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
@@ -329,7 +329,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                             </div>
 
                             {/* Comment List */}
-                            <div className="flex-1 overflow-y-auto px-5 py-6 bg-gray-50/50">
+                            <div className="flex-1 overflow-y-auto px-5 py-6 bg-gray-50/50 overscroll-contain">
                                 {loading ? (
                                     <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
                                 ) : comments.length === 0 ? (

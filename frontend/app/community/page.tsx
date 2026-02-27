@@ -33,7 +33,8 @@ function formatRelative(isoDate: string) {
 
 
 // ── Post Composer Inline ───────────────────────────────────────
-function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post; onSuccess: (post: Post) => void; onCancel: () => void; }) {
+interface RepostTarget { id: string; authorName: string; textContent: string; }
+function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { postData?: Post; repostTarget?: RepostTarget; onSuccess: (post: Post) => void; onCancel: () => void; }) {
     const [text, setText] = useState(postData?.textContent || '');
     const [location, setLocation] = useState(postData?.locationName || '');
     const [submitting, setSubmitting] = useState(false);
@@ -115,6 +116,9 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
             if (selectedHomestay) {
                 payload.homestayId = selectedHomestay;
             }
+            if (repostTarget) {
+                payload.repostedFromPostId = repostTarget.id;
+            }
 
             const endpoint = postData ? `/api/posts/${postData.id}` : '/api/posts';
             const res = postData ? await api.put(endpoint, payload) : await api.post(endpoint, payload);
@@ -130,47 +134,71 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
     };
 
     return (
-        <div className="bg-white sm:rounded-2xl rounded-xl shadow-lg p-6 border border-gray-100 z-50 relative">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="font-extrabold text-gray-900 tracking-tight text-xl">{postData ? 'Edit Your Story' : 'Share Your Journey'}</h2>
-                <button onClick={onCancel} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors"><X className="w-5 h-5" /></button>
+        <div className="bg-white sm:rounded-2xl rounded-xl shadow-lg border border-gray-100 z-50 relative flex flex-col max-h-[100dvh] sm:max-h-[85vh]">
+            {/* Header — shrink-0, always visible */}
+            <div className="flex items-center justify-between p-6 pb-0 shrink-0">
+                <h2 className="font-extrabold text-gray-900 tracking-tight text-xl">{postData ? 'Edit Your Story' : repostTarget ? 'Repost Story' : 'Share Your Journey'}</h2>
+                <button onClick={onCancel} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-all active:scale-95 shadow-sm"><X className="w-5 h-5" /></button>
             </div>
 
-            <textarea
-                data-testid="post-textarea"
-                value={text}
-                onChange={e => setText(e.target.value)}
-                placeholder="What's the atmosphere like? Tell the community..."
-                rows={4}
-                className="w-full text-lg font-medium text-gray-900 placeholder-gray-500 resize-none focus:ring-0 focus:outline-none border-none p-0 mb-4 bg-transparent"
-            />
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto p-6 pt-4 overscroll-contain">
 
-            {/* Staging Area */}
-            {(stagedFiles.length > 0 || existingUrls.length > 0) && (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300 mb-4">
-                    {existingUrls.map((url, i) => (
-                        <div key={`ex-${i}`} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm">
-                            <img src={url} alt="existing" className="w-full h-full object-cover" />
-                            <button onClick={() => setExistingUrls(prev => prev.filter((_, idx) => idx !== i))}
-                                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                                <X className="w-6 h-6 text-white" />
-                            </button>
-                        </div>
-                    ))}
-                    {stagedFiles.map((staged, i) => (
-                        <div key={staged.id} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm border-2 border-green-500/20">
-                            <img src={staged.previewUrl} alt="preview" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
-                                <button onClick={() => setCropModal({ isOpen: true, imageIdx: i })} className="p-2 bg-white rounded-full text-gray-900 hover:scale-110 transition-transform"><Scissors className="w-4 h-4" /></button>
-                                <button onClick={() => removeStaged(staged.id)} className="p-2 bg-rose-500 rounded-full text-white hover:scale-110 transition-transform"><X className="w-4 h-4" /></button>
+                {/* Repost Quote Preview */}
+                {repostTarget && (
+                    <div className="border border-green-300 rounded-xl p-4 bg-green-50 mb-4">
+                        <p className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                            <Share2 className="w-3.5 h-3.5" /> Reposting {repostTarget.authorName}&apos;s story
+                        </p>
+                        <p className="text-sm text-gray-700 line-clamp-3">{repostTarget.textContent}</p>
+                    </div>
+                )}
+
+                <textarea
+                    data-testid="post-textarea"
+                    value={text}
+                    onChange={e => setText(e.target.value)}
+                    placeholder={repostTarget ? 'Add your thoughts...' : "What's the atmosphere like? Tell the community..."}
+                    rows={repostTarget ? 3 : 4}
+                    className="w-full text-lg font-medium text-gray-900 placeholder-gray-500 resize-none focus:ring-0 focus:outline-none border-none p-0 mb-4 bg-transparent"
+                />
+
+                {/* Staging Area */}
+                {(stagedFiles.length > 0 || existingUrls.length > 0) && (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300 mb-4">
+                        {existingUrls.map((url, i) => (
+                            <div key={`ex-${i}`} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm">
+                                <img src={url} alt="existing" className="w-full h-full object-cover" />
+                                <button onClick={() => setExistingUrls(prev => prev.filter((_, idx) => idx !== i))}
+                                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                    <X className="w-6 h-6 text-white" />
+                                </button>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                        {stagedFiles.map((staged, i) => (
+                            <div key={staged.id} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm border-2 border-green-500/20">
+                                <img src={staged.previewUrl} alt="preview" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
+                                    <button onClick={() => setCropModal({ isOpen: true, imageIdx: i })} className="p-2 bg-white rounded-full text-gray-900 hover:scale-110 transition-transform"><Scissors className="w-4 h-4" /></button>
+                                    <button onClick={() => removeStaged(staged.id)} className="p-2 bg-rose-500 rounded-full text-white hover:scale-110 transition-transform"><X className="w-4 h-4" /></button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-100">
-                {/* Left Side: Buttons and Inputs */}
+                {cropModal.isOpen && cropModal.imageIdx !== null && (
+                    <ImageCropModal
+                        isOpen={cropModal.isOpen}
+                        onClose={() => setCropModal({ isOpen: false, imageIdx: null })}
+                        imageSrc={stagedFiles[cropModal.imageIdx].previewUrl}
+                        onCropComplete={handleCropComplete}
+                    />
+                )}
+            </div>{/* end scrollable content */}
+
+            {/* Footer — shrink-0, always visible above keyboard */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 pt-4 border-t border-gray-100 shrink-0 bg-white">
                 <div className="flex flex-wrap items-center gap-2">
                     <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
                     <button data-testid="add-photo-btn" onClick={() => fileRef.current?.click()} disabled={submitting}
@@ -199,22 +227,12 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
                     </div>
                 </div>
 
-                {/* Right Side: Submit */}
                 <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0)}
-                    className="flex shrink-0 items-center justify-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full transition-transform active:scale-95 disabled:opacity-50 shadow-sm ml-auto">
+                    className="flex shrink-0 items-center justify-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full transition-transform active:scale-95 disabled:opacity-50 shadow-sm ml-auto">
                     {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {submitting ? 'Sharing...' : (postData ? 'Update' : 'Post')}
+                    {submitting ? 'Sharing...' : (postData ? 'Update' : repostTarget ? 'Repost' : 'Post')}
                 </button>
             </div>
-
-            {cropModal.isOpen && cropModal.imageIdx !== null && (
-                <ImageCropModal
-                    isOpen={cropModal.isOpen}
-                    onClose={() => setCropModal({ isOpen: false, imageIdx: null })}
-                    imageSrc={stagedFiles[cropModal.imageIdx].previewUrl}
-                    onCropComplete={handleCropComplete}
-                />
-            )}
         </div>
     );
 }
@@ -380,9 +398,9 @@ export default function CommunityPage() {
             {/* Composer Modal Background Overlay */}
             <AnimatePresence>
                 {composerOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setComposerOpen(false)} />
-                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative z-10 w-full max-w-lg">
+                    <div className="fixed inset-0 z-50 flex flex-col md:items-center md:justify-center bg-white md:bg-black/40 md:backdrop-blur-sm md:p-4">
+                        <div className="hidden md:block absolute inset-0" onClick={() => setComposerOpen(false)} />
+                        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="relative z-10 w-full md:max-w-lg h-[100dvh] md:h-auto md:max-h-[85vh] flex flex-col">
                             <PostComposerInline onSuccess={handleNewPost} onCancel={() => setComposerOpen(false)} />
                         </motion.div>
                     </div>

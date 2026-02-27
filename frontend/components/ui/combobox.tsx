@@ -34,12 +34,18 @@ export function CustomCombobox({ options, value, onChange, placeholder = "Tag Ho
             ? options
             : options.filter((opt) => opt.name.toLowerCase().includes(query.toLowerCase()));
 
-    // Recalculate position whenever the combobox opens
+    // Recalculate position whenever the combobox opens — flips upward if not enough room
     const updatePosition = () => {
         if (!triggerRef.current) return;
         const rect = triggerRef.current.getBoundingClientRect();
+        const menuHeight = 260; // max-h-60 = 15rem = 240px + buffer
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const flipUp = spaceBelow < menuHeight && rect.top > spaceBelow;
+
         setMenuPos({
-            top: rect.bottom + window.scrollY + 4,
+            top: flipUp
+                ? rect.top + window.scrollY - menuHeight - 4
+                : rect.bottom + window.scrollY + 4,
             left: rect.left + window.scrollX,
             width: Math.max(rect.width, 280),
         });

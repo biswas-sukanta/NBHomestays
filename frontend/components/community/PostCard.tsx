@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle, MapPin, Pencil, MoreHorizontal, Trash2, Share2, Loader2, Repeat2, X, Send } from 'lucide-react';
+import { Heart, MessageCircle, MapPin, Pencil, MoreHorizontal, Trash2, Share2, Loader2, Repeat2, X, Send, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -359,23 +359,54 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
 }
 
 // ── InternalMiniRepostComposer ──────────────────────────────────────────────
-// Lightweight repost modal embedded directly into PostCard for self-sufficiency.
+// Full-featured repost modal with image upload, location, and homestay tagging.
+import { CustomCombobox } from '@/components/ui/combobox';
+
+interface HomestayOpt { id: string; name: string; }
 
 function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: QuotePost; onSuccess: () => void; onCancel: () => void }) {
     const [text, setText] = useState('');
+    const [location, setLocation] = useState('North Bengal');
     const [submitting, setSubmitting] = useState(false);
+    const [stagedFiles, setStagedFiles] = useState<{ id: string; file: File; previewUrl: string }[]>([]);
+    const [homestays, setHomestays] = useState<HomestayOpt[]>([]);
+    const [selectedHomestay, setSelectedHomestay] = useState('');
+    const fileRef = React.useRef<HTMLInputElement>(null);
+
+    React.useEffect(() => {
+        api.get('/api/homestays')
+            .then(res => setHomestays(res.data.content || res.data || []))
+            .catch(() => { });
+    }, []);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        const newStaged = files.map(f => ({ id: Math.random().toString(36).slice(2), file: f, previewUrl: URL.createObjectURL(f) }));
+        setStagedFiles(prev => [...prev, ...newStaged].slice(0, 6));
+        if (fileRef.current) fileRef.current.value = '';
+    };
 
     const handleSubmit = async () => {
         if (submitting) return;
         setSubmitting(true);
         try {
-            await api.post('/api/posts', {
+            let imageUrls: string[] = [];
+            if (stagedFiles.length > 0) {
+                const form = new FormData();
+                stagedFiles.forEach(f => form.append('files', f.file));
+                const up = await api.post('/api/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+                imageUrls = up.data;
+            }
+            const payload: any = {
                 textContent: text,
-                locationName: 'North Bengal',
-                imageUrls: [],
+                locationName: location || 'North Bengal',
+                imageUrls,
                 repostedFromPostId: quote.id,
-            });
+            };
+            if (selectedHomestay) payload.homestayId = selectedHomestay;
+            await api.post('/api/posts', payload);
             toast.success('Reposted!');
+            stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
             onSuccess();
         } catch {
             toast.error('Repost failed');
@@ -389,21 +420,24 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
+            className="fixed inset-0 z-[9999] flex flex-col md:items-center md:justify-center bg-white md:bg-black/40 md:backdrop-blur-sm"
         >
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
-            <div className="relative z-10 w-full max-w-lg bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-2xl">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="hidden md:block absolute inset-0" onClick={onCancel} />
+            <div className="relative z-10 w-full md:max-w-lg flex flex-col h-[100dvh] md:h-auto md:max-h-[85vh] bg-white md:rounded-2xl md:border md:border-gray-200 overflow-hidden md:shadow-2xl">
+                {/* Header — shrink-0 */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
                     <p className="font-extrabold text-gray-900 flex items-center gap-2"><Repeat2 className="w-4 h-4 text-green-600" /> Repost Story</p>
-                    <button onClick={onCancel} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors"><X className="w-4 h-4" /></button>
+                    <button onClick={onCancel} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-all active:scale-95 shadow-sm"><X className="w-5 h-5" /></button>
                 </div>
-                <div className="px-6 py-5 space-y-4">
+
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4 overscroll-contain">
                     {/* Quoted Preview */}
                     <div className="border border-green-300 rounded-xl p-4 bg-green-50">
                         <p className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-1 flex items-center gap-1">
                             <Repeat2 className="w-3.5 h-3.5" /> Reposting {quote.authorName}&apos;s story
                         </p>
-                        <p className="text-sm text-gray-700 line-clamp-2">{quote.textContent}</p>
+                        <p className="text-sm text-gray-700 line-clamp-3">{quote.textContent}</p>
                     </div>
                     <textarea
                         value={text}
@@ -412,9 +446,38 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                         rows={3}
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-400 transition-all"
                     />
+                    {/* Image staging */}
+                    {stagedFiles.length > 0 && (
+                        <div className="grid grid-cols-3 gap-2">
+                            {stagedFiles.map((f, i) => (
+                                <div key={f.id} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-200">
+                                    <img src={f.previewUrl} alt="preview" className="w-full h-full object-cover" />
+                                    <button onClick={() => { URL.revokeObjectURL(f.previewUrl); setStagedFiles(p => p.filter((_, j) => j !== i)); }}
+                                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                        <X className="w-5 h-5 text-white" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <div className="flex items-center justify-end px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-                    <button onClick={handleSubmit} disabled={submitting} className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-all disabled:opacity-50 active:scale-95">
+
+                {/* Footer — shrink-0, always above keyboard */}
+                <div className="flex flex-col gap-3 px-6 py-4 border-t border-gray-100 bg-white shrink-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                        <button onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold hover:bg-blue-100 transition-colors">
+                            <ImageIcon className="w-4 h-4" /> Photo
+                        </button>
+                        <div className="relative">
+                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-500" />
+                            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location..." className="bg-rose-50 text-rose-700 placeholder-rose-400 border-none rounded-full pl-8 pr-3 py-2 text-sm font-semibold focus:ring-0 focus:outline-none w-[120px] transition-all" />
+                        </div>
+                        <div className="relative min-w-[140px] flex-1">
+                            <CustomCombobox options={homestays} value={selectedHomestay} onChange={setSelectedHomestay} placeholder="Tag Homestay" />
+                        </div>
+                    </div>
+                    <button onClick={handleSubmit} disabled={submitting} className="flex items-center justify-center gap-2 w-full px-6 py-2.5 rounded-full bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-all disabled:opacity-50 active:scale-95 shadow-sm">
                         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         {submitting ? 'Posting...' : 'Repost'}
                     </button>
@@ -423,3 +486,4 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
         </motion.div>
     );
 }
+
