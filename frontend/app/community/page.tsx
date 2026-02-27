@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Image as ImageIcon, Send, X, Pencil, Search, Loader2, Scissors, Share2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -134,8 +135,14 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
         }
     };
 
-    return (
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
+
+    if (!mounted) return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-[9999] bg-white w-full h-[100dvh] flex flex-col md:relative md:w-[600px] md:h-auto md:max-h-[85vh] md:rounded-2xl md:mx-auto md:mt-20 shadow-2xl overflow-hidden">
+            <div className="hidden md:block absolute inset-0 bg-black/40 backdrop-blur-sm -z-10" onClick={onCancel} />
             {/* Tier 1: Safe-Area Header (flex-none) */}
             <div className="flex-none pt-[max(1rem,env(safe-area-inset-top))] pb-4 px-4 flex justify-between items-center bg-white border-b border-gray-100">
                 <h2 className="text-lg font-bold text-gray-800">
@@ -240,7 +247,8 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                     {submitting ? 'Sharing...' : (postData ? 'Update' : repostTarget ? 'Repost' : 'Post')}
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -407,12 +415,7 @@ export default function CommunityPage() {
             {/* Composer Modal Background Overlay */}
             <AnimatePresence>
                 {composerOpen && (
-                    <div className="fixed inset-0 z-50 flex flex-col md:items-center md:justify-center bg-white md:bg-black/40 md:backdrop-blur-sm md:p-4">
-                        <div className="hidden md:block absolute inset-0" onClick={() => setComposerOpen(false)} />
-                        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="relative z-10 w-full md:max-w-lg h-[100dvh] md:h-auto md:max-h-[85vh] flex flex-col">
-                            <PostComposerInline onSuccess={handleNewPost} onCancel={() => setComposerOpen(false)} />
-                        </motion.div>
-                    </div>
+                    <PostComposerInline onSuccess={handleNewPost} onCancel={() => setComposerOpen(false)} />
                 )}
             </AnimatePresence>
 

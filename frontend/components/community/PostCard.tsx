@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, MapPin, Pencil, MoreHorizontal, Trash2, Share2, Loader2, Repeat2, X, Send, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -377,8 +378,12 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
             setSubmitting(false);
         }
     };
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -449,7 +454,8 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                     </button>
                 </div>
             </div>
-        </motion.div>
+        </motion.div>,
+        document.body
     );
 }
 
