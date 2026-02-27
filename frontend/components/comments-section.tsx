@@ -332,18 +332,18 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 30 }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="relative z-10 w-full md:w-[600px] h-[90dvh] md:h-auto md:max-h-[85vh] bg-white rounded-t-3xl md:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                            className="relative z-10 w-full max-w-[700px] h-[90dvh] max-h-[90vh] md:max-h-[85vh] bg-white rounded-t-3xl md:rounded-xl shadow-2xl flex flex-col overflow-hidden"
                         >
-                            {/* Tier 1: Header — shrink-0, always pinned */}
-                            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+                            {/* Header — flex-none: NEVER shrinks or grows under zoom */}
+                            <div className="flex-none flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-white">
                                 <h2 className="font-extrabold text-lg text-gray-900">Comments</h2>
-                                <button onClick={handleClose} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all active:scale-95 shadow-sm" aria-label="Close comments">
+                                <button onClick={handleClose} className="p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-all" aria-label="Close comments">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
 
-                            {/* Tier 2: Comment List — flex-1 scrollable, min-h-0 for zoom safety */}
-                            <div className="flex-1 overflow-y-auto px-5 py-6 bg-gray-50/50 overscroll-contain min-h-0">
+                            {/* Body — flex-1 min-h-0: only tier that flexes */}
+                            <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50/50 overscroll-contain min-h-0 space-y-4">
                                 {loading ? (
                                     <div className="flex items-center justify-center h-full min-h-[200px]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
                                 ) : comments.length === 0 ? (
@@ -370,8 +370,8 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                 )}
                             </div>
 
-                            {/* Tier 3: Fixed Bottom Input Area — shrink-0, always pinned */}
-                            <div className="p-4 border-t border-gray-100 bg-white shrink-0">
+                            {/* Footer — flex-none: NEVER shrinks or grows under zoom */}
+                            <div className="flex-none p-3 border-t border-gray-200 bg-white">
                                 {isAuthenticated ? (
                                     <div className="flex flex-col gap-3">
                                         {/* Staging Area */}
