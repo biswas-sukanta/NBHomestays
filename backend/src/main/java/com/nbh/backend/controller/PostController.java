@@ -79,7 +79,7 @@ public class PostController {
         if (currentUser == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to like this post");
         }
-        PostDto.LikeResponse resp = postService.toggleLike(id, currentUser);
+        PostDto.LikeResponse resp = postService.toggleLike(id, currentUser.getEmail());
         return ResponseEntity.ok(resp);
     }
 
