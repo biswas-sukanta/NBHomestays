@@ -28,7 +28,7 @@ export interface CommunityPost {
     commentCount?: number;
     homestayId?: string;
     homestayName?: string;
-    repostedPost?: CommunityPost;
+    originalPost?: CommunityPost;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -60,6 +60,8 @@ interface PostCardProps {
     isDetailView?: boolean;
     /** Callback to open composer in "Repost" mode */
     onRepost?: (quote: QuotePost) => void;
+    /** Is this post being rendered as a quoted repost inside another post? */
+    isQuoted?: boolean;
 }
 
 // ── LikeButton ────────────────────────────────────────────────────────────────
@@ -71,18 +73,14 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode }: { postId: 
 
     const toggle = async () => {
         if (!isAuthenticated) { toast.error('Sign in to love this story'); return; }
-        const prev = { liked, count };
-        setLiked(l => !l);
-        setCount(c => liked ? Math.max(0, c - 1) : c + 1);
         setPopping(true);
         setTimeout(() => setPopping(false), 420);
         try {
             const res = await api.post(`/api/posts/${postId}/like`);
             setCount(res.data.loveCount);
             setLiked(res.data.isLiked);
-        } catch {
-            setLiked(prev.liked);
-            setCount(prev.count);
+        } catch (error) {
+            console.error("Failed to action post", error);
         }
     };
 
@@ -103,7 +101,7 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode }: { postId: 
 }
 
 // ── PostCard ──────────────────────────────────────────────────────────────────
-export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView = false, onRepost }: PostCardProps) {
+export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView = false, onRepost, isQuoted = false }: PostCardProps) {
     const authorName = post.userName || 'Traveller';
     const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     const isOwner = currentUser?.id === post.userId || currentUser?.role === 'ROLE_ADMIN';
@@ -149,15 +147,16 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
     };
 
     const articleClassName = cn(
-        'bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-4 relative transition-all duration-300',
-        !isDetailView && 'cursor-pointer'
+        'bg-white border rounded-xl overflow-hidden transition-all duration-300',
+        isQuoted ? "border-gray-200 mt-3 hover:bg-gray-50/50" : "border-gray-200 mb-4 shadow-sm hover:shadow-md",
+        isDetailView && !isQuoted && "shadow-none border-t border-x-0 border-b-0 rounded-none mb-0"
     );
 
     const content = (
         <motion.article
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            {...(!isDetailView ? { whileHover: { y: -3, scale: 1.005 }, transition: { type: 'spring', stiffness: 400, damping: 30 } } : {})}
+            {...(!isDetailView && !isQuoted ? { whileHover: { y: -3, scale: 1.005 }, transition: { type: 'spring', stiffness: 400, damping: 30 } } : {})}
             className={articleClassName}
         >
             {/* Card-level link (feed only) */}
@@ -172,7 +171,7 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                 </div>
             )}
 
-            <div className="p-4 relative z-10 pointer-events-none">
+            <div className={cn("p-4 relative z-10 pointer-events-none", isQuoted && "p-3")}>
                 {/* Header Sequence */}
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -219,35 +218,38 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                     )}
                 </div>
 
-                <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line mb-3 font-normal">{post.textContent}</p>
+                <p className={cn("text-sm text-gray-900 leading-relaxed whitespace-pre-line mb-3 font-normal", isQuoted && "text-xs")}>{post.textContent}</p>
 
                 {/* Recursive Nested Repost */}
-                {post.repostedPost && (
+                {post.originalPost && (
                     <div className="mb-3 mt-2 rounded-lg border border-gray-300 bg-gray-50 pointer-events-auto overflow-hidden">
                         <PostCard
-                            post={post.repostedPost}
+                            post={post.originalPost}
                             isDetailView={true}
+                            isQuoted={true}
                             currentUser={currentUser}
                         />
                     </div>
                 )}
             </div>
 
-            {/* Actions Bar */}
-            <div className="flex items-center justify-between px-2 py-1 border-t border-gray-100 pointer-events-auto bg-white relative z-10">
-                <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} />
-                <Link href={`/community/post/${post.id}`} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold">
-                    <MessageCircle className="w-5 h-5" /><span>{Math.max(0, Number(post.commentCount) || 0)}</span>
-                </Link>
-                {/* Repost */}
-                <button onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Repost">
-                    <Repeat2 className="w-5 h-5" />
-                </button>
-                {/* Share */}
-                <button onClick={handleShare} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Share post">
-                    <Share2 className="w-5 h-5" /> <span>{Math.max(0, Number(shareCount) || 0)}</span>
-                </button>
-            </div>
+            {/* Actions Bar (Hidden if quoting) */}
+            {!isQuoted && (
+                <div className="flex items-center justify-between px-2 py-1 border-t border-gray-100 pointer-events-auto bg-white relative z-10">
+                    <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} />
+                    <Link href={`/community/post/${post.id}`} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold">
+                        <MessageCircle className="w-5 h-5" /><span>{Math.max(0, Number(post.commentCount) || 0)}</span>
+                    </Link>
+                    {/* Repost */}
+                    <button onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Repost">
+                        <Repeat2 className="w-5 h-5" />
+                    </button>
+                    {/* Share */}
+                    <button onClick={handleShare} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Share post">
+                        <Share2 className="w-5 h-5" /> <span>{Math.max(0, Number(shareCount) || 0)}</span>
+                    </button>
+                </div>
+            )}
 
             {/* Lightbox */}
             {lightboxIndex !== null && post.imageUrls && post.imageUrls.length > 0 && (

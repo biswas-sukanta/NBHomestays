@@ -20,7 +20,7 @@ public class PostDto {
         private String textContent;
         private List<String> imageUrls;
         private UUID homestayId;
-        private UUID repostedFromPostId;
+        private UUID originalPostId;
     }
 
     @Data
@@ -39,7 +39,7 @@ public class PostDto {
         private int loveCount;
         private int shareCount;
         private boolean isLikedByCurrentUser;
-        private Response repostedPost;
+        private Response originalPost;
         private LocalDateTime createdAt;
     }
 

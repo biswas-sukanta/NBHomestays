@@ -82,4 +82,16 @@ public class PostController {
         PostDto.LikeResponse resp = postService.incrementShare(id);
         return ResponseEntity.ok(resp);
     }
+
+    @PostMapping("/{id}/repost")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<PostDto.Response> repost(
+            @PathVariable("id") java.util.UUID id,
+            @RequestBody(required = false) PostDto.Request request,
+            Authentication authentication) {
+        if (request == null) {
+            request = new PostDto.Request();
+        }
+        return ResponseEntity.ok(postService.repost(id, request, authentication.getName()));
+    }
 }

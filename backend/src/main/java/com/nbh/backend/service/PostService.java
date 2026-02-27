@@ -40,9 +40,9 @@ public class PostService {
             homestay = homestayRepository.findById(request.getHomestayId()).orElse(null);
         }
 
-        Post repostedPost = null;
-        if (request.getRepostedFromPostId() != null) {
-            repostedPost = postRepository.findById(request.getRepostedFromPostId()).orElse(null);
+        Post originalPost = null;
+        if (request.getOriginalPostId() != null) {
+            originalPost = postRepository.findById(request.getOriginalPostId()).orElse(null);
         }
 
         Post post = Post.builder()
@@ -51,7 +51,7 @@ public class PostService {
                 .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new java.util.ArrayList<>())
                 .user(user)
                 .homestay(homestay)
-                .repostedPost(repostedPost)
+                .originalPost(originalPost)
                 .createdAt(LocalDateTime.now()) // Kept this from original, as snippet removed it but instruction didn't
                                                 // say to.
                 .build();
@@ -172,6 +172,35 @@ public class PostService {
         return PostDto.LikeResponse.builder().loveCount(post.getLoveCount()).isLiked(false).build();
     }
 
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "postsList", allEntries = true),
+            @CacheEvict(value = "postDetail", key = "#originalPostId")
+    })
+    public PostDto.Response repost(java.util.UUID originalPostId, PostDto.Request request, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Post original = postRepository.findById(originalPostId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Original post not found"));
+
+        original.setShareCount(original.getShareCount() + 1);
+        postRepository.save(original);
+
+        Post post = Post.builder()
+                .locationName(
+                        request.getLocationName() != null ? request.getLocationName() : original.getLocationName())
+                .textContent(request.getTextContent() != null ? request.getTextContent() : "")
+                .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new java.util.ArrayList<>())
+                .user(user)
+                .originalPost(original)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Post saved = postRepository.save(post);
+        return mapToResponse(saved);
+    }
+
     // ── Mapping Helper ────────────────────────────────────────
     private PostDto.Response mapToResponse(Post post) {
         return mapToResponse(post, null);
@@ -190,9 +219,9 @@ public class PostService {
             }
         }
 
-        PostDto.Response repostedDto = null;
-        if (includeRepost && post.getRepostedPost() != null) {
-            repostedDto = mapToResponse(post.getRepostedPost(), userEmail, false); // prevent infinite recursion
+        PostDto.Response originalPostDto = null;
+        if (includeRepost && post.getOriginalPost() != null) {
+            originalPostDto = mapToResponse(post.getOriginalPost(), userEmail, false); // prevent infinite recursion
         }
 
         return PostDto.Response.builder()
@@ -207,7 +236,7 @@ public class PostService {
                 .loveCount(post.getLoveCount())
                 .shareCount(post.getShareCount())
                 .isLikedByCurrentUser(isLiked)
-                .repostedPost(repostedDto)
+                .originalPost(originalPostDto)
                 .createdAt(post.getCreatedAt())
                 .build();
     }

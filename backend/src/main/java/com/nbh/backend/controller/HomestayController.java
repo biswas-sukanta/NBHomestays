@@ -29,6 +29,11 @@ public class HomestayController {
         return homestayService.createHomestay(request, userEmail);
     }
 
+    @GetMapping
+    public org.springframework.http.ResponseEntity<List<HomestayDto.Response>> getHomestaysForDropdown() {
+        return org.springframework.http.ResponseEntity.ok(homestayService.getAllHomestays());
+    }
+
     @GetMapping("/search")
     public Page<HomestayDto.Response> search(
             @RequestParam(value = "q", required = false) String q,

@@ -129,89 +129,86 @@ function PostComposerInline({ postData, onSuccess, onCancel }: { postData?: Post
     };
 
     return (
-        <div className="bg-card border border-border sm:rounded-3xl rounded-2xl overflow-hidden shadow-2xl z-50">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-border/50 bg-muted/20">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center shadow-lg shadow-green-600/20">
-                        <ImageIcon className="w-4 h-4 text-white" />
-                    </div>
-                    <h2 className="font-extrabold text-foreground tracking-tight">{postData ? 'Edit Your Story' : 'Share Your Journey'}</h2>
-                </div>
-                <button onClick={onCancel} className="w-9 h-9 rounded-xl bg-secondary/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"><X className="w-5 h-5" /></button>
+        <div className="bg-white sm:rounded-2xl rounded-xl overflow-hidden shadow-lg p-6 border border-gray-100 z-50 relative">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="font-extrabold text-gray-900 tracking-tight text-xl">{postData ? 'Edit Your Story' : 'Share Your Journey'}</h2>
+                <button onClick={onCancel} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors"><X className="w-5 h-5" /></button>
             </div>
-            <div className="px-6 py-6 space-y-6">
-                <textarea
-                    value={text}
-                    onChange={e => setText(e.target.value)}
-                    placeholder="What's the atmosphere like? Tell the community..."
-                    rows={4}
-                    className="w-full bg-secondary/30 border border-border rounded-2xl px-5 py-4 text-[15px] font-medium text-foreground placeholder:text-muted-foreground/60 resize-none focus:outline-none focus:ring-4 focus:ring-green-600/10 focus:border-green-600/30 transition-all shadow-inner"
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <textarea
+                value={text}
+                onChange={e => setText(e.target.value)}
+                placeholder="What's the atmosphere like? Tell the community..."
+                rows={4}
+                className="w-full text-lg font-medium text-gray-900 placeholder-gray-500 resize-none focus:ring-0 focus:outline-none border-none p-0 mb-4 bg-transparent"
+            />
+
+            {/* Staging Area */}
+            {(stagedFiles.length > 0 || existingUrls.length > 0) && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300 mb-4">
+                    {existingUrls.map((url, i) => (
+                        <div key={`ex-${i}`} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm">
+                            <img src={url} alt="existing" className="w-full h-full object-cover" />
+                            <button onClick={() => setExistingUrls(prev => prev.filter((_, idx) => idx !== i))}
+                                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                <X className="w-6 h-6 text-white" />
+                            </button>
+                        </div>
+                    ))}
+                    {stagedFiles.map((staged, i) => (
+                        <div key={staged.id} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm border-2 border-green-500/20">
+                            <img src={staged.previewUrl} alt="preview" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
+                                <button onClick={() => setCropModal({ isOpen: true, imageIdx: i })} className="p-2 bg-white rounded-full text-gray-900 hover:scale-110 transition-transform"><Scissors className="w-4 h-4" /></button>
+                                <button onClick={() => removeStaged(staged.id)} className="p-2 bg-rose-500 rounded-full text-white hover:scale-110 transition-transform"><X className="w-4 h-4" /></button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                {/* Left Side: Buttons and Inputs */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                    <button onClick={() => fileRef.current?.click()} disabled={submitting}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold hover:bg-blue-100 transition-colors" title="Add Photos">
+                        <ImageIcon className="w-4 h-4" />
+                        <span className="hidden sm:inline">Photo</span>
+                    </button>
+
                     <div className="relative group">
-                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-green-600 transition-colors" />
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500" />
                         <input
                             value={location}
                             onChange={e => setLocation(e.target.value)}
-                            placeholder="Location (e.g. Darjeeling, Sittong...)"
-                            className="w-full bg-secondary/30 border border-border rounded-2xl pl-11 pr-5 py-3.5 text-[15px] font-bold text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-4 focus:ring-green-600/10 focus:border-green-600/30 transition-all"
+                            placeholder="Location..."
+                            className="bg-rose-50 text-rose-700 placeholder-rose-400 border-none rounded-full pl-9 pr-3 py-2 text-sm font-semibold focus:ring-0 focus:outline-none w-[130px] transition-all"
                         />
                     </div>
-                    <div className="relative group">
+
+                    <div className="relative group min-w-[130px]">
                         <select
                             value={selectedHomestay}
                             onChange={e => setSelectedHomestay(e.target.value)}
                             className={cn(
-                                "w-full bg-secondary/30 border border-border rounded-2xl px-5 py-3.5 text-[15px] font-bold appearance-none focus:outline-none focus:ring-4 focus:ring-green-600/10 focus:border-green-600/30 transition-all",
-                                selectedHomestay ? "text-foreground" : "text-muted-foreground/60"
+                                "w-full bg-emerald-50 border-none rounded-full px-3 py-2 text-sm font-semibold appearance-none focus:outline-none focus:ring-0 transition-all text-emerald-700",
+                                selectedHomestay ? "text-emerald-700" : "text-emerald-600/70"
                             )}
                         >
-                            <option value="">Tag a Homestay (Optional)</option>
+                            <option value="">Tag Homestay</option>
                             {homestays.map(h => (
-                                <option key={h.id} value={h.id}>{h.name}</option>
+                                <option key={h.id} value={h.id}>{h.name.length > 15 ? h.name.slice(0, 15) + '...' : h.name}</option>
                             ))}
                         </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground group-focus-within:text-green-600 transition-colors">
-                            ▼
-                        </div>
                     </div>
                 </div>
 
-                {/* Staging Area */}
-                {(stagedFiles.length > 0 || existingUrls.length > 0) && (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 bg-muted/10 p-4 rounded-3xl border border-dashed border-border">
-                        {existingUrls.map((url, i) => (
-                            <div key={`ex-${i}`} className="relative aspect-square rounded-xl overflow-hidden group shadow-md">
-                                <img src={url} alt="existing" className="w-full h-full object-cover" />
-                                <button onClick={() => setExistingUrls(prev => prev.filter((_, idx) => idx !== i))}
-                                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all backdrop-blur-[2px]">
-                                    <X className="w-6 h-6 text-white" />
-                                </button>
-                            </div>
-                        ))}
-                        {stagedFiles.map((staged, i) => (
-                            <div key={staged.id} className="relative aspect-square rounded-xl overflow-hidden group shadow-md border-2 border-green-600/20">
-                                <img src={staged.previewUrl} alt="preview" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all backdrop-blur-[2px]">
-                                    <button onClick={() => setCropModal({ isOpen: true, imageIdx: i })} className="p-2 bg-white rounded-full text-gray-900 hover:scale-110 transition-transform"><Scissors className="w-4 h-4" /></button>
-                                    <button onClick={() => removeStaged(staged.id)} className="p-2 bg-rose-500 rounded-full text-white hover:scale-110 transition-transform"><X className="w-4 h-4" /></button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-            <div className="flex items-center justify-between px-6 py-5 border-t border-border/50 bg-muted/10">
-                <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-                <button onClick={() => fileRef.current?.click()} disabled={submitting}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/80 transition-all disabled:opacity-50 shadow-sm">
-                    <ImageIcon className="w-4 h-4" />
-                    Add Photos
-                </button>
+                {/* Right Side: Submit */}
                 <button onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0)}
-                    className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-green-600 text-white text-[15px] font-extrabold tracking-tight hover:bg-green-700 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 shadow-lg shadow-green-600/20">
-                    {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                    {submitting ? 'Sharing...' : (postData ? 'Update Story' : 'Share Story')}
+                    className="flex shrink-0 items-center justify-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full transition-transform active:scale-95 disabled:opacity-50 shadow-sm ml-auto">
+                    {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
+                    {submitting ? 'Sharing...' : (postData ? 'Update' : 'Post')}
                 </button>
             </div>
 
