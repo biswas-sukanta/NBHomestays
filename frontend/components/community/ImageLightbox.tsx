@@ -19,6 +19,12 @@ export function ImageLightbox({ images, initialIndex, onClose, footer }: ImageLi
     const goNext = () => setCurrent(i => Math.min(i + 1, images.length - 1));
     const goPrev = () => setCurrent(i => Math.max(i - 1, 0));
 
+    // ── Scroll Lock ──────────────────────────────────────────────
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = 'unset'; };
+    }, []);
+
     // Keyboard navigation
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
@@ -55,19 +61,28 @@ export function ImageLightbox({ images, initialIndex, onClose, footer }: ImageLi
 
     return (
         <div
-            className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-between pt-4 overflow-hidden"
+            className="fixed inset-0 z-[9999] flex flex-col bg-black/95 backdrop-blur-sm w-screen h-screen overflow-hidden"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            {/* Close button */}
-            <div className="w-full flex justify-end px-4 sm:px-8 pb-2 shrink-0">
-                <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all">
+            {/* Tier 1: Header — flex-none, close button in flow */}
+            <div className="flex-none flex items-center justify-between px-4 py-3 w-full">
+                {/* Counter on the left */}
+                <div className="text-white/70 text-sm font-semibold">
+                    {current + 1} / {images.length}
+                </div>
+                {/* Close button on the right — NOT absolutely positioned */}
+                <button
+                    onClick={onClose}
+                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
+                    aria-label="Close lightbox"
+                >
                     <X className="w-5 h-5" />
                 </button>
             </div>
 
-            {/* Main image */}
+            {/* Tier 2: Image Container — flex-1 min-h-0, zoom-proof */}
             <div
-                className="relative flex-1 w-full flex items-center justify-center px-12 sm:px-20 overflow-hidden"
+                className="flex-1 min-h-0 w-full flex items-center justify-center p-2 md:p-8 relative"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
             >
@@ -75,10 +90,10 @@ export function ImageLightbox({ images, initialIndex, onClose, footer }: ImageLi
                     key={current}
                     src={optimized(images[current])}
                     alt={`Image ${current + 1}`}
-                    className="max-h-full max-w-full object-contain rounded-xl shadow-2xl animate-in fade-in duration-200"
+                    className="max-w-full max-h-full object-contain drop-shadow-2xl select-none rounded-lg animate-in fade-in duration-200"
                 />
 
-                {/* Left arrow */}
+                {/* Left arrow — absolutely positioned inside Tier 2 */}
                 {current > 0 && (
                     <button
                         onClick={goPrev}
@@ -89,7 +104,7 @@ export function ImageLightbox({ images, initialIndex, onClose, footer }: ImageLi
                     </button>
                 )}
 
-                {/* Right arrow */}
+                {/* Right arrow — absolutely positioned inside Tier 2 */}
                 {current < images.length - 1 && (
                     <button
                         onClick={goNext}
@@ -99,37 +114,35 @@ export function ImageLightbox({ images, initialIndex, onClose, footer }: ImageLi
                         <ChevronRight className="w-6 h-6" />
                     </button>
                 )}
-
-                {/* Counter */}
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm">
-                    {current + 1} / {images.length}
-                </div>
             </div>
 
-            {/* Thumbnail strip */}
-            {images.length > 1 && (
-                <div ref={thumbnailRef} className="flex gap-2 overflow-x-auto py-3 px-4 shrink-0 hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
-                    {images.map((url, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setCurrent(i)}
-                            className={cn(
-                                'w-16 h-12 sm:w-20 sm:h-14 flex-none rounded-lg overflow-hidden transition-all duration-200',
-                                i === current ? 'ring-2 ring-white scale-110 shadow-lg' : 'opacity-50 hover:opacity-80'
-                            )}
-                        >
-                            <img src={thumb(url)} alt="" className="w-full h-full object-cover" />
-                        </button>
-                    ))}
-                </div>
-            )}
+            {/* Tier 3: Footer — flex-none, thumbnails + injected action bar */}
+            <div className="flex-none w-full">
+                {/* Thumbnail strip */}
+                {images.length > 1 && (
+                    <div ref={thumbnailRef} className="flex gap-2 overflow-x-auto py-2 px-4" style={{ scrollbarWidth: 'none' }}>
+                        {images.map((url, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setCurrent(i)}
+                                className={cn(
+                                    'w-16 h-12 sm:w-20 sm:h-14 flex-none rounded-lg overflow-hidden transition-all duration-200',
+                                    i === current ? 'ring-2 ring-white scale-110 shadow-lg' : 'opacity-50 hover:opacity-80'
+                                )}
+                            >
+                                <img src={thumb(url)} alt="" className="w-full h-full object-cover" />
+                            </button>
+                        ))}
+                    </div>
+                )}
 
-            {/* Injected Footer (e.g. Post Action Bar) */}
-            {footer && (
-                <div className="w-full shrink-0 mt-auto">
-                    {footer}
-                </div>
-            )}
+                {/* Injected Footer (e.g. Post Action Bar) */}
+                {footer && (
+                    <div className="w-full">
+                        {footer}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
