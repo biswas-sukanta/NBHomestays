@@ -84,7 +84,7 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
     const totalReplies = localReplies.length;
 
     return (
-        <div className={cn('group', depth > 0 && 'ml-8 mt-3 pl-3 border-l-2 border-border/50')}>
+        <div data-testid="comment-item" className={cn('group', depth > 0 && 'ml-8 mt-3 pl-3 border-l-2 border-border/50')}>
             <div className="flex gap-2.5">
                 <Initials name={comment.authorName} />
                 <div className="flex-1 min-w-0">
@@ -379,19 +379,21 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                                 {user?.firstName?.[0] || 'U'}
                                             </div>
                                             <div className="flex-1 flex items-center bg-gray-100 rounded-full px-4 py-2 border border-transparent focus-within:border-gray-300 focus-within:bg-white transition-all shadow-inner relative">
-                                                <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                                                <input data-testid="comment-image-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
                                                 <input
+                                                    data-testid="comment-input"
                                                     value={newComment}
                                                     onChange={e => setNewComment(e.target.value)}
                                                     onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), submitComment())}
                                                     placeholder="Add a comment..."
                                                     className="flex-1 bg-transparent text-[15px] font-medium text-gray-900 focus:outline-none placeholder:text-gray-500"
                                                 />
-                                                <button onClick={() => fileRef.current?.click()} className="text-gray-400 hover:text-green-600 transition-colors ml-2" aria-label="Attach photo">
+                                                <button data-testid="comment-attach-btn" onClick={() => fileRef.current?.click()} className="text-gray-400 hover:text-green-600 transition-colors ml-2" aria-label="Attach photo">
                                                     <ImageIcon className="w-5 h-5" />
                                                 </button>
                                             </div>
                                             <button
+                                                data-testid="comment-send-btn"
                                                 onClick={submitComment}
                                                 disabled={(!newComment.trim() && stagedFiles.length === 0) || submitting}
                                                 className="w-10 h-10 flex-none rounded-full bg-green-600 text-white flex items-center justify-center disabled:opacity-50 hover:bg-green-700 transition-all shadow-md active:scale-95"

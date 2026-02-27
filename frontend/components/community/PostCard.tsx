@@ -87,6 +87,7 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode }: { postId: 
 
     return (
         <button
+            data-testid="like-btn"
             onClick={toggle}
             className={cn('flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-colors duration-200 active:scale-95 text-sm font-semibold group',
                 liked ? 'text-rose-600 hover:bg-rose-50' :
@@ -156,6 +157,7 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
 
     const content = (
         <motion.article
+            data-testid={isQuoted ? "quoted-post-card" : "post-card"}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             {...(!isDetailView && !isQuoted ? { whileHover: { y: -3, scale: 1.005 }, transition: { type: 'spring', stiffness: 400, damping: 30 } } : {})}
@@ -203,15 +205,15 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
                         <div className="pointer-events-auto">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <button className="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors flex justify-center items-center">
+                                    <button data-testid="post-options-btn" className="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors flex justify-center items-center">
                                         <MoreHorizontal className="w-5 h-5" />
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-36 rounded-xl font-medium border-gray-200">
-                                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                                    <DropdownMenuItem data-testid="edit-post-btn" onClick={() => setIsEditing(true)}>
                                         <Pencil className="w-4 h-4 mr-2" /> Edit
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => onDelete(post.id)}>
+                                    <DropdownMenuItem data-testid="delete-post-btn" className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => onDelete(post.id)}>
                                         <Trash2 className="w-4 h-4 mr-2" /> Delete
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -239,15 +241,15 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, isDetailView =
             {!isQuoted && (
                 <div className="flex items-center justify-between px-2 py-1 border-t border-gray-100 pointer-events-auto bg-white relative z-10">
                     <LikeButton postId={post.id} initialLiked={post.isLikedByCurrentUser} initialCount={Math.max(0, Number(post.loveCount) || 0)} />
-                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsCommentDrawerOpen(true); }} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold">
+                    <button data-testid="comment-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsCommentDrawerOpen(true); }} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold">
                         <MessageCircle className="w-5 h-5" /><span>{Math.max(0, Number(post.commentCount) || 0)}</span>
                     </button>
                     {/* Repost */}
-                    <button onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Repost">
+                    <button data-testid="repost-btn" onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Repost">
                         <Repeat2 className="w-5 h-5" />
                     </button>
                     {/* Share */}
-                    <button onClick={handleShare} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Share post">
+                    <button data-testid="share-btn" onClick={handleShare} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95 text-sm font-semibold" aria-label="Share post">
                         <Share2 className="w-5 h-5" /> <span>{Math.max(0, Number(shareCount) || 0)}</span>
                     </button>
                 </div>
