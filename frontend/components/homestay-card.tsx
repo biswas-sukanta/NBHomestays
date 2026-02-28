@@ -23,6 +23,10 @@ export interface HomestaySummary {
     vibeScore: number;
     status: string;
     locationName?: string;
+    destination?: {
+        name: string;
+        district: string;
+    };
     host?: {
         id: string;
         name: string;
@@ -187,7 +191,9 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
                     </h3>
                     <div className="flex items-center justify-between mb-1">
                         <p className="text-sm text-gray-500 truncate" data-testid="location-text">
-                            {homestay.locationName || 'North Bengal Hills'}
+                            {homestay.destination
+                                ? `${homestay.destination.name}, ${homestay.destination.district}`
+                                : (homestay.locationName || 'North Bengal Hills')}
                         </p>
                         {homestay.host?.isVerifiedHost && (
                             <div className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full border border-blue-100">

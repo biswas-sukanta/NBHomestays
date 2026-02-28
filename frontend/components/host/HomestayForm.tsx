@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -93,9 +93,14 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
     const [imageFiles, setImageFiles] = useState<StagedFile[]>([]);
     const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
     const [location, setLocation] = useState({ latitude: null as number | null, longitude: null as number | null, locationName: '' });
-    const [topDestination, setTopDestination] = useState<string>('');
+    const [destinationId, setDestinationId] = useState<string>('');
     const [amenities, setAmenities] = useState<string[]>([]);
     const [tags, setTags] = useState<string[]>([]);
+
+    const { data: destinations } = useQuery({
+        queryKey: ['destinations-form'],
+        queryFn: () => api.get('/api/destinations').then(res => res.data)
+    });
 
     // Host Details
     const [hostDetails, setHostDetails] = useState({
@@ -122,9 +127,11 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                 // ... rest of mapping
                 setBasicInfo({ name: data.name || '', description: data.description || '', pricePerNight: data.pricePerNight?.toString() || '' });
                 setLocation({ latitude: data.latitude, longitude: data.longitude, locationName: data.locationName || '' });
+                if (data.destination) {
+                    setDestinationId(data.destination.id);
+                }
                 if (data.tags && data.tags.length > 0) {
-                    setTopDestination(data.tags.find((t: string) => ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Sittong', 'Dooars', 'Siliguri', 'Lava', 'Lolegaon'].includes(t)) || '');
-                    setTags(data.tags.filter((t: string) => !['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Sittong', 'Dooars', 'Siliguri', 'Lava', 'Lolegaon'].includes(t)));
+                    setTags(data.tags);
                 }
                 setAmenities(Object.keys(data.amenities || {}).filter(k => data.amenities[k]));
                 setPolicies(data.policies || []);
@@ -174,7 +181,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                 newErrors.price = "Valid price per night is required.";
             }
         } else if (currentStep === 2) {
-            if (!topDestination) newErrors.topDestination = "Please select a Top Destination segment.";
+            if (!destinationId) newErrors.destinationId = "Please select a Destination.";
             if (!location.latitude || !location.longitude) {
                 newErrors.location = "Please pin your exact location on the map.";
             }
@@ -248,7 +255,8 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                     url: url,
                     fileId: url.split('/').pop()?.split('?')[0] // Attempt to extract fileId from ImageKit URL format. If it fails, backend relies on DB ID.
                 })),
-                tags: Array.from(new Set([...tags, topDestination])),
+                destinationId: destinationId,
+                tags: Array.from(new Set(tags)),
                 // JSONB Conversions
                 amenities: amenities.reduce((acc, curr) => ({ ...acc, [curr]: true }), {}),
                 policies: policies.filter(p => p.trim() !== ''),
@@ -382,19 +390,17 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                     {step === 2 && (
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <Label>Top Destination Segment *</Label>
-                                <Select value={topDestination} onValueChange={setTopDestination}>
-                                    <SelectTrigger error={errors.topDestination}><SelectValue placeholder="Select primary locality (e.g. Darjeeling)" /></SelectTrigger>
+                                <Label>Select Destination *</Label>
+                                <Select value={destinationId} onValueChange={setDestinationId}>
+                                    <SelectTrigger error={errors.destinationId}><SelectValue placeholder="Choose a destination..." /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Darjeeling">Darjeeling</SelectItem>
-                                        <SelectItem value="Kalimpong">Kalimpong</SelectItem>
-                                        <SelectItem value="Kurseong">Kurseong</SelectItem>
-                                        <SelectItem value="Mirik">Mirik</SelectItem>
-                                        <SelectItem value="Sittong">Sittong</SelectItem>
-                                        <SelectItem value="Dooars">Dooars</SelectItem>
-                                        <SelectItem value="Siliguri">Siliguri</SelectItem>
-                                        <SelectItem value="Lava">Lava</SelectItem>
-                                        <SelectItem value="Lolegaon">Lolegaon</SelectItem>
+                                        <ScrollArea className="h-[300px]">
+                                            {destinations?.map((dest: any) => (
+                                                <SelectItem key={dest.id} value={dest.id}>
+                                                    {dest.name} ({dest.district})
+                                                </SelectItem>
+                                            ))}
+                                        </ScrollArea>
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -112,6 +112,11 @@ public class Homestay {
     @Column(nullable = false)
     private Boolean featured = false;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_id")
+    private Destination destination;
+
     public enum Status {
         PENDING, APPROVED, REJECTED
     }

@@ -13,6 +13,11 @@ public interface HomestayRepository extends JpaRepository<Homestay, UUID>, Homes
         org.springframework.data.domain.Page<Homestay> findByStatus(Homestay.Status status,
                         org.springframework.data.domain.Pageable pageable);
 
+        @org.springframework.data.jpa.repository.Query("SELECT h FROM Homestay h LEFT JOIN FETCH h.mediaFiles WHERE h.destination.slug = :slug AND h.isDeleted = false")
+        org.springframework.data.domain.Page<Homestay> findByDestinationSlug(
+                        @org.springframework.data.repository.query.Param("slug") String slug,
+                        org.springframework.data.domain.Pageable pageable);
+
         @org.springframework.data.jpa.repository.Query("SELECT h FROM Homestay h WHERE h.status = :status AND h.isDeleted = false")
         List<Homestay> findByStatus(@org.springframework.data.repository.query.Param("status") Homestay.Status status);
 

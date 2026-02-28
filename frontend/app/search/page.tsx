@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense, useRef, useCallback } from 'react
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CategoryFilterBar } from '@/components/category-filter-bar';
 import { HomestaySwimlane } from '@/components/homestay-swimlane';
+import { DestinationDiscovery } from '@/components/destination-discovery';
 import { HomestayCard, HomestaySummary } from '@/components/homestay-card';
 import type L from 'leaflet';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -263,16 +264,13 @@ function SearchResults() {
                 ) : isStorefront ? (
                     <>
                         <section>
-                            <CarouselWrapper
-                                headerLeft={
-                                    <div className="text-left">
-                                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight">Top Destinations</h2>
-                                        <p className="text-gray-500 text-base">Unwind in the most sought-after hills.</p>
-                                    </div>
-                                }
-                            >
-                                {DESTINATIONS.map(d => <DestinationCard key={d.name} dest={d} isActive={tag === d.name} />)}
-                            </CarouselWrapper>
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                                <div className="text-left">
+                                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight italic">Destination Discovery</h2>
+                                    <p className="text-gray-500 text-base">Unwind in the most sought-after hills of North Bengal.</p>
+                                </div>
+                            </div>
+                            <DestinationDiscovery />
                         </section>
 
                         <HomestaySwimlane

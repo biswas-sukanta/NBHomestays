@@ -31,6 +31,8 @@ public class HomestayService {
         private final HomestayRepository repository;
         private final UserRepository userRepository;
         private final ImageUploadService imageUploadService;
+        private final com.nbh.backend.repository.DestinationRepository destinationRepository;
+        private final DestinationService destinationService;
 
         @CacheEvict(value = "homestaysSearch", allEntries = true)
         public HomestayDto.Response createHomestay(HomestayDto.Request request, String userEmail) {
@@ -58,6 +60,12 @@ public class HomestayService {
                                 .address(request.getLocationName()) // Using locationName from DTO as address
                                 .owner(owner)
                                 .build();
+
+                if (request.getDestinationId() != null && !request.getDestinationId().isBlank()) {
+                        homestay.setDestination(destinationRepository
+                                        .findById(java.util.UUID.fromString(request.getDestinationId()))
+                                        .orElse(null));
+                }
 
                 if (request.getMedia() != null) {
                         final com.nbh.backend.model.Homestay finalH = homestay;
@@ -177,6 +185,16 @@ public class HomestayService {
                 if (request.getLocationName() != null)
                         homestay.setAddress(request.getLocationName());
 
+                if (request.getDestinationId() != null) {
+                        if (request.getDestinationId().isBlank()) {
+                                homestay.setDestination(null);
+                        } else {
+                                homestay.setDestination(destinationRepository
+                                                .findById(java.util.UUID.fromString(request.getDestinationId()))
+                                                .orElse(null));
+                        }
+                }
+
                 if (request.getLatitude() != null)
                         homestay.setLatitude(request.getLatitude());
                 if (request.getLongitude() != null)
@@ -267,6 +285,11 @@ public class HomestayService {
                 return pageResults.map(this::mapToResponse);
         }
 
+        public org.springframework.data.domain.Page<HomestayDto.Response> getHomestaysByDestinationSlug(String slug,
+                        Pageable pageable) {
+                return repository.findByDestinationSlug(slug, pageable).map(this::mapToResponse);
+        }
+
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         @Cacheable(value = "homestay", key = "#id", sync = true)
         public HomestayDto.Response getHomestay(java.util.UUID id) {
@@ -325,12 +348,16 @@ public class HomestayService {
                                 .status(homestay.getStatus())
                                 .host(AuthorDto.builder()
                                                 .id(homestay.getOwner().getId())
-                                                .name(homestay.getOwner().getFirstName()
+                                                .name((homestay.getOwner().getFirstName() != null
+                                                                ? homestay.getOwner().getFirstName()
+                                                                : "")
                                                                 + (homestay.getOwner().getLastName() != null
                                                                                 ? " " + homestay.getOwner()
                                                                                                 .getLastName()
                                                                                 : ""))
-                                                .role(homestay.getOwner().getRole().name())
+                                                .role(homestay.getOwner().getRole() != null
+                                                                ? homestay.getOwner().getRole().name()
+                                                                : "ROLE_USER")
                                                 .avatarUrl(homestay.getOwner().getAvatarUrl())
                                                 .isVerifiedHost(homestay.getOwner().isVerifiedHost())
                                                 .build())
@@ -340,6 +367,7 @@ public class HomestayService {
                                 .ownerId(homestay.getOwner().getId())
                                 .ownerEmail(homestay.getOwner().getEmail())
                                 .featured(homestay.getFeatured())
+                                .destination(destinationService.mapToDto(homestay.getDestination()))
                                 .build();
         }
 }

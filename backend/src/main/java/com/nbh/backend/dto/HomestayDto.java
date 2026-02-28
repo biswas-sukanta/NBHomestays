@@ -46,6 +46,7 @@ public class HomestayDto {
         private java.util.List<String> tags;
         private java.util.Map<String, Object> hostDetails;
         private java.util.List<MediaDto> media;
+        private String destinationId;
     }
 
     @Data
@@ -78,5 +79,6 @@ public class HomestayDto {
         private UUID ownerId;
         private String ownerEmail;
         private Boolean featured;
+        private DestinationDto destination;
     }
 }

@@ -1,0 +1,539 @@
+[
+    {
+        "slug": "darjeeling",
+        "name": "Darjeeling",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏔️ Hill Station",
+            "🏛️ Heritage",
+            "☕ Tea Garden"
+        ],
+        "heroTitle": "The Heritage Queen of the Hills",
+        "description": "Steeped in colonial charm and famous for its legendary tea estates, Darjeeling offers breathtaking panoramic views of the Kanchenjunga range. This bustling town is a mosaic of vibrant monasteries, colonial architecture, the famous UNESCO Heritage 'Toy Train', and lush emerald tea gardens clinging to steep slopes.",
+        "localImageName": "dest-darjeeling.webp"
+    },
+    {
+        "slug": "kurseong",
+        "name": "Kurseong",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏔️ Hill Station",
+            "☕ Tea Garden",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The land of the White Orchids",
+        "description": "A quiet, serene hill town often enveloped in mystical mist, Kurseong is famed for its lush tea estates, ancient boarding schools, and viewpoints like Eagle’s Crag. It offers a more relaxed pace than Darjeeling, perfect for exploring hidden forest trails and heritage walks through colonial-era settings.",
+        "localImageName": "dest-kurseong.webp"
+    },
+    {
+        "slug": "mirik",
+        "name": "Mirik",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🌊 Lakeside",
+            "🏔️ Hill Station",
+            "🍃 Nature"
+        ],
+        "heroTitle": "Serenity by the Sumendu Lake",
+        "description": "Famed for the placid Sumendu Lake, Mirik is a beautiful lakeside destination perfect for leisure. The lake is surrounded by a forest of cryptic pine trees and a footbridge across it offers views of the mountains, with boating being a major activity. Ideal for long, peaceful lakeside walks.",
+        "localImageName": "dest-mirik.webp"
+    },
+    {
+        "slug": "sandakphu",
+        "name": "Sandakphu",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🥾 Trekking",
+            "🏔️ High-Altitude",
+            "🍃 Nature"
+        ],
+        "heroTitle": "Standing at the Top of Bengal",
+        "description": "The highest point in West Bengal, Sandakphu offers one of the most magnificent mountain views on Earth: a panoramic vista of four of the world’s five highest peaks—Everest, Kanchenjunga, Lhotse, and Makalu. Accessible via a demanding trek or a challenging 4x4 Land Rover ride through the Singalila National Park.",
+        "localImageName": "dest-sandakphu.webp"
+    },
+    {
+        "slug": "phalut",
+        "name": "Phalut",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🥾 Trekking",
+            "🏔️ High-Altitude",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Ultimate Wilderness Frontier",
+        "description": "A rugged, isolated high-altitude destination located further along the same ridge as Sandakphu. Phalut offers a close-up, dramatic view of Kanchenjunga. The landscape is bare and windswept, perfect for adventurous trekkers seeking solitude and untouched Himalayan beauty.",
+        "localImageName": "dest-phalut.webp"
+    },
+    {
+        "slug": "chatakpur",
+        "name": "Chatakpur",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍃 Nature",
+            "🦅 Wildlife"
+        ],
+        "heroTitle": "An Eco-Village Hidden in Wildlife",
+        "description": "A pristine eco-friendly village located within the Senchal Wildlife Sanctuary. Chatakpur is renowned for its organic farming, stunning sunrise views over Kanchenjunga without the crowds, and a network of nature trails for birdwatching and spotting elusive Himalayan wildlife like the Red Panda.",
+        "localImageName": "dest-chatakpur.webp"
+    },
+    {
+        "slug": "tinchuley",
+        "name": "Tinchuley",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "☕ Tea Garden",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Hamlet of Three Ovens",
+        "description": "Famed for its unique 'Three Ovens' hill formations and expansive tea gardens, Tinchuley is a serene, offbeat hamlet. It offers panoramic views of the Teesta and Rangeet valleys and focuses on eco-tourism, organic farming, and heritage tea estate walks.",
+        "localImageName": "dest-tinchuley.webp"
+    },
+    {
+        "slug": "takdah",
+        "name": "Takdah",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏛️ Heritage",
+            "☕ Tea Garden",
+            "🏕️ Offbeat"
+        ],
+        "heroTitle": "Step into a Colonial Time Capsule",
+        "description": "Once a critical British cantonment, Takdah is a serene hamlet frozen in time. It is famous for its collection of colonial-era heritage bungalows, misty, cool weather, lush pine forests, and some of the finest tea gardens in the region, offering a quiet escape into history.",
+        "localImageName": "dest-takdah.webp"
+    },
+    {
+        "slug": "lamahatta",
+        "name": "Lamahatta",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍃 Nature",
+            "🌊 Riverside"
+        ],
+        "heroTitle": "Where the Pines and Prayers Meet",
+        "description": "Famous for its beautifully manicured Eco-Park centered around a sacred pond and a stunning forest of tall pine and dhupi trees. Lamahatta offers breathtaking views of Kanchenjunga, serene nature walks through dense forests, and the unique experience of white river rafting nearby on the Teesta.",
+        "localImageName": "dest-lamahatta.webp"
+    },
+    {
+        "slug": "sittong",
+        "name": "Sittong",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍃 Nature",
+            "🍊 Agricultural"
+        ],
+        "heroTitle": "The Orange Valley of Bengal",
+        "description": "Known as the Orange Village, Sittong is a cluster of villages famous for its sprawling orange orchards that bloom brilliantly in winter. It offers a authentic offbeat agricultural experience, panoramic mountain views, and river-side retreats along the Riyang river.",
+        "localImageName": "dest-sittong.webp"
+    },
+    {
+        "slug": "lepcha-jagat",
+        "name": "Lepcha Jagat",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍃 Nature",
+            "🏛️ Cultural"
+        ],
+        "heroTitle": "The Silent Forest Hamlet",
+        "description": "A secluded hamlet nestled within a dense forest of oak, pine, and rhododendron trees. Lepcha Jagat (literally 'World of the Lepchas') offers profound peace, stunning Kanchenjunga views, birdwatching, and is dedicated to preserving the rich culture and heritage of the indigenous Lepcha community.",
+        "localImageName": "dest-lepcha-jagat.webp"
+    },
+    {
+        "slug": "dawaipani",
+        "name": "Dawaipani",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🏔️ Hill Station",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Viewpoint Above the Clouds",
+        "description": "Literally translating to 'Medicinal Water', Dawaipani is an offbeat hamlet situated on a ridge that offers a panoramic, 180-degree unblocked view of the Kanchenjunga massif, Darjeeling town, and the misty valleys below. A serene destination for those seeking solitude and raw mountain beauty.",
+        "localImageName": "dest-dawaipani.webp"
+    },
+    {
+        "slug": "bijanbari",
+        "name": "Bijanbari",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🌊 Riverside",
+            "🍃 Nature"
+        ],
+        "heroTitle": "Rhapsody by the Little Teesta River",
+        "description": "A beautiful river valley destination located along the Chhota Rangeet (Little Teesta) river. Bijanbari offers a authentic agricultural experience with sprawling orchards, cardamom plantations, and a perfect setting for riverside picnics, angling, and peaceful riverside retreats.",
+        "localImageName": "dest-bijanbari.webp"
+    },
+    {
+        "slug": "srikhola",
+        "name": "Srikhola",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🥾 Trekking",
+            "🌊 Riverside",
+            "🏕️ Offbeat"
+        ],
+        "heroTitle": "The Trekker's Riverside Oasis",
+        "description": "Located at the end of the Singalila trek, Srikhola is a pristine riverside hamlet. It is famed for its clear river, a famous old suspension bridge, lush forests, and serene riverside homestays offering profound relaxation after the long mountain trek.",
+        "localImageName": "dest-srikhola.webp"
+    },
+    {
+        "slug": "singtam",
+        "name": "Singtam",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "☕ Tea Garden",
+            "🏕️ Offbeat",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Heart of the Singtam Tea Estate",
+        "description": "A quiet, offbeat village centered entirely around the operational Singtam Tea Estate. Singtam offers an authentic 'life on a tea garden' experience, heritage factory visits, and serene walks through some of the finest tea plantations in the Darjeeling district.",
+        "localImageName": "dest-singtam.webp"
+    },
+    {
+        "slug": "makaibari",
+        "name": "Makaibari",
+        "district": "Darjeeling",
+        "tags": [
+            "🌟 All",
+            "🏛️ Heritage",
+            "☕ Tea Garden",
+            "🏕️ Offbeat"
+        ],
+        "heroTitle": "The Legend of the Makaibari Tea Estate",
+        "description": "The world's first tea estate to be certified organic, Makaibari is a legend in the world of tea. This hamlet offers a premium heritage experience, focused on sustainable farming, visits to the historic 1859-built tea factory, and living amidst the birthplace of one of the world's most expensive teas.",
+        "localImageName": "dest-makaibari.webp"
+    },
+    {
+        "slug": "kalimpong",
+        "name": "Kalimpong",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏔️ Hill Station",
+            "🌸 Floral",
+            "🏛️ Heritage"
+        ],
+        "heroTitle": "The Floral Gateway to the Hills",
+        "description": "Once a critical trade gateway to Tibet, Kalimpong is a vibrant hill town famed for its expansive flower nurseries, exotic orchid collections, colonial-era heritage buildings like Morgan House, and serene monasteries overlooking the Teesta river valley. It offers a unique cultural fusion of Nepalese, Lepcha, and Bhutanese influences.",
+        "localImageName": "dest-kalimpong.webp"
+    },
+    {
+        "slug": "lava",
+        "name": "Lava",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏔️ Hill Station",
+            "🏛️ Heritage",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Misty Monastery Town of Lava",
+        "description": "One of the few places in West Bengal to receive snow, Lava is a secluded high-altitude destination. It is famed for its iconic Lava Jamgyong Kongtrul Monastery, dense pine forests that are often enveloped in thick mist, and as the gateway to the remote Neora Valley National Park.",
+        "localImageName": "dest-lava.webp"
+    },
+    {
+        "slug": "rishop",
+        "name": "Rishop",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏔️ High-Altitude",
+            "🏕️ Offbeat",
+            "🍃 Nature"
+        ],
+        "heroTitle": "Sleeping Under the Silent Kanchenjunga",
+        "description": "Literally translating to 'The Peaks and Swamps', Rishop is a pristine high-altitude destination famed for its uninterrupted, up-close view of the snow-capped Kanchenjunga massif, particularly during sunrise and under moonlight, as the small village remains delightfully free of electricity pollution.",
+        "localImageName": "dest-rishop.webp"
+    },
+    {
+        "slug": "kolakham",
+        "name": "Kolakham",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🦅 Wildlife",
+            "🍃 Nature"
+        ],
+        "heroTitle": "Into the Wild Neora Valley Buffer Zone",
+        "description": "Located inside the Neora Valley National Park buffer zone, Kolakham is a dream destination for wildlife lovers. This serene offbeat hamlet offers opportunities to spot rare high-altitude birds, the elusive Red Panda, and panoramic views of the entire Kanchenjunga range, all while surrounded by dense, untouchable forest.",
+        "localImageName": "dest-kolakham.webp"
+    },
+    {
+        "slug": "lolegaon",
+        "name": "Lolegaon",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Forest Canopy Walk in Lolegaon",
+        "description": "Famed for its misty, heritage pine forests and unique 'Canopy Walk' hanging bridge, Lolegaon is a serene offbeat destination. It offers dramatic views of the Kanchenjunga range from viewpoints like 'Jhandi Dara' and is perfect for deeply immersive nature walks in deep, silent woods.",
+        "localImageName": "dest-lolegaon.webp"
+    },
+    {
+        "slug": "sillery-gaon",
+        "name": "Sillery Gaon",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Hamlet with a 180-Degree View",
+        "description": "Famed for its unblocked, dramatic view of the entire Kanchenjunga massif, Sillery Gaon is a peaceful offbeat hamlet. It offers profound solitude, birdwatching opportunities in the surrounding cypress and pine forests, and a network of easy nature trails through untouched landscapes.",
+        "localImageName": "dest-sillery-gaon.webp"
+    },
+    {
+        "slug": "icche-gaon",
+        "name": "Icche Gaon",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍃 Nature",
+            "🌊 Riverside"
+        ],
+        "heroTitle": "The Riverside Eco-Village of your Wish",
+        "description": "Known as the 'Wish Village', Icche Gaon is a pristine eco-tourism destination. It is famous for its proximity to the Teesta River, organic farming, birdwatching in the pine forests, and serene riverside homestays offering white river rafting experiences nearby.",
+        "localImageName": "dest-icche-gaon.webp"
+    },
+    {
+        "slug": "pedong",
+        "name": "Pedong",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏛️ Heritage",
+            "🏛️ Cultural",
+            "🌸 Floral"
+        ],
+        "heroTitle": "The Crossroad of History and Religion",
+        "description": "A historically critical town on the old Silk Route, Pedong is famed for its heritage. It is home to the historic 1700-built Sangchen Dorjee Monastery and the 1837-built Damsung Fort ruins, offering a unique blend of historical, cultural, and religious tourism amidst scenic landscapes.",
+        "localImageName": "dest-pedong.webp"
+    },
+    {
+        "slug": "ramdhura",
+        "name": "Ramdhura",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Viewpoint Above the Teesta River Valley",
+        "description": "A serene, offbeat hamlet famed for its panoramic viewpoint that offers unblocked views of the Kanchenjunga range and the winding Teesta river valley deep below. Ramdhura focuses on eco-tourism, birdwatching in the surrounding pine forests, and offers a authentic offbeat agricultural experience.",
+        "localImageName": "dest-ramdhura.webp"
+    },
+    {
+        "slug": "chibo",
+        "name": "Chibo",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍊 Agricultural",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The agricultural heart of the Kalimpong foothills",
+        "description": "A authentic offbeat agricultural village famous for its sprawling orange orchards, organic farming, and traditional Lepcha heritage. Chibo offers profound peace, panoramic views of the surrounding hills, and a unique glimpse into the traditional rural life of the Kalimpong foothills.",
+        "localImageName": "dest-chibo.webp"
+    },
+    {
+        "slug": "bidyang",
+        "name": "Bidyang",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🌊 Riverside",
+            "🍃 Nature"
+        ],
+        "heroTitle": "Rhapsody by the Relli River Valley",
+        "description": "A secluded riverside village destination located deep within the Relli River valley. Bidyang offers profound relaxation, riverside picnics, angling experiences, and is famed for its proximity to the beautiful Relli River, offering white river rafting and riverside retreats.",
+        "localImageName": "dest-bidyang.webp"
+    },
+    {
+        "slug": "rikisum",
+        "name": "Rikisum",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🏛️ Heritage",
+            "🍃 Nature"
+        ],
+        "heroTitle": "Solitude amidst the Silk Route Ruins",
+        "description": "A historically critical offbeat hamlet on the old Silk Route trade path. Rikisum is famous for its collection of colonial-era British heritage bungalows (currently ruins), misty cool weather, profound solitude, and panoramic views of the Kanchenjunga massif, particularly during sunrise and sunset.",
+        "localImageName": "dest-rikisum.webp"
+    },
+    {
+        "slug": "kagey",
+        "name": "Kagey",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍊 Agricultural",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The multi-faceted Agricultural Village",
+        "description": "Known as the multi-faceted village, Kagey is a vibrant offbeat agricultural village. It is famous for its sprawling orchards (cardamom, oranges), organic farming, authentic agricultural experience, panoramic views of the surrounding hills, and profound peace.",
+        "localImageName": "dest-kagey.webp"
+    },
+    {
+        "slug": "nimbong",
+        "name": "Nimbong",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🏛️ Cultural",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Cultural heart of the Kalimpong foothills",
+        "description": "A historically critical offbeat village dedicated to preserving the rich culture and heritage of the indigenous Lepcha community. Nimbong offers authentic Lepcha homestays, birdwatching in the surrounding forests, organic farming, and panoramic views of the surrounding hills.",
+        "localImageName": "dest-nimbong.webp"
+    },
+    {
+        "slug": "pabong",
+        "name": "Pabong",
+        "district": "Kalimpong",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Silent Forest retreat",
+        "description": "A secluded hamlet nestled within a dense forest of oak, pine, and rhododendron trees. Pabong offers profound peace, panoramic views of the Kanchenjunga massif, birdwatching in the surrounding forests, and profound solitude. Perfect for deep, silent forest retreats.",
+        "localImageName": "dest-pabong.webp"
+    },
+    {
+        "slug": "siliguri",
+        "name": "Siliguri",
+        "district": "Siliguri & Foothills",
+        "tags": [
+            "🌟 All",
+            "🏙️ Transit"
+        ],
+        "heroTitle": "Gateway to the North East",
+        "description": "Siliguri is a bustling transit city, serving as the commercial and transport hub for the entire North East. It connects the Himalayas of Bengal, Sikkim, Bhutan, and Nepal. Ideal for commercial trips and convenient stopovers before heading to the mountains.",
+        "localImageName": "dest-siliguri.webp"
+    },
+    {
+        "slug": "latpanchar",
+        "name": "Latpanchar",
+        "district": "Siliguri & Foothills",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🦅 Wildlife",
+            "🍃 Nature"
+        ],
+        "heroTitle": "The Birdwatching Capital of the Cinchona Plantations",
+        "description": "Located inside the Mahananda Wildlife Sanctuary, Latpanchar is a dream destination for wildlife lovers and birdwatchers. Famous for its sprawling Cinchona plantations and as the primary habitat of the rare high-altitude Rufous-necked Hornbill, which attracts birders from around the world.",
+        "localImageName": "dest-latpanchar.webp"
+    },
+    {
+        "slug": "dudhia",
+        "name": "Dudhia",
+        "district": "Siliguri & Foothills",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🌊 Riverside",
+            "🍃 Nature"
+        ],
+        "heroTitle": "Riverside Rhapsody along the Balason River",
+        "description": "A popular weekend riverside destination for Siliguri residents. Dudhia is famed for the beautiful, wide Balason river valley, perfect for riverside picnics, angling, white river rafting experiences nearby, and authentic offbeat agricultural retreats.",
+        "localImageName": "dest-dudhia.webp"
+    },
+    {
+        "slug": "sevoke",
+        "name": "Sevoke",
+        "district": "Siliguri & Foothills",
+        "tags": [
+            "🌟 All",
+            "🏛️ Heritage",
+            "🏙️ Transit"
+        ],
+        "heroTitle": "Transit Hub by the Teesta River Valley",
+        "description": "A historically critical transit hub situated along the Teesta river valley. Sevoke is famous for the landmark colonial-era Sevoke Coronation Bridge, its function as a critical transit stop, and as a spiritual destination featuring scenic riverside viewpoints and the Sevoke Kali Mandir.",
+        "localImageName": "dest-sevoke.webp"
+    },
+    {
+        "slug": "sukna",
+        "name": "Sukna",
+        "district": "Siliguri & Foothills",
+        "tags": [
+            "🌟 All",
+            "🏛️ Heritage",
+            "🏙️ Transit"
+        ],
+        "heroTitle": "The Forest Gateway stop",
+        "description": "The Forest Gateway to the Himalayas, Sukna is a serene forest hamlet. Famed for the landmark Sukna Forest Range, its function as a critical transit stop, and featuring a scenic heritage railway stop on the UNESCO world heritage toy train route.",
+        "localImageName": "dest-sukna.webp"
+    },
+    {
+        "slug": "shivkhola",
+        "name": "Shivkhola",
+        "district": "Siliguri & Foothills",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🌊 Riverside",
+            "🍃 Nature"
+        ],
+        "heroTitle": "Solitude along the Shiv River Valley",
+        "description": "A secluded riverside destination located along the Shiv River valley. Shivkhola offers profound relaxation, riverside picnics, angling experiences, organic farming, and is famed for white river rafting experiences nearby and authentic riverside retreats.",
+        "localImageName": "dest-shivkhola.webp"
+    },
+    {
+        "slug": "rohini",
+        "name": "Rohini",
+        "district": "Siliguri & Foothills",
+        "tags": [
+            "🌟 All",
+            "🏕️ Offbeat",
+            "🍃 Nature",
+            "🏙️ Transit"
+        ],
+        "heroTitle": "The view-point above the Teesta foothills",
+        "description": "A historically critical transit viewpoint route famed for its unblocked, dramatic view of the entire Teesta foothills and winding Teesta river valley deep below. Rohini focuses on eco-tourism and birdwatching in surrounding pine forests, featuring authentic offbeat agricultural experience.",
+        "localImageName": "dest-rohini.webp"
+    },
+    {
+        "slug": "mongpong",
+        "name": "Mongpong",
+        "district": "Siliguri & Foothills",
+        "tags": [
+            "🌟 All",
+            "🏛️ Heritage",
+            "🏙️ Transit"
+        ],
+        "heroTitle": "Transit Hub by the Teesta River view-point",
+        "description": "A historically critical transit hub situated along the Teesta river viewpoint. Mongpong is famous for its collection of colonial-era British heritage bungalows (ruins), its function as a critical transit stop, and as scenic Teesta river viewpoint featuring profound solitude.",
+        "localImageName": "dest-mongpong.webp"
+    }
+]
