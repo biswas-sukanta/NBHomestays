@@ -86,6 +86,26 @@ public class CommentService {
                                 .map(c -> toDto(c, true));
         }
 
+        // ── Update comment ─────────────────────────────────────────
+        @Transactional
+        @CacheEvict(value = "postComments", allEntries = true)
+        public CommentDto updateComment(UUID commentId, CommentDto.Request request, User currentUser) {
+                Comment comment = commentRepository.findById(commentId)
+                                .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
+
+                // ONLY the owner of a comment can edit it. Admins cannot edit user text.
+                boolean isOwner = comment.getUser().getId().equals(currentUser.getId());
+                if (!isOwner) {
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot edit this comment");
+                }
+
+                if (request.getBody() != null) {
+                        comment.setBody(request.getBody().trim());
+                }
+
+                return toDto(commentRepository.save(comment), false);
+        }
+
         // ── Delete (owner or admin) ────────────────────────────────
         @Transactional
         @CacheEvict(value = "postComments", allEntries = true)

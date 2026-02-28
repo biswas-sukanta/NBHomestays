@@ -433,9 +433,10 @@ export default function CommunityPage() {
                     hideTrigger={true}
                     externalOpen={true}
                     onExternalClose={() => setActiveCommentPostId(null)}
-                    onCommentCountChange={(newTotal) => {
+                    onCommentCountChange={(newTotal: number) => {
                         setPosts(prev => prev.map(p => p.id === activeCommentPostId ? { ...p, commentCount: Math.max(0, newTotal) } : p));
                     }}
+                    currentUserRole={user?.role}
                 />
             )}
         </div>

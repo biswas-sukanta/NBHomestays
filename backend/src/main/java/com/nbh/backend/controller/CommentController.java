@@ -70,6 +70,26 @@ public class CommentController {
         }
     }
 
+    /** Update an existing comment (owner only). */
+    @PutMapping("/posts/{postId}/comments/{commentId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CommentDto> updateComment(
+            @PathVariable("postId") UUID postId,
+            @PathVariable("commentId") UUID commentId,
+            @Valid @RequestBody CommentDto.Request request,
+            @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to edit");
+        }
+        try {
+            return ResponseEntity.ok(commentService.updateComment(commentId, request, currentUser));
+        } catch (Exception e) {
+            System.err.println("CRITICAL ERROR IN EDIT COMMENT: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
     /** Delete a comment (owner or admin). */
     @DeleteMapping("/comments/{commentId}")
     @PreAuthorize("isAuthenticated()")

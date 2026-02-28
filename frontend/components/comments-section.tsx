@@ -48,6 +48,15 @@ function Initials({ name }: { name: string }) {
     );
 }
 
+interface CommentsSectionProps {
+    postId: string;
+    hideTrigger?: boolean;
+    externalOpen?: boolean;
+    onExternalClose?: () => void;
+    onCommentCountChange?: (count: number) => void;
+    currentUserRole?: string;
+}
+
 interface SingleCommentProps {
     comment: Comment;
     postId: string;
@@ -127,42 +136,57 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
             <div className="flex gap-2.5">
                 <Initials name={comment.authorName} />
                 <div className="flex-1 min-w-0">
-                    {/* Bubble */}
-                    <div className="bg-secondary/60 rounded-xl px-3 py-2.5 text-sm relative group">
-                        <span className="font-semibold text-foreground text-xs mr-1.5">{comment.authorName}</span>
-                        {isEditing ? (
-                            <div className="mt-1 flex flex-col gap-2">
-                                <input
-                                    autoFocus
-                                    className="w-full bg-background border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                    value={editBody}
-                                    onChange={e => setEditBody(e.target.value)}
-                                    onKeyDown={e => {
-                                        if (e.key === 'Enter') handleEditSubmit();
-                                        if (e.key === 'Escape') { setIsEditing(false); setEditBody(comment.body); }
-                                    }}
-                                />
-                                <div className="flex justify-end gap-2">
-                                    <button onClick={() => { setIsEditing(false); setEditBody(comment.body); }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
-                                    <button onClick={handleEditSubmit} disabled={submitting} className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">Save</button>
-                                </div>
+                    <div className="flex justify-between items-start w-full">
+                        <div className="flex flex-col flex-1 min-w-0">
+                            {/* Bubble */}
+                            <div className="bg-secondary/60 rounded-xl px-3 py-2.5 text-sm">
+                                <span className="font-semibold text-foreground text-xs mr-1.5">{comment.authorName}</span>
+                                {isEditing ? (
+                                    <div className="mt-1 flex flex-col gap-2">
+                                        <input
+                                            autoFocus
+                                            className="w-full bg-background border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                            value={editBody}
+                                            onChange={e => setEditBody(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') handleEditSubmit();
+                                                if (e.key === 'Escape') { setIsEditing(false); setEditBody(comment.body); }
+                                            }}
+                                        />
+                                        <div className="flex justify-end gap-2">
+                                            <button onClick={() => { setIsEditing(false); setEditBody(comment.body); }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+                                            <button onClick={handleEditSubmit} disabled={submitting} className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">Save</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <span className="text-foreground leading-relaxed">{comment.body}</span>
+                                )}
+                                {comment.media && comment.media.length > 0 && (
+                                    <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                                        <ImageCollage images={comment.media.map(m => m.url)} onImageClick={(i) => setLightboxIndex(i)} />
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <span className="text-foreground leading-relaxed">{comment.body}</span>
-                        )}
-                        {comment.media && comment.media.length > 0 && (
-                            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                                <ImageCollage images={comment.media.map(m => m.url)} onImageClick={(i) => setLightboxIndex(i)} />
-                            </div>
-                        )}
 
-                        {/* Edit/Delete Options Menu Overlay */}
+                            {/* Meta row */}
+                            <div className="flex items-center gap-3 mt-1 px-1">
+                                <span className="text-[11px] text-muted-foreground">{formatTime(comment.createdAt)}</span>
+                                {depth === 0 && (
+                                    <button
+                                        onClick={() => setReplying(r => !r)}
+                                        className="text-[11px] font-semibold text-primary hover:text-primary/80"
+                                    >Reply</button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Edit/Delete Options Menu Outer Float */}
                         {isOwner && !isEditing && (
-                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="relative ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <button className="w-6 h-6 rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-800 transition-colors flex justify-center items-center">
-                                            <MoreHorizontal className="w-3.5 h-3.5" />
+                                        <button className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 flex justify-center items-center mt-1">
+                                            <MoreHorizontal className="w-4 h-4" />
                                         </button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="min-w-[120px] rounded-xl font-medium border-gray-200">
@@ -175,16 +199,6 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
-                        )}
-                    </div>
-                    {/* Meta row */}
-                    <div className="flex items-center gap-3 mt-1 px-1">
-                        <span className="text-[11px] text-muted-foreground">{formatTime(comment.createdAt)}</span>
-                        {depth === 0 && (
-                            <button
-                                onClick={() => setReplying(r => !r)}
-                                className="text-[11px] font-semibold text-primary hover:text-primary/80"
-                            >Reply</button>
                         )}
                     </div>
                 </div>
@@ -261,7 +275,7 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
 }
 
 // ── Public API ────────────────────────────────────────────────
-export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalClose, onCommentCountChange }: { postId: string, hideTrigger?: boolean, externalOpen?: boolean, onExternalClose?: () => void, onCommentCountChange?: (count: number) => void }) {
+export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalClose, onCommentCountChange, currentUserRole }: CommentsSectionProps) {
     const { isAuthenticated, user } = useAuth() as any;
     // AuthContext stores under 'token'
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
