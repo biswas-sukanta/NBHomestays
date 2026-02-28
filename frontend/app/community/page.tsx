@@ -20,8 +20,10 @@ import { CustomCombobox } from '@/components/ui/combobox';
 import api from '@/lib/api';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 type Post = CommunityPost;
+
 interface HomestayOption { id: string; name: string; address?: string; }
 
 // ── Post Composer Inline ───────────────────────────────────────
@@ -190,8 +192,8 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                     {(stagedFiles.length > 0 || existingMedia.length > 0) && (
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300">
                             {existingMedia.map((mediaObj, i) => (
-                                <div key={`ex-${i}`} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm">
-                                    <img src={mediaObj.url} alt="existing" className="w-full h-full object-cover" />
+                                <div key={`ex-${i}`} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm bg-gray-200">
+                                    <OptimizedImage src={mediaObj.url} alt="existing" className="w-full h-full object-cover" width={200} />
                                     <button onClick={() => setExistingMedia(prev => prev.filter((_, idx) => idx !== i))}
                                         className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                                         <X className="w-6 h-6 text-white" />
@@ -199,8 +201,8 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                                 </div>
                             ))}
                             {stagedFiles.map((staged, i) => (
-                                <div key={staged.id} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm border-2 border-green-500/20">
-                                    <img src={staged.previewUrl} alt="preview" className="w-full h-full object-cover" />
+                                <div key={staged.id} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm border-2 border-green-500/20 bg-gray-200">
+                                    <OptimizedImage src={staged.previewUrl} alt="preview" className="w-full h-full object-cover" width={200} />
                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
                                         <button onClick={() => setCropModal({ isOpen: true, imageIdx: i })} className="p-2 bg-white rounded-full text-gray-900 hover:scale-110 transition-transform"><Scissors className="w-4 h-4" /></button>
                                         <button onClick={() => removeStaged(staged.id)} className="p-2 bg-rose-500 rounded-full text-white hover:scale-110 transition-transform"><X className="w-4 h-4" /></button>

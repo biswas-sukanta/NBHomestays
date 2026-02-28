@@ -4,8 +4,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface ImageLightboxProps {
+
     images: string[];
     initialIndex: number;
     onClose: () => void;
@@ -86,10 +88,12 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
             >
-                <img
+                <OptimizedImage
                     key={current}
-                    src={optimized(images[current])}
+                    src={images[current]}
                     alt={`Image ${current + 1}`}
+                    width={1600}
+                    quality={85}
                     className="max-w-full max-h-full object-contain drop-shadow-2xl select-none rounded-lg animate-in fade-in duration-200"
                 />
 
@@ -130,7 +134,7 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
                                     i === current ? 'ring-2 ring-white scale-110 shadow-lg' : 'opacity-50 hover:opacity-80'
                                 )}
                             >
-                                <img src={thumb(url)} alt="" className="w-full h-full object-cover" />
+                                <OptimizedImage src={url} alt="" className="w-full h-full object-cover" width={160} />
                             </button>
                         ))}
                     </div>

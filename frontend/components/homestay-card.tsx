@@ -8,6 +8,7 @@ import { useCompareStore } from '@/store/useCompareStore';
 import { TripBoardButton } from '@/components/trip-board-button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 export interface HomestaySummary {
     id: string;
@@ -95,13 +96,12 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
                       to the photoUrl string for on-the-fly transformations. 
                       Example: \`${homestay.photoUrls?.[0]}?tr=w-400,h-300\` 
                     */}
-                    <img
-                        src={`${images[currentIndex]}?tr=w-600,h-450,cm-extract`}
+                    {/* Optimized Image with async decoding and ImageKit scaling */}
+                    <OptimizedImage
+                        src={images[currentIndex]}
                         alt={homestay.name}
                         width={600}
-                        height={450}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
                         onError={(e) => {
                             e.currentTarget.src = FALLBACK_IMAGE;
                         }}

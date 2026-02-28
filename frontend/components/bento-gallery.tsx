@@ -4,6 +4,7 @@ import * as React from 'react';
 import { X, ChevronLeft, ChevronRight, Images } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 const FALLBACK = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=1965&auto=format&fit=crop';
 
@@ -59,9 +60,10 @@ export function BentoGallery({ photoUrls, name, className }: BentoGalleryProps) 
                     onClick={() => openLightbox(0)}
                     aria-label={`View photo 1 of ${name}`}
                 >
-                    <img
+                    <OptimizedImage
                         src={displayPhotos[0]}
                         alt={`${name} — main photo`}
+                        width={1200}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-300" />
@@ -75,9 +77,10 @@ export function BentoGallery({ photoUrls, name, className }: BentoGalleryProps) 
                         onClick={() => openLightbox(idx + 1)}
                         aria-label={`View photo ${idx + 2} of ${name}`}
                     >
-                        <img
+                        <OptimizedImage
                             src={url}
                             alt={`${name} — photo ${idx + 2}`}
+                            width={600}
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
@@ -102,9 +105,10 @@ export function BentoGallery({ photoUrls, name, className }: BentoGalleryProps) 
                         className="flex-none w-[90vw] snap-center rounded-xl overflow-hidden focus:outline-none"
                         onClick={() => openLightbox(idx)}
                     >
-                        <img
+                        <OptimizedImage
                             src={url}
                             alt={`${name} — photo ${idx + 1}`}
+                            width={800}
                             className="w-full h-full object-cover"
                         />
                     </button>

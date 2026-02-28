@@ -388,3 +388,13 @@
   scroll-snap-align: start;
   flex-shrink: 0;
 }
+
+/* 60fps Optimization: GPU Scrolling & Scrollbars */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}

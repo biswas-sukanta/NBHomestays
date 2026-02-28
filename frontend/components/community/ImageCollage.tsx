@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface ImageCollageProps {
     images: string[];
@@ -10,15 +11,26 @@ interface ImageCollageProps {
 
 function CollageImg({ src, className, onClick }: { src: string; className?: string; onClick: () => void }) {
     const [loaded, setLoaded] = React.useState(false);
-    const optimized = src.includes('ik.imagekit.io') ? `${src}?tr=w-800,q-80` : src;
+
+    // We pass the raw src to OptimizedImage; it handles the ?tr= parsing internally
     return (
         <div className={cn('relative overflow-hidden bg-secondary/30 cursor-pointer', className)} onClick={onClick}>
             {/* Blur-up placeholder */}
-            <img src={optimized} alt="" aria-hidden className={cn('absolute inset-0 w-full h-full object-cover blur-xl scale-110 transition-opacity duration-500', loaded ? 'opacity-0' : 'opacity-100')} />
-            <img
-                src={optimized}
+            <OptimizedImage
+                src={src}
+                alt=""
+                width={800}
+                quality={80}
+                className={cn('absolute inset-0 w-full h-full object-cover blur-xl scale-110 transition-opacity duration-500', loaded ? 'opacity-0' : 'opacity-100')}
+                aria-hidden
+            />
+            {/* Main high-res image */}
+            <OptimizedImage
+                src={src}
                 alt="Post image"
-                className={cn('w-full h-full object-cover transition-all duration-500 hover:scale-105', loaded ? 'opacity-100' : 'opacity-0')}
+                width={800}
+                quality={80}
+                className={cn('w-full h-full object-cover transition-all duration-500 hover:scale-105 relative z-10', loaded ? 'opacity-100' : 'opacity-0')}
                 onLoad={() => setLoaded(true)}
             />
         </div>

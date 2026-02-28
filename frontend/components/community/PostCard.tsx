@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from '@/lib/utils';
 import { ImageCollage } from '@/components/community/ImageCollage';
 import { ImageLightbox } from '@/components/community/ImageLightbox';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CommentsSection } from '@/components/comments-section';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -476,7 +477,7 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                         <div className="grid grid-cols-3 gap-2">
                             {stagedFiles.map((f, i) => (
                                 <div key={f.id} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-200">
-                                    <img src={f.previewUrl} alt="preview" className="w-full h-full object-cover" />
+                                    <OptimizedImage src={f.previewUrl} alt="preview" className="w-full h-full object-cover" width={200} />
                                     <button onClick={() => { URL.revokeObjectURL(f.previewUrl); setStagedFiles(p => p.filter((_, j) => j !== i)); }}
                                         className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                                         <X className="w-5 h-5 text-white" />

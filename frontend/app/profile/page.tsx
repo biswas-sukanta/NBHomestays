@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 import { toast } from 'sonner';
 import { Heart, FileText, Settings, Pencil, Trash2, MapPin, Star, LogOut } from 'lucide-react';
@@ -73,11 +74,12 @@ function TripBoardsTab() {
                         exit={{ opacity: 0, scale: 0.9 }}
                         className="group relative bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                     >
-                        <Link href={`/homestays/${item.id}`}>
-                            <img
+                        <Link href={`/homestays/${item.id}`} className="block relative aspect-video">
+                            <OptimizedImage
                                 src={item.imageUrl || FALLBACK}
                                 alt={item.name}
-                                className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-500"
+                                width={400}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                         </Link>
                         <button
