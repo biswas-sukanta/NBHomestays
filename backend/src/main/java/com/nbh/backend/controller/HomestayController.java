@@ -62,13 +62,14 @@ public class HomestayController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     public HomestayDto.Response updateHomestay(
             @PathVariable("id") UUID id,
-            @RequestBody HomestayDto.Request request,
+            @RequestPart("request") HomestayDto.Request request,
+            @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
             Authentication authentication) {
         String userEmail = authentication.getName();
-        return homestayService.updateHomestay(id, request, userEmail);
+        return homestayService.updateHomestay(id, request, files, userEmail);
     }
 
     @DeleteMapping("/{id}")

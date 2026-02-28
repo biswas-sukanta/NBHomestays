@@ -124,7 +124,8 @@ public class PostService {
             @CacheEvict(value = "postsList", allEntries = true),
             @CacheEvict(value = "postDetail", key = "#id")
     })
-    public PostDto.Response updatePost(java.util.UUID id, PostDto.Request request, String userEmail) {
+    public PostDto.Response updatePost(java.util.UUID id, PostDto.Request request,
+            java.util.List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
@@ -143,41 +144,51 @@ public class PostService {
             post.setTextContent(request.getTextContent());
 
         // --- CLOUD JANITOR DIFF: Purge images removed by the user ---
+        java.util.List<com.nbh.backend.model.MediaResource> finalMergedMedia = new java.util.ArrayList<>();
         if (request.getMedia() != null) {
             java.util.List<com.nbh.backend.model.MediaResource> existingMedia = post.getMediaFiles();
-            java.util.List<MediaDto> newMedia = request.getMedia();
+            java.util.List<MediaDto> retainedMediaDtos = request.getMedia();
 
             if (existingMedia != null) {
-                // Find fileIds that were in existingMedia but are NOT in newMedia
-                java.util.Set<String> newFileIds = newMedia.stream()
+                // Find fileIds that were in existingMedia but are NOT in retainedMediaDtos
+                java.util.Set<String> retainedFileIds = retainedMediaDtos.stream()
                         .map(MediaDto::getFileId)
                         .filter(java.util.Objects::nonNull)
                         .collect(java.util.stream.Collectors.toSet());
 
                 for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
                     String oldFileId = oldResource.getFileId();
-                    if (oldFileId != null && !newFileIds.contains(oldFileId)) {
+                    if (oldFileId != null && !retainedFileIds.contains(oldFileId)) {
                         System.out.println("--- CLOUD JANITOR (UPDATE DIFF): Deleting orphaned File ID: " + oldFileId);
                         imageUploadService.deleteFile(oldFileId);
+                    } else if (oldFileId != null) {
+                        // Keep retained valid resources
+                        finalMergedMedia.add(oldResource);
                     }
                 }
             }
-            final Post finalPost = post;
-            java.util.List<com.nbh.backend.model.MediaResource> entityMedia = newMedia.stream()
-                    .map(dto -> com.nbh.backend.model.MediaResource.builder()
-                            .id(dto.getId())
-                            .url(dto.getUrl())
-                            .fileId(dto.getFileId())
-                            .post(finalPost)
-                            .build())
-                    .collect(java.util.stream.Collectors.toList());
-
-            if (post.getMediaFiles() == null) {
-                post.setMediaFiles(new java.util.ArrayList<>());
-            }
-            post.getMediaFiles().clear();
-            post.getMediaFiles().addAll(entityMedia);
         }
+
+        // --- Upload NEW files if any ---
+        final Post finalPost = post;
+        if (files != null && !files.isEmpty()) {
+            try {
+                java.util.List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
+                        .uploadFiles(files);
+                for (com.nbh.backend.model.MediaResource res : uploadedResources) {
+                    res.setPost(finalPost);
+                    finalMergedMedia.add(res);
+                }
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("Failed to upload new media files", e);
+            }
+        }
+
+        if (post.getMediaFiles() == null) {
+            post.setMediaFiles(new java.util.ArrayList<>());
+        }
+        post.getMediaFiles().clear();
+        post.getMediaFiles().addAll(finalMergedMedia);
 
         Post saved = postRepository.save(post);
         return mapToResponse(saved, userEmail);

@@ -144,7 +144,8 @@ public class HomestayService {
 
         @Caching(put = { @CachePut(value = "homestay", key = "#id") }, evict = {
                         @CacheEvict(value = "homestaysSearch", allEntries = true) })
-        public HomestayDto.Response updateHomestay(java.util.UUID id, HomestayDto.Request request, String userEmail) {
+        public HomestayDto.Response updateHomestay(java.util.UUID id, HomestayDto.Request request,
+                        java.util.List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
                 Homestay homestay = repository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Homestay not found"));
@@ -182,41 +183,50 @@ public class HomestayService {
                         homestay.setLongitude(request.getLongitude());
 
                 // --- CLOUD JANITOR V2 DIFF: Purge orphaned Photos ---
+                java.util.List<com.nbh.backend.model.MediaResource> finalMergedMedia = new java.util.ArrayList<>();
                 if (request.getMedia() != null) {
                         java.util.List<com.nbh.backend.model.MediaResource> existingMedia = homestay.getMediaFiles();
-                        java.util.List<MediaDto> newMedia = request.getMedia();
+                        java.util.List<MediaDto> retainedMediaDtos = request.getMedia();
 
                         if (existingMedia != null) {
-                                java.util.Set<String> newFileIds = newMedia.stream()
+                                java.util.Set<String> retainedFileIds = retainedMediaDtos.stream()
                                                 .map(MediaDto::getFileId)
                                                 .filter(java.util.Objects::nonNull)
                                                 .collect(java.util.stream.Collectors.toSet());
 
                                 for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
                                         if (oldResource.getFileId() != null
-                                                        && !newFileIds.contains(oldResource.getFileId())) {
+                                                        && !retainedFileIds.contains(oldResource.getFileId())) {
                                                 System.out.println("--- CLOUD JANITOR (HOMESTAY): Deleting File ID: "
                                                                 + oldResource.getFileId());
                                                 imageUploadService.deleteFile(oldResource.getFileId());
+                                        } else if (oldResource.getFileId() != null) {
+                                                finalMergedMedia.add(oldResource);
                                         }
                                 }
                         }
-                        final com.nbh.backend.model.Homestay finalH = homestay;
-                        java.util.List<com.nbh.backend.model.MediaResource> entityMedia = newMedia.stream()
-                                        .map(dto -> com.nbh.backend.model.MediaResource.builder()
-                                                        .id(dto.getId())
-                                                        .url(dto.getUrl())
-                                                        .fileId(dto.getFileId())
-                                                        .homestay(finalH)
-                                                        .build())
-                                        .collect(java.util.stream.Collectors.toList());
-
-                        if (homestay.getMediaFiles() == null) {
-                                homestay.setMediaFiles(new java.util.ArrayList<>());
-                        }
-                        homestay.getMediaFiles().clear();
-                        homestay.getMediaFiles().addAll(entityMedia);
                 }
+
+                // --- Upload NEW files if any ---
+                final com.nbh.backend.model.Homestay finalH = homestay;
+                if (files != null && !files.isEmpty()) {
+                        try {
+                                java.util.List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
+                                                .uploadFiles(files);
+                                for (com.nbh.backend.model.MediaResource res : uploadedResources) {
+                                        res.setHomestay(finalH);
+                                        finalMergedMedia.add(res);
+                                }
+                        } catch (java.io.IOException e) {
+                                throw new RuntimeException("Failed to upload new homestay media files", e);
+                        }
+                }
+
+                if (homestay.getMediaFiles() == null) {
+                        homestay.setMediaFiles(new java.util.ArrayList<>());
+                }
+                homestay.getMediaFiles().clear();
+                homestay.getMediaFiles().addAll(finalMergedMedia);
 
                 Homestay saved = repository.save(homestay);
                 return mapToResponse(saved);

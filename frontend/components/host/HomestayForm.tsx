@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -79,8 +80,9 @@ export interface HomestayFormProps {
     isEditMode?: boolean;
 }
 
-export default function HomestayForm({ id, isEditMode = false }: HomestayFormProps) {
+export default function HomestayForm({ id, isEditMode = false }: { id?: string; isEditMode?: boolean }) {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(isEditMode);
@@ -233,22 +235,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
 
         setLoading(true);
         try {
-            // STEP A: Upload New Images First (if any)
-            let finalPhotoUrls = [...existingPhotoUrls];
-            if (imageFiles.length > 0) {
-                const formData = new FormData();
-                imageFiles.forEach(staged => {
-                    formData.append('files', staged.file);
-                });
-
-                toast.info("Uploading framed images, please wait...");
-                const uploadResponse = await api.post('/api/upload', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                finalPhotoUrls = [...finalPhotoUrls, ...uploadResponse.data];
-            }
-
-            // STEP B: Submit the Homestay Payload
+            // STEP A: Prepare the Homestay DTO Payload
             const payload = {
                 name: basicInfo.name,
                 description: basicInfo.description,
@@ -256,7 +243,11 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                 latitude: location.latitude,
                 longitude: location.longitude,
                 locationName: location.locationName,
-                photoUrls: finalPhotoUrls,
+                media: existingPhotoUrls.map(url => ({
+                    // Retained photoUrls need to be mapped to the generic 'media' list for the diff check.
+                    url: url,
+                    fileId: url.split('/').pop()?.split('?')[0] // Attempt to extract fileId from ImageKit URL format. If it fails, backend relies on DB ID.
+                })),
                 tags: Array.from(new Set([...tags, topDestination])),
                 // JSONB Conversions
                 amenities: amenities.reduce((acc, curr) => ({ ...acc, [curr]: true }), {}),
@@ -282,13 +273,27 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                 }
             };
 
+            // STEP B: Compile into Multipart FormData
+            const formData = new FormData();
+            formData.append('request', new Blob([JSON.stringify(payload)], { type: "application/json" }));
+
+            if (imageFiles.length > 0) {
+                imageFiles.forEach(staged => {
+                    formData.append('files', staged.file);
+                });
+            }
+
+            toast.info(isEditMode ? "Updating homestay..." : "Creating homestay...");
+
             if (isEditMode) {
-                await api.put(`/api/homestays/${id}`, payload);
+                await api.put(`/api/homestays/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
                 toast.success("Homestay updated successfully!");
+                queryClient.invalidateQueries({ queryKey: ['homestay', id] });
             } else {
-                await api.post('/api/homestays', payload);
+                await api.post('/api/homestays', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
                 toast.success("Homestay created successfully!");
             }
+            queryClient.invalidateQueries({ queryKey: ['my-listings'] });
             router.push('/host/dashboard');
         } catch (error: any) {
             console.error("Submission Error:", error.response?.data || error.message);

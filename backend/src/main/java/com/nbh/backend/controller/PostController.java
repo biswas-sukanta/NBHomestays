@@ -61,13 +61,14 @@ public class PostController {
         return ResponseEntity.ok(postService.getPostsByUser(authentication.getName(), pageable));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.Response> updatePost(
             @PathVariable("id") java.util.UUID id,
-            @RequestBody PostDto.Request request,
+            @RequestPart("request") PostDto.Request request,
+            @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
             Authentication authentication) {
-        return ResponseEntity.ok(postService.updatePost(id, request, authentication.getName()));
+        return ResponseEntity.ok(postService.updatePost(id, request, files, authentication.getName()));
     }
 
     @DeleteMapping("/{id}")

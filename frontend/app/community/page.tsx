@@ -29,6 +29,8 @@ interface HomestayOption { id: string; name: string; address?: string; }
 // ── Post Composer Inline ───────────────────────────────────────
 interface RepostTarget { id: string; authorName: string; textContent: string; }
 function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { postData?: Post; repostTarget?: RepostTarget; onSuccess: (post: Post) => void; onCancel: () => void; }) {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
     const [text, setText] = useState(postData?.textContent || '');
     const [location, setLocation] = useState(postData?.locationName || '');
     const [submitting, setSubmitting] = useState(false);
@@ -103,22 +105,10 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
         setError('');
         setSubmitting(true);
         try {
-            let finalMedia = [...existingMedia];
-
-            if (stagedFiles.length > 0) {
-                const formData = new FormData();
-                stagedFiles.forEach(staged => formData.append('files', staged.file));
-                toast.info("Uploading images...");
-                const uploadRes = await api.post('/api/upload', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                finalMedia = [...finalMedia, ...uploadRes.data];
-            }
-
             const payload: any = {
                 textContent: text,
                 locationName: location || 'North Bengal',
-                media: finalMedia
+                media: existingMedia // These are retained media
             };
             if (selectedHomestay) {
                 payload.homestayId = selectedHomestay;
@@ -127,8 +117,20 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                 payload.repostedFromPostId = repostTarget.id;
             }
 
+            const formData = new FormData();
+            formData.append('request', new Blob([JSON.stringify(payload)], { type: "application/json" }));
+            if (stagedFiles.length > 0) {
+                stagedFiles.forEach(staged => formData.append('files', staged.file));
+            }
+
+            toast.info(postData ? "Updating story..." : "Sharing story...");
             const endpoint = postData ? `/api/posts/${postData.id}` : '/api/posts';
-            const res = postData ? await api.put(endpoint, payload) : await api.post(endpoint, payload);
+            const res = postData
+                ? await api.put(endpoint, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+                : await api.post(endpoint, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+
+            // Invalidate React Query cache
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
 
             onSuccess(res.data);
             stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
