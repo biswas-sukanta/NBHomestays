@@ -249,6 +249,20 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
     );
 }
 
+const CommunityFeedSkeleton = () => (
+    <div className="min-h-screen bg-background">
+        <SharedPageBanner
+            title="Community"
+            subtitle="Stories, tips, and incredible moments from North Bengal travellers."
+        />
+        <div className="container mx-auto max-w-2xl px-4 py-8 space-y-8">
+            <div className="space-y-4">
+                {[1, 2, 3].map(i => <PostSkeleton key={i} />)}
+            </div>
+        </div>
+    </div>
+);
+
 // ── Main Feed Page ─────────────────────────────────────────────
 export default function CommunityPage() {
     const { isAuthenticated, user } = useAuth() as any;
@@ -270,15 +284,15 @@ export default function CommunityPage() {
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
-        status,
-        isLoading
+        isPending,
+        isError
     } = useInfiniteQuery({
         queryKey: ['community-posts'],
         queryFn: fetchPosts,
         initialPageParam: 0,
         getNextPageParam: (lastPage) => {
-            if (lastPage.last) return undefined;
-            return lastPage.pageable.pageNumber + 1;
+            if (lastPage?.last) return undefined;
+            return lastPage?.pageable?.pageNumber + 1;
         },
     });
 
@@ -287,6 +301,14 @@ export default function CommunityPage() {
             fetchNextPage();
         }
     }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage, searchQuery]);
+
+    if (isPending) {
+        return <CommunityFeedSkeleton />;
+    }
+
+    if (isError) {
+        return <div className="text-center py-20 text-red-500">Failed to load feed. Please try again.</div>;
+    }
 
     const handleNewPost = () => {
         queryClient.invalidateQueries({ queryKey: ['community-posts'] });
@@ -313,7 +335,7 @@ export default function CommunityPage() {
         }
     };
 
-    const posts = data?.pages.flatMap(page => page.content) || [];
+    const posts = data?.pages?.flatMap(page => page.content || page.data || []) || [];
 
     const filteredPosts = posts.filter(p =>
         !searchQuery ||
@@ -356,14 +378,14 @@ export default function CommunityPage() {
                     ))}
                 </AnimatePresence>
 
-                {filteredPosts.length === 0 && !isLoading && (
+                {filteredPosts.length === 0 && (
                     <div className="text-center py-20 text-muted-foreground">
                         <div className="text-4xl mb-4">🍃</div>
                         <p className="font-medium text-lg">No stories found.</p>
                     </div>
                 )}
 
-                {(isLoading || isFetchingNextPage) && (
+                {isFetchingNextPage && (
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => <PostSkeleton key={i} />)}
                     </div>
