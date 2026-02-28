@@ -2,6 +2,7 @@ package com.nbh.backend.service;
 
 import com.nbh.backend.dto.PostDto;
 import com.nbh.backend.dto.AuthorDto;
+import com.nbh.backend.dto.MediaDto;
 import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.MediaResource;
 import com.nbh.backend.model.Post;
@@ -56,7 +57,13 @@ public class PostService {
         Post post = Post.builder()
                 .locationName(request.getLocationName())
                 .textContent(request.getTextContent())
-                .mediaFiles(request.getMedia() != null ? request.getMedia() : new java.util.ArrayList<>())
+                .mediaFiles(request.getMedia() != null ? request.getMedia().stream()
+                        .map(dto -> com.nbh.backend.model.MediaResource.builder()
+                                .id(dto.getId())
+                                .url(dto.getUrl())
+                                .fileId(dto.getFileId())
+                                .build())
+                        .collect(java.util.stream.Collectors.toList()) : new java.util.ArrayList<>())
                 .user(user)
                 .homestay(homestay)
                 .originalPost(originalPost)
@@ -137,17 +144,17 @@ public class PostService {
 
         // --- CLOUD JANITOR DIFF: Purge images removed by the user ---
         if (request.getMedia() != null) {
-            java.util.List<MediaResource> existingMedia = post.getMediaFiles();
-            java.util.List<MediaResource> newMedia = request.getMedia();
+            java.util.List<com.nbh.backend.model.MediaResource> existingMedia = post.getMediaFiles();
+            java.util.List<MediaDto> newMedia = request.getMedia();
 
             if (existingMedia != null) {
                 // Find fileIds that were in existingMedia but are NOT in newMedia
                 java.util.Set<String> newFileIds = newMedia.stream()
-                        .map(MediaResource::getFileId)
+                        .map(MediaDto::getFileId)
                         .filter(java.util.Objects::nonNull)
                         .collect(java.util.stream.Collectors.toSet());
 
-                for (MediaResource oldResource : existingMedia) {
+                for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
                     String oldFileId = oldResource.getFileId();
                     if (oldFileId != null && !newFileIds.contains(oldFileId)) {
                         System.out.println("--- CLOUD JANITOR (UPDATE DIFF): Deleting orphaned File ID: " + oldFileId);
@@ -156,8 +163,15 @@ public class PostService {
                 }
             }
             final Post finalPost = post;
-            newMedia.forEach(m -> m.setPost(finalPost));
-            post.setMediaFiles(newMedia);
+            java.util.List<com.nbh.backend.model.MediaResource> entityMedia = newMedia.stream()
+                    .map(dto -> com.nbh.backend.model.MediaResource.builder()
+                            .id(dto.getId())
+                            .url(dto.getUrl())
+                            .fileId(dto.getFileId())
+                            .post(finalPost)
+                            .build())
+                    .collect(java.util.stream.Collectors.toList());
+            post.setMediaFiles(entityMedia);
         }
 
         Post saved = postRepository.save(post);
@@ -259,7 +273,13 @@ public class PostService {
                 .locationName(
                         request.getLocationName() != null ? request.getLocationName() : original.getLocationName())
                 .textContent(request.getTextContent() != null ? request.getTextContent() : "")
-                .mediaFiles(request.getMedia() != null ? request.getMedia() : new java.util.ArrayList<>())
+                .mediaFiles(request.getMedia() != null ? request.getMedia().stream()
+                        .map(dto -> com.nbh.backend.model.MediaResource.builder()
+                                .id(dto.getId())
+                                .url(dto.getUrl())
+                                .fileId(dto.getFileId())
+                                .build())
+                        .collect(java.util.stream.Collectors.toList()) : new java.util.ArrayList<>())
                 .user(user)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -315,15 +335,25 @@ public class PostService {
                 .avatarUrl(post.getUser().getAvatarUrl())
                 .isVerifiedHost(post.getUser().isVerifiedHost())
                 .build();
+        List<MediaDto> dtoMedia = combinedMedia.stream()
+                .map(m -> MediaDto.builder().id(m.getId()).url(m.getUrl()).fileId(m.getFileId()).build())
+                .collect(java.util.stream.Collectors.toList());
+
+        // Define homestay and authorName for the builder, assuming they are derived
+        // from 'post' and 'author'
+        // as per the original structure and the provided snippet's context.
+        com.nbh.backend.model.Homestay homestay = post.getHomestay();
+        String authorName = post.getUser().getFirstName()
+                + (post.getUser().getLastName() != null ? " " + post.getUser().getLastName() : "");
 
         return PostDto.Response.builder()
                 .id(post.getId())
                 .author(author)
                 .locationName(post.getLocationName())
                 .textContent(post.getTextContent())
-                .media(combinedMedia)
-                .homestayId(post.getHomestay() != null ? post.getHomestay().getId() : null)
-                .homestayName(post.getHomestay() != null ? post.getHomestay().getName() : null)
+                .media(dtoMedia)
+                .homestayId(homestay != null ? homestay.getId() : null)
+                .homestayName(homestay != null ? homestay.getName() : null)
                 .loveCount(post.getLoveCount())
                 .shareCount(post.getShareCount())
                 .commentCount(post.getComments() != null ? post.getComments().size() : 0)

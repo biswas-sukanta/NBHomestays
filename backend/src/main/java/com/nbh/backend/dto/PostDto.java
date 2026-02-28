@@ -1,7 +1,5 @@
 package com.nbh.backend.dto;
 
-import com.nbh.backend.model.MediaResource;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +18,7 @@ public class PostDto {
     public static class Request {
         private String locationName;
         private String textContent;
-        private List<MediaResource> media;
+        private List<MediaDto> media;
         private UUID homestayId;
         private UUID originalPostId;
     }
@@ -34,7 +32,7 @@ public class PostDto {
         private AuthorDto author;
         private String locationName;
         private String textContent;
-        private List<MediaResource> media;
+        private List<MediaDto> media;
         private UUID homestayId;
         private String homestayName;
         private int loveCount;

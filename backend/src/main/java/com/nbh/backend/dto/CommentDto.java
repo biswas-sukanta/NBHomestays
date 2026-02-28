@@ -1,7 +1,5 @@
 package com.nbh.backend.dto;
 
-import com.nbh.backend.model.MediaResource;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,7 +22,7 @@ public class CommentDto {
     @NoArgsConstructor
     public static class Request {
         private String body;
-        private List<MediaResource> media;
+        private List<MediaDto> media;
     }
 
     private UUID id;
@@ -34,7 +32,7 @@ public class CommentDto {
     private AuthorDto author;
 
     private String body;
-    private List<MediaResource> media;
+    private List<MediaDto> media;
     private LocalDateTime createdAt;
 
     /** First-level replies (populated only for top-level comments). */

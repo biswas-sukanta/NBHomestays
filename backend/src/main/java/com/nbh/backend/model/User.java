@@ -61,16 +61,19 @@ public class User implements UserDetails {
     @Builder.Default
     private List<String> badges = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
     private List<Homestay> homestays;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
     private List<Post> posts;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
@@ -80,16 +83,19 @@ public class User implements UserDetails {
     // incompatible.
     // Likes are managed via LikeService + PostLikeRepository directly.
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
     private List<com.nbh.backend.model.Review> reviews;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
     private List<HomestayQuestion> questions;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude

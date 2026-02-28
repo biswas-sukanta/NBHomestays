@@ -33,11 +33,13 @@ public class Comment {
     private boolean isDeleted = false;
 
     /** The post this comment belongs to. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
     /** The author of this comment. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -46,6 +48,7 @@ public class Comment {
      * Self-referential parent (adjacency list).
      * NULL = top-level comment.
      */
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Comment parent;

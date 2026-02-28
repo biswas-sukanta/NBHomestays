@@ -45,7 +45,7 @@ public class HomestayDto {
         private java.util.Map<String, String> quickFacts;
         private java.util.List<String> tags;
         private java.util.Map<String, Object> hostDetails;
-        private java.util.List<com.nbh.backend.model.MediaResource> media;
+        private java.util.List<MediaDto> media;
     }
 
     @Data
@@ -66,7 +66,7 @@ public class HomestayDto {
         private java.util.Map<String, String> quickFacts;
         private java.util.List<String> tags;
         private java.util.Map<String, Object> hostDetails;
-        private java.util.List<com.nbh.backend.model.MediaResource> media;
+        private java.util.List<MediaDto> media;
         private Double vibeScore;
         private Double avgAtmosphereRating;
         private Double avgServiceRating;

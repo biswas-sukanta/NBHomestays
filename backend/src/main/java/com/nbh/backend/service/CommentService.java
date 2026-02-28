@@ -1,7 +1,8 @@
 package com.nbh.backend.service;
 
-import com.nbh.backend.dto.CommentDto;
 import com.nbh.backend.dto.AuthorDto;
+import com.nbh.backend.dto.CommentDto;
+import com.nbh.backend.dto.MediaDto;
 import com.nbh.backend.model.Comment;
 import com.nbh.backend.model.Post;
 import com.nbh.backend.model.User;
@@ -50,8 +51,15 @@ public class CommentService {
 
                 if (request.getMedia() != null) {
                         final Comment finalC = comment;
-                        request.getMedia().forEach(m -> m.setComment(finalC));
-                        comment.setMediaFiles(request.getMedia());
+                        java.util.List<com.nbh.backend.model.MediaResource> entityMedia = request.getMedia().stream()
+                                        .map(dto -> com.nbh.backend.model.MediaResource.builder()
+                                                        .id(dto.getId())
+                                                        .url(dto.getUrl())
+                                                        .fileId(dto.getFileId())
+                                                        .comment(finalC)
+                                                        .build())
+                                        .collect(java.util.stream.Collectors.toList());
+                        comment.setMediaFiles(entityMedia);
                 }
 
                 return toDto(commentRepository.save(comment), true);
@@ -79,8 +87,15 @@ public class CommentService {
 
                 if (request.getMedia() != null) {
                         final Comment finalReply = reply;
-                        request.getMedia().forEach(m -> m.setComment(finalReply));
-                        reply.setMediaFiles(request.getMedia());
+                        java.util.List<com.nbh.backend.model.MediaResource> entityMedia = request.getMedia().stream()
+                                        .map(dto -> com.nbh.backend.model.MediaResource.builder()
+                                                        .id(dto.getId())
+                                                        .url(dto.getUrl())
+                                                        .fileId(dto.getFileId())
+                                                        .comment(finalReply)
+                                                        .build())
+                                        .collect(java.util.stream.Collectors.toList());
+                        reply.setMediaFiles(entityMedia);
                 }
 
                 return toDto(commentRepository.save(reply), false);
@@ -167,6 +182,11 @@ public class CommentService {
                         }
                 }
 
+                List<MediaDto> dtoMedia = combinedMedia.stream()
+                                .map(m -> MediaDto.builder().id(m.getId()).url(m.getUrl()).fileId(m.getFileId())
+                                                .build())
+                                .collect(Collectors.toList());
+
                 return CommentDto.builder()
                                 .id(c.getId())
                                 .postId(c.getPost().getId())
@@ -178,7 +198,7 @@ public class CommentService {
                                                 .avatarUrl(author.getAvatarUrl())
                                                 .build())
                                 .body(c.getBody())
-                                .media(combinedMedia)
+                                .media(dtoMedia)
                                 .createdAt(c.getCreatedAt())
                                 .replies(replies)
                                 .replyCount(replies.size())

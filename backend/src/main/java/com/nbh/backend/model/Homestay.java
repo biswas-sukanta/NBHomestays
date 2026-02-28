@@ -38,6 +38,7 @@ public class Homestay {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;

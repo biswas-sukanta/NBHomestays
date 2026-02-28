@@ -2,6 +2,7 @@ package com.nbh.backend.service;
 
 import com.nbh.backend.dto.HomestayDto;
 import com.nbh.backend.dto.AuthorDto;
+import com.nbh.backend.dto.MediaDto;
 import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.MediaResource;
 import com.nbh.backend.model.User;
@@ -60,8 +61,15 @@ public class HomestayService {
 
                 if (request.getMedia() != null) {
                         final com.nbh.backend.model.Homestay finalH = homestay;
-                        request.getMedia().forEach(m -> m.setHomestay(finalH));
-                        homestay.setMediaFiles(request.getMedia());
+                        java.util.List<com.nbh.backend.model.MediaResource> entityMedia = request.getMedia().stream()
+                                        .map(dto -> com.nbh.backend.model.MediaResource.builder()
+                                                        .id(dto.getId())
+                                                        .url(dto.getUrl())
+                                                        .fileId(dto.getFileId())
+                                                        .homestay(finalH)
+                                                        .build())
+                                        .collect(java.util.stream.Collectors.toList());
+                        homestay.setMediaFiles(entityMedia);
                 }
 
                 return mapToResponse(repository.save(homestay));
@@ -175,16 +183,16 @@ public class HomestayService {
 
                 // --- CLOUD JANITOR V2 DIFF: Purge orphaned Photos ---
                 if (request.getMedia() != null) {
-                        java.util.List<MediaResource> existingMedia = homestay.getMediaFiles();
-                        java.util.List<MediaResource> newMedia = request.getMedia();
+                        java.util.List<com.nbh.backend.model.MediaResource> existingMedia = homestay.getMediaFiles();
+                        java.util.List<MediaDto> newMedia = request.getMedia();
 
                         if (existingMedia != null) {
                                 java.util.Set<String> newFileIds = newMedia.stream()
-                                                .map(MediaResource::getFileId)
+                                                .map(MediaDto::getFileId)
                                                 .filter(java.util.Objects::nonNull)
                                                 .collect(java.util.stream.Collectors.toSet());
 
-                                for (MediaResource oldResource : existingMedia) {
+                                for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
                                         if (oldResource.getFileId() != null
                                                         && !newFileIds.contains(oldResource.getFileId())) {
                                                 System.out.println("--- CLOUD JANITOR (HOMESTAY): Deleting File ID: "
@@ -194,8 +202,15 @@ public class HomestayService {
                                 }
                         }
                         final com.nbh.backend.model.Homestay finalH = homestay;
-                        newMedia.forEach(m -> m.setHomestay(finalH));
-                        homestay.setMediaFiles(newMedia);
+                        java.util.List<com.nbh.backend.model.MediaResource> entityMedia = newMedia.stream()
+                                        .map(dto -> com.nbh.backend.model.MediaResource.builder()
+                                                        .id(dto.getId())
+                                                        .url(dto.getUrl())
+                                                        .fileId(dto.getFileId())
+                                                        .homestay(finalH)
+                                                        .build())
+                                        .collect(java.util.stream.Collectors.toList());
+                        homestay.setMediaFiles(entityMedia);
                 }
 
                 Homestay saved = repository.save(homestay);
@@ -281,7 +296,11 @@ public class HomestayService {
                                 .quickFacts(quickFacts)
                                 .tags(tags)
                                 .hostDetails(hostDetails)
-                                .media(new java.util.ArrayList<>(homestay.getMediaFiles()))
+                                .media(homestay.getMediaFiles() != null ? homestay.getMediaFiles().stream()
+                                                .map(m -> MediaDto.builder().id(m.getId()).url(m.getUrl())
+                                                                .fileId(m.getFileId()).build())
+                                                .collect(java.util.stream.Collectors.toList())
+                                                : new java.util.ArrayList<>())
                                 .vibeScore(homestay.getVibeScore())
                                 .avgAtmosphereRating(homestay.getAvgAtmosphereRating())
                                 .avgServiceRating(homestay.getAvgServiceRating())
