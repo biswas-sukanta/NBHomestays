@@ -34,7 +34,9 @@ export default function HostDashboard() {
     const fetchListings = async () => {
         try {
             const res = await homestayApi.getMyListings();
-            const data: Homestay[] = (res.data as any[]).map((h: any) => ({
+            const responseData = res.data as any;
+            const listingsArray = responseData.content ? responseData.content : responseData;
+            const data: Homestay[] = listingsArray.map((h: any) => ({
                 id: h.id,
                 name: h.name || '',
                 pricePerNight: h.pricePerNight || 0,
@@ -42,6 +44,7 @@ export default function HostDashboard() {
                 location: null,
             }));
             setListings(data);
+
         } catch (error) {
             console.error(error);
             toast.error("Failed to fetch listings");

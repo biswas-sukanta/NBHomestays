@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+
 import { toast } from 'sonner';
 import { Heart, FileText, Settings, Pencil, Trash2, MapPin, Star, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -98,23 +100,28 @@ function TripBoardsTab() {
 
 // ── My Posts Tab ──────────────────────────────────────────────
 function MyPostsTab() {
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data, isPending, isError } = useQuery({
+        queryKey: ['my-posts'],
+        queryFn: async () => {
+            const res = await api.get('/api/posts/my-posts');
+            return res.data;
+        }
+    });
 
-    useEffect(() => {
-        api.get('/api/posts/my-posts')
-            .then(r => setPosts(r.data))
-            .catch(() => toast.error('Failed to load posts'))
-            .finally(() => setLoading(false));
-    }, []);
+    if (isPending) return <div className="space-y-4">{[1, 2, 3].map(i => <div key={i} className="h-24 rounded-2xl skeleton-shimmer" />)}</div>;
+    if (isError) return <div className="py-20 text-center text-red-500 font-medium">Failed to load posts. Please try again.</div>;
 
-    if (loading) return <div className="space-y-4">{[1, 2, 3].map(i => <div key={i} className="h-24 rounded-2xl skeleton-shimmer" />)}</div>;
+    // Safe extraction
+    const posts = data?.pages ? data.pages.flatMap((p: any) => p.content || p.data || []) : (data?.content || data || []);
+
     if (posts.length === 0) return <p className="text-center py-20 text-muted-foreground font-medium">You haven't posted anything yet. <Link href="/community" className="text-green-600 font-bold hover:underline">Share your experience →</Link></p>;
 
     return (
+
         <div className="grid gap-4 sm:grid-cols-2">
-            {posts.map(post => (
+            {posts.map((post: Post) => (
                 <div key={post.id}>
+
                     <motion.div
                         whileHover={{ scale: 1.01 }}
                         className="group bg-card border border-border/80 hover:border-green-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all h-full flex flex-col"

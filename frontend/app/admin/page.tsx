@@ -60,9 +60,10 @@ export default function AdminPage() {
                 api.get('/api/posts'),
                 api.get('/api/admin/stats'),
             ]);
-            setPendingHomestays(pendingRes.data);
-            setAllHomestays(allRes.data);
+            setPendingHomestays(pendingRes.data.content ? pendingRes.data.content : pendingRes.data);
+            setAllHomestays(allRes.data.content ? allRes.data.content : allRes.data);
             setPosts(Array.isArray(postsRes.data) ? postsRes.data : postsRes.data.content ?? []);
+
             setStats(statsRes.data);
         } catch (error) {
             console.error('Failed to fetch admin data', error);
