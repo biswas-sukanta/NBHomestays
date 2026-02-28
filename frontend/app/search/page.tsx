@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
 
 const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
     ssr: false,
@@ -266,9 +267,9 @@ function SearchResults() {
                                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight">Top Destinations</h2>
                                 <p className="text-gray-500 text-base">Unwind in the most sought-after hills.</p>
                             </div>
-                            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-6">
+                            <CarouselWrapper>
                                 {DESTINATIONS.map(d => <DestinationCard key={d.name} dest={d} isActive={tag === d.name} />)}
-                            </div>
+                            </CarouselWrapper>
                         </section>
 
                         <HomestaySwimlane
