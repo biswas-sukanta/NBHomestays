@@ -104,7 +104,12 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
         if (!post.getUser().getEmail().equals(userEmail)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to update this post.");
+            User requestor = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Requesting user not found"));
+            if (requestor.getRole() != User.Role.ROLE_ADMIN) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "You do not have permission to update this post.");
+            }
         }
 
         if (request.getLocationName() != null)
@@ -127,7 +132,12 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
         if (!post.getUser().getEmail().equals(userEmail)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to delete this post.");
+            User requestor = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Requesting user not found"));
+            if (requestor.getRole() != User.Role.ROLE_ADMIN) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "You do not have permission to delete this post.");
+            }
         }
 
         postRepository.delete(post);

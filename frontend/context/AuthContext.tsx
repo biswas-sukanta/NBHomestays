@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 
 interface User {
+    id: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -15,6 +16,7 @@ interface User {
 interface DecodedToken {
     sub: string;
     role: string;
+    userId: string;
     // other fields if needed
 }
 
@@ -45,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // We might not have full user details from token, but we have role
                 // ideally we fetch /me, but for now let's set what we can
                 setUser({
+                    id: decoded.userId || '',
                     firstName: '', // fetch or decoded?
                     lastName: '',
                     email: decoded.sub,
@@ -65,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('refreshToken', refreshToken);
         const decoded = jwtDecode<DecodedToken>(token);
         setUser({
+            id: decoded.userId || '',
             firstName: '',
             lastName: '',
             email: decoded.sub,

@@ -32,7 +32,9 @@ public class AuthenticationService {
                         throw new RuntimeException("User already exists with email: " + request.getEmail());
                 }
                 repository.save(user);
-                var jwtToken = jwtService.generateToken(java.util.Map.of("role", user.getRole().name()), user);
+                var jwtToken = jwtService.generateToken(java.util.Map.of(
+                                "role", user.getRole().name(),
+                                "userId", user.getId().toString()), user);
                 return AuthDto.AuthenticationResponse.builder()
                                 .accessToken(jwtToken)
                                 .build();
@@ -45,7 +47,9 @@ public class AuthenticationService {
                                                 request.getPassword()));
                 var user = repository.findByEmail(request.getEmail())
                                 .orElseThrow();
-                var jwtToken = jwtService.generateToken(java.util.Map.of("role", user.getRole().name()), user);
+                var jwtToken = jwtService.generateToken(java.util.Map.of(
+                                "role", user.getRole().name(),
+                                "userId", user.getId().toString()), user);
                 return AuthDto.AuthenticationResponse.builder()
                                 .accessToken(jwtToken)
                                 .build();

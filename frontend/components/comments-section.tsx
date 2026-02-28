@@ -48,9 +48,10 @@ interface SingleCommentProps {
     onDelete: (id: string) => void;
     currentUserId?: string;
     token?: string;
+    currentUserRole?: string;
 }
 
-function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, token }: SingleCommentProps) {
+function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, token, currentUserRole }: SingleCommentProps) {
     const [showReplies, setShowReplies] = useState(false);
     const [replying, setReplying] = useState(false);
     const [replyBody, setReplyBody] = useState('');
@@ -80,7 +81,7 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
         } finally { setSubmitting(false); }
     };
 
-    const isOwner = currentUserId === comment.authorId;
+    const isOwner = currentUserId === comment.authorId || currentUserRole === 'ROLE_ADMIN';
     const totalReplies = localReplies.length;
 
     return (
@@ -174,6 +175,9 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                             postId={postId}
                             depth={depth + 1}
                             onDelete={onDelete}
+                            currentUserId={currentUserId}
+                            token={token}
+                            currentUserRole={currentUserRole}
                         />
                     </motion.div>
                 ))}
@@ -364,6 +368,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                                 onDelete={deleteComment}
                                                 currentUserId={user?.id}
                                                 token={token || undefined}
+                                                currentUserRole={user?.role}
                                             />
                                         ))}
                                     </div>
