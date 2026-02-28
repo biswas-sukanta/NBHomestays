@@ -259,33 +259,8 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
     );
 }
 
-// ── Feed PostCard Wrapper ──────────────────────────────────────
-// Thin wrapper: handles the edit-mode toggle locally, then delegates to the universal PostCard.
-function FeedPostCard({ post, user, onUpdate, onDelete, onOpenComments }: { post: Post; user: any; onUpdate: (p: Post) => void; onDelete: (id: string) => void; onOpenComments: (postId: string) => void; }) {
-    const [isEditing, setIsEditing] = useState(false);
+// FeedPostCard wrapper removed - Logic moved to Main Feed Page for state centralization
 
-    if (isEditing) {
-        return (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="z-10 relative">
-                <PostComposerInline
-                    postData={post}
-                    onSuccess={(p) => { onUpdate(p); setIsEditing(false); toast.success('Post updated!'); }}
-                    onCancel={() => setIsEditing(false)}
-                />
-            </motion.div>
-        );
-    }
-
-    return (
-        <PostCard
-            post={post}
-            currentUser={user}
-            onUpdate={onUpdate}
-            onDelete={onDelete}
-            onOpenComments={onOpenComments}
-        />
-    );
-}
 
 // ── Main Feed Page ─────────────────────────────────────────────
 export default function CommunityPage() {
@@ -295,6 +270,7 @@ export default function CommunityPage() {
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
     const [composerOpen, setComposerOpen] = useState(false);
+    const [postToEdit, setPostToEdit] = useState<Post | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
     const observerRef = useRef<HTMLDivElement>(null);
@@ -327,10 +303,14 @@ export default function CommunityPage() {
     const handleNewPost = (post: Post) => {
         setPosts(prev => [post, ...prev]);
         setComposerOpen(false);
+        setPostToEdit(null);
     };
 
     const handleUpdatePost = (updated: Post) => {
         setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
+        setComposerOpen(false);
+        setPostToEdit(null);
+        toast.success('Post updated!');
     };
 
     const handleDeletePost = async (id: string) => {
@@ -379,7 +359,15 @@ export default function CommunityPage() {
 
                 <AnimatePresence>
                     {filteredPosts.map(post => (
-                        <FeedPostCard key={post.id} post={post} user={user} onUpdate={handleUpdatePost} onDelete={handleDeletePost} onOpenComments={(postId) => setActiveCommentPostId(postId)} />
+                        <PostCard
+                            key={post.id}
+                            post={post}
+                            currentUser={user}
+                            onEdit={(p) => { setPostToEdit(p); setComposerOpen(true); }}
+                            onUpdate={handleUpdatePost}
+                            onDelete={handleDeletePost}
+                            onOpenComments={(postId) => setActiveCommentPostId(postId)}
+                        />
                     ))}
                 </AnimatePresence>
 
@@ -411,7 +399,7 @@ export default function CommunityPage() {
             <AnimatePresence>
                 {isAuthenticated && !composerOpen && (
                     <motion.button data-testid="fab-add-post" key="fab" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                        onClick={() => setComposerOpen(true)}
+                        onClick={() => { setPostToEdit(null); setComposerOpen(true); }}
                         className="fixed bottom-24 right-5 sm:bottom-10 sm:right-10 w-16 h-16 rounded-full bg-green-600 focus:ring-4 focus:ring-green-600/30 text-white shadow-xl shadow-green-900/20 flex items-center justify-center hover:bg-green-700 transition-all z-40"
                         aria-label="Write a Story">
                         <Pencil className="w-6 h-6" />
@@ -422,7 +410,11 @@ export default function CommunityPage() {
             {/* Composer Modal Background Overlay */}
             <AnimatePresence>
                 {composerOpen && (
-                    <PostComposerInline onSuccess={handleNewPost} onCancel={() => setComposerOpen(false)} />
+                    <PostComposerInline
+                        postData={postToEdit || undefined}
+                        onSuccess={postToEdit ? handleUpdatePost : handleNewPost}
+                        onCancel={() => { setComposerOpen(false); setPostToEdit(null); }}
+                    />
                 )}
             </AnimatePresence>
 

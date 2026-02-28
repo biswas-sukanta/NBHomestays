@@ -121,8 +121,29 @@ public class PostService {
             post.setLocationName(request.getLocationName());
         if (request.getTextContent() != null)
             post.setTextContent(request.getTextContent());
-        if (request.getMediaFiles() != null)
-            post.setMediaFiles(request.getMediaFiles());
+
+        // --- CLOUD JANITOR DIFF: Purge images removed by the user ---
+        if (request.getMediaFiles() != null) {
+            java.util.List<MediaResource> existingMedia = post.getMediaFiles();
+            java.util.List<MediaResource> newMedia = request.getMediaFiles();
+
+            if (existingMedia != null) {
+                // Find fileIds that were in existingMedia but are NOT in newMedia
+                java.util.Set<String> newFileIds = newMedia.stream()
+                        .map(MediaResource::getFileId)
+                        .filter(java.util.Objects::nonNull)
+                        .collect(java.util.stream.Collectors.toSet());
+
+                for (MediaResource oldResource : existingMedia) {
+                    String oldFileId = oldResource.getFileId();
+                    if (oldFileId != null && !newFileIds.contains(oldFileId)) {
+                        System.out.println("--- CLOUD JANITOR (UPDATE DIFF): Deleting orphaned File ID: " + oldFileId);
+                        imageUploadService.deleteFile(oldFileId);
+                    }
+                }
+            }
+            post.setMediaFiles(newMedia);
+        }
 
         Post saved = postRepository.save(post);
         return mapToResponse(saved, userEmail);

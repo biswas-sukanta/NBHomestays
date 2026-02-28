@@ -57,9 +57,11 @@ export interface QuotePost {
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface PostCardProps {
     post: CommunityPost;
-    /** Show edit/delete controls (only on main feed where callbacks are available) */
+    /** Existing update callback for when data actually changes (passed to composer) */
     onUpdate?: (p: CommunityPost) => void;
     onDelete?: (id: string) => void;
+    /** Trigger for opening the edit modal from the parent */
+    onEdit?: (p: CommunityPost) => void;
     /** Passed from feed page for owner comparison */
     currentUser?: any;
     /** In detail view: disable card-level link, disable hover lift */
@@ -115,7 +117,7 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
 }
 
 // ── PostCard ──────────────────────────────────────────────────────────────────
-export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQuoted = false, onOpenComments, onNewPost }: PostCardProps) {
+export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepost, isQuoted = false, onOpenComments, onNewPost }: PostCardProps) {
     const authorName = post.author?.name || 'Traveller';
     const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
@@ -123,7 +125,6 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
     const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN';
     const canModify = isOwner || isAdmin;
 
-    const [isEditing, setIsEditing] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [shareCount, setShareCount] = useState<number>(Number(post.shareCount) || 0);
     const [sharing, setSharing] = useState(false);
@@ -138,15 +139,14 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
         const url = `${window.location.origin}/community/post/${post.id}`;
         try {
             if (typeof navigator !== 'undefined' && navigator.share) {
-                await navigator.share({ title: `${authorName}'s story`, text: post.textContent?.slice(0, 100), url });
+                await navigator.share({ title: 'North Bengal Homestays Story', text: post.textContent, url });
+                setShareCount(prev => prev + 1);
+                await api.post(`/api/posts/${post.id}/share`);
             } else {
                 await navigator.clipboard.writeText(url);
                 toast.success('Link copied to clipboard!');
             }
-            await api.post(`/api/posts/${post.id}/share`);
-            setShareCount(c => c + 1);
         } catch (err: any) {
-            // AbortError = user cancelled share dialog, not a true error
             if (err?.name !== 'AbortError') toast.error('Could not share post');
         } finally {
             setSharing(false);
@@ -227,7 +227,7 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
                         <div className="flex items-center gap-3 ml-auto pointer-events-auto">
                             <button
                                 data-testid="edit-post-btn"
-                                onClick={() => setIsEditing(true)}
+                                onClick={() => onEdit?.(post)}
                                 className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
                             >
                                 Edit
