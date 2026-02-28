@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 import { Heart, MessageCircle, MapPin, Pencil, MoreHorizontal, Trash2, Share2, Loader2, Repeat2, X, Send, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -14,7 +15,6 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CommentsSection } from '@/components/comments-section';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { AnimatePresence } from 'framer-motion';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 export interface CommunityPost {
@@ -386,6 +386,7 @@ import { CustomCombobox } from '@/components/ui/combobox';
 interface HomestayOpt { id: string; name: string; }
 
 function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: QuotePost; onSuccess: (post?: CommunityPost) => void; onCancel: () => void }) {
+    const queryClient = useQueryClient();
     const [text, setText] = useState('');
     const [location, setLocation] = useState('North Bengal');
     const [submitting, setSubmitting] = useState(false);
@@ -427,6 +428,8 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
             if (selectedHomestay) payload.homestayId = selectedHomestay;
             const res = await api.post('/api/posts', payload);
             toast.success('Reposted!');
+            // Invalidate the posts feed to show the new repost
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
             stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
             onSuccess(res.data);
         } catch {

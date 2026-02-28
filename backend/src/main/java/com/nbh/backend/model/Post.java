@@ -50,6 +50,7 @@ public class Post {
     private String textContent;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
     @Builder.Default
     private List<MediaResource> mediaFiles = new java.util.ArrayList<>();
 

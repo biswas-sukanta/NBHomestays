@@ -293,6 +293,8 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                 await api.post('/api/homestays', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
                 toast.success("Homestay created successfully!");
             }
+            // Invalidate both lists to ensure the new thumbnail propagates everywhere
+            queryClient.invalidateQueries({ queryKey: ['homestays'] });
             queryClient.invalidateQueries({ queryKey: ['my-listings'] });
             router.push('/host/dashboard');
         } catch (error: any) {

@@ -76,6 +76,7 @@ public class Homestay {
     private java.util.Map<String, Object> hostDetails;
 
     @OneToMany(mappedBy = "homestay", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
     @Builder.Default
     private java.util.List<MediaResource> mediaFiles = new java.util.ArrayList<>();
 

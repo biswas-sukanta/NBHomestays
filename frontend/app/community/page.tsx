@@ -131,6 +131,9 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
 
             // Invalidate React Query cache
             queryClient.invalidateQueries({ queryKey: ['posts'] });
+            if (postData) {
+                queryClient.invalidateQueries({ queryKey: ['post', postData.id] });
+            }
 
             onSuccess(res.data);
             stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
