@@ -210,7 +210,12 @@ public class HomestayService {
                                                         .homestay(finalH)
                                                         .build())
                                         .collect(java.util.stream.Collectors.toList());
-                        homestay.setMediaFiles(entityMedia);
+
+                        if (homestay.getMediaFiles() == null) {
+                                homestay.setMediaFiles(new java.util.ArrayList<>());
+                        }
+                        homestay.getMediaFiles().clear();
+                        homestay.getMediaFiles().addAll(entityMedia);
                 }
 
                 Homestay saved = repository.save(homestay);

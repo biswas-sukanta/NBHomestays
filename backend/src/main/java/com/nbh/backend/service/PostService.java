@@ -171,7 +171,12 @@ public class PostService {
                             .post(finalPost)
                             .build())
                     .collect(java.util.stream.Collectors.toList());
-            post.setMediaFiles(entityMedia);
+
+            if (post.getMediaFiles() == null) {
+                post.setMediaFiles(new java.util.ArrayList<>());
+            }
+            post.getMediaFiles().clear();
+            post.getMediaFiles().addAll(entityMedia);
         }
 
         Post saved = postRepository.save(post);
