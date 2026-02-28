@@ -1,5 +1,7 @@
 package com.nbh.backend.dto;
 
+import com.nbh.backend.model.MediaResource;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +24,7 @@ public class CommentDto {
     @NoArgsConstructor
     public static class Request {
         private String body;
-        private List<String> imageUrls;
+        private List<MediaResource> mediaFiles;
     }
 
     private UUID id;

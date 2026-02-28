@@ -1,5 +1,7 @@
 package com.nbh.backend.controller;
 
+import com.nbh.backend.model.MediaResource;
+
 import com.nbh.backend.service.ImageUploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -20,12 +22,12 @@ public class UploadController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_HOST') or hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<List<String>> uploadImages(@RequestPart("files") List<MultipartFile> files) {
+    public ResponseEntity<List<MediaResource>> uploadImages(@RequestPart("files") List<MultipartFile> files) {
         try {
             if (files == null || files.isEmpty() || files.size() > 10) {
                 return ResponseEntity.badRequest().build();
             }
-            List<String> urls = imageUploadService.uploadFiles(files);
+            List<MediaResource> urls = imageUploadService.uploadFiles(files);
             return ResponseEntity.ok(urls);
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();

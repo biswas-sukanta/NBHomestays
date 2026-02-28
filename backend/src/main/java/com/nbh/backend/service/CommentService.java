@@ -29,6 +29,7 @@ public class CommentService {
         private final CommentRepository commentRepository;
         private final PostRepository postRepository;
         private final UserRepository userRepository;
+        private final ImageUploadService imageUploadService;
 
         // ── Add top-level comment ──────────────────────────────────
         @Transactional
@@ -44,7 +45,8 @@ public class CommentService {
                                 .post(post)
                                 .user(user)
                                 .body(request.getBody() != null ? request.getBody().trim() : "")
-                                .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new ArrayList<>())
+                                .mediaFiles(request.getMediaFiles() != null ? request.getMediaFiles()
+                                                : new ArrayList<>())
                                 .build();
 
                 return toDto(commentRepository.save(comment), true);
@@ -68,7 +70,8 @@ public class CommentService {
                                 .user(user)
                                 .parent(parent)
                                 .body(request.getBody() != null ? request.getBody().trim() : "")
-                                .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new ArrayList<>())
+                                .mediaFiles(request.getMediaFiles() != null ? request.getMediaFiles()
+                                                : new ArrayList<>())
                                 .build();
 
                 return toDto(commentRepository.save(reply), false);
@@ -96,6 +99,14 @@ public class CommentService {
                 if (!isOwner && !isAdmin) {
                         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot delete this comment");
                 }
+
+                // --- CLOUD JANITOR: Purge ImageKit Media before Database Deletion ---
+                if (comment.getMediaFiles() != null && !comment.getMediaFiles().isEmpty()) {
+                        for (com.nbh.backend.model.MediaResource media : comment.getMediaFiles()) {
+                                imageUploadService.deleteFile(media.getFileId());
+                        }
+                }
+
                 commentRepository.delete(comment);
         }
 
@@ -120,7 +131,11 @@ public class CommentService {
                                 .authorName(authorName.isBlank() ? "Anonymous" : authorName.trim())
                                 .authorAvatarUrl(null) // TODO: wire when User.avatarUrl is populated
                                 .body(c.getBody())
-                                .imageUrls(c.getImageUrls() != null ? c.getImageUrls() : new ArrayList<>())
+                                .imageUrls(c.getMediaFiles() != null
+                                                ? c.getMediaFiles().stream()
+                                                                .map(com.nbh.backend.model.MediaResource::getUrl)
+                                                                .collect(Collectors.toList())
+                                                : new ArrayList<>())
                                 .createdAt(c.getCreatedAt())
                                 .replies(replies)
                                 .replyCount(replies.size())

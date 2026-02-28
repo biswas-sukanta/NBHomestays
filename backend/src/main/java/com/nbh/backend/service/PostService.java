@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Optional;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -27,6 +28,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final com.nbh.backend.repository.HomestayRepository homestayRepository;
     private final com.nbh.backend.repository.PostLikeRepository postLikeRepository;
+    private final ImageUploadService imageUploadService;
 
     @Caching(evict = {
             @CacheEvict(value = "postsList", allEntries = true)
@@ -48,7 +50,7 @@ public class PostService {
         Post post = Post.builder()
                 .locationName(request.getLocationName())
                 .textContent(request.getTextContent())
-                .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new java.util.ArrayList<>())
+                .mediaFiles(request.getMediaFiles() != null ? request.getMediaFiles() : new java.util.ArrayList<>())
                 .user(user)
                 .homestay(homestay)
                 .originalPost(originalPost)
@@ -116,8 +118,8 @@ public class PostService {
             post.setLocationName(request.getLocationName());
         if (request.getTextContent() != null)
             post.setTextContent(request.getTextContent());
-        if (request.getImageUrls() != null)
-            post.setImageUrls(request.getImageUrls());
+        if (request.getMediaFiles() != null)
+            post.setMediaFiles(request.getMediaFiles());
 
         Post saved = postRepository.save(post);
         return mapToResponse(saved, userEmail);
@@ -137,6 +139,13 @@ public class PostService {
             if (requestor.getRole() != User.Role.ROLE_ADMIN) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                         "You do not have permission to delete this post.");
+            }
+        }
+
+        // --- CLOUD JANITOR: Purge ImageKit Media before Database Deletion ---
+        if (post.getMediaFiles() != null && !post.getMediaFiles().isEmpty()) {
+            for (com.nbh.backend.model.MediaResource media : post.getMediaFiles()) {
+                imageUploadService.deleteFile(media.getFileId());
             }
         }
 
@@ -208,7 +217,7 @@ public class PostService {
                 .locationName(
                         request.getLocationName() != null ? request.getLocationName() : original.getLocationName())
                 .textContent(request.getTextContent() != null ? request.getTextContent() : "")
-                .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : new java.util.ArrayList<>())
+                .mediaFiles(request.getMediaFiles() != null ? request.getMediaFiles() : new java.util.ArrayList<>())
                 .user(user)
                 .originalPost(original)
                 .createdAt(LocalDateTime.now())
@@ -247,7 +256,10 @@ public class PostService {
                 .userName(post.getUser().getFirstName() + " " + post.getUser().getLastName())
                 .locationName(post.getLocationName())
                 .textContent(post.getTextContent())
-                .imageUrls(post.getImageUrls())
+                .imageUrls(post.getMediaFiles() != null
+                        ? post.getMediaFiles().stream().map(com.nbh.backend.model.MediaResource::getUrl)
+                                .collect(Collectors.toList())
+                        : new java.util.ArrayList<>())
                 .homestayId(post.getHomestay() != null ? post.getHomestay().getId() : null)
                 .homestayName(post.getHomestay() != null ? post.getHomestay().getName() : null)
                 .loveCount(post.getLoveCount())

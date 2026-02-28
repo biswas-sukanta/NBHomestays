@@ -55,9 +55,8 @@ public class Comment {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "comment_images", joinColumns = @JoinColumn(name = "comment_id"))
-    @Column(name = "image_url")
     @Builder.Default
-    private List<String> imageUrls = new ArrayList<>();
+    private List<MediaResource> mediaFiles = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

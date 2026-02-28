@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Send, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { MessageCircle, Send, ChevronDown, ChevronUp, Trash2, MoreHorizontal, Pencil } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { Image as ImageIcon, X, Loader2 } from 'lucide-react';
@@ -11,6 +11,13 @@ import { ImageCollage } from '@/components/community/ImageCollage';
 import { ImageLightbox } from '@/components/community/ImageLightbox';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CommentAuthor { id: string; firstName?: string; lastName?: string; avatarUrl?: string; }
 interface Comment {
@@ -52,6 +59,8 @@ interface SingleCommentProps {
 }
 
 function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, token, currentUserRole }: SingleCommentProps) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editBody, setEditBody] = useState(comment.body);
     const [showReplies, setShowReplies] = useState(false);
     const [replying, setReplying] = useState(false);
     const [replyBody, setReplyBody] = useState('');
@@ -81,6 +90,35 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
         } finally { setSubmitting(false); }
     };
 
+    const handleEditSubmit = async () => {
+        if (!editBody.trim() || editBody === comment.body) {
+            setIsEditing(false);
+            return;
+        }
+        setSubmitting(true);
+        try {
+            const res = await fetch(`${API}/api/posts/${postId}/comments/${comment.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ body: editBody })
+            });
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(errText || "Failed to edit comment");
+            }
+            comment.body = editBody;
+            setIsEditing(false);
+            toast.success("Comment updated");
+        } catch (e: any) {
+            toast.error(e.message || "Failed to edit comment");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const isOwner = currentUserId === comment.authorId || currentUserRole === 'ROLE_ADMIN';
     const totalReplies = localReplies.length;
 
@@ -90,12 +128,52 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                 <Initials name={comment.authorName} />
                 <div className="flex-1 min-w-0">
                     {/* Bubble */}
-                    <div className="bg-secondary/60 rounded-xl px-3 py-2.5 text-sm">
+                    <div className="bg-secondary/60 rounded-xl px-3 py-2.5 text-sm relative group">
                         <span className="font-semibold text-foreground text-xs mr-1.5">{comment.authorName}</span>
-                        <span className="text-foreground leading-relaxed">{comment.body}</span>
+                        {isEditing ? (
+                            <div className="mt-1 flex flex-col gap-2">
+                                <input
+                                    autoFocus
+                                    className="w-full bg-background border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                    value={editBody}
+                                    onChange={e => setEditBody(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') handleEditSubmit();
+                                        if (e.key === 'Escape') { setIsEditing(false); setEditBody(comment.body); }
+                                    }}
+                                />
+                                <div className="flex justify-end gap-2">
+                                    <button onClick={() => { setIsEditing(false); setEditBody(comment.body); }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+                                    <button onClick={handleEditSubmit} disabled={submitting} className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">Save</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <span className="text-foreground leading-relaxed">{comment.body}</span>
+                        )}
                         {comment.imageUrls && comment.imageUrls.length > 0 && (
                             <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                                 <ImageCollage images={comment.imageUrls} onImageClick={(i) => setLightboxIndex(i)} />
+                            </div>
+                        )}
+
+                        {/* Edit/Delete Options Menu Overlay */}
+                        {isOwner && !isEditing && (
+                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button className="w-6 h-6 rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-800 transition-colors flex justify-center items-center">
+                                            <MoreHorizontal className="w-3.5 h-3.5" />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="min-w-[120px] rounded-xl font-medium border-gray-200">
+                                        <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                                            <Pencil className="w-3.5 h-3.5 mr-2" /> Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => onDelete(comment.id)}>
+                                            <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         )}
                     </div>
@@ -107,15 +185,6 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                                 onClick={() => setReplying(r => !r)}
                                 className="text-[11px] font-semibold text-primary hover:text-primary/80"
                             >Reply</button>
-                        )}
-                        {isOwner && (
-                            <button
-                                onClick={() => onDelete(comment.id)}
-                                className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500"
-                                aria-label="Delete comment"
-                            >
-                                <Trash2 className="w-3.5 h-3.5" />
-                            </button>
                         )}
                     </div>
                 </div>

@@ -42,8 +42,7 @@ public class Post {
 
     @ElementCollection
     @CollectionTable(name = "post_images", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "image_url")
-    private List<String> imageUrls;
+    private List<MediaResource> mediaFiles;
 
     @Column(name = "created_at", nullable = false)
     @Builder.Default

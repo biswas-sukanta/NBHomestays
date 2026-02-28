@@ -1,5 +1,7 @@
 package com.nbh.backend.dto;
 
+import com.nbh.backend.model.MediaResource;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +20,7 @@ public class PostDto {
     public static class Request {
         private String locationName;
         private String textContent;
-        private List<String> imageUrls;
+        private List<MediaResource> mediaFiles;
         private UUID homestayId;
         private UUID originalPostId;
     }

@@ -1,5 +1,7 @@
 package com.nbh.backend.service;
 
+import com.nbh.backend.model.MediaResource;
+
 import io.imagekit.sdk.ImageKit;
 import io.imagekit.sdk.models.FileCreateRequest;
 import io.imagekit.sdk.models.results.Result;
@@ -15,11 +17,11 @@ import java.util.List;
 @Slf4j
 public class ImageUploadService {
 
-    public List<String> uploadFiles(List<MultipartFile> files) throws IOException {
-        List<String> urls = new ArrayList<>();
+    public List<MediaResource> uploadFiles(List<MultipartFile> files) throws IOException {
+        List<MediaResource> mediaResources = new ArrayList<>();
 
         if (files == null || files.isEmpty()) {
-            return urls;
+            return mediaResources;
         }
 
         for (MultipartFile file : files) {
@@ -34,14 +36,28 @@ public class ImageUploadService {
             try {
                 Result result = ImageKit.getInstance().upload(fileCreateRequest);
                 String cdnUrl = result.getUrl();
-                log.info("[IMAGEKIT UPLOAD] Successfully uploaded file. CDN URL: {}", cdnUrl);
-                urls.add(cdnUrl);
+                String fileId = result.getFileId();
+                log.info("[IMAGEKIT UPLOAD] Successfully uploaded file. CDN URL: {} (File ID: {})", cdnUrl, fileId);
+                mediaResources.add(MediaResource.builder().url(cdnUrl).fileId(fileId).build());
             } catch (Exception e) {
                 log.error("[IMAGEKIT UPLOAD] FATAL ERROR: Failed to upload file {}", originalFilename, e);
                 throw new IOException("Failed to upload file to ImageKit", e);
             }
         }
 
-        return urls;
+        return mediaResources;
+    }
+
+    public void deleteFile(String fileId) {
+        if (fileId == null || fileId.isBlank()) {
+            return;
+        }
+        try {
+            Result result = ImageKit.getInstance().deleteFile(fileId);
+            log.info("[IMAGEKIT DELETE] Successfully deleted fileId {}. Result: {}", fileId, result.toString());
+        } catch (Exception e) {
+            log.error("[IMAGEKIT DELETE] FATAL ERROR: Failed to delete fileId {}", fileId, e);
+            // Non-blocking in case of external CDN failure
+        }
     }
 }
