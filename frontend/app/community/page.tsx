@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Image as ImageIcon, Send, X, Pencil, Search, Loader2, Scissors, Share2 } from 'lucide-react';
+import { Image as ImageIcon, Send, X, Pencil, Search, Loader2, Scissors, Share2, MapPin } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { SharedPageBanner } from '@/components/shared-page-banner';
@@ -17,23 +16,11 @@ import { PostSkeleton } from '@/components/community/PostSkeleton';
 import { CommentsSection } from '@/components/comments-section';
 import { CustomCombobox } from '@/components/ui/combobox';
 import api from '@/lib/api';
-import { MapPin } from 'lucide-react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInView } from 'react-intersection-observer';
 
-// Re-export for local use — the canonical definition lives in PostCard.tsx
 type Post = CommunityPost;
 interface HomestayOption { id: string; name: string; address?: string; }
-
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
-// ── Helpers ───────────────────────────────────────────────────
-function formatRelative(isoDate: string) {
-    const diff = (Date.now() - new Date(isoDate).getTime()) / 1000;
-    if (diff < 60) return 'just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
-}
-
 
 // ── Post Composer Inline ───────────────────────────────────────
 interface RepostTarget { id: string; authorName: string; textContent: string; }
@@ -99,7 +86,6 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
         try {
             let finalMedia = [...existingMedia];
 
-            // 1. Batch Upload Staged Files
             if (stagedFiles.length > 0) {
                 const formData = new FormData();
                 stagedFiles.forEach(staged => formData.append('files', staged.file));
@@ -110,7 +96,6 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                 finalMedia = [...finalMedia, ...uploadRes.data];
             }
 
-            // 2. Submit Post
             const payload: any = {
                 textContent: text,
                 locationName: location || 'North Bengal',
@@ -150,7 +135,6 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                 exit={{ opacity: 0, y: 30 }}
                 className="bg-white w-full h-[100dvh] flex flex-col md:w-[600px] md:h-auto md:max-h-[85vh] md:rounded-2xl shadow-2xl overflow-hidden relative z-10"
             >
-                {/* Tier 1: Safe-Area Header (flex-none) */}
                 <div className="flex-none pt-[max(1.5rem,env(safe-area-inset-top))] md:pt-4 pb-4 px-4 flex justify-between items-center border-b border-gray-200 bg-white">
                     <h2 className="text-lg font-bold text-gray-800">
                         {postData ? 'Edit Your Story' : repostTarget ? 'Repost Story' : 'Share Your Journey'}
@@ -164,10 +148,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                     </button>
                 </div>
 
-                {/* Tier 2: The Contained Body (flex-1 min-h-0) */}
                 <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-4">
-
-                    {/* Repost Quote Preview */}
                     {repostTarget && (
                         <div className="border border-green-300 rounded-xl p-4 bg-green-50">
                             <p className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-1 flex items-center gap-1">
@@ -185,7 +166,6 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                         className="w-full h-32 md:h-40 p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-inner focus:bg-white focus:ring-2 focus:ring-green-500/40 focus:border-transparent resize-none text-base font-medium text-gray-900 placeholder-gray-400 transition-all duration-200"
                     />
 
-                    {/* Staging Area */}
                     {(stagedFiles.length > 0 || existingMedia.length > 0) && (
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300">
                             {existingMedia.map((mediaObj, i) => (
@@ -218,7 +198,6 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                         />
                     )}
 
-                    {/* Tools Row — Photo & Location side by side */}
                     <div className="flex items-center gap-3">
                         <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
                         <button data-testid="add-photo-btn" onClick={() => fileRef.current?.click()} disabled={submitting}
@@ -237,7 +216,6 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                         </div>
                     </div>
 
-                    {/* Tag Homestay */}
                     <div className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                         <CustomCombobox
                             options={homestays}
@@ -247,7 +225,6 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                         />
                     </div>
 
-                    {/* Submit */}
                     <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingMedia.length === 0)}
                         className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md active:scale-[0.98] disabled:opacity-50 transition-all text-base mt-1">
                         {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -260,64 +237,54 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
     );
 }
 
-// FeedPostCard wrapper removed - Logic moved to Main Feed Page for state centralization
-
-
 // ── Main Feed Page ─────────────────────────────────────────────
 export default function CommunityPage() {
     const { isAuthenticated, user } = useAuth() as any;
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [page, setPage] = useState(0);
-    const [hasMore, setHasMore] = useState(true);
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
     const [composerOpen, setComposerOpen] = useState(false);
     const [postToEdit, setPostToEdit] = useState<Post | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
-    const observerRef = useRef<HTMLDivElement>(null);
 
-    const fetchPosts = useCallback(async (pageNum: number) => {
-        if (loading || (pageNum > 0 && !hasMore)) return;
-        setLoading(true);
-        try {
-            const res = await api.get(`/api/posts?page=${pageNum}&size=10&sort=createdAt,desc`);
-            const data = res.data;
-            const content: Post[] = data.content || [];
+    const { ref, inView } = useInView({ threshold: 0.1 });
 
-            setPosts(prev => pageNum === 0 ? content : [...prev, ...content]);
-            setHasMore(!data.last); // metadata from Spring Page
-            setPage(pageNum);
-        } catch (e) {
-            console.error('Failed to load posts', e);
-            toast.error("Failed to load feed.");
-        } finally {
-            setLoading(false);
-        }
-    }, [loading, hasMore]);
-
-    useEffect(() => {
-        setHasMore(true);
-        fetchPosts(0);
-    }, [fetchPosts]);
-
-    useEffect(() => {
-        const el = observerRef.current;
-        if (!el) return;
-        const observer = new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting && hasMore && !loading && !searchQuery) { const next = page + 1; setPage(next); fetchPosts(next); }
-        }, { rootMargin: '200px' });
-        observer.observe(el);
-        return () => observer.disconnect();
-    }, [hasMore, loading, page, fetchPosts, searchQuery]);
-
-    const handleNewPost = (post: Post) => {
-        setPosts(prev => [post, ...prev]);
-        setComposerOpen(false);
-        setPostToEdit(null);
+    const fetchPosts = async ({ pageParam = 0 }) => {
+        const { data } = await api.get(`/api/posts?page=${pageParam}&size=10&sort=createdAt,desc`);
+        return data;
     };
 
-    const handleUpdatePost = (updated: Post) => {
-        setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        status,
+        isLoading
+    } = useInfiniteQuery({
+        queryKey: ['community-posts'],
+        queryFn: fetchPosts,
+        initialPageParam: 0,
+        getNextPageParam: (lastPage) => {
+            if (lastPage.last) return undefined;
+            return lastPage.pageable.pageNumber + 1;
+        },
+    });
+
+    useEffect(() => {
+        if (inView && hasNextPage && !isFetchingNextPage && !searchQuery) {
+            fetchNextPage();
+        }
+    }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage, searchQuery]);
+
+    const handleNewPost = () => {
+        queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+        setComposerOpen(false);
+        setPostToEdit(null);
+        toast.success('Story shared!');
+    };
+
+    const handleUpdatePost = () => {
+        queryClient.invalidateQueries({ queryKey: ['community-posts'] });
         setComposerOpen(false);
         setPostToEdit(null);
         toast.success('Post updated!');
@@ -325,16 +292,16 @@ export default function CommunityPage() {
 
     const handleDeletePost = async (id: string) => {
         if (!window.confirm("Are you sure you want to delete this story?")) return;
-        const previousPosts = [...posts];
-        setPosts(prev => prev.filter(p => p.id !== id)); // Optimistic UI
         try {
             await api.delete(`/api/posts/${id}`);
+            queryClient.invalidateQueries({ queryKey: ['community-posts'] });
             toast.success('Story deleted');
         } catch (err) {
-            setPosts(previousPosts); // Revert on failure
             toast.error('Failed to delete story');
         }
     };
+
+    const posts = data?.pages.flatMap(page => page.content) || [];
 
     const filteredPosts = posts.filter(p =>
         !searchQuery ||
@@ -345,16 +312,12 @@ export default function CommunityPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            {/* Banner */}
             <SharedPageBanner
                 title="Community"
                 subtitle="Stories, tips, and incredible moments from North Bengal travellers."
             />
 
-            {/* Feed Container */}
             <div className="container mx-auto max-w-2xl px-4 py-8 space-y-8">
-
-                {/* Search & Actions Bar */}
                 <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
                     <div className="relative w-full sm:max-w-md group">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-green-600 transition-colors" />
@@ -381,24 +344,27 @@ export default function CommunityPage() {
                     ))}
                 </AnimatePresence>
 
-                {filteredPosts.length === 0 && !loading && (
+                {filteredPosts.length === 0 && !isLoading && (
                     <div className="text-center py-20 text-muted-foreground">
                         <div className="text-4xl mb-4">🍃</div>
                         <p className="font-medium text-lg">No stories found.</p>
                     </div>
                 )}
 
-                {loading && (
+                {(isLoading || isFetchingNextPage) && (
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => <PostSkeleton key={i} />)}
                     </div>
                 )}
 
-                <div ref={observerRef} className="h-4" />
-                {!hasMore && filteredPosts.length > 0 && !searchQuery && <p className="text-center text-muted-foreground text-[15px] py-4 font-semibold tracking-wide uppercase opacity-70">You&apos;ve seen it all! 🌿</p>}
+                <div ref={ref} className="h-4" />
+                {!hasNextPage && filteredPosts.length > 0 && !searchQuery && (
+                    <p className="text-center text-muted-foreground text-[15px] py-4 font-semibold tracking-wide uppercase opacity-70">
+                        You&apos;ve seen it all! 🌿
+                    </p>
+                )}
             </div>
 
-            {/* Floating Compose Button */}
             <AnimatePresence>
                 {isAuthenticated && !composerOpen && (
                     <motion.button data-testid="fab-add-post" key="fab" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
@@ -410,7 +376,6 @@ export default function CommunityPage() {
                 )}
             </AnimatePresence>
 
-            {/* Composer Modal Background Overlay */}
             <AnimatePresence>
                 {composerOpen && (
                     <PostComposerInline
@@ -421,7 +386,6 @@ export default function CommunityPage() {
                 )}
             </AnimatePresence>
 
-            {/* Global Comment Drawer — single instance outside .map loop */}
             {activeCommentPostId && (
                 <CommentsSection
                     postId={activeCommentPostId}
@@ -429,7 +393,7 @@ export default function CommunityPage() {
                     externalOpen={true}
                     onExternalClose={() => setActiveCommentPostId(null)}
                     onCommentCountChange={(newTotal: number) => {
-                        setPosts(prev => prev.map(p => p.id === activeCommentPostId ? { ...p, commentCount: Math.max(0, newTotal) } : p));
+                        queryClient.invalidateQueries({ queryKey: ['community-posts'] });
                     }}
                     currentUserRole={user?.role}
                 />
