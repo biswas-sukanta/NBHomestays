@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Compass } from 'lucide-react';
+import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
 
 interface Destination {
     id: string;
@@ -67,7 +68,7 @@ export function DestinationDiscovery() {
             </div>
 
             {/* Zostel-style Grid/Carousel */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">
+            <CarouselWrapper>
                 <AnimatePresence mode='popLayout'>
                     {filteredDestinations?.map((dest) => (
                         <motion.div
@@ -78,9 +79,9 @@ export function DestinationDiscovery() {
                             exit={{ opacity: 0, scale: 0.9 }}
                             transition={{ duration: 0.3 }}
                             onClick={() => router.push(`/destination/${dest.slug}`)}
-                            className="group cursor-pointer"
+                            className="group cursor-pointer snap-start shrink-0 w-32 md:w-40 mr-4"
                         >
-                            <div className="relative w-32 md:w-40 aspect-[3/4] rounded-[999px] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5">
+                            <div className="relative aspect-[3/4] rounded-[999px] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5">
                                 <img
                                     src={`/destinations/${dest.localImageName}`}
                                     alt={dest.name}
@@ -90,7 +91,7 @@ export function DestinationDiscovery() {
                                     }}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 flex flex-col items-center justify-end pb-8">
-                                    <h3 className="text-white font-bold text-base md:text-lg tracking-tight drop-shadow-md">
+                                    <h3 className="text-white font-bold text-base md:text-lg tracking-tight drop-shadow-md text-center">
                                         {dest.name}
                                     </h3>
                                 </div>
@@ -100,12 +101,12 @@ export function DestinationDiscovery() {
                 </AnimatePresence>
 
                 {!filteredDestinations?.length && (
-                    <div className="col-span-full py-12 text-center text-gray-400">
+                    <div className="flex-1 py-12 text-center text-gray-400">
                         <Compass className="w-12 h-12 mx-auto mb-4 opacity-20" />
                         <p>No destinations found for this filter</p>
                     </div>
                 )}
-            </div>
+            </CarouselWrapper>
         </div>
     );
 }
