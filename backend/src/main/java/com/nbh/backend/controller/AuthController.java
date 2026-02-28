@@ -34,4 +34,10 @@ public class AuthController {
             @Valid @RequestBody AuthDto.AuthenticationRequest request) {
         return ResponseEntity.ok(service.authenticate(request));
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthDto.AuthenticationResponse> refresh(
+            @Valid @RequestBody AuthDto.RefreshTokenRequest request) {
+        return ResponseEntity.ok(service.refreshToken(request.getRefreshToken()));
+    }
 }

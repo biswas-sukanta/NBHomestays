@@ -35,8 +35,10 @@ public class AuthenticationService {
                 var jwtToken = jwtService.generateToken(java.util.Map.of(
                                 "role", user.getRole().name(),
                                 "userId", user.getId().toString()), user);
+                var refreshToken = jwtService.generateRefreshToken(user);
                 return AuthDto.AuthenticationResponse.builder()
                                 .accessToken(jwtToken)
+                                .refreshToken(refreshToken)
                                 .build();
         }
 
@@ -50,8 +52,28 @@ public class AuthenticationService {
                 var jwtToken = jwtService.generateToken(java.util.Map.of(
                                 "role", user.getRole().name(),
                                 "userId", user.getId().toString()), user);
+                var refreshToken = jwtService.generateRefreshToken(user);
                 return AuthDto.AuthenticationResponse.builder()
                                 .accessToken(jwtToken)
+                                .refreshToken(refreshToken)
                                 .build();
+        }
+
+        public AuthDto.AuthenticationResponse refreshToken(String refreshToken) {
+                String userEmail = jwtService.extractUsername(refreshToken);
+                if (userEmail != null) {
+                        var user = repository.findByEmail(userEmail)
+                                        .orElseThrow();
+                        if (jwtService.isTokenValid(refreshToken, user)) {
+                                var accessToken = jwtService.generateToken(java.util.Map.of(
+                                                "role", user.getRole().name(),
+                                                "userId", user.getId().toString()), user);
+                                return AuthDto.AuthenticationResponse.builder()
+                                                .accessToken(accessToken)
+                                                .refreshToken(refreshToken)
+                                                .build();
+                        }
+                }
+                throw new RuntimeException("Invalid refresh token");
         }
 }

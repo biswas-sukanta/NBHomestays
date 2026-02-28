@@ -54,4 +54,13 @@ public class AuthDto {
         private String accessToken;
         private String refreshToken; // Simplified for now
     }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class RefreshTokenRequest {
+        @NotBlank(message = "Refresh token is mandatory")
+        private String refreshToken;
+    }
 }
