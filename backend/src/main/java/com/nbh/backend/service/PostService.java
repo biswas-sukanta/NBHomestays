@@ -1,6 +1,9 @@
 package com.nbh.backend.service;
 
 import com.nbh.backend.dto.PostDto;
+import com.nbh.backend.dto.AuthorDto;
+import com.nbh.backend.model.Homestay;
+import com.nbh.backend.model.MediaResource;
 import com.nbh.backend.model.Post;
 import com.nbh.backend.model.PostLike;
 import com.nbh.backend.model.User;
@@ -266,8 +269,12 @@ public class PostService {
 
         return PostDto.Response.builder()
                 .id(post.getId())
-                .userId(post.getUser().getId())
-                .userName(post.getUser().getFirstName() + " " + post.getUser().getLastName())
+                .author(AuthorDto.builder()
+                        .id(post.getUser().getId())
+                        .name(post.getUser().getFirstName() + " " + post.getUser().getLastName())
+                        .role(post.getUser().getRole().name())
+                        .avatarUrl(post.getUser().getAvatarUrl())
+                        .build())
                 .locationName(post.getLocationName())
                 .textContent(post.getTextContent())
                 .media(combinedMedia)

@@ -31,8 +31,7 @@ public class PostDto {
     @NoArgsConstructor
     public static class Response {
         private UUID id;
-        private UUID userId;
-        private String userName;
+        private AuthorDto author;
         private String locationName;
         private String textContent;
         private List<MediaResource> media;

@@ -18,9 +18,12 @@ import { AnimatePresence } from 'framer-motion';
 // ── Types ────────────────────────────────────────────────────────────────────
 export interface CommunityPost {
     id: string;
-    userId: string;
-    userName: string;
-    userEmail?: string;
+    author: {
+        id: string;
+        name: string;
+        role: string;
+        avatarUrl?: string;
+    };
     locationName: string;
     textContent: string;
     media?: { url: string; fileId?: string }[];
@@ -113,9 +116,13 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
 
 // ── PostCard ──────────────────────────────────────────────────────────────────
 export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQuoted = false, onOpenComments, onNewPost }: PostCardProps) {
-    const authorName = post.userName || 'Traveller';
+    const authorName = post.author?.name || 'Traveller';
     const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    const isOwner = currentUser?.id === post.userId || currentUser?.role === 'ROLE_ADMIN';
+
+    const isOwner = String(currentUser?.id) === String(post.author?.id);
+    const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN';
+    const canModify = isOwner || isAdmin;
+
     const [isEditing, setIsEditing] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [shareCount, setShareCount] = useState<number>(Number(post.shareCount) || 0);
@@ -215,24 +222,23 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
                         </div>
                     </div>
 
-                    {/* Edit/Delete dropdown */}
-                    {isOwner && onDelete && onUpdate && (
-                        <div className="pointer-events-auto">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button data-testid="post-options-btn" className="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors flex justify-center items-center">
-                                        <MoreHorizontal className="w-5 h-5" />
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-36 rounded-xl font-medium border-gray-200">
-                                    <DropdownMenuItem data-testid="edit-post-btn" onClick={() => setIsEditing(true)}>
-                                        <Pencil className="w-4 h-4 mr-2" /> Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem data-testid="delete-post-btn" className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => onDelete(post.id)}>
-                                        <Trash2 className="w-4 h-4 mr-2" /> Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                    {/* EXPLICIT ACTION BUTTONS ALIGNED RIGHT */}
+                    {canModify && onDelete && (
+                        <div className="flex items-center gap-3 ml-auto pointer-events-auto">
+                            <button
+                                data-testid="edit-post-btn"
+                                onClick={() => setIsEditing(true)}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                            >
+                                Edit
+                            </button>
+                            <button
+                                data-testid="delete-post-btn"
+                                onClick={() => onDelete(post.id)}
+                                className="text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
+                            >
+                                Delete
+                            </button>
                         </div>
                     )}
                 </div>

@@ -23,9 +23,12 @@ interface CommentAuthor { id: string; firstName?: string; lastName?: string; ava
 interface Comment {
     id: string;
     body: string;
-    authorId: string;
-    authorName: string;
-    authorAvatarUrl?: string;
+    author: {
+        id: string;
+        name: string;
+        role: string;
+        avatarUrl?: string;
+    };
     createdAt: string;
     replies?: Comment[];
     replyCount?: number;
@@ -128,38 +131,44 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
         }
     };
 
-    const isOwner = currentUserId === comment.authorId || currentUserRole === 'ROLE_ADMIN';
+    const isOwner = String(currentUserId) === String(comment.author?.id);
+    const isAdmin = currentUserRole === 'ADMIN' || currentUserRole === 'ROLE_ADMIN';
+    const canModify = isOwner || isAdmin;
+
     const totalReplies = localReplies.length;
 
     return (
         <div data-testid="comment-item" className={cn('group', depth > 0 && 'ml-8 mt-3 pl-3 border-l-2 border-border/50')}>
             <div className="flex gap-2.5">
-                <Initials name={comment.authorName} />
+                <Initials name={comment.author?.name || 'User'} />
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start w-full">
                         <div className="flex flex-col flex-1 min-w-0">
                             {/* Bubble */}
                             <div className="bg-secondary/60 rounded-xl px-3 py-2.5 text-sm">
-                                <span className="font-semibold text-foreground text-xs mr-1.5">{comment.authorName}</span>
+                                <span className="font-semibold text-foreground text-xs mr-1.5">{comment.author?.name || 'User'}</span>
                                 {isEditing ? (
                                     <div className="mt-1 flex flex-col gap-2">
-                                        <input
+                                        <textarea
                                             autoFocus
-                                            className="w-full bg-background border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                            className="w-full bg-background border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary min-h-[60px]"
                                             value={editBody}
                                             onChange={e => setEditBody(e.target.value)}
                                             onKeyDown={e => {
-                                                if (e.key === 'Enter') handleEditSubmit();
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    handleEditSubmit();
+                                                }
                                                 if (e.key === 'Escape') { setIsEditing(false); setEditBody(comment.body); }
                                             }}
                                         />
                                         <div className="flex justify-end gap-2">
-                                            <button onClick={() => { setIsEditing(false); setEditBody(comment.body); }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
-                                            <button onClick={handleEditSubmit} disabled={submitting} className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">Save</button>
+                                            <button onClick={() => { setIsEditing(false); setEditBody(comment.body); }} className="text-[11px] text-muted-foreground hover:text-foreground">Cancel</button>
+                                            <button onClick={handleEditSubmit} disabled={submitting} className="text-[11px] bg-primary text-primary-foreground px-2 py-0.5 rounded">Save</button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <span className="text-foreground leading-relaxed">{comment.body}</span>
+                                    <span className="text-foreground leading-relaxed whitespace-pre-line">{comment.body}</span>
                                 )}
                                 {comment.media && comment.media.length > 0 && (
                                     <div className="mt-2" onClick={(e) => e.stopPropagation()}>
@@ -168,38 +177,36 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                                 )}
                             </div>
 
-                            {/* Meta row */}
-                            <div className="flex items-center gap-3 mt-1 px-1">
-                                <span className="text-[11px] text-muted-foreground">{formatTime(comment.createdAt)}</span>
-                                {depth === 0 && (
-                                    <button
-                                        onClick={() => setReplying(r => !r)}
-                                        className="text-[11px] font-semibold text-primary hover:text-primary/80"
-                                    >Reply</button>
+                            {/* Meta row - EXPLICIT ACTIONS ON THE RIGHT */}
+                            <div className="flex items-center justify-between w-full mt-1 px-1">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[11px] text-muted-foreground">{formatTime(comment.createdAt)}</span>
+                                    {depth === 0 && (
+                                        <button
+                                            onClick={() => setReplying(r => !r)}
+                                            className="text-[11px] font-semibold text-green-600 hover:text-green-700"
+                                        >Reply</button>
+                                    )}
+                                </div>
+
+                                {canModify && !isEditing && (
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => setIsEditing(true)}
+                                            className="text-[11px] font-semibold text-blue-600 hover:text-blue-800"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => onDelete(comment.id)}
+                                            className="text-[11px] font-semibold text-red-600 hover:text-red-800"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>
-
-                        {/* Edit/Delete Options Menu Outer Float */}
-                        {isOwner && !isEditing && (
-                            <div className="relative ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 flex justify-center items-center mt-1">
-                                            <MoreHorizontal className="w-4 h-4" />
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="min-w-[120px] rounded-xl font-medium border-gray-200">
-                                        <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                                            <Pencil className="w-3.5 h-3.5 mr-2" /> Edit
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => onDelete(comment.id)}>
-                                            <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>

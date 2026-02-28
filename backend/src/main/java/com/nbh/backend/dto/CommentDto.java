@@ -31,10 +31,7 @@ public class CommentDto {
     private UUID postId;
     private UUID parentId;
 
-    // Author info
-    private UUID authorId;
-    private String authorName;
-    private String authorAvatarUrl;
+    private AuthorDto author;
 
     private String body;
     private List<MediaResource> media;

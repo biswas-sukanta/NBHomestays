@@ -350,7 +350,7 @@ export default function CommunityPage() {
         !searchQuery ||
         p.textContent.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.locationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.userName || '').toLowerCase().includes(searchQuery.toLowerCase())
+        (p.author?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (

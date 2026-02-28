@@ -1,7 +1,9 @@
 package com.nbh.backend.service;
 
 import com.nbh.backend.dto.CommentDto;
+import com.nbh.backend.dto.AuthorDto;
 import com.nbh.backend.model.Comment;
+import com.nbh.backend.model.MediaResource;
 import com.nbh.backend.model.Post;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.CommentRepository;
@@ -162,9 +164,12 @@ public class CommentService {
                                 .id(c.getId())
                                 .postId(c.getPost().getId())
                                 .parentId(c.getParent() != null ? c.getParent().getId() : null)
-                                .authorId(author.getId())
-                                .authorName(authorName.isBlank() ? "Anonymous" : authorName.trim())
-                                .authorAvatarUrl(null) // TODO: wire when User.avatarUrl is populated
+                                .author(AuthorDto.builder()
+                                                .id(author.getId())
+                                                .name(authorName.isBlank() ? "Anonymous" : authorName.trim())
+                                                .role(author.getRole().name())
+                                                .avatarUrl(author.getAvatarUrl())
+                                                .build())
                                 .body(c.getBody())
                                 .media(combinedMedia)
                                 .createdAt(c.getCreatedAt())

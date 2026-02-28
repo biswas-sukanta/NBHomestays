@@ -40,6 +40,7 @@ public class User implements UserDetails {
     // Additional fields for user profile can be added here
     private String firstName;
     private String lastName;
+    private String avatarUrl;
 
     @Column(columnDefinition = "TEXT")
     private String bio;
