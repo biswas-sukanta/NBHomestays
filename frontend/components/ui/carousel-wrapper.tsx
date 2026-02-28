@@ -5,10 +5,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CarouselWrapperProps {
     children: ReactNode;
+    headerLeft?: ReactNode; // Title/Description to be placed on the left
     className?: string; // Additional classes for the outer container
 }
 
-export function CarouselWrapper({ children, className = '' }: CarouselWrapperProps) {
+export function CarouselWrapper({ children, headerLeft, className = '' }: CarouselWrapperProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
@@ -42,16 +43,42 @@ export function CarouselWrapper({ children, className = '' }: CarouselWrapperPro
     };
 
     return (
-        <div className={`relative group ${className}`}>
-            {/* Left Desktop Arrow - Hidden on mobile, hidden if at start */}
-            <div className={`absolute -left-5 top-1/2 -translate-y-1/2 z-10 hidden md:block transition-opacity duration-300 ${canScrollLeft ? 'opacity-0 group-hover:opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-                <button
-                    onClick={() => scroll('left')}
-                    className="p-2.5 rounded-full bg-white/90 backdrop-blur-md border border-gray-100 shadow-xl text-gray-700 hover:text-[#004d00] hover:scale-105 hover:bg-white transition-all focus:outline-none focus:ring-2 focus:ring-[#004d00] focus:ring-offset-1"
-                    aria-label="Scroll left"
-                >
-                    <ChevronLeft className="w-6 h-6" />
-                </button>
+        <div className={`w-full ${className}`}>
+            {/* Header with Title and Navigation */}
+            <div className="flex items-end justify-between mb-6">
+                <div className="flex-1">
+                    {headerLeft}
+                </div>
+
+                {/* Desktop Navigation Controls */}
+                <div className="hidden md:flex items-center gap-2 mb-1">
+                    <button
+                        onClick={() => scroll('left')}
+                        disabled={!canScrollLeft}
+                        className={cn(
+                            "p-2 rounded-full border border-gray-200 transition-all duration-200",
+                            canScrollLeft
+                                ? "bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-900 shadow-sm active:scale-95"
+                                : "bg-gray-50 text-gray-300 cursor-not-allowed"
+                        )}
+                        aria-label="Scroll left"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={() => scroll('right')}
+                        disabled={!canScrollRight}
+                        className={cn(
+                            "p-2 rounded-full border border-gray-200 transition-all duration-200",
+                            canScrollRight
+                                ? "bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-900 shadow-sm active:scale-95"
+                                : "bg-gray-50 text-gray-300 cursor-not-allowed"
+                        )}
+                        aria-label="Scroll right"
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
 
             {/* The Scrollable Horizontal Container */}
@@ -62,17 +89,11 @@ export function CarouselWrapper({ children, className = '' }: CarouselWrapperPro
             >
                 {children}
             </div>
-
-            {/* Right Desktop Arrow - Hidden on mobile, hidden if at end */}
-            <div className={`absolute -right-5 top-1/2 -translate-y-1/2 z-10 hidden md:block transition-opacity duration-300 ${canScrollRight ? 'opacity-0 group-hover:opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-                <button
-                    onClick={() => scroll('right')}
-                    className="p-2.5 rounded-full bg-white/90 backdrop-blur-md border border-gray-100 shadow-xl text-gray-700 hover:text-[#004d00] hover:scale-105 hover:bg-white transition-all focus:outline-none focus:ring-2 focus:ring-[#004d00] focus:ring-offset-1"
-                    aria-label="Scroll right"
-                >
-                    <ChevronRight className="w-6 h-6" />
-                </button>
-            </div>
         </div>
     );
+}
+
+// Helper for conditional classes if not imported
+function cn(...classes: string[]) {
+    return classes.filter(Boolean).join(' ');
 }

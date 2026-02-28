@@ -113,8 +113,8 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
                             <button
                                 onClick={prevImage}
                                 className={cn(
-                                    'absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 shadow-md flex items-center justify-center text-gray-800 transition-all duration-300 transform',
-                                    currentIndex === 0 ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'
+                                    'absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 shadow-md hidden group-hover:flex items-center justify-center text-gray-800 transition-all duration-300 transform',
+                                    currentIndex === 0 && 'pointer-events-none opacity-50'
                                 )}
                                 aria-label="Previous image"
                             >
@@ -123,8 +123,8 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
                             <button
                                 onClick={nextImage}
                                 className={cn(
-                                    'absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 shadow-md flex items-center justify-center text-gray-800 transition-all duration-300 transform',
-                                    currentIndex === images.length - 1 ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'
+                                    'absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 shadow-md hidden group-hover:flex items-center justify-center text-gray-800 transition-all duration-300 transform',
+                                    currentIndex === images.length - 1 && 'pointer-events-none opacity-50'
                                 )}
                                 aria-label="Next image"
                             >

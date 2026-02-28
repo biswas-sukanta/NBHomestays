@@ -263,11 +263,14 @@ function SearchResults() {
                 ) : isStorefront ? (
                     <>
                         <section>
-                            <div className="mb-6 text-left">
-                                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight">Top Destinations</h2>
-                                <p className="text-gray-500 text-base">Unwind in the most sought-after hills.</p>
-                            </div>
-                            <CarouselWrapper>
+                            <CarouselWrapper
+                                headerLeft={
+                                    <div className="text-left">
+                                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight">Top Destinations</h2>
+                                        <p className="text-gray-500 text-base">Unwind in the most sought-after hills.</p>
+                                    </div>
+                                }
+                            >
                                 {DESTINATIONS.map(d => <DestinationCard key={d.name} dest={d} isActive={tag === d.name} />)}
                             </CarouselWrapper>
                         </section>
