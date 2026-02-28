@@ -7,7 +7,7 @@ import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.UserRepository;
-import org.junit.jupiter.api.AfterEach;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Map;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -27,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 @ActiveProfiles("test")
 public class AuditIntegrationTest {
 
@@ -51,13 +50,12 @@ public class AuditIntegrationTest {
 
         @BeforeEach
         void setUp() throws Exception {
-                userRepository.deleteAll();
-                homestayRepository.deleteAll();
+                String uniqueEmail = "testaudit-" + java.util.UUID.randomUUID() + "@example.com";
 
                 testUser = User.builder()
                                 .firstName("Test")
                                 .lastName("User")
-                                .email("testaudit@example.com")
+                                .email(uniqueEmail)
                                 .password(passwordEncoder.encode("password123"))
                                 .role(User.Role.ROLE_USER)
                                 .enabled(true)
@@ -65,24 +63,19 @@ public class AuditIntegrationTest {
                 userRepository.save(testUser);
 
                 testHomestay = Homestay.builder()
-                                .name("Audit Test Homestay")
+                                .name("Audit Test UniqueAuditXyz456")
                                 .description("A beautiful place to stay")
                                 .pricePerNight(1500)
                                 .latitude(27.0410)
                                 .longitude(88.2663)
-                                .address("Darjeeling")
+                                .address("UniqueAuditXyz456")
                                 .status(Homestay.Status.APPROVED)
                                 .owner(testUser)
-                                .amenities(java.util.Map.of())
-                                .policies(java.util.List.of())
-                                .tags(java.util.List.of())
-                                .hostDetails(java.util.Map.of())
-                                .quickFacts(java.util.Map.of())
                                 .build();
                 homestayRepository.save(testHomestay);
 
                 // Authenticate to get token
-                AuthDto.AuthenticationRequest loginRequest = new AuthDto.AuthenticationRequest("testaudit@example.com",
+                AuthDto.AuthenticationRequest loginRequest = new AuthDto.AuthenticationRequest(uniqueEmail,
                                 "password123");
                 String loginResponse = mockMvc.perform(post("/api/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -93,38 +86,25 @@ public class AuditIntegrationTest {
                 userToken = objectMapper.readTree(loginResponse).get("accessToken").asText();
         }
 
-        @AfterEach
-        void tearDown() {
-                homestayRepository.deleteAll();
-                userRepository.deleteAll();
-        }
-
         @Test
         void testOptimizedSearchEndpoint() throws Exception {
-                // Test 1: Verify the optimized search endpoints still return the exact expected
-                // payloads (N+1 fix verification)
                 mockMvc.perform(get("/api/homestays/search")
-                                .param("query", "Darjeeling")
+                                .param("q", "UniqueAuditXyz456")
                                 .param("size", "10")
                                 .param("page", "0"))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.content[0].name").value("Audit Test Homestay"))
-                                .andExpect(jsonPath("$.content[0].locationName").value("Darjeeling"));
+                                .andExpect(jsonPath("$.content[0].name").value("Audit Test UniqueAuditXyz456"))
+                                .andExpect(jsonPath("$.content[0].locationName").value("UniqueAuditXyz456"));
         }
 
         @Test
         void testSecurityValidations() throws Exception {
-                // Test 2: Verify security validations explicitly reject unauthorized requests
-                // (401/403)
-                // Trying to access saved homestays without a token should return 403
                 mockMvc.perform(get("/api/saves/homestays"))
                                 .andExpect(status().isForbidden());
         }
 
         @Test
         void testInputValidationRejectsBadData() throws Exception {
-                // Test 3: Verify input validation rejects bad data with 400 Bad Request
-                // Sending a registration request with blank email and short password
                 AuthDto.RegisterRequest badRequest = AuthDto.RegisterRequest.builder()
                                 .firstname("John")
                                 .lastname("Doe")
@@ -140,17 +120,16 @@ public class AuditIntegrationTest {
                                 .andExpect(jsonPath("$.email").exists())
                                 .andExpect(jsonPath("$.password").exists());
 
-                // Homestay creation with negative price
                 HomestayDto.Request badHomestay = HomestayDto.Request.builder()
                                 .name("New Space")
                                 .description("Desc")
-                                .pricePerNight(-500) // Negative
+                                .pricePerNight(-500)
                                 .latitude(27.0)
                                 .longitude(88.0)
                                 .locationName("Mirik")
                                 .build();
 
-                mockMvc.perform(post("/api/homestays/add")
+                mockMvc.perform(post("/api/homestays")
                                 .header("Authorization", "Bearer " + userToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(badHomestay)))

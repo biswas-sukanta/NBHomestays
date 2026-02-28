@@ -23,6 +23,9 @@ public interface HomestayRepository extends JpaRepository<Homestay, UUID>, Homes
 
         long countByStatus(Homestay.Status status);
 
+        @org.springframework.data.jpa.repository.Query("SELECT h FROM Homestay h WHERE h.destination IS NULL AND h.isDeleted = false")
+        List<Homestay> findByDestinationIsNull();
+
         long countByFeaturedTrue();
 
         org.springframework.data.domain.Page<Homestay> findByOwner(com.nbh.backend.model.User owner,

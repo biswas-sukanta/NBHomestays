@@ -5,6 +5,7 @@ import com.nbh.backend.model.User;
 import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.security.JwtService;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 @ActiveProfiles("test")
 public class AdminHomestayControllerTest {
 
@@ -42,14 +44,11 @@ public class AdminHomestayControllerTest {
 
     @BeforeEach
     void setUp() {
-        homestayRepository.deleteAll();
-        userRepository.deleteAll();
-
-        // Create Admin User
+        // Create Admin User with unique email
         User admin = User.builder()
                 .firstName("Admin")
                 .lastName("User")
-                .email("admin@test.com")
+                .email("admin-" + UUID.randomUUID() + "@test.com")
                 .password("password")
                 .role(User.Role.ROLE_ADMIN)
                 .enabled(true)
@@ -84,7 +83,6 @@ public class AdminHomestayControllerTest {
     void testToggleFeatured_WithoutToken_ShouldReturnForbiddenOrUnauthorized() throws Exception {
         mockMvc.perform(put("/api/admin/homestays/" + homestayId + "/feature")
                 .contentType(MediaType.APPLICATION_JSON))
-                // Spring security might return 401 or 403 depending on configuration
                 .andExpect(status().is4xxClientError());
     }
 }

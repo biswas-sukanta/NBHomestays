@@ -3,7 +3,9 @@ package com.nbh.backend.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nbh.backend.dto.AuthDto;
 import com.nbh.backend.dto.HomestayDto;
+import com.nbh.backend.model.Destination;
 import com.nbh.backend.model.User;
+import com.nbh.backend.repository.DestinationRepository;
 import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -19,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,6 +37,9 @@ public class HomestayIntegrationTest {
 
         @Autowired
         private HomestayRepository homestayRepository;
+
+        @Autowired
+        private DestinationRepository destinationRepository;
 
         @Autowired
         private ObjectMapper objectMapper;
@@ -53,10 +59,11 @@ public class HomestayIntegrationTest {
                                 .locationName("Darjeeling")
                                 .build();
 
-                mockMvc.perform(post("/api/homestays/add")
+                mockMvc.perform(post("/api/homestays")
                                 .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
+                                .andDo(print())
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.id").exists())
                                 .andExpect(jsonPath("$.name").value("Cozy Cabin"))
@@ -71,20 +78,21 @@ public class HomestayIntegrationTest {
                 User host = userRepository.findByEmail(email).orElseThrow();
 
                 // Create an APPROVED homestay directly in Repo for search test
-                // Only APPROVED homestays are searchable
                 com.nbh.backend.model.Homestay h = com.nbh.backend.model.Homestay.builder()
-                                .name("Mountain View")
-                                .description("Best view of Kanchenjunga")
+                                .name("Mountain View UniqueTestXyz789")
+                                .description("Best view of UniqueTestXyz789 landscape")
                                 .pricePerNight(2000)
                                 .owner(host)
+                                .address("UniqueTestXyz789 Location")
                                 .status(com.nbh.backend.model.Homestay.Status.APPROVED)
                                 .build();
                 homestayRepository.save(h);
 
                 mockMvc.perform(get("/api/homestays/search")
-                                .param("q", "Kanchenjunga"))
+                                .param("q", "UniqueTestXyz789"))
+                                .andDo(print())
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.content[0].name").value("Mountain View"));
+                                .andExpect(jsonPath("$.content[0].name").value("Mountain View UniqueTestXyz789"));
         }
 
         private String registerUser(String email, User.Role role) throws Exception {

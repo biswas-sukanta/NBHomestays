@@ -20,7 +20,11 @@ export default function DestinationPage() {
 
     const { data: homestaysPage, isLoading: homestaysLoading } = useQuery({
         queryKey: ['destination-homestays', slug],
-        queryFn: () => api.get(`/api/destinations/${slug}/homestays`).then(res => res.data)
+        queryFn: async () => {
+            const res = await api.get(`/api/destinations/${slug}/homestays`);
+            // Safely extract the array whether it's wrapped in a Page object or not
+            return res.data.content ? res.data.content : res.data;
+        }
     });
 
     if (destLoading) {
@@ -41,7 +45,7 @@ export default function DestinationPage() {
 
     if (!destination) return <div className="p-20 text-center">Destination not found</div>;
 
-    const homestays = homestaysPage?.content || [];
+    const homestays = Array.isArray(homestaysPage) ? homestaysPage : [];
 
     return (
         <div className="min-h-screen bg-[#FDFCFB]">

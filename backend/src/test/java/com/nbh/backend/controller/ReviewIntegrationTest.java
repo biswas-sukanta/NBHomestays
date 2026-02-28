@@ -6,9 +6,8 @@ import com.nbh.backend.dto.ReviewDto;
 import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.HomestayRepository;
-import com.nbh.backend.repository.ReviewRepository;
 import com.nbh.backend.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -25,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 @ActiveProfiles("test")
 public class ReviewIntegrationTest {
 
@@ -36,23 +36,16 @@ public class ReviewIntegrationTest {
     private UserRepository userRepository;
     @Autowired
     private HomestayRepository homestayRepository;
-    @Autowired
-    private ReviewRepository reviewRepository;
-
-    @BeforeEach
-    void tearDown() {
-        reviewRepository.deleteAll();
-        homestayRepository.deleteAll();
-        userRepository.deleteAll();
-    }
 
     @Test
     void shouldAddReview() throws Exception {
-        String token = registerUser("reviewer@example.com");
+        String reviewerEmail = "reviewer-" + UUID.randomUUID() + "@example.com";
+        String token = registerUser(reviewerEmail);
 
         // Register host
-        registerUser("host@example.com");
-        User host = userRepository.findByEmail("host@example.com").orElseThrow();
+        String hostEmail = "host-" + UUID.randomUUID() + "@example.com";
+        registerUser(hostEmail);
+        User host = userRepository.findByEmail(hostEmail).orElseThrow();
 
         UUID homestayId = createHomestay(host);
 
