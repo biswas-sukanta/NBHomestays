@@ -5,6 +5,9 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -14,7 +17,8 @@ export default function RegisterPage() {
         password: '',
         role: 'ROLE_USER'
     });
-    const [error, setError] = useState('');
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [globalError, setGlobalError] = useState('');
     const { login } = useAuth();
     const router = useRouter();
 
@@ -24,12 +28,26 @@ export default function RegisterPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrors({});
+        setGlobalError('');
+
+        const newErrors: Record<string, string> = {};
+        if (!formData.firstname.trim()) newErrors.firstname = "First name is required.";
+        if (!formData.lastname.trim()) newErrors.lastname = "Last name is required.";
+        if (!formData.email.trim()) newErrors.email = "Email is required.";
+        if (!formData.password.trim() || formData.password.length < 6) newErrors.password = "Password must be at least 6 characters.";
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
         try {
             const res = await api.post('/api/auth/register', formData);
             login(res.data.accessToken, res.data.refreshToken);
             router.push('/');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Registration failed');
+            setGlobalError(err.response?.data?.message || 'Registration failed');
         }
     };
 
@@ -39,63 +57,54 @@ export default function RegisterPage() {
                 <div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
                 </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div className="grid grid-cols-2 gap-2 mb-2">
-                            <input
-                                name="firstname"
-                                type="text"
-                                required
-                                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                                placeholder="First Name"
-                                value={formData.firstname}
-                                onChange={handleChange}
-                            />
-                            <input
-                                name="lastname"
-                                type="text"
-                                required
-                                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                                placeholder="Last Name"
-                                value={formData.lastname}
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div className="mb-2">
-                            <input
-                                name="email"
-                                type="email"
-                                required
-                                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                                placeholder="Email address"
-                                value={formData.email}
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div className="mb-2">
-                            <input
-                                name="password"
-                                type="password"
-                                required
-                                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                                placeholder="Password"
-                                value={formData.password}
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div className="mb-2">
-                            <label className="text-sm text-gray-600">I want to:</label>
-                            <select
-                                name="role"
-                                value={formData.role}
-                                onChange={handleChange}
-                                className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                            >
-                                <option value="ROLE_USER">Book Homestays</option>
-                                <option value="ROLE_HOST">Host a Homestay</option>
-                            </select>
-                        </div>
+                <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+                    {globalError && <div className="text-red-500 text-sm text-center font-medium bg-red-50 py-2 rounded-lg border border-red-100">{globalError}</div>}
+                    <div className="grid grid-cols-2 gap-3">
+                        <Input
+                            name="firstname"
+                            placeholder="First Name"
+                            value={formData.firstname}
+                            onChange={handleChange}
+                            error={errors.firstname}
+                        />
+                        <Input
+                            name="lastname"
+                            placeholder="Last Name"
+                            value={formData.lastname}
+                            onChange={handleChange}
+                            error={errors.lastname}
+                        />
+                    </div>
+                    <Input
+                        name="email"
+                        type="email"
+                        placeholder="Email address"
+                        value={formData.email}
+                        onChange={handleChange}
+                        error={errors.email}
+                    />
+                    <Input
+                        name="password"
+                        type="password"
+                        placeholder="Password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        error={errors.password}
+                    />
+                    <div className="space-y-2">
+                        <Label className="text-xs text-gray-500 font-bold uppercase tracking-wider">I want to:</Label>
+                        <Select
+                            value={formData.role}
+                            onValueChange={(val) => setFormData({ ...formData, role: val })}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ROLE_USER">Book Homestays</SelectItem>
+                                <SelectItem value="ROLE_HOST">Host a Homestay</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div>

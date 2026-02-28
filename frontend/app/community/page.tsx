@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Image as ImageIcon, Send, X, Pencil, Search, Loader2, Scissors, Share2, MapPin } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { SharedPageBanner } from '@/components/shared-page-banner';
@@ -80,8 +82,14 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
         });
     };
 
+    const [error, setError] = useState('');
+
     const handleSubmit = async () => {
-        if (!text.trim() && stagedFiles.length === 0 && existingMedia.length === 0) return;
+        if (!text.trim() && stagedFiles.length === 0 && existingMedia.length === 0) {
+            setError("Please add some text or a photo to share.");
+            return;
+        }
+        setError('');
         setSubmitting(true);
         try {
             let finalMedia = [...existingMedia];
@@ -158,12 +166,16 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                         </div>
                     )}
 
-                    <textarea
+                    <Textarea
                         data-testid="post-textarea"
                         value={text}
-                        onChange={e => setText(e.target.value)}
+                        onChange={e => {
+                            setText(e.target.value);
+                            if (error) setError('');
+                        }}
                         placeholder={repostTarget ? 'Add your thoughts...' : "What's the atmosphere like? Tell the community..."}
                         className="w-full h-32 md:h-40 p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-inner focus:bg-white focus:ring-2 focus:ring-green-500/40 focus:border-transparent resize-none text-base font-medium text-gray-900 placeholder-gray-400 transition-all duration-200"
+                        error={error}
                     />
 
                     {(stagedFiles.length > 0 || existingMedia.length > 0) && (

@@ -84,6 +84,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(isEditMode);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     // --- State Models ---
     const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '' });
@@ -162,7 +163,39 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
         }
     }, [isEditMode, id]);
 
-    const handleNext = () => setStep(prev => prev + 1);
+    const validateStep = (currentStep: number): boolean => {
+        const newErrors: Record<string, string> = {};
+
+        if (currentStep === 1) {
+            if (!basicInfo.name.trim()) newErrors.name = "Property name is required.";
+            if (!basicInfo.pricePerNight || parseFloat(basicInfo.pricePerNight) <= 0) {
+                newErrors.price = "Valid price per night is required.";
+            }
+        } else if (currentStep === 2) {
+            if (!topDestination) newErrors.topDestination = "Please select a Top Destination segment.";
+            if (!location.latitude || !location.longitude) {
+                newErrors.location = "Please pin your exact location on the map.";
+            }
+        } else if (currentStep === 3) {
+            if (existingPhotoUrls.length + imageFiles.length === 0) {
+                newErrors.photos = "Please upload at least 1 property photo.";
+            }
+        } else if (currentStep === 7) {
+            if (hostDetails.yearsHosting && parseInt(hostDetails.yearsHosting) < 0) {
+                newErrors.yearsHosting = "Years hosting cannot be negative.";
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleNext = () => {
+        if (validateStep(step)) {
+            setStep(prev => prev + 1);
+            setErrors({});
+        }
+    };
     const handleBack = () => {
         if (step === 1) {
             router.push('/host/dashboard'); // Route back completely
@@ -196,14 +229,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
     const removePolicy = (index: number) => setPolicies(prev => prev.filter((_, i) => i !== index));
 
     const handleSubmit = async () => {
-        if (!basicInfo.name || !basicInfo.pricePerNight || !location.latitude || !topDestination) {
-            toast.error("Please complete the required basic info, location, and Top Destination.");
-            return;
-        }
-        if (existingPhotoUrls.length + imageFiles.length === 0) {
-            toast.error("Please provide at least 1 photo for your homestay.");
-            return;
-        }
+        if (!validateStep(7)) return;
 
         setLoading(true);
         try {
@@ -310,15 +336,37 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                         <div className="space-y-5">
                             <div className="space-y-2">
                                 <Label htmlFor="name">Property Name *</Label>
-                                <Input id="name" value={basicInfo.name} onChange={e => setBasicInfo({ ...basicInfo, name: e.target.value })} placeholder="e.g. Cloud 9 Villa" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
+                                <Input
+                                    id="name"
+                                    value={basicInfo.name}
+                                    onChange={e => setBasicInfo({ ...basicInfo, name: e.target.value })}
+                                    placeholder="e.g. Cloud 9 Villa"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
+                                    error={errors.name}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="description">Description</Label>
-                                <Textarea id="description" value={basicInfo.description} onChange={e => setBasicInfo({ ...basicInfo, description: e.target.value })} placeholder="Describe the vibe and surroundings..." className="h-32 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
+                                <Textarea
+                                    id="description"
+                                    value={basicInfo.description}
+                                    onChange={e => setBasicInfo({ ...basicInfo, description: e.target.value })}
+                                    placeholder="Describe the vibe and surroundings..."
+                                    className="h-32 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
+                                    error={errors.description}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="price">Price per Night (₹) *</Label>
-                                <Input id="price" type="number" value={basicInfo.pricePerNight} onChange={e => setBasicInfo({ ...basicInfo, pricePerNight: e.target.value })} placeholder="2500" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
+                                <Input
+                                    id="price"
+                                    type="number"
+                                    value={basicInfo.pricePerNight}
+                                    onChange={e => setBasicInfo({ ...basicInfo, pricePerNight: e.target.value })}
+                                    placeholder="2500"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
+                                    error={errors.price}
+                                />
                             </div>
                         </div>
                     )}
@@ -329,7 +377,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                             <div className="space-y-2">
                                 <Label>Top Destination Segment *</Label>
                                 <Select value={topDestination} onValueChange={setTopDestination}>
-                                    <SelectTrigger><SelectValue placeholder="Select primary locality (e.g. Darjeeling)" /></SelectTrigger>
+                                    <SelectTrigger error={errors.topDestination}><SelectValue placeholder="Select primary locality (e.g. Darjeeling)" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Darjeeling">Darjeeling</SelectItem>
                                         <SelectItem value="Kalimpong">Kalimpong</SelectItem>
@@ -351,6 +399,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                                     initialLng={location.longitude || undefined}
                                     initialAddress={location.locationName}
                                 />
+                                {errors.location && <p className="text-red-500 text-xs mt-2 font-medium">{errors.location}</p>}
                             </div>
                         </div>
                     )}
@@ -361,6 +410,7 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                             <div className="space-y-4">
                                 <Label className="text-lg font-bold">Property Photos</Label>
                                 <ImageDropzone files={imageFiles} setFiles={setImageFiles} existingUrls={existingPhotoUrls} setExistingUrls={setExistingPhotoUrls} maxFiles={10} />
+                                {errors.photos && <p className="text-red-500 text-xs mt-2 font-medium">{errors.photos}</p>}
                             </div>
 
                             <div className="space-y-4">
@@ -458,7 +508,13 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                             </div>
                             <div className="space-y-2">
                                 <Label>Location Type</Label>
-                                <Input placeholder="e.g. Remote, Village Center" value={quickFacts.locationType} onChange={e => setQuickFacts({ ...quickFacts, locationType: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
+                                <Input
+                                    placeholder="e.g. Remote, Village Center"
+                                    value={quickFacts.locationType}
+                                    onChange={e => setQuickFacts({ ...quickFacts, locationType: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
+                                    error={errors.locationType}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label>Hike / Walk to Property</Label>
@@ -507,7 +563,13 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Years Hosting (Number)</Label>
-                                    <Input type="number" value={hostDetails.yearsHosting} onChange={e => setHostDetails({ ...hostDetails, yearsHosting: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
+                                    <Input
+                                        type="number"
+                                        value={hostDetails.yearsHosting}
+                                        onChange={e => setHostDetails({ ...hostDetails, yearsHosting: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
+                                        error={errors.yearsHosting}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Reviews Count (Dummy/Migration)</Label>
@@ -531,7 +593,13 @@ export default function HomestayForm({ id, isEditMode = false }: HomestayFormPro
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <Label>Bio / Tagline</Label>
-                                    <Textarea value={hostDetails.bio} onChange={e => setHostDetails({ ...hostDetails, bio: e.target.value })} placeholder="A short welcoming message to your guests..." className="h-24 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
+                                    <Textarea
+                                        value={hostDetails.bio}
+                                        onChange={e => setHostDetails({ ...hostDetails, bio: e.target.value })}
+                                        placeholder="A short welcoming message to your guests..."
+                                        className="h-24 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
+                                        error={errors.bio}
+                                    />
                                 </div>
                             </div>
                         </div>
