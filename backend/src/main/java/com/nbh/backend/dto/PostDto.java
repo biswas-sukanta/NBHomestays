@@ -20,7 +20,7 @@ public class PostDto {
     public static class Request {
         private String locationName;
         private String textContent;
-        private List<MediaResource> mediaFiles;
+        private List<MediaResource> media;
         private UUID homestayId;
         private UUID originalPostId;
     }

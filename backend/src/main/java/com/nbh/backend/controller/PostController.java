@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import com.nbh.backend.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -22,14 +26,16 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping
-    public ResponseEntity<List<PostDto.Response>> getAllPosts() {
-        return ResponseEntity.ok(postService.getAllPosts());
+    public ResponseEntity<Page<PostDto.Response>> getAllPosts(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(postService.getAllPosts(pageable));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<PostDto.Response>> searchPosts(
-            @RequestParam(name = "q", required = false, defaultValue = "") String query) {
-        return ResponseEntity.ok(postService.searchPosts(query));
+    public ResponseEntity<Page<PostDto.Response>> searchPosts(
+            @RequestParam(name = "q", required = false, defaultValue = "") String query,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(postService.searchPosts(query, pageable));
     }
 
     @GetMapping("/{id}")
@@ -49,8 +55,10 @@ public class PostController {
 
     @GetMapping("/my-posts")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<PostDto.Response>> getMyPosts(Authentication authentication) {
-        return ResponseEntity.ok(postService.getPostsByUser(authentication.getName()));
+    public ResponseEntity<Page<PostDto.Response>> getMyPosts(
+            Authentication authentication,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(postService.getPostsByUser(authentication.getName(), pageable));
     }
 
     @PutMapping("/{id}")

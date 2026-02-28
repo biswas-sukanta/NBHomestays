@@ -3,7 +3,6 @@ package com.nbh.backend.service;
 import com.nbh.backend.dto.CommentDto;
 import com.nbh.backend.dto.AuthorDto;
 import com.nbh.backend.model.Comment;
-import com.nbh.backend.model.MediaResource;
 import com.nbh.backend.model.Post;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.CommentRepository;
@@ -47,9 +46,13 @@ public class CommentService {
                                 .post(post)
                                 .user(user)
                                 .body(request.getBody() != null ? request.getBody().trim() : "")
-                                .mediaFiles(request.getMediaFiles() != null ? request.getMediaFiles()
-                                                : new ArrayList<>())
                                 .build();
+
+                if (request.getMedia() != null) {
+                        final Comment finalC = comment;
+                        request.getMedia().forEach(m -> m.setComment(finalC));
+                        comment.setMediaFiles(request.getMedia());
+                }
 
                 return toDto(commentRepository.save(comment), true);
         }
@@ -72,16 +75,20 @@ public class CommentService {
                                 .user(user)
                                 .parent(parent)
                                 .body(request.getBody() != null ? request.getBody().trim() : "")
-                                .mediaFiles(request.getMediaFiles() != null ? request.getMediaFiles()
-                                                : new ArrayList<>())
                                 .build();
+
+                if (request.getMedia() != null) {
+                        final Comment finalReply = reply;
+                        request.getMedia().forEach(m -> m.setComment(finalReply));
+                        reply.setMediaFiles(request.getMedia());
+                }
 
                 return toDto(commentRepository.save(reply), false);
         }
 
         // ── Get paginated top-level comments (with embedded replies) ──
         @Transactional(readOnly = true)
-        @Cacheable(value = "postComments", sync = true)
+        @Cacheable(value = "postComments", key = "#postId + '-' + #page", sync = true)
         public Page<CommentDto> getComments(UUID postId, int page, int size) {
                 return commentRepository
                                 .findTopLevelByPostId(postId, PageRequest.of(page, size))

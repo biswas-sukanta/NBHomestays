@@ -24,7 +24,7 @@ public class CommentDto {
     @NoArgsConstructor
     public static class Request {
         private String body;
-        private List<MediaResource> mediaFiles;
+        private List<MediaResource> media;
     }
 
     private UUID id;

@@ -10,14 +10,20 @@ import java.util.UUID;
 @Repository
 public interface HomestayRepository extends JpaRepository<Homestay, UUID>, HomestayRepositoryCustom {
 
-    List<Homestay> findByStatus(Homestay.Status status);
+        org.springframework.data.domain.Page<Homestay> findByStatus(Homestay.Status status,
+                        org.springframework.data.domain.Pageable pageable);
 
-    long countByStatus(Homestay.Status status);
+        @org.springframework.data.jpa.repository.Query("SELECT h FROM Homestay h WHERE h.status = :status")
+        List<Homestay> findByStatus(@org.springframework.data.repository.query.Param("status") Homestay.Status status);
 
-    long countByFeaturedTrue();
+        long countByStatus(Homestay.Status status);
 
-    List<Homestay> findByOwner(com.nbh.backend.model.User owner);
+        long countByFeaturedTrue();
 
-    @org.springframework.data.jpa.repository.Query("SELECT h FROM Homestay h LEFT JOIN FETCH h.owner LEFT JOIN FETCH h.photoUrls WHERE h.id = :id")
-    java.util.Optional<Homestay> findByIdWithDetails(@org.springframework.data.repository.query.Param("id") UUID id);
+        org.springframework.data.domain.Page<Homestay> findByOwner(com.nbh.backend.model.User owner,
+                        org.springframework.data.domain.Pageable pageable);
+
+        @org.springframework.data.jpa.repository.Query("SELECT h FROM Homestay h LEFT JOIN FETCH h.owner LEFT JOIN FETCH h.mediaFiles WHERE h.id = :id")
+        java.util.Optional<Homestay> findByIdWithDetails(
+                        @org.springframework.data.repository.query.Param("id") UUID id);
 }

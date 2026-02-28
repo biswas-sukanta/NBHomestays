@@ -14,11 +14,17 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE homestay_questions SET is_deleted = true WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_deleted = false")
 public class HomestayQuestion {
 
     @Id
     @GeneratedValue
     private UUID id;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private boolean isDeleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "homestay_id", nullable = false)

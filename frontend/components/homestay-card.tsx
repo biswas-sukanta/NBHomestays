@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Star, Scale, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Scale, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompareStore } from '@/store/useCompareStore';
 import { TripBoardButton } from '@/components/trip-board-button';
@@ -17,10 +17,17 @@ export interface HomestaySummary {
     latitude: number;
     longitude: number;
     amenities: Record<string, boolean>;
-    photoUrls: string[];
+    media?: { url: string; fileId?: string }[];
+    photoUrls?: string[]; // Kept for legacy compatibility if any
     vibeScore: number;
     status: string;
     locationName?: string;
+    host?: {
+        id: string;
+        name: string;
+        avatarUrl?: string;
+        isVerifiedHost?: boolean;
+    };
 }
 
 interface HomestayCardProps {
@@ -34,7 +41,17 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
     const { addToCompare, selectedIds } = useCompareStore();
     const isSelected = selectedIds.includes(homestay.id);
     const [currentIndex, setCurrentIndex] = React.useState(0);
-    const images = homestay.photoUrls?.length > 0 ? homestay.photoUrls : [FALLBACK_IMAGE];
+
+    // Extract images from new media or legacy photoUrls
+    const images = React.useMemo(() => {
+        if (homestay.media && homestay.media.length > 0) {
+            return homestay.media.map(m => m.url);
+        }
+        if (homestay.photoUrls && homestay.photoUrls.length > 0) {
+            return homestay.photoUrls;
+        }
+        return [FALLBACK_IMAGE];
+    }, [homestay.media, homestay.photoUrls]);
 
     const handleCompare = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -56,7 +73,7 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
     const tripBoardItem = {
         id: homestay.id,
         name: homestay.name,
-        imageUrl: homestay.photoUrls?.[0] || FALLBACK_IMAGE,
+        imageUrl: homestay.media?.[0]?.url || homestay.photoUrls?.[0] || FALLBACK_IMAGE,
         locationName: homestay.locationName || 'North Bengal Hills',
         pricePerNight: homestay.pricePerNight,
     };
@@ -168,9 +185,17 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
                     <h3 className="text-lg font-semibold text-gray-900 truncate mt-3" data-slot="card-title">
                         {homestay.name}
                     </h3>
-                    <p className="text-sm text-gray-500 truncate mb-1" data-testid="location-text">
-                        {homestay.locationName || 'North Bengal Hills'}
-                    </p>
+                    <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm text-gray-500 truncate" data-testid="location-text">
+                            {homestay.locationName || 'North Bengal Hills'}
+                        </p>
+                        {homestay.host?.isVerifiedHost && (
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full border border-blue-100">
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                <span>VERIFIED</span>
+                            </div>
+                        )}
+                    </div>
                     <div className="mt-1 flex items-center justify-between">
                         <span className="font-semibold text-gray-900">
                             ₹{homestay.pricePerNight.toLocaleString()} <span className="font-normal text-gray-500">/night</span>

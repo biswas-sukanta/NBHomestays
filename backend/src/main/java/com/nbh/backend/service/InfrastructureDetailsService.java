@@ -73,9 +73,13 @@ public class InfrastructureDetailsService {
 
     /** Clear all keys from the current Redis database. */
     public void clearAllCaches() {
-        if (redisTemplate.getConnectionFactory() != null
-                && redisTemplate.getConnectionFactory().getConnection() != null) {
-            redisTemplate.getConnectionFactory().getConnection().serverCommands().flushDb();
+        var factory = redisTemplate.getConnectionFactory();
+        if (factory != null) {
+            try (var connection = factory.getConnection()) {
+                if (connection != null) {
+                    connection.serverCommands().flushDb();
+                }
+            }
         }
     }
 }

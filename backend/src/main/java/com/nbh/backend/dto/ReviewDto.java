@@ -16,6 +16,10 @@ public class ReviewDto {
     public static class Request {
         private UUID homestayId;
         private Integer rating;
+        private Integer atmosphereRating;
+        private Integer serviceRating;
+        private Integer accuracyRating;
+        private Integer valueRating;
         private String comment;
         private java.util.List<String> photoUrls;
     }
@@ -27,7 +31,11 @@ public class ReviewDto {
     public static class Response {
         private UUID id;
         private String userName;
-        private Integer rating;
+        private Integer atmosphereRating;
+        private Integer serviceRating;
+        private Integer accuracyRating;
+        private Integer valueRating;
+        private Double overallRating;
         private String comment;
         private java.util.List<String> photoUrls;
         private LocalDateTime createdAt;

@@ -3,6 +3,7 @@ package com.nbh.backend.service;
 import com.nbh.backend.dto.HostProfileDto;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -47,8 +48,8 @@ public class UserService {
                 .bio(user.getBio())
                 .communityPoints(user.getCommunityPoints())
                 .badges(user.getBadges())
-                .homestays(homestayService.getHomestaysByOwner(user.getEmail()))
-                .posts(postService.getPostsByUser(user.getEmail()))
+                .homestays(homestayService.getHomestaysByOwner(user.getEmail(), PageRequest.of(0, 10)).getContent())
+                .posts(postService.getPostsByUser(user.getEmail(), PageRequest.of(0, 10)).getContent())
                 .build();
     }
 

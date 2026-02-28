@@ -16,11 +16,17 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE posts SET is_deleted = true WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_deleted = false")
 public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private boolean isDeleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -40,9 +46,9 @@ public class Post {
     @Column(name = "text_content", nullable = false, columnDefinition = "TEXT")
     private String textContent;
 
-    @ElementCollection
-    @CollectionTable(name = "post_media", joinColumns = @JoinColumn(name = "post_id"))
-    private List<MediaResource> mediaFiles;
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<MediaResource> mediaFiles = new java.util.ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "post_images", joinColumns = @JoinColumn(name = "post_id"))

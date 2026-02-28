@@ -20,11 +20,17 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE comments SET is_deleted = true WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_deleted = false")
 public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private boolean isDeleted = false;
 
     /** The post this comment belongs to. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -53,8 +59,7 @@ public class Comment {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String body;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "comment_media", joinColumns = @JoinColumn(name = "comment_id"))
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MediaResource> mediaFiles = new ArrayList<>();
 

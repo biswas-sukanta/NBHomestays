@@ -16,4 +16,5 @@ public class AuthorDto {
     private String name;
     private String role;
     private String avatarUrl;
+    private boolean isVerifiedHost;
 }

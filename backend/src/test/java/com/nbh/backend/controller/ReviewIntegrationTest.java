@@ -17,10 +17,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -61,6 +59,10 @@ public class ReviewIntegrationTest {
         ReviewDto.Request request = ReviewDto.Request.builder()
                 .homestayId(homestayId)
                 .rating(5)
+                .atmosphereRating(5)
+                .serviceRating(5)
+                .accuracyRating(5)
+                .valueRating(5)
                 .comment("Great place!")
                 .build();
 

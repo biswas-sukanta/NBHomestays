@@ -16,11 +16,17 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name = "reviews")
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE reviews SET is_deleted = true WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_deleted = false")
 public class Review {
 
     @Id
     @GeneratedValue
     private UUID id;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private boolean isDeleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "homestay_id", nullable = false)
@@ -30,7 +36,13 @@ public class Review {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private Integer rating; // 1-5
+    private Integer rating; // Overall 1-5
+
+    // Categorical Ratings
+    private Integer atmosphereRating;
+    private Integer serviceRating;
+    private Integer accuracyRating;
+    private Integer valueRating;
 
     @Column(columnDefinition = "TEXT")
     private String comment;

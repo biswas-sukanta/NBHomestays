@@ -22,8 +22,10 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
     public Page<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, Boolean isFeatured,
             Double minLat, Double maxLat, Double minLng, Double maxLng,
             Pageable pageable) {
-        StringBuilder sql = new StringBuilder("SELECT h.id FROM homestays h WHERE h.status = 'APPROVED' ");
-        StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM homestays h WHERE h.status = 'APPROVED' ");
+        StringBuilder sql = new StringBuilder(
+                "SELECT h.id FROM homestays h WHERE h.is_deleted = false AND h.status = 'APPROVED' ");
+        StringBuilder countSql = new StringBuilder(
+                "SELECT COUNT(*) FROM homestays h WHERE h.is_deleted = false AND h.status = 'APPROVED' ");
 
         StringBuilder conditions = new StringBuilder();
 
@@ -122,7 +124,7 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
 
         // N+1 Fix: Fetch entities with JOIN FETCH to eagerly load proxies
         List<Homestay> unsorted = entityManager.createQuery(
-                "SELECT h FROM Homestay h LEFT JOIN FETCH h.owner LEFT JOIN FETCH h.photoUrls WHERE h.id IN :ids",
+                "SELECT h FROM Homestay h LEFT JOIN FETCH h.owner LEFT JOIN FETCH h.mediaFiles WHERE h.id IN :ids",
                 Homestay.class).setParameter("ids", ids).getResultList();
 
         // Sort unsorted list based on the order of the initially ranked native 'ids'

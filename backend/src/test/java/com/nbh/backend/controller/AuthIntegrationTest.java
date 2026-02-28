@@ -3,7 +3,6 @@ package com.nbh.backend.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nbh.backend.dto.AuthDto;
 import com.nbh.backend.model.User;
-import com.nbh.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

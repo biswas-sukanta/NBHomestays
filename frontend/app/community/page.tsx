@@ -13,6 +13,7 @@ import { SharedPageBanner } from '@/components/shared-page-banner';
 import { ImageCropModal } from '@/components/host/ImageCropModal';
 import { StagedFile } from '@/components/host/ImageDropzone';
 import { PostCard, CommunityPost } from '@/components/community/PostCard';
+import { PostSkeleton } from '@/components/community/PostSkeleton';
 import { CommentsSection } from '@/components/comments-section';
 import { CustomCombobox } from '@/components/ui/combobox';
 import api from '@/lib/api';
@@ -113,7 +114,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
             const payload: any = {
                 textContent: text,
                 locationName: location || 'North Bengal',
-                mediaFiles: finalMedia
+                media: finalMedia
             };
             if (selectedHomestay) {
                 payload.homestayId = selectedHomestay;
@@ -276,19 +277,28 @@ export default function CommunityPage() {
     const observerRef = useRef<HTMLDivElement>(null);
 
     const fetchPosts = useCallback(async (pageNum: number) => {
-        if (loading || !hasMore) return;
+        if (loading || (pageNum > 0 && !hasMore)) return;
         setLoading(true);
         try {
-            const res = await fetch(`${API}/api/posts?page=${pageNum}&size=10&sort=createdAt,desc`);
-            const data = await res.json();
-            const content: Post[] = data.content ?? data ?? [];
+            const res = await api.get(`/api/posts?page=${pageNum}&size=10&sort=createdAt,desc`);
+            const data = res.data;
+            const content: Post[] = data.content || [];
+
             setPosts(prev => pageNum === 0 ? content : [...prev, ...content]);
-            setHasMore(content.length === 10);
-        } catch (e) { console.error('Failed to load posts', e); }
-        finally { setLoading(false); }
+            setHasMore(!data.last); // metadata from Spring Page
+            setPage(pageNum);
+        } catch (e) {
+            console.error('Failed to load posts', e);
+            toast.error("Failed to load feed.");
+        } finally {
+            setLoading(false);
+        }
     }, [loading, hasMore]);
 
-    useEffect(() => { fetchPosts(0); }, []);
+    useEffect(() => {
+        setHasMore(true);
+        fetchPosts(0);
+    }, [fetchPosts]);
 
     useEffect(() => {
         const el = observerRef.current;
@@ -378,18 +388,11 @@ export default function CommunityPage() {
                     </div>
                 )}
 
-                {loading && [1, 2].map(i => (
-                    <div key={i} className="rounded-3xl overflow-hidden border border-border shadow-sm">
-                        <div className="h-64 skeleton-shimmer" />
-                        <div className="p-6 space-y-4">
-                            <div className="flex gap-4">
-                                <div className="w-11 h-11 rounded-full skeleton-shimmer flex-none" />
-                                <div className="flex-1 space-y-2.5 pt-1"><div className="h-4 w-32 rounded skeleton-shimmer" /><div className="h-3 w-40 rounded skeleton-shimmer" /></div>
-                            </div>
-                            <div className="h-3.5 w-full rounded skeleton-shimmer" /><div className="h-3.5 w-5/6 rounded skeleton-shimmer" />
-                        </div>
+                {loading && (
+                    <div className="space-y-4">
+                        {[1, 2, 3].map(i => <PostSkeleton key={i} />)}
                     </div>
-                ))}
+                )}
 
                 <div ref={observerRef} className="h-4" />
                 {!hasMore && filteredPosts.length > 0 && !searchQuery && <p className="text-center text-muted-foreground text-[15px] py-4 font-semibold tracking-wide uppercase opacity-70">You&apos;ve seen it all! 🌿</p>}

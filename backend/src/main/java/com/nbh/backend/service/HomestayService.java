@@ -1,7 +1,9 @@
 package com.nbh.backend.service;
 
 import com.nbh.backend.dto.HomestayDto;
+import com.nbh.backend.dto.AuthorDto;
 import com.nbh.backend.model.Homestay;
+import com.nbh.backend.model.MediaResource;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.UserRepository;
@@ -27,6 +29,7 @@ public class HomestayService {
 
         private final HomestayRepository repository;
         private final UserRepository userRepository;
+        private final ImageUploadService imageUploadService;
 
         @CacheEvict(value = "homestaysSearch", allEntries = true)
         public HomestayDto.Response createHomestay(HomestayDto.Request request, String userEmail) {
@@ -47,7 +50,6 @@ public class HomestayService {
                                 .quickFacts(request.getQuickFacts())
                                 .tags(request.getTags())
                                 .hostDetails(request.getHostDetails())
-                                .photoUrls(request.getPhotoUrls())
                                 .status(status)
                                 .vibeScore(0.0)
                                 .latitude(request.getLatitude())
@@ -56,8 +58,13 @@ public class HomestayService {
                                 .owner(owner)
                                 .build();
 
-                Homestay saved = repository.save(homestay);
-                return mapToResponse(saved);
+                if (request.getMedia() != null) {
+                        final com.nbh.backend.model.Homestay finalH = homestay;
+                        request.getMedia().forEach(m -> m.setHomestay(finalH));
+                        homestay.setMediaFiles(request.getMedia());
+                }
+
+                return mapToResponse(repository.save(homestay));
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
@@ -158,8 +165,6 @@ public class HomestayService {
                         homestay.setTags(request.getTags());
                 if (request.getHostDetails() != null)
                         homestay.setHostDetails(request.getHostDetails());
-                if (request.getPhotoUrls() != null)
-                        homestay.setPhotoUrls(request.getPhotoUrls());
                 if (request.getLocationName() != null)
                         homestay.setAddress(request.getLocationName());
 
@@ -167,6 +172,31 @@ public class HomestayService {
                         homestay.setLatitude(request.getLatitude());
                 if (request.getLongitude() != null)
                         homestay.setLongitude(request.getLongitude());
+
+                // --- CLOUD JANITOR V2 DIFF: Purge orphaned Photos ---
+                if (request.getMedia() != null) {
+                        java.util.List<MediaResource> existingMedia = homestay.getMediaFiles();
+                        java.util.List<MediaResource> newMedia = request.getMedia();
+
+                        if (existingMedia != null) {
+                                java.util.Set<String> newFileIds = newMedia.stream()
+                                                .map(MediaResource::getFileId)
+                                                .filter(java.util.Objects::nonNull)
+                                                .collect(java.util.stream.Collectors.toSet());
+
+                                for (MediaResource oldResource : existingMedia) {
+                                        if (oldResource.getFileId() != null
+                                                        && !newFileIds.contains(oldResource.getFileId())) {
+                                                System.out.println("--- CLOUD JANITOR (HOMESTAY): Deleting File ID: "
+                                                                + oldResource.getFileId());
+                                                imageUploadService.deleteFile(oldResource.getFileId());
+                                        }
+                                }
+                        }
+                        final com.nbh.backend.model.Homestay finalH = homestay;
+                        newMedia.forEach(m -> m.setHomestay(finalH));
+                        homestay.setMediaFiles(newMedia);
+                }
 
                 Homestay saved = repository.save(homestay);
                 return mapToResponse(saved);
@@ -188,16 +218,23 @@ public class HomestayService {
                         }
                 }
 
+                // --- CLOUD JANITOR: Purge Photos before deletion ---
+                if (homestay.getMediaFiles() != null) {
+                        for (MediaResource media : homestay.getMediaFiles()) {
+                                if (media.getFileId() != null) {
+                                        imageUploadService.deleteFile(media.getFileId());
+                                }
+                        }
+                }
                 repository.delete(homestay);
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
-        public List<HomestayDto.Response> getHomestaysByOwner(String email) {
+        public Page<HomestayDto.Response> getHomestaysByOwner(String email, Pageable pageable) {
                 User owner = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
-                return repository.findByOwner(owner).stream()
-                                .map(this::mapToResponse)
-                                .toList();
+                Page<Homestay> pageResults = repository.findByOwner(owner, pageable);
+                return pageResults.map(this::mapToResponse);
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
@@ -210,10 +247,8 @@ public class HomestayService {
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
-        public List<HomestayDto.Response> getPendingHomestays() {
-                return repository.findByStatus(Homestay.Status.PENDING).stream()
-                                .map(this::mapToResponse)
-                                .toList();
+        public Page<HomestayDto.Response> getPendingHomestays(Pageable pageable) {
+                return repository.findByStatus(Homestay.Status.PENDING, pageable).map(this::mapToResponse);
         }
 
         public HomestayDto.Response mapToResponse(Homestay homestay) {
@@ -231,9 +266,6 @@ public class HomestayService {
                 java.util.Map<String, Object> hostDetails = homestay.getHostDetails() != null
                                 ? new java.util.HashMap<>(homestay.getHostDetails())
                                 : new java.util.HashMap<>();
-                java.util.List<String> photoUrls = homestay.getPhotoUrls() != null
-                                ? new java.util.ArrayList<>(homestay.getPhotoUrls())
-                                : new java.util.ArrayList<>();
 
                 java.util.List<String> tags = homestay.getTags() != null
                                 ? new java.util.ArrayList<>(homestay.getTags())
@@ -249,9 +281,25 @@ public class HomestayService {
                                 .quickFacts(quickFacts)
                                 .tags(tags)
                                 .hostDetails(hostDetails)
-                                .photoUrls(photoUrls)
+                                .media(new java.util.ArrayList<>(homestay.getMediaFiles()))
                                 .vibeScore(homestay.getVibeScore())
+                                .avgAtmosphereRating(homestay.getAvgAtmosphereRating())
+                                .avgServiceRating(homestay.getAvgServiceRating())
+                                .avgAccuracyRating(homestay.getAvgAccuracyRating())
+                                .avgValueRating(homestay.getAvgValueRating())
+                                .totalReviews(homestay.getTotalReviews())
                                 .status(homestay.getStatus())
+                                .host(AuthorDto.builder()
+                                                .id(homestay.getOwner().getId())
+                                                .name(homestay.getOwner().getFirstName()
+                                                                + (homestay.getOwner().getLastName() != null
+                                                                                ? " " + homestay.getOwner()
+                                                                                                .getLastName()
+                                                                                : ""))
+                                                .role(homestay.getOwner().getRole().name())
+                                                .avatarUrl(homestay.getOwner().getAvatarUrl())
+                                                .isVerifiedHost(homestay.getOwner().isVerifiedHost())
+                                                .build())
                                 .latitude(homestay.getLatitude())
                                 .longitude(homestay.getLongitude())
                                 .locationName(homestay.getAddress())

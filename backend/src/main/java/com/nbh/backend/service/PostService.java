@@ -22,6 +22,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 
 @Service
 @RequiredArgsConstructor
@@ -53,13 +56,17 @@ public class PostService {
         Post post = Post.builder()
                 .locationName(request.getLocationName())
                 .textContent(request.getTextContent())
-                .mediaFiles(request.getMediaFiles() != null ? request.getMediaFiles() : new java.util.ArrayList<>())
+                .mediaFiles(request.getMedia() != null ? request.getMedia() : new java.util.ArrayList<>())
                 .user(user)
                 .homestay(homestay)
                 .originalPost(originalPost)
-                .createdAt(LocalDateTime.now()) // Kept this from original, as snippet removed it but instruction didn't
-                                                // say to.
+                .createdAt(LocalDateTime.now())
                 .build();
+
+        if (post.getMediaFiles() != null) {
+            final Post finalPost = post;
+            post.getMediaFiles().forEach(m -> m.setPost(finalPost));
+        }
 
         Post saved = postRepository.save(post);
         return mapToResponse(saved);
@@ -72,32 +79,38 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "postsList", sync = true)
-    public List<PostDto.Response> getAllPosts() {
-        return postRepository.findAllByOrderByCreatedAtDesc().stream()
+    @Cacheable(value = "postsList", key = "#pageable.pageNumber + '-' + #pageable.pageSize", sync = true)
+    public Page<PostDto.Response> getAllPosts(Pageable pageable) {
+        Page<Post> postsPage = postRepository.findAll(pageable);
+        List<PostDto.Response> dtos = postsPage.getContent().stream()
                 .map(p -> mapToResponse(p, null))
                 .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, postsPage.getTotalElements());
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "postsList", sync = true)
-    public List<PostDto.Response> searchPosts(String query) {
+    @Cacheable(value = "postsList", key = "'search-' + #query + '-' + #pageable.pageNumber", sync = true)
+    public Page<PostDto.Response> searchPosts(String query, Pageable pageable) {
         if (query == null || query.isBlank()) {
-            return getAllPosts();
+            return getAllPosts(pageable);
         }
-        return postRepository.findByLocationNameContainingIgnoreCaseOrderByCreatedAtDesc(query).stream()
+        Page<Post> postsPage = postRepository.findByLocationNameContainingIgnoreCase(query, pageable);
+        List<PostDto.Response> dtos = postsPage.getContent().stream()
                 .map(p -> mapToResponse(p, null))
                 .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, postsPage.getTotalElements());
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "postsList", sync = true)
-    public List<PostDto.Response> getPostsByUser(String email) {
+    @Cacheable(value = "postsList", key = "'user-' + #email + '-' + #pageable.pageNumber", sync = true)
+    public Page<PostDto.Response> getPostsByUser(String email, Pageable pageable) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return postRepository.findByUser(user).stream()
+        Page<Post> postsPage = postRepository.findByUser(user, pageable);
+        List<PostDto.Response> dtos = postsPage.getContent().stream()
                 .map(p -> mapToResponse(p, null))
                 .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, postsPage.getTotalElements());
     }
 
     @Caching(evict = {
@@ -123,9 +136,9 @@ public class PostService {
             post.setTextContent(request.getTextContent());
 
         // --- CLOUD JANITOR DIFF: Purge images removed by the user ---
-        if (request.getMediaFiles() != null) {
+        if (request.getMedia() != null) {
             java.util.List<MediaResource> existingMedia = post.getMediaFiles();
-            java.util.List<MediaResource> newMedia = request.getMediaFiles();
+            java.util.List<MediaResource> newMedia = request.getMedia();
 
             if (existingMedia != null) {
                 // Find fileIds that were in existingMedia but are NOT in newMedia
@@ -142,6 +155,8 @@ public class PostService {
                     }
                 }
             }
+            final Post finalPost = post;
+            newMedia.forEach(m -> m.setPost(finalPost));
             post.setMediaFiles(newMedia);
         }
 
@@ -244,11 +259,15 @@ public class PostService {
                 .locationName(
                         request.getLocationName() != null ? request.getLocationName() : original.getLocationName())
                 .textContent(request.getTextContent() != null ? request.getTextContent() : "")
-                .mediaFiles(request.getMediaFiles() != null ? request.getMediaFiles() : new java.util.ArrayList<>())
+                .mediaFiles(request.getMedia() != null ? request.getMedia() : new java.util.ArrayList<>())
                 .user(user)
-                .originalPost(original)
                 .createdAt(LocalDateTime.now())
                 .build();
+
+        if (post.getMediaFiles() != null) {
+            final Post finalPost = post;
+            post.getMediaFiles().forEach(m -> m.setPost(finalPost));
+        }
 
         Post saved = postRepository.save(post);
         return mapToResponse(saved);
@@ -288,14 +307,18 @@ public class PostService {
             }
         }
 
+        AuthorDto author = AuthorDto.builder()
+                .id(post.getUser().getId())
+                .name(post.getUser().getFirstName()
+                        + (post.getUser().getLastName() != null ? " " + post.getUser().getLastName() : ""))
+                .role(post.getUser().getRole().name())
+                .avatarUrl(post.getUser().getAvatarUrl())
+                .isVerifiedHost(post.getUser().isVerifiedHost())
+                .build();
+
         return PostDto.Response.builder()
                 .id(post.getId())
-                .author(AuthorDto.builder()
-                        .id(post.getUser().getId())
-                        .name(post.getUser().getFirstName() + " " + post.getUser().getLastName())
-                        .role(post.getUser().getRole().name())
-                        .avatarUrl(post.getUser().getAvatarUrl())
-                        .build())
+                .author(author)
                 .locationName(post.getLocationName())
                 .textContent(post.getTextContent())
                 .media(combinedMedia)

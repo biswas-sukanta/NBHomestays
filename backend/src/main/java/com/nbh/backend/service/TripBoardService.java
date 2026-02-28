@@ -1,10 +1,9 @@
 package com.nbh.backend.service;
 
-import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.TripBoardSave;
 import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.TripBoardSaveRepository;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class TripBoardService {
 
     private final TripBoardSaveRepository tripBoardSaveRepository;

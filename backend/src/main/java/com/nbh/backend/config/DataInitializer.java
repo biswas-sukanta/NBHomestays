@@ -73,8 +73,7 @@ public class DataInitializer {
                                                 .status(Homestay.Status.APPROVED)
                                                 .latitude(27.0360)
                                                 .longitude(88.2627)
-                                                .photoUrls(java.util.List.of(
-                                                                "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80"))
+                                                .mediaFiles(new java.util.ArrayList<>())
                                                 .build();
                                 homestayRepository.save(h1);
 
@@ -87,8 +86,7 @@ public class DataInitializer {
                                                 .status(Homestay.Status.APPROVED)
                                                 .latitude(27.0667)
                                                 .longitude(88.4667)
-                                                .photoUrls(java.util.List.of(
-                                                                "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80"))
+                                                .mediaFiles(new java.util.ArrayList<>())
                                                 .build();
                                 homestayRepository.save(h2);
 
@@ -101,8 +99,7 @@ public class DataInitializer {
                                                 .status(Homestay.Status.PENDING)
                                                 .latitude(26.8833)
                                                 .longitude(88.1833)
-                                                .photoUrls(java.util.List.of(
-                                                                "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80"))
+                                                .mediaFiles(new java.util.ArrayList<>())
                                                 .build();
                                 homestayRepository.save(h3);
 

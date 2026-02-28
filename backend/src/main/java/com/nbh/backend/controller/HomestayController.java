@@ -10,8 +10,11 @@ import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.util.List;
-import org.springframework.data.domain.Page;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
 
 @RestController
 @RequestMapping("/api/homestays")
@@ -75,9 +78,11 @@ public class HomestayController {
     }
 
     @GetMapping("/my-listings")
-    public List<HomestayDto.Response> getMyListings(Authentication authentication) {
+    public Page<HomestayDto.Response> getMyListings(
+            Authentication authentication,
+            @PageableDefault(size = 10) Pageable pageable) {
         String userEmail = authentication.getName();
-        return homestayService.getHomestaysByOwner(userEmail);
+        return homestayService.getHomestaysByOwner(userEmail, pageable);
     }
 
     @GetMapping("/all")
@@ -88,8 +93,9 @@ public class HomestayController {
 
     @GetMapping("/pending")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public List<HomestayDto.Response> getPendingHomestays() {
-        return homestayService.getPendingHomestays();
+    public Page<HomestayDto.Response> getPendingHomestays(
+            @PageableDefault(size = 20) Pageable pageable) {
+        return homestayService.getPendingHomestays(pageable);
     }
 
     @PutMapping("/{id}/approve")

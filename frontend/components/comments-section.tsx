@@ -9,6 +9,7 @@ import { Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ImageCollage } from '@/components/community/ImageCollage';
 import { ImageLightbox } from '@/components/community/ImageLightbox';
+import { CommentSkeleton } from '@/components/community/CommentSkeleton';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -332,6 +333,26 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
         if ((!newComment.trim() && stagedFiles.length === 0) || submitting) return;
         setSubmitting(true);
         try {
+            // OPTIMISTIC UPDATE if no files
+            let tempId = '';
+            if (stagedFiles.length === 0) {
+                tempId = 'temp-' + Math.random().toString(36).substring(7);
+                const optimisticComment: Comment = {
+                    id: tempId,
+                    body: newComment.trim(),
+                    author: {
+                        id: user?.id || 'anon',
+                        name: (user?.firstName || 'User') + (user?.lastName ? ' ' + user?.lastName : ''),
+                        role: user?.role || 'USER',
+                        avatarUrl: user?.avatarUrl
+                    },
+                    createdAt: new Date().toISOString(),
+                    media: []
+                };
+                setComments(prev => [...prev, optimisticComment]);
+                setNewComment('');
+            }
+
             // 1. Upload Images to ImageKit if any
             let finalUrls: { url: string, fileId?: string }[] = [];
             if (stagedFiles.length > 0) {
@@ -353,15 +374,20 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                     'Content-Type': 'application/json',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ body: newComment.trim(), mediaFiles: finalUrls }),
+                body: JSON.stringify({ body: newComment.trim(), media: finalUrls }),
             });
             if (res.ok) {
                 const c: Comment = await res.json();
-                setComments(prev => [...prev, c]);
-                setNewComment('');
-                setStagedFiles([]);
+                if (tempId) {
+                    setComments(prev => prev.map(comm => comm.id === tempId ? c : comm));
+                } else {
+                    setComments(prev => [...prev, c]);
+                    setNewComment('');
+                    setStagedFiles([]);
+                }
                 onCommentCountChange?.(comments.length + 1);
             } else {
+                if (tempId) setComments(prev => prev.filter(comm => comm.id !== tempId));
                 toast.error('Failed to post comment');
             }
         } catch (e: any) {
@@ -370,17 +396,24 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
     };
 
     const deleteComment = async (commentId: string) => {
+        const confirmToast = toast.loading("Deleting comment...");
         try {
-            await fetch(`${API}/api/comments/${commentId}`, {
+            const res = await fetch(`${API}/api/comments/${commentId}`, {
                 method: 'DELETE',
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
+            if (!res.ok) throw new Error("Failed to delete");
+
             setComments(prev => {
                 const next = prev.filter(c => c.id !== commentId);
                 onCommentCountChange?.(next.length);
                 return next;
             });
-        } catch (e) { console.error(e); }
+            toast.success("Comment deleted", { id: confirmToast });
+        } catch (e) {
+            console.error(e);
+            toast.error("Cloud sync failed", { id: confirmToast });
+        }
     };
 
     const handleClose = () => {
@@ -439,7 +472,9 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                             {/* Body — flex-1 min-h-0: only tier that flexes */}
                             <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50/50 overscroll-contain min-h-0 space-y-4">
                                 {loading ? (
-                                    <div className="flex items-center justify-center h-full min-h-[200px]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+                                    <div className="space-y-4">
+                                        {[1, 2, 3].map(i => <CommentSkeleton key={i} />)}
+                                    </div>
                                 ) : comments.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-center">
                                         <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-4 ring-8 ring-green-50/50">

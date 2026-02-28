@@ -4,15 +4,16 @@ import com.nbh.backend.model.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, UUID> {
 
-    List<Post> findAllByOrderByCreatedAtDesc();
+        org.springframework.data.domain.Page<Post> findAll(org.springframework.data.domain.Pageable pageable);
 
-    List<Post> findByLocationNameContainingIgnoreCaseOrderByCreatedAtDesc(String locationName);
+        org.springframework.data.domain.Page<Post> findByLocationNameContainingIgnoreCase(String locationName,
+                        org.springframework.data.domain.Pageable pageable);
 
-    List<Post> findByUser(com.nbh.backend.model.User user);
+        org.springframework.data.domain.Page<Post> findByUser(com.nbh.backend.model.User user,
+                        org.springframework.data.domain.Pageable pageable);
 }

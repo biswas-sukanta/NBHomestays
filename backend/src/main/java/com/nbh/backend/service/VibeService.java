@@ -47,18 +47,35 @@ public class VibeService {
 
     @Transactional
     public void calculateAndSave(Homestay homestay) {
-        double avgRating = calculateAvgRating(homestay.getId());
-        double responseRate = 1.0; // Placeholder
-        int imageCount = homestay.getPhotoUrls() != null ? homestay.getPhotoUrls().size() : 0;
+        List<Review> reviews = reviewRepository.findByHomestayId(homestay.getId());
+        int total = reviews.size();
+        homestay.setTotalReviews(total);
 
-        double score = (avgRating * 0.6) + (responseRate * 0.2) + (imageCount * 0.2);
+        if (total > 0) {
+            double sumAtmosphere = 0, sumService = 0, sumAccuracy = 0, sumValue = 0, sumOverall = 0;
+            for (Review r : reviews) {
+                sumAtmosphere += (r.getAtmosphereRating() != null ? r.getAtmosphereRating() : 0);
+                sumService += (r.getServiceRating() != null ? r.getServiceRating() : 0);
+                sumAccuracy += (r.getAccuracyRating() != null ? r.getAccuracyRating() : 0);
+                sumValue += (r.getValueRating() != null ? r.getValueRating() : 0);
+                sumOverall += r.getRating();
+            }
+            homestay.setAvgAtmosphereRating(Math.round((sumAtmosphere / total) * 10.0) / 10.0);
+            homestay.setAvgServiceRating(Math.round((sumService / total) * 10.0) / 10.0);
+            homestay.setAvgAccuracyRating(Math.round((sumAccuracy / total) * 10.0) / 10.0);
+            homestay.setAvgValueRating(Math.round((sumValue / total) * 10.0) / 10.0);
 
-        // Round to 1 decimal for cleanliness
-        score = Math.round(score * 10.0) / 10.0;
-
-        homestay.setVibeScore(score);
+            double avgRating = sumOverall / total;
+            double responseRate = 1.0;
+            int imageCount = homestay.getMediaFiles() != null ? homestay.getMediaFiles().size() : 0;
+            double score = (avgRating * 0.6) + (responseRate * 0.2) + (imageCount * 0.2);
+            homestay.setVibeScore(Math.round(score * 10.0) / 10.0);
+            log.info("Updated Vibe Score for {}: {}", homestay.getName(), homestay.getVibeScore());
+        } else {
+            homestay.setVibeScore(4.0); // Default for new properties
+            homestay.setTotalReviews(0);
+        }
         homestayRepository.save(homestay);
-        log.info("Updated Vibe Score for {}: {}", homestay.getName(), score);
     }
 
     private double calculateAvgRating(java.util.UUID homestayId) {

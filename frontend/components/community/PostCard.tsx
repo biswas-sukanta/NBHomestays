@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle, MapPin, Pencil, MoreHorizontal, Trash2, Share2, Loader2, Repeat2, X, Send, Image as ImageIcon } from 'lucide-react';
+import { Heart, MessageCircle, MapPin, Pencil, MoreHorizontal, Trash2, Share2, Loader2, Repeat2, X, Send, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -23,10 +23,11 @@ export interface CommunityPost {
         name: string;
         role: string;
         avatarUrl?: string;
+        isVerifiedHost?: boolean;
     };
     locationName: string;
     textContent: string;
-    media?: { url: string; fileId?: string }[];
+    media?: { id?: string; url: string; fileId?: string }[];
     createdAt: string;
     loveCount: number;
     shareCount: number;
@@ -84,10 +85,26 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
 
     const toggle = async () => {
         if (!isAuthenticated) { toast.error('Sign in to love this story'); return; }
+
+        // --- OPTIMISTIC UI UPDATE ---
+        const prevLiked = liked;
+        const prevCount = count;
+
+        const newIsLiked = !prevLiked;
+        const newCount = newIsLiked ? prevCount + 1 : Math.max(0, prevCount - 1);
+
+        setLiked(newIsLiked);
+        setCount(newCount);
         setPopping(true);
         setTimeout(() => setPopping(false), 420);
+
+        if (onLikeToggle) {
+            onLikeToggle(newCount, newIsLiked);
+        }
+
         try {
             const res = await api.post(`/api/posts/${postId}/like`);
+            // Sync with server response if needed (handle potential concurrent likes)
             setCount(res.data.loveCount);
             setLiked(res.data.isLiked);
             if (onLikeToggle) {
@@ -95,6 +112,13 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
             }
         } catch (error) {
             console.error("Failed to action post", error);
+            // Revert on error
+            setLiked(prevLiked);
+            setCount(prevCount);
+            if (onLikeToggle) {
+                onLikeToggle(prevCount, prevLiked);
+            }
+            toast.error("Cloud sync failed. Reverting love.");
         }
     };
 
@@ -205,7 +229,12 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                             {initials}
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-bold text-sm text-gray-900 hover:underline cursor-pointer pointer-events-auto leading-tight">{authorName}</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-sm text-gray-900 hover:underline cursor-pointer pointer-events-auto leading-tight">{authorName}</span>
+                                {post.author?.isVerifiedHost && (
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-50" />
+                                )}
+                            </div>
                             <span className="text-xs text-gray-500 leading-tight flex items-center gap-1 mt-0.5">
                                 {formatRelative(post.createdAt)} • <MapPin className="w-3 h-3 inline-block" /> {post.locationName}
                             </span>
@@ -391,7 +420,7 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
             const payload: any = {
                 textContent: text,
                 locationName: location || 'North Bengal',
-                mediaFiles: finalMedia,
+                media: finalMedia,
                 repostedFromPostId: quote.id,
             };
             if (selectedHomestay) payload.homestayId = selectedHomestay;

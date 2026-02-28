@@ -20,11 +20,17 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE users SET is_deleted = true WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_deleted = false")
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private boolean isDeleted = false;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -41,6 +47,7 @@ public class User implements UserDetails {
     private String firstName;
     private String lastName;
     private String avatarUrl;
+    private boolean isVerifiedHost;
 
     @Column(columnDefinition = "TEXT")
     private String bio;

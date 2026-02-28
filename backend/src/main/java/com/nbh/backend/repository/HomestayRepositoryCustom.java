@@ -1,7 +1,6 @@
 package com.nbh.backend.repository;
 
 import com.nbh.backend.model.Homestay;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;

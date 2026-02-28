@@ -20,11 +20,17 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE homestays SET is_deleted = true WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_deleted = false")
 public class Homestay {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private boolean isDeleted = false;
 
     @Column(nullable = false)
     private String name;
@@ -68,13 +74,19 @@ public class Homestay {
     @Column(columnDefinition = "jsonb")
     private java.util.Map<String, Object> hostDetails;
 
-    @ElementCollection
-    @CollectionTable(name = "homestay_photos", joinColumns = @JoinColumn(name = "homestay_id"))
-    @Column(name = "photo_url")
-    private java.util.List<String> photoUrls;
+    @OneToMany(mappedBy = "homestay", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<MediaResource> mediaFiles = new java.util.ArrayList<>();
 
     @Builder.Default
     private Double vibeScore = 0.0;
+
+    // Aggregate Ratings Cache
+    private Double avgAtmosphereRating;
+    private Double avgServiceRating;
+    private Double avgAccuracyRating;
+    private Double avgValueRating;
+    private Integer totalReviews;
 
     @OneToMany(mappedBy = "homestay", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude

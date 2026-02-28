@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -77,6 +78,7 @@ public class AdminDataService {
                 // Nuclear wipe using DELETE to avoid locking and handle legacy tables
                 jdbcTemplate.execute("DELETE FROM post_likes");
                 jdbcTemplate.execute("DELETE FROM trip_board_saves");
+                jdbcTemplate.execute("DELETE FROM media_resources");
                 jdbcTemplate.execute("DELETE FROM homestay_photos");
                 jdbcTemplate.execute("DELETE FROM homestay_answers");
                 jdbcTemplate.execute("DELETE FROM homestay_questions");
@@ -162,7 +164,7 @@ public class AdminDataService {
 
         private Homestay createHomestay(User owner, String name, String desc, int price, double lat, double lng,
                         String locName, List<String> tags, List<String> photos) {
-                return Homestay.builder()
+                Homestay h = Homestay.builder()
                                 .owner(owner)
                                 .name(name)
                                 .description(desc)
@@ -171,7 +173,6 @@ public class AdminDataService {
                                 .longitude(lng)
                                 .address(locName)
                                 .tags(tags)
-                                .photoUrls(photos)
                                 .amenities(
                                                 Map.of("Free Wi-Fi", true, "Hot water", true, "Mountain View", true,
                                                                 "Parking (public)", true))
@@ -187,5 +188,11 @@ public class AdminDataService {
                                 .featured(tags.contains("Featured Stays"))
                                 .vibeScore(Math.random() * 5 + 90) // 90 to 95 vibe score
                                 .build();
+
+                List<com.nbh.backend.model.MediaResource> media = photos.stream()
+                                .map(url -> com.nbh.backend.model.MediaResource.builder().url(url).homestay(h).build())
+                                .collect(Collectors.toList());
+                h.setMediaFiles(media);
+                return h;
         }
 }
