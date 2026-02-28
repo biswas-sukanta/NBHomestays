@@ -41,6 +41,15 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
     const [selectedHomestay, setSelectedHomestay] = useState(postData?.homestayId || '');
 
     useEffect(() => {
+        if (postData) {
+            setText(postData.textContent || '');
+            setLocation(postData.locationName || '');
+            setExistingMedia(postData.media || []);
+            setSelectedHomestay(postData.homestayId || '');
+        }
+    }, [postData]);
+
+    useEffect(() => {
         api.get('/api/homestays')
             .then(res => setHomestays(res.data.content || res.data || []))
             .catch(err => console.error("Failed to fetch homestays for tagging:", err));

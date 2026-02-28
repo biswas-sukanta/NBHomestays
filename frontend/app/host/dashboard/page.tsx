@@ -99,9 +99,9 @@ export default function HostDashboard() {
             ) : (
                 <div className="grid gap-4">
                     {listings.map(homestay => (
-                        <Card key={homestay.id} className="flex flex-row items-center justify-between p-4">
+                        <Card key={homestay.id} className="flex flex-row items-center justify-between p-4 cursor-pointer hover:border-green-300 hover:shadow-md transition-all group" onClick={() => router.push(`/homestays/${homestay.id}`)}>
                             <div>
-                                <h3 className="text-xl font-semibold">{homestay.name}</h3>
+                                <h3 className="text-xl font-semibold group-hover:text-green-700 transition-colors">{homestay.name}</h3>
                                 <div className="text-sm text-gray-500">
                                     ₹{homestay.pricePerNight} / night
                                 </div>
@@ -117,10 +117,10 @@ export default function HostDashboard() {
                                 </span>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleEditClick(homestay.id)}>
+                                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleEditClick(homestay.id); }}>
                                     <Pencil className="w-4 h-4 mr-1" /> Edit
                                 </Button>
-                                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(homestay.id)}>
+                                <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteClick(homestay.id); }}>
                                     <Trash2 className="w-4 h-4 mr-1" /> Delete
                                 </Button>
                             </div>
