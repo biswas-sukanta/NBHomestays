@@ -40,7 +40,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
     const [text, setText] = useState(postData?.textContent || '');
     const [location, setLocation] = useState(postData?.locationName || '');
     const [submitting, setSubmitting] = useState(false);
-    const [existingUrls, setExistingUrls] = useState<string[]>(postData?.imageUrls || []);
+    const [existingMedia, setExistingMedia] = useState<{ url: string; fileId?: string }[]>(postData?.media || []);
     const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
     const [cropModal, setCropModal] = useState<{ isOpen: boolean; imageIdx: number | null }>({
         isOpen: false,
@@ -93,10 +93,10 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
     };
 
     const handleSubmit = async () => {
-        if (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0) return;
+        if (!text.trim() && stagedFiles.length === 0 && existingMedia.length === 0) return;
         setSubmitting(true);
         try {
-            let finalImageUrls = [...existingUrls];
+            let finalMedia = [...existingMedia];
 
             // 1. Batch Upload Staged Files
             if (stagedFiles.length > 0) {
@@ -106,14 +106,14 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                 const uploadRes = await api.post('/api/upload', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                finalImageUrls = [...finalImageUrls, ...uploadRes.data];
+                finalMedia = [...finalMedia, ...uploadRes.data];
             }
 
             // 2. Submit Post
             const payload: any = {
                 textContent: text,
                 locationName: location || 'North Bengal',
-                imageUrls: finalImageUrls
+                mediaFiles: finalMedia
             };
             if (selectedHomestay) {
                 payload.homestayId = selectedHomestay;
@@ -185,12 +185,12 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                     />
 
                     {/* Staging Area */}
-                    {(stagedFiles.length > 0 || existingUrls.length > 0) && (
+                    {(stagedFiles.length > 0 || existingMedia.length > 0) && (
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300">
-                            {existingUrls.map((url, i) => (
+                            {existingMedia.map((mediaObj, i) => (
                                 <div key={`ex-${i}`} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm">
-                                    <img src={url} alt="existing" className="w-full h-full object-cover" />
-                                    <button onClick={() => setExistingUrls(prev => prev.filter((_, idx) => idx !== i))}
+                                    <img src={mediaObj.url} alt="existing" className="w-full h-full object-cover" />
+                                    <button onClick={() => setExistingMedia(prev => prev.filter((_, idx) => idx !== i))}
                                         className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                                         <X className="w-6 h-6 text-white" />
                                     </button>
@@ -247,7 +247,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                     </div>
 
                     {/* Submit */}
-                    <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingUrls.length === 0)}
+                    <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingMedia.length === 0)}
                         className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md active:scale-[0.98] disabled:opacity-50 transition-all text-base mt-1">
                         {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
                         {submitting ? 'Sharing...' : (postData ? 'Update' : repostTarget ? 'Repost' : 'Post')}

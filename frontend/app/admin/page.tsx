@@ -16,7 +16,7 @@ interface Homestay {
 }
 interface Post {
     id: string; userName: string; locationName: string; textContent: string;
-    imageUrls: string[]; createdAt: string;
+    media?: { url: string; fileId?: string }[]; createdAt: string;
 }
 interface Stats {
     totalUsers: number; totalPosts: number; totalHomestays: number;
@@ -177,10 +177,10 @@ export default function AdminPage() {
                                             <span className="text-xs text-muted-foreground">· {p.locationName}</span>
                                         </div>
                                         <p className="text-sm text-muted-foreground line-clamp-2">{p.textContent}</p>
-                                        {p.imageUrls?.length > 0 && (
+                                        {p.media && p.media.length > 0 && (
                                             <div className="flex gap-1 mt-2">
-                                                {p.imageUrls.slice(0, 3).map((url, i) => (
-                                                    <img key={i} src={url} alt="" className="w-16 h-16 object-cover rounded-lg" />
+                                                {p.media.slice(0, 3).map((m, i) => (
+                                                    <img key={i} src={m.url} alt="" className="w-16 h-16 object-cover rounded-lg" />
                                                 ))}
                                             </div>
                                         )}

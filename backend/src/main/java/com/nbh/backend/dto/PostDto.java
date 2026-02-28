@@ -35,7 +35,7 @@ public class PostDto {
         private String userName;
         private String locationName;
         private String textContent;
-        private List<String> imageUrls;
+        private List<MediaResource> media;
         private UUID homestayId;
         private String homestayName;
         private int loveCount;

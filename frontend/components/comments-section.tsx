@@ -29,7 +29,7 @@ interface Comment {
     createdAt: string;
     replies?: Comment[];
     replyCount?: number;
-    imageUrls?: string[];
+    media?: { url: string; fileId?: string }[];
 }
 
 function formatTime(iso: string) {
@@ -150,9 +150,9 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                         ) : (
                             <span className="text-foreground leading-relaxed">{comment.body}</span>
                         )}
-                        {comment.imageUrls && comment.imageUrls.length > 0 && (
+                        {comment.media && comment.media.length > 0 && (
                             <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                                <ImageCollage images={comment.imageUrls} onImageClick={(i) => setLightboxIndex(i)} />
+                                <ImageCollage images={comment.media.map(m => m.url)} onImageClick={(i) => setLightboxIndex(i)} />
                             </div>
                         )}
 
@@ -253,8 +253,8 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
             </AnimatePresence>
 
             {/* Lightbox */}
-            {lightboxIndex !== null && comment.imageUrls && comment.imageUrls.length > 0 && (
-                <ImageLightbox images={comment.imageUrls} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+            {lightboxIndex !== null && comment.media && comment.media.length > 0 && (
+                <ImageLightbox images={comment.media.map(m => m.url)} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
             )}
         </div>
     );
@@ -312,7 +312,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
         setSubmitting(true);
         try {
             // 1. Upload Images to ImageKit if any
-            let finalUrls: string[] = [];
+            let finalUrls: { url: string, fileId?: string }[] = [];
             if (stagedFiles.length > 0) {
                 const formData = new FormData();
                 stagedFiles.forEach(s => formData.append('files', s.file));
@@ -332,7 +332,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                     'Content-Type': 'application/json',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ body: newComment.trim(), imageUrls: finalUrls }),
+                body: JSON.stringify({ body: newComment.trim(), mediaFiles: finalUrls }),
             });
             if (res.ok) {
                 const c: Comment = await res.json();

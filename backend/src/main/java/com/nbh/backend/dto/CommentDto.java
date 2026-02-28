@@ -37,7 +37,7 @@ public class CommentDto {
     private String authorAvatarUrl;
 
     private String body;
-    private List<String> imageUrls;
+    private List<MediaResource> media;
     private LocalDateTime createdAt;
 
     /** First-level replies (populated only for top-level comments). */

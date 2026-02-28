@@ -144,8 +144,11 @@ public class PostService {
 
         // --- CLOUD JANITOR: Purge ImageKit Media before Database Deletion ---
         if (post.getMediaFiles() != null && !post.getMediaFiles().isEmpty()) {
+            System.out.println("--- CLOUD JANITOR INITIATED ---");
             for (com.nbh.backend.model.MediaResource media : post.getMediaFiles()) {
+                System.out.println("Preparing to delete File ID: " + media.getFileId());
                 imageUploadService.deleteFile(media.getFileId());
+                System.out.println("Successfully purged File ID: " + media.getFileId() + " from cloud storage.");
             }
         }
 
@@ -250,16 +253,24 @@ public class PostService {
             originalPostDto = mapToResponse(post.getOriginalPost(), userEmail, false); // prevent infinite recursion
         }
 
+        List<com.nbh.backend.model.MediaResource> combinedMedia = new java.util.ArrayList<>();
+        if (post.getMediaFiles() != null) {
+            combinedMedia.addAll(post.getMediaFiles());
+        }
+        // Fallback for Legacy Images
+        if (post.getLegacyImageUrls() != null && !post.getLegacyImageUrls().isEmpty() && combinedMedia.isEmpty()) {
+            for (String url : post.getLegacyImageUrls()) {
+                combinedMedia.add(com.nbh.backend.model.MediaResource.builder().url(url).build());
+            }
+        }
+
         return PostDto.Response.builder()
                 .id(post.getId())
                 .userId(post.getUser().getId())
                 .userName(post.getUser().getFirstName() + " " + post.getUser().getLastName())
                 .locationName(post.getLocationName())
                 .textContent(post.getTextContent())
-                .imageUrls(post.getMediaFiles() != null
-                        ? post.getMediaFiles().stream().map(com.nbh.backend.model.MediaResource::getUrl)
-                                .collect(Collectors.toList())
-                        : new java.util.ArrayList<>())
+                .media(combinedMedia)
                 .homestayId(post.getHomestay() != null ? post.getHomestay().getId() : null)
                 .homestayName(post.getHomestay() != null ? post.getHomestay().getName() : null)
                 .loveCount(post.getLoveCount())

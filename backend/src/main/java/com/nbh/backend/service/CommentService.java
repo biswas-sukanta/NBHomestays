@@ -102,8 +102,12 @@ public class CommentService {
 
                 // --- CLOUD JANITOR: Purge ImageKit Media before Database Deletion ---
                 if (comment.getMediaFiles() != null && !comment.getMediaFiles().isEmpty()) {
+                        System.out.println("--- CLOUD JANITOR INITIATED ---");
                         for (com.nbh.backend.model.MediaResource media : comment.getMediaFiles()) {
+                                System.out.println("Preparing to delete File ID: " + media.getFileId());
                                 imageUploadService.deleteFile(media.getFileId());
+                                System.out.println("Successfully purged File ID: " + media.getFileId()
+                                                + " from cloud storage.");
                         }
                 }
 
@@ -123,6 +127,17 @@ public class CommentService {
                 String authorName = (author.getFirstName() != null ? author.getFirstName() : "")
                                 + (author.getLastName() != null ? " " + author.getLastName() : "");
 
+                List<com.nbh.backend.model.MediaResource> combinedMedia = new ArrayList<>();
+                if (c.getMediaFiles() != null) {
+                        combinedMedia.addAll(c.getMediaFiles());
+                }
+                // Fallback for Legacy Images
+                if (c.getLegacyImageUrls() != null && !c.getLegacyImageUrls().isEmpty() && combinedMedia.isEmpty()) {
+                        for (String url : c.getLegacyImageUrls()) {
+                                combinedMedia.add(com.nbh.backend.model.MediaResource.builder().url(url).build());
+                        }
+                }
+
                 return CommentDto.builder()
                                 .id(c.getId())
                                 .postId(c.getPost().getId())
@@ -131,11 +146,7 @@ public class CommentService {
                                 .authorName(authorName.isBlank() ? "Anonymous" : authorName.trim())
                                 .authorAvatarUrl(null) // TODO: wire when User.avatarUrl is populated
                                 .body(c.getBody())
-                                .imageUrls(c.getMediaFiles() != null
-                                                ? c.getMediaFiles().stream()
-                                                                .map(com.nbh.backend.model.MediaResource::getUrl)
-                                                                .collect(Collectors.toList())
-                                                : new ArrayList<>())
+                                .media(combinedMedia)
                                 .createdAt(c.getCreatedAt())
                                 .replies(replies)
                                 .replyCount(replies.size())

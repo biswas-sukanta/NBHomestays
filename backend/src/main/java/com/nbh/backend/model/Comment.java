@@ -54,9 +54,15 @@ public class Comment {
     private String body;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "comment_images", joinColumns = @JoinColumn(name = "comment_id"))
+    @CollectionTable(name = "comment_media", joinColumns = @JoinColumn(name = "comment_id"))
     @Builder.Default
     private List<MediaResource> mediaFiles = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "comment_images", joinColumns = @JoinColumn(name = "comment_id"))
+    @Column(name = "image_url")
+    @Builder.Default
+    private List<String> legacyImageUrls = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

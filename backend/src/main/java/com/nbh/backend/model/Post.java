@@ -41,8 +41,13 @@ public class Post {
     private String textContent;
 
     @ElementCollection
-    @CollectionTable(name = "post_images", joinColumns = @JoinColumn(name = "post_id"))
+    @CollectionTable(name = "post_media", joinColumns = @JoinColumn(name = "post_id"))
     private List<MediaResource> mediaFiles;
+
+    @ElementCollection
+    @CollectionTable(name = "post_images", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "image_url")
+    private List<String> legacyImageUrls;
 
     @Column(name = "created_at", nullable = false)
     @Builder.Default

@@ -23,7 +23,7 @@ export interface CommunityPost {
     userEmail?: string;
     locationName: string;
     textContent: string;
-    imageUrls: string[];
+    media?: { url: string; fileId?: string }[];
     createdAt: string;
     loveCount: number;
     shareCount: number;
@@ -184,9 +184,9 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
         >
 
             {/* Dynamic Image Collage */}
-            {post.imageUrls?.length > 0 && (
+            {post.media && post.media.length > 0 && (
                 <div className="relative z-10">
-                    <ImageCollage images={post.imageUrls} onImageClick={(i) => setLightboxIndex(i)} />
+                    <ImageCollage images={post.media.map(m => m.url)} onImageClick={(i) => setLightboxIndex(i)} />
                 </div>
             )}
 
@@ -316,9 +316,9 @@ export function PostCard({ post, onUpdate, onDelete, currentUser, onRepost, isQu
             })()}
 
             {/* Lightbox */}
-            {lightboxIndex !== null && post.imageUrls && post.imageUrls.length > 0 && (
+            {lightboxIndex !== null && post.media && post.media.length > 0 && (
                 <ImageLightbox
-                    images={post.imageUrls}
+                    images={post.media.map(m => m.url)}
                     initialIndex={lightboxIndex}
                     onClose={() => setLightboxIndex(null)}
                 />
@@ -375,17 +375,17 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
         if (submitting) return;
         setSubmitting(true);
         try {
-            let imageUrls: string[] = [];
+            let finalMedia: { url: string; fileId?: string }[] = [];
             if (stagedFiles.length > 0) {
                 const form = new FormData();
                 stagedFiles.forEach(f => form.append('files', f.file));
                 const up = await api.post('/api/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-                imageUrls = up.data;
+                finalMedia = up.data;
             }
             const payload: any = {
                 textContent: text,
                 locationName: location || 'North Bengal',
-                imageUrls,
+                mediaFiles: finalMedia,
                 repostedFromPostId: quote.id,
             };
             if (selectedHomestay) payload.homestayId = selectedHomestay;
