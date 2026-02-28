@@ -275,7 +275,8 @@ export default function CommunityPage() {
     const { ref, inView } = useInView({ threshold: 0.1 });
 
     const fetchPosts = async ({ pageParam = 0 }) => {
-        const { data } = await api.get(`/api/posts?page=${pageParam}&size=10&sort=createdAt,desc`);
+        const validPage = Number.isInteger(pageParam) ? pageParam : 0;
+        const { data } = await api.get(`/api/posts?page=${validPage}&size=10&sort=createdAt,desc`);
         return data;
     };
 
@@ -291,8 +292,25 @@ export default function CommunityPage() {
         queryFn: fetchPosts,
         initialPageParam: 0,
         getNextPageParam: (lastPage) => {
-            if (lastPage?.last) return undefined;
-            return lastPage?.pageable?.pageNumber + 1;
+            // 1. Guard against empty/malformed responses
+            if (!lastPage || !lastPage.page) return undefined;
+
+            const currentPage = lastPage.page.number;
+            const totalPages = lastPage.page.totalPages;
+
+            // 2. Strict type check to prevent NaN propagation
+            if (typeof currentPage !== 'number' || typeof totalPages !== 'number') {
+                console.error("Pagination data is not a number", lastPage.page);
+                return undefined;
+            }
+
+            // 3. Check if we reached the end
+            if (currentPage + 1 >= totalPages) {
+                return undefined; // Stops React Query from fetching more
+            }
+
+            // 4. Safely return the next integer
+            return currentPage + 1;
         },
     });
 
