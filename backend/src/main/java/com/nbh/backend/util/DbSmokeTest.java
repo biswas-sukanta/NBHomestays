@@ -20,7 +20,7 @@ public class DbSmokeTest {
         String password = System.getenv("SPRING_DATASOURCE_PASSWORD");
 
         System.out.println("🔍 TESTING CONNECTION TO: " + url);
-        System.out.println("👤 CONNECTING AS: " + user);
+        System.out.println("👤 ATTEMPTING AUTH AS: " + user);
 
         if (url == null || user == null || password == null) {
             System.err.println("❌ ERROR: Missing environment variables.");
