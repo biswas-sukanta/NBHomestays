@@ -2,18 +2,20 @@ spring:
   application:
     name: nb-homestays-backend
   datasource:
-    url: jdbc:postgresql://localhost:5432/nbh_db
-    username: admin
-    password: password
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/nbh_db}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     enabled: true
+    user: ${SPRING_FLYWAY_USER}
+    password: ${SPRING_FLYWAY_PASSWORD}
     out-of-order: true
     baseline-on-migrate: true
     validate-on-migrate: false
