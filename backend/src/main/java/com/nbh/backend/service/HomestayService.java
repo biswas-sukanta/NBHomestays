@@ -37,7 +37,8 @@ public class HomestayService {
 
         @CacheEvict(value = "homestaysSearch", allEntries = true)
         @org.springframework.transaction.annotation.Transactional
-        public HomestayDto.Response createHomestay(HomestayDto.Request request, String userEmail) {
+        public HomestayDto.Response createHomestay(HomestayDto.Request request,
+                        java.util.List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
                 User owner = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 

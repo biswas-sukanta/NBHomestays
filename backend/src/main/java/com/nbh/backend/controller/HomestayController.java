@@ -23,13 +23,15 @@ public class HomestayController {
 
     private final HomestayService homestayService;
 
-    @PostMapping
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_HOST') or hasAuthority('ROLE_ADMIN')")
-    public HomestayDto.Response createHomestay(@Valid @RequestBody HomestayDto.Request request,
+    public HomestayDto.Response createHomestay(
+            @Valid @RequestPart("request") HomestayDto.Request request,
+            @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
             Authentication authentication) {
         // Extract owner email from Security Context
         String userEmail = authentication.getName();
-        return homestayService.createHomestay(request, userEmail);
+        return homestayService.createHomestay(request, files, userEmail);
     }
 
     @GetMapping

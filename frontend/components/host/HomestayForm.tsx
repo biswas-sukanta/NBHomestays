@@ -290,11 +290,11 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
             toast.info(isEditMode ? "Updating homestay..." : "Creating homestay...");
 
             if (isEditMode) {
-                await api.put(`/api/homestays/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                await api.put(`/api/homestays/${id}`, formData);
                 toast.success("Homestay updated successfully!");
                 queryClient.invalidateQueries({ queryKey: ['homestay', id] });
             } else {
-                await api.post('/api/homestays', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                await api.post('/api/homestays', formData);
                 toast.success("Homestay created successfully!");
             }
             // Invalidate both lists to ensure the new thumbnail propagates everywhere
