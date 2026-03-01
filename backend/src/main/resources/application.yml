@@ -42,8 +42,9 @@ application:
         expiration: 604800000 # 7 days
 sentry:
   dsn: ${SENTRY_DSN}
-  # Links backend errors to the specific Git commit hash from Koyeb
-  release: ${KOYEB_GIT_SHA:latest}
+  # This pulls the automatic commit ID provided by the Koyeb platform
+  release: ${KOYEB_GIT_SHA:local-dev} 
   environment: ${SPRING_PROFILES_ACTIVE:prod}
+  # Set trace rate to 10% for production efficiency
   traces-sample-rate: 0.1
   exception-resolver-order: -2147483647

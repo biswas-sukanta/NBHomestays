@@ -24,11 +24,11 @@ public class SentryRuntimeValidator implements ApplicationRunner {
         if ("NOT_CONFIGURED".equals(sentryDsn) || sentryDsn.isEmpty()) {
             logger.error("❌ SENTRY ERROR: DSN is missing. Observability is offline.");
         } else {
-            logger.info("✅ SENTRY SUCCESS: Connection established to DSN.");
-            logger.info("📦 RELEASE TAG: {}", gitSha);
+            logger.info("✅ SENTRY SUCCESS: Connection established.");
+            logger.info("📦 MONITORING RELEASE: {}", gitSha);
 
-            // Ship a test message to Sentry to confirm the 'Logs' tab is active
-            Sentry.captureMessage("System Online: Release " + gitSha + " is now being monitored.");
+            // Ship a test message to Sentry to confirm the 'Logs' tab is receiving data
+            Sentry.captureMessage("System Online: Release " + gitSha + " is active.");
         }
     }
 }
