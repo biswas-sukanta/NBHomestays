@@ -426,7 +426,14 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                 repostedFromPostId: quote.id,
             };
             if (selectedHomestay) payload.homestayId = selectedHomestay;
-            const res = await api.post('/api/posts', payload);
+
+            // Enforce multipart/form-data contract required by PostController
+            const formData = new FormData();
+            formData.append('request', new Blob([JSON.stringify(payload)], { type: "application/json" }));
+
+            // Files could be appended directly here if we skip the separate /api/upload step, 
+            // but preserving existing upload logic just sends the JSON Blob inside FormData
+            const res = await api.post('/api/posts', formData);
             toast.success('Reposted!');
             // Invalidate the posts feed to show the new repost
             queryClient.invalidateQueries({ queryKey: ['posts'] });
