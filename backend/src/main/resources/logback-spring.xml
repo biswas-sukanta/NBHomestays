@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <appender name="Logtail" class="com.logtail.logback.LogtailAppender">
+        <appName>nb-homestays-backend</appName>
+        <sourceToken>${LOGTAIL_SOURCE_TOKEN}</sourceToken>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="Logtail"/>
+    </root>
+</configuration>
