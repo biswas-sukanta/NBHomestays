@@ -10,6 +10,9 @@
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="Logtail"/>
     </root>
+
+    <logger name="com.nbh.backend" level="INFO" additivity="true">
+        <appender-ref ref="Logtail"/>
+    </logger>
 </configuration>
