@@ -42,12 +42,3 @@ application:
       expiration: 86400000
       refresh-token:
         expiration: 604800000
-sentry:
-  dsn: ${SENTRY_DSN}
-  # Correctly capture the auto-injected Koyeb Commit SHA
-  release: ${KOYEB_GIT_SHA:local-dev} 
-  environment: ${SPRING_PROFILES_ACTIVE:prod}
-  logging:
-    enabled: true # Enables the "Logs" tab in Sentry
-  traces-sample-rate: 0.1
-  exception-resolver-order: -2147483647
