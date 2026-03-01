@@ -38,6 +38,8 @@ application:
     jwt:
       secret-key: ${JWT_SECRET_KEY} # Required for secure startup
       expiration: 86400000
+      refresh-token:
+        expiration: 604800000 # 7 days
 sentry:
   dsn: ${SENTRY_DSN:}
   traces-sample-rate: 0.1
