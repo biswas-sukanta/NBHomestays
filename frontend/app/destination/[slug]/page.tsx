@@ -55,9 +55,6 @@ export default function DestinationPage() {
                     src={`/destinations/${destination.localImageName}`}
                     alt={destination.name}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=1600';
-                    }}
                 />
                 <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-4">
                     <motion.div

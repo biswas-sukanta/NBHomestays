@@ -86,9 +86,6 @@ export function DestinationDiscovery() {
                                     src={`/destinations/${dest.localImageName}`}
                                     alt={dest.name}
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=400';
-                                    }}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 flex flex-col items-center justify-end pb-8">
                                     <h3 className="text-white font-bold text-base md:text-lg tracking-tight drop-shadow-md text-center">
