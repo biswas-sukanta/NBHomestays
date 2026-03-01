@@ -9,6 +9,10 @@ Sentry.init({
     // PERFORMANCE: 10% in production, 100% in local dev
     tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 
+    integrations: [
+        Sentry.browserTracingIntegration(),
+    ],
+
     // APM WIRING: Link frontend transactions to backend span
     tracePropagationTargets: [
         "localhost",
