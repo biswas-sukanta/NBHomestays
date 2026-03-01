@@ -23,13 +23,18 @@ console.log("🚀 Initializing Sentry Verification...");
 init({
     dsn: dsn,
     tracesSampleRate: 1.0, // Force 100% capture for this test
+    // Explicitly enable the Sentry Logs feature for verification
+    enableLogs: true,
 });
 
 async function verify() {
     try {
         console.log("✅ SDK Initialized.");
 
-        // 1. Generate an Error
+        // 1. Generate a Log (Sentry Logs)
+        console.log("📢 Automated Verification Log: This should appear in Sentry Logs!");
+
+        // 2. Generate an Error
         const errorId = captureException(new Error("Automated Verification Error: Setup is fully operational!"));
         console.log(`✅ Error generated. Event ID: ${errorId}`);
 
