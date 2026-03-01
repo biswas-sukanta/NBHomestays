@@ -43,6 +43,7 @@ sentry:
   # Correctly capture the auto-injected Koyeb Commit SHA
   release: ${KOYEB_GIT_SHA:local-dev} 
   environment: ${SPRING_PROFILES_ACTIVE:prod}
-  logging: true # Enables the "Logs" tab in Sentry
+  logging:
+    enabled: true # Enables the "Logs" tab in Sentry
   traces-sample-rate: 0.1
   exception-resolver-order: -2147483647
