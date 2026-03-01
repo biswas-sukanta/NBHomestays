@@ -105,11 +105,20 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
         setError('');
         setSubmitting(true);
         try {
+            let uploadedMedia: { url: string; fileId?: string }[] = [];
+            if (stagedFiles.length > 0) {
+                const form = new FormData();
+                stagedFiles.forEach(staged => form.append('files', staged.file));
+                const upres = await api.post('/api/upload', form);
+                uploadedMedia = upres.data;
+            }
+
             const payload: any = {
                 textContent: text,
                 locationName: location || 'North Bengal',
-                media: existingMedia // These are retained media
+                media: [...existingMedia, ...uploadedMedia]
             };
+
             if (selectedHomestay) {
                 payload.homestayId = selectedHomestay;
             }
@@ -119,9 +128,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
 
             const formData = new FormData();
             formData.append('request', new Blob([JSON.stringify(payload)], { type: "application/json" }));
-            if (stagedFiles.length > 0) {
-                stagedFiles.forEach(staged => formData.append('files', staged.file));
-            }
+            // We NO LONGER append `files` directly to `/api/posts`, as they are now securely uploaded via `/api/upload`
 
             toast.info(postData ? "Updating story..." : "Sharing story...");
             const endpoint = postData ? `/api/posts/${postData.id}` : '/api/posts';
@@ -129,8 +136,32 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                 ? await api.put(endpoint, formData)
                 : await api.post(endpoint, formData);
 
-            // Invalidate React Query cache
-            queryClient.invalidateQueries({ queryKey: ['posts'] });
+            // Optimistically update React Query cache to instantly render the post + images!
+            if (!postData) {
+                queryClient.setQueryData(['community-posts'], (old: any) => {
+                    if (!old || !old.pages) return old;
+                    const newPages = [...old.pages];
+                    if (newPages.length > 0) {
+                        newPages[0] = {
+                            ...newPages[0],
+                            content: [res.data, ...(newPages[0].content || [])]
+                        };
+                    }
+                    return { ...old, pages: newPages };
+                });
+            } else {
+                queryClient.setQueryData(['community-posts'], (old: any) => {
+                    if (!old || !old.pages) return old;
+                    const newPages = old.pages.map((page: any) => ({
+                        ...page,
+                        content: (page.content || []).map((p: any) => p.id === postData.id ? res.data : p)
+                    }));
+                    return { ...old, pages: newPages };
+                });
+            }
+
+            // Invalidate to ensure background sync
+            queryClient.invalidateQueries({ queryKey: ['community-posts'] });
             if (postData) {
                 queryClient.invalidateQueries({ queryKey: ['post', postData.id] });
             }

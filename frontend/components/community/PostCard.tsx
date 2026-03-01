@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { Heart, MessageCircle, MapPin, Pencil, MoreHorizontal, Trash2, Share2, Loader2, Repeat2, X, Send, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -80,63 +80,75 @@ interface PostCardProps {
 // ── LikeButton ────────────────────────────────────────────────────────────────
 function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle }: { postId: string; initialLiked: boolean; initialCount: number; darkMode?: boolean; onLikeToggle?: (loveCount: number, isLiked: boolean) => void }) {
     const { isAuthenticated } = useAuth() as any;
-    const [liked, setLiked] = useState<boolean>(Boolean(initialLiked));
-    const [count, setCount] = useState<number>(Number(initialCount) || 0);
     const [popping, setPopping] = useState(false);
+    const queryClient = useQueryClient();
 
-    const toggle = async () => {
-        if (!isAuthenticated) { toast.error('Sign in to love this story'); return; }
-
-        // --- OPTIMISTIC UI UPDATE ---
-        const prevLiked = liked;
-        const prevCount = count;
-
-        const newIsLiked = !prevLiked;
-        const newCount = newIsLiked ? prevCount + 1 : Math.max(0, prevCount - 1);
-
-        setLiked(newIsLiked);
-        setCount(newCount);
-        setPopping(true);
-        setTimeout(() => setPopping(false), 420);
-
-        if (onLikeToggle) {
-            onLikeToggle(newCount, newIsLiked);
-        }
-
-        try {
+    const mutation = useMutation({
+        mutationFn: async () => {
             const res = await api.post(`/api/posts/${postId}/like`);
-            // Sync with server response if needed (handle potential concurrent likes)
-            setCount(res.data.loveCount);
-            setLiked(res.data.isLiked);
-            if (onLikeToggle) {
-                onLikeToggle(res.data.loveCount, res.data.isLiked);
+            return res.data;
+        },
+        onMutate: async () => {
+            if (!isAuthenticated) {
+                toast.error('Sign in to love this story');
+                throw new Error('Unauthenticated');
             }
-        } catch (error) {
-            console.error("Failed to action post", error);
-            // Revert on error
-            setLiked(prevLiked);
-            setCount(prevCount);
-            if (onLikeToggle) {
-                onLikeToggle(prevCount, prevLiked);
+            setPopping(true);
+            setTimeout(() => setPopping(false), 420);
+
+            // Cancel outgoing refetches so they don't overwrite our optimistic update
+            await queryClient.cancelQueries({ queryKey: ['community-posts'] });
+            const previousPosts = queryClient.getQueryData(['community-posts']);
+
+            // Optimistically update the cache
+            queryClient.setQueryData(['community-posts'], (old: any) => {
+                if (!old || !old.pages) return old;
+                return {
+                    ...old,
+                    pages: old.pages.map((page: any) => ({
+                        ...page,
+                        content: (page.content || []).map((post: any) => {
+                            if (post.id === postId) {
+                                const newIsLiked = !post.isLikedByCurrentUser;
+                                const newCount = newIsLiked ? post.loveCount + 1 : Math.max(0, post.loveCount - 1);
+                                if (onLikeToggle) onLikeToggle(newCount, newIsLiked);
+                                return { ...post, isLikedByCurrentUser: newIsLiked, loveCount: newCount };
+                            }
+                            return post;
+                        })
+                    }))
+                };
+            });
+
+            return { previousPosts };
+        },
+        onError: (err, newTodo, context: any) => {
+            if (context?.previousPosts) {
+                queryClient.setQueryData(['community-posts'], context.previousPosts);
+                toast.error("Cloud sync failed. Reverting love.");
             }
-            toast.error("Cloud sync failed. Reverting love.");
+        },
+        onSettled: () => {
+            // Background sync against the true server state
+            queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+            queryClient.invalidateQueries({ queryKey: ['post', postId] });
         }
-    };
+    });
 
     return (
         <button
             data-testid="like-btn"
-            onClick={toggle}
+            onClick={() => mutation.mutate()}
             className={cn('flex-1 flex justify-center items-center gap-2 rounded-lg transition-transform duration-200 active:scale-75 text-sm font-semibold group cursor-pointer min-h-10',
-                (liked || count > 0) ? 'text-red-500 hover:bg-red-50' :
+                (initialLiked || initialCount > 0) ? 'text-red-500 hover:bg-red-50' :
                     darkMode ? 'text-white hover:bg-white/10' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100')}
-            aria-label={liked ? 'Unlike post' : 'Like post'}
+            aria-label={initialLiked ? 'Unlike post' : 'Like post'}
         >
             <Heart className={cn('w-5 h-5 transition-all duration-200',
                 popping ? 'scale-125 bounce-pop' : '',
-                (liked || count > 0) ? 'fill-red-500 stroke-red-500 animate-in zoom-in-75 duration-300' :
+                (initialLiked || initialCount > 0) ? 'fill-red-500 stroke-red-500 animate-in zoom-in-75 duration-300' :
                     darkMode ? 'stroke-white' : 'stroke-gray-500 group-hover:stroke-gray-700')} />
-            <span>{Number(count) || 0}</span>
+            <span>{Number(initialCount) || 0}</span>
         </button>
     );
 }
@@ -435,8 +447,19 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
             // but preserving existing upload logic just sends the JSON Blob inside FormData
             const res = await api.post('/api/posts', formData);
             toast.success('Reposted!');
-            // Invalidate the posts feed to show the new repost
-            queryClient.invalidateQueries({ queryKey: ['posts'] });
+
+            // Instantly inject the repost into the active feed BEFORE the background refetch completes
+            queryClient.setQueryData(['community-posts'], (old: any) => {
+                if (!old || !old.pages) return old;
+                const newPages = [...old.pages];
+                if (newPages.length > 0) {
+                    newPages[0] = { ...newPages[0], content: [res.data, ...(newPages[0].content || [])] };
+                }
+                return { ...old, pages: newPages };
+            });
+
+            // Invalidate the absolute truth feed
+            queryClient.invalidateQueries({ queryKey: ['community-posts'] });
             stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
             onSuccess(res.data);
         } catch {
