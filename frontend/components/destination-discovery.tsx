@@ -30,8 +30,8 @@ export function DestinationDiscovery() {
     if (isLoading) {
         return (
             <div className="space-y-8">
-                <div className="flex gap-3 overflow-hidden pb-2">
-                    {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-24 rounded-full" />)}
+                <div className="flex flex-nowrap overflow-hidden md:flex-wrap md:overflow-visible gap-2 pb-2">
+                    {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-24 rounded-full shrink-0 md:shrink" />)}
                 </div>
                 <div className="flex gap-6 overflow-hidden pb-4">
                     {[...Array(5)].map((_, i) => <Skeleton key={i} className="w-32 md:w-40 aspect-[3/4] rounded-[999px]" />)}
@@ -49,7 +49,7 @@ export function DestinationDiscovery() {
         <div className="space-y-8">
             {/* Horizontal Sticky Filter Row */}
             <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md py-4 -mx-4 px-4 mask-fade-edges">
-                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                <div className="flex flex-nowrap overflow-x-auto no-scrollbar md:flex-wrap md:overflow-visible gap-2 pb-2">
                     {allTags.map(tag => (
                         <button
                             key={tag}
