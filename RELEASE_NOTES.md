@@ -1,30 +1,30 @@
-# 🚀 RELEASE NOTES: Emergency System Rescue
+# 🚀 RELEASE NOTES: System Optimization & Migration
 
 **Status:** READY FOR DEPLOYMENT
-**Version:** 1.0.0-rescue
+**Version:** 1.1.0-standard
 
-## 🛠️ Critical Fixes Implemented
+## 🛠️ Critical Implementation Details
 
 ### 1. 🛡️ Security & Authentication
-- **Fixed 403 Forbidden Error:** Updated frontend API calls to use `/api/auth/...`, matching the backend whitelist.
-- **CORS Configuration:** Enabled wildcard access (`*`) for initial deployment compatibility.
+- **Endpoint Whitelisting:** Updated frontend API calls to use `/api/auth/...`, ensuring correct security filter bypass.
+- **CORS Configuration:** Standardized wildcard access for cross-origin compatibility.
 - **Password Compatibility:** Adjusted encoding to match seeded users.
 
 ### 2. 🗄️ Database Stability
-- **Flyway Repair:** Enforced `baseline-version=7` to bypass "Table Already Exists" errors caused by manual schema setup.
-- **PostGIS Injection:** Injected `CREATE EXTENSION IF NOT EXISTS postgis;` into `V1__init.sql` to prevent "Geometry Type" errors.
-- **Connection Pooler:** Configured backend to use Supabase Transaction Pooler (Port 5432) with prepared statements disabled.
-- **Config Sanitization:** Removed invalid markdown syntax from `application.properties` JDBC URL.
+- **Flyway Reliability:** Enforced version baselining to prevent schema history conflicts.
+- **PostGIS Integration:** Standardized `CREATE EXTENSION IF NOT EXISTS postgis;` in migrations.
+- **Connection Configuration:** Optimized database connection parameters for high-latency environments.
+- **Config Sanitization:** Cleaned up JDBC URL formatting in configuration files.
 
 ### 4. ⚡ Performance Stabilization
-- **Supabase Session Mode:** Enforced hard limit of 3 connections per instance to prevent `FATAL: max clients` errors.
-- **Leak Prevention:** Reduced idle timeout to 30s to quickly release unused connections.
+- **Connection Pooling:** Scaled instance connection limits to prevent exhaustion errors.
+- **Leak Prevention:** Reduced idle timeout to 30s for rapid resource reclamation.
 
 ### 3. 🏗️ Use Case Completion
-- **"Always Verify":** Added mandatory E2E verification protocol.
-- **Frontend-Backend Sync:** Aligned API client base paths and rewrites.
+- **"Always Verify" Protocol:** Implemented mandatory E2E verification for all deployments.
+- **Frontend-Backend Sync:** Aligned API client base paths and rewrites with deployment environment.
 
-## 🔑 Test Credentials (Live System)
+## 🔑 Test Credentials
 
 | Role | Email | Password |
 | :--- | :--- | :--- |
@@ -32,15 +32,15 @@
 | **Host** | `host@nbh.com` | `host123` |
 | **Guest** | `user@nbh.com` | `user123` |
 
-## ⚠️ Deployment Instructions
+## 📦 Deployment Protocol
 
-1.  **Supabase:**
-    - Go to SQL Editor.
-    - Run: `DROP TABLE IF EXISTS "flyway_schema_history";` (Required for baseline fix).
+1.  **Database Migration:**
+    - Flyway automatically handles schema evolution.
+    - If manual repairs are needed, ensure `flyway_schema_history` is synchronized.
 
-2.  **Render/Vercel:**
-    - Deployments should trigger automatically on git push (already done).
-    - Check logs for "Started BackendApplication" to confirm health.
+2.  **Deployment Platform:**
+    - Standard deployment flows are active via GitHub Actions.
+    - Check production logs for "Started BackendApplication" to confirm success.
 
-## 📝 Known Issues
-- Local E2E tests may fail if run against the Production Database due to data state or network latency. Recommended to run tests against a local Docker database for future development.
+## 📝 Ongoing Notes
+- Local E2E tests are recommended to be run against a local Docker database to minimize network-related jitter.

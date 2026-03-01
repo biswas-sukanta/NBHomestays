@@ -15,11 +15,9 @@ Access the application:
 - **Backend API**: [http://localhost:8080/api](http://localhost:8080/api)
 - **Maildev**: [http://localhost:1080](http://localhost:1080)
 
-## 🏗️ Architecture
-
-- **Backend**: Java 21, Spring Boot 3.3, PostgreSQL (PostGIS), Hibernate (EhCache L2), JWT Auth.
+- **Backend**: Java 21, Spring Boot 3.3, PostgreSQL, Hibernate (EhCache L2), JWT Auth.
 - **Frontend**: Next.js 14, React 18, Tailwind CSS, Shadcn UI, Zustand, TanStack Query.
-- **Infrastructure**: Docker, GitHub Actions CI/CD.
+- **Infrastructure**: Supabase (Database), ImageKit (Storage), Koyeb (Backend Hosting), Docker, GitHub Actions CI/CD.
 
 ## ✨ Features
 
@@ -60,5 +58,16 @@ Run the production readiness check:
 ```
 
 ## 📦 Deployment
+
+The project is configured for deployment on **Koyeb**.
+
+### Environment Variables Required:
+- `SPRING_DATASOURCE_URL`: Database connection string
+- `SPRING_DATASOURCE_USERNAME`: Database username
+- `SPRING_DATASOURCE_PASSWORD`: Database password
+- `JWT_SECRET_KEY`: Secure key for JWT signing
+- `IMAGEKIT_PUBLIC_KEY`: ImageKit public key
+- `IMAGEKIT_PRIVATE_KEY`: ImageKit private key
+- `IMAGEKIT_URL_ENDPOINT`: ImageKit URL endpoint
 
 The project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically builds and tests the application on every push to `main`.
