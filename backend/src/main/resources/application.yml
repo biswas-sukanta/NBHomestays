@@ -2,6 +2,7 @@ spring:
   application:
     name: nb-homestays-backend
   datasource:
+    # Strict binding: No default values to ensure fail-fast on missing environment variables
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
