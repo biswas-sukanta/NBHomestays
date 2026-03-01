@@ -36,8 +36,11 @@ server:
 application:
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY}
+      # No default value here - must be provided by Koyeb
+      secret-key: ${JWT_SECRET_KEY} 
       expiration: 86400000 # 24 hours
+      refresh-token:
+        expiration: 604800000 # 7 days
 sentry:
   dsn: ${SENTRY_DSN:}
   traces-sample-rate: 0.1
