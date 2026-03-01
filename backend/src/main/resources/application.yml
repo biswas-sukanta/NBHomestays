@@ -2,28 +2,28 @@ spring:
   application:
     name: nb-homestays-backend
   datasource:
+    # Strict binding: No default values to avoid 'postgres' user ghosting
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 120000 # 2-minute timeout for cold starts
-      max-lifetime: 1800000
+      connection-timeout: 120000 # 2-minute timeout for Supabase wake-up
   jpa:
     hibernate:
-      ddl-auto: validate # Flyway handles schema
+      ddl-auto: validate # CRITICAL: Ensure this is 'validate'
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     enabled: true
+    # Force Flyway to use the exact same credentials as the main datasource
     url: ${SPRING_FLYWAY_URL:${spring.datasource.url}}
     user: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     baseline-on-migrate: true
-    connect-retries: 10 # Lower retries to prevent fast circuit-breaker triggers
+    connect-retries: 5 # Lower retries to avoid triggering Supabase circuit breakers
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
@@ -36,11 +36,8 @@ server:
 application:
   security:
     jwt:
-      # No default value here - must be provided by Koyeb
-      secret-key: ${JWT_SECRET_KEY} 
-      expiration: 86400000 # 24 hours
-      refresh-token:
-        expiration: 604800000 # 7 days
+      secret-key: ${JWT_SECRET_KEY} # Required for secure startup
+      expiration: 86400000
 sentry:
   dsn: ${SENTRY_DSN:}
   traces-sample-rate: 0.1
