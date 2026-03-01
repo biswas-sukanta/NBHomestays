@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, Suspense, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { CategoryFilterBar } from '@/components/category-filter-bar';
 import { HomestaySwimlane } from '@/components/homestay-swimlane';
 import { DestinationDiscovery } from '@/components/destination-discovery';
@@ -57,67 +58,120 @@ function SearchResults() {
     const tag = searchParams?.get('tag') || '';
 
     const [searchTerm, setSearchTerm] = useState(query);
-    const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-    // Dynamic Top Grid
+    // Dynamic Search/Tag Results (imperative — user-driven)
     const [searchGrid, setSearchGrid] = useState<HomestaySummary[]>([]);
-
-    // Swimlanes
-    const [trendingStays, setTrendingStays] = useState<HomestaySummary[]>([]);
-    const [offbeatStays, setOffbeatStays] = useState<HomestaySummary[]>([]);
-    const [featuredStays, setFeaturedStays] = useState<HomestaySummary[]>([]);
-
-    // Infinite Scroll Integration
-    const [allStays, setAllStays] = useState<HomestaySummary[]>([]);
-    const [page, setPage] = useState(0);
-    const [hasMore, setHasMore] = useState(true);
-    const [loading, setLoading] = useState(false);
-    const observerTarget = useRef<HTMLDivElement>(null);
+    const [searchLoading, setSearchLoading] = useState(false);
 
     const [viewType, setViewType] = useState<'grid' | 'map'>('grid');
     const [mapBounds, setMapBounds] = useState<{ minLat: number, maxLat: number, minLng: number, maxLng: number } | null>(null);
+
+    const isStorefront = !query && !tag;
 
     // Sync input box when URL query changes
     useEffect(() => {
         setSearchTerm(query);
     }, [query]);
 
-    // Fast Initial Fetch
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            setIsInitialLoading(true);
-            try {
-                if (query || tag) {
-                    const endpoint = query
-                        ? `/api/homestays/search?q=${encodeURIComponent(query)}&page=0&size=50`
-                        : `/api/homestays/search?tag=${encodeURIComponent(tag)}&page=0&size=50`;
+    // ══════════════════════════════════════════════════════════
+    //  CACHED QUERIES (Storefront Mode) — Stale-While-Revalidate
+    // ══════════════════════════════════════════════════════════
 
-                    const res = await api.get(endpoint);
-                    // Handle Page<HomestayDto.Response> structure
-                    setSearchGrid(res.data.content || []);
-                } else {
-                    const [res1, res2, res3] = await Promise.all([
-                        api.get('/api/homestays/search?tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6'),
-                        api.get('/api/homestays/search?tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6'),
-                        api.get('/api/homestays/search?isFeatured=true&page=0&size=8')
-                    ]);
-                    setTrendingStays(res1.data.content || []);
-                    setOffbeatStays(res2.data.content || []);
-                    setFeaturedStays(res3.data.content || []);
+    // Swimlane: Trending Now
+    const { data: trendingStays = [] } = useQuery<HomestaySummary[]>({
+        queryKey: ['swimlane', 'Trending Now'],
+        queryFn: () => api.get('/api/homestays/search?tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6').then(res => res.data.content || []),
+        enabled: isStorefront,
+    });
+
+    // Swimlane: Explore Offbeat
+    const { data: offbeatStays = [] } = useQuery<HomestaySummary[]>({
+        queryKey: ['swimlane', 'Explore Offbeat'],
+        queryFn: () => api.get('/api/homestays/search?tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6').then(res => res.data.content || []),
+        enabled: isStorefront,
+    });
+
+    // Swimlane: Featured Escapes
+    const { data: featuredStays = [] } = useQuery<HomestaySummary[]>({
+        queryKey: ['swimlane', 'featured'],
+        queryFn: () => api.get('/api/homestays/search?isFeatured=true&page=0&size=8').then(res => res.data.content || []),
+        enabled: isStorefront,
+    });
+
+    // All Homestays: Infinite Scroll with caching
+    const {
+        data: allHomestaysData,
+        fetchNextPage: fetchNextAllPage,
+        hasNextPage: hasMoreAll,
+        isFetchingNextPage: loadingAll,
+        isLoading: isAllInitialLoading,
+    } = useInfiniteQuery({
+        queryKey: ['allHomestays'],
+        queryFn: async ({ pageParam = 0 }) => {
+            const res = await api.get(`/api/homestays/search?page=${pageParam}&size=12`);
+            return res.data;
+        },
+        initialPageParam: 0,
+        getNextPageParam: (lastPage: any, allPages: any[]) => {
+            if (lastPage.last || (lastPage.content || []).length === 0) return undefined;
+            return allPages.length;
+        },
+        enabled: isStorefront,
+    });
+
+    // Flatten infinite query pages into a single array
+    const allStays = allHomestaysData?.pages.flatMap((page: any) => page.content || []) || [];
+
+    // Infinite scroll observer
+    const observerTarget = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!isStorefront) return;
+
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMoreAll && !loadingAll) {
+                    fetchNextAllPage();
                 }
+            },
+            { threshold: 0.1 }
+        );
+
+        const target = observerTarget.current;
+        if (target) {
+            observer.observe(target);
+        }
+
+        return () => {
+            if (target) observer.unobserve(target);
+        };
+    }, [fetchNextAllPage, hasMoreAll, loadingAll, isStorefront]);
+
+    // ══════════════════════════════════════════════════════════
+    //  IMPERATIVE FETCHES (Search/Tag/Map Mode)
+    // ══════════════════════════════════════════════════════════
+
+    // Fetch search/tag results
+    useEffect(() => {
+        if (!query && !tag) return;
+
+        const fetchSearchResults = async () => {
+            setSearchLoading(true);
+            try {
+                const endpoint = query
+                    ? `/api/homestays/search?q=${encodeURIComponent(query)}&page=0&size=50`
+                    : `/api/homestays/search?tag=${encodeURIComponent(tag)}&page=0&size=50`;
+                const res = await api.get(endpoint);
+                setSearchGrid(res.data.content || []);
             } catch (err) {
-                console.error("Failed to fetch layout feeds", err);
+                console.error("Failed to fetch search results", err);
             } finally {
-                setIsInitialLoading(false);
+                setSearchLoading(false);
             }
         };
 
-        fetchInitialData();
-        // Reset infinite scroll engine
-        setAllStays([]);
-        setPage(0);
-        setHasMore(true);
-        setMapBounds(null); // Clear bounds on fresh query/tag search
+        fetchSearchResults();
+        setMapBounds(null);
     }, [query, tag]);
 
     // Handle Map Movement
@@ -130,75 +184,19 @@ function SearchResults() {
         };
         setMapBounds(newBounds);
 
-        setLoading(true);
         try {
             const queryPart = query ? `&q=${encodeURIComponent(query)}` : '';
             const tagPart = tag ? `&tag=${encodeURIComponent(tag)}` : '';
             const res = await api.get(`/api/homestays/search?minLat=${newBounds.minLat}&maxLat=${newBounds.maxLat}&minLng=${newBounds.minLng}&maxLng=${newBounds.maxLng}${queryPart}${tagPart}&size=100`);
 
-            // For map view, we update both if searching specifically in area
             const homestaysInArea = res.data.content || [];
             if (query || tag) {
                 setSearchGrid(homestaysInArea);
-            } else {
-                setAllStays(homestaysInArea);
-                setHasMore(false); // Stop infinite scroll when browsing by map bounds
             }
         } catch (err) {
             console.error("Map search failed", err);
-        } finally {
-            setLoading(false);
         }
     }, [query, tag]);
-
-    // Paged "All Homestays" Loader
-    const fetchNextPage = useCallback(async () => {
-        if (!hasMore || loading) return;
-
-        // Prevent generic grid loading if querying a specific tag or term
-        if (query || tag) return;
-
-        setLoading(true);
-        try {
-            const res = await api.get(`/api/homestays/search?page=${page}&size=12`);
-            const newData = res.data; // Mapped to Spring Page<>
-
-            const fetchedContent = newData.content || [];
-
-            setAllStays((prev: HomestaySummary[]) => [...prev, ...fetchedContent]);
-
-            if (newData.last || fetchedContent.length === 0) {
-                setHasMore(false);
-            } else {
-                setPage((prev: number) => prev + 1);
-            }
-        } catch (error) {
-            console.error('Failed to resolve paginated payload', error);
-        } finally {
-            setLoading(false);
-        }
-    }, [hasMore, loading, page, query, tag]);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            entries => {
-                if (entries[0].isIntersecting) {
-                    fetchNextPage();
-                }
-            },
-            { threshold: 0.1 }
-        );
-
-        // Instead of a one-time bind, we poll slightly or just ensure it binds when ref exists
-        const target = observerTarget.current;
-        if (target) {
-            observer.observe(target);
-        }
-
-        return () => {
-            if (target) observer.unobserve(target);
-        };
-    }, [fetchNextPage, isInitialLoading, query, tag]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -209,7 +207,7 @@ function SearchResults() {
         }
     };
 
-    const isStorefront = !query && !tag;
+    const isLoading = isStorefront ? isAllInitialLoading : searchLoading;
 
     return (
         <div className="min-h-screen bg-white text-gray-900 pb-20">
@@ -251,7 +249,7 @@ function SearchResults() {
 
             {/* STEP 3: Bounded Core UI Layout Area */}
             <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col gap-12 md:gap-16">
-                {isInitialLoading ? (
+                {isLoading && allStays.length === 0 && !trendingStays.length ? (
                     <div className="flex gap-4 overflow-hidden">
                         {[...Array(4)].map((_, i) => (
                             <div key={i} className="flex flex-col space-y-3 w-[280px] shrink-0">
@@ -341,14 +339,14 @@ function SearchResults() {
 
                             {/* Scroll Listener Node */}
                             <div id="load-more-trigger" ref={observerTarget} className="w-full py-12 flex justify-center items-center h-24">
-                                {loading && (
+                                {loadingAll && (
                                     <div className="flex space-x-2">
                                         <div className="w-3 h-3 bg-gray-300 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                                         <div className="w-3 h-3 bg-gray-300 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                                         <div className="w-3 h-3 bg-gray-300 rounded-full animate-bounce"></div>
                                     </div>
                                 )}
-                                {!hasMore && allStays.length > 0 && (
+                                {!hasMoreAll && allStays.length > 0 && (
                                     <p className="text-gray-500 font-medium text-sm">You have reached the end of the line.</p>
                                 )}
                             </div>

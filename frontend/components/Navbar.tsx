@@ -7,8 +7,10 @@ import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
+import { usePrefetchSearch } from '@/hooks/usePrefetchSearch';
 
 export default function Navbar() {
+    usePrefetchSearch(); // ← Silent background prefetch for /search page data
     const [isOpen, setIsOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const pathname = usePathname();
