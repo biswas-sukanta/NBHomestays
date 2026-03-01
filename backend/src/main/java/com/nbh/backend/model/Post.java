@@ -59,6 +59,12 @@ public class Post {
     @Column(name = "image_url")
     private List<String> legacyImageUrls;
 
+    @ElementCollection
+    @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "tag")
+    @Builder.Default
+    private List<String> tags = new java.util.ArrayList<>();
+
     @Column(name = "created_at", nullable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

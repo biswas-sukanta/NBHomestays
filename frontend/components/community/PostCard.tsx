@@ -38,6 +38,7 @@ export interface CommunityPost {
     homestayId?: string;
     homestayName?: string;
     originalPost?: CommunityPost;
+    tags?: string[];
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -287,6 +288,17 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 </div>
 
                 <p className={cn("text-sm text-gray-900 leading-relaxed whitespace-pre-line mb-3 font-normal", isQuoted && "text-xs")}>{post.textContent}</p>
+
+                {/* Vibe Tags */}
+                {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                        {post.tags.map(tag => (
+                            <span key={tag} className="inline-flex items-center bg-gray-100 text-gray-600 text-[11px] font-medium rounded-full px-2.5 py-0.5 border border-gray-200/60">
+                                {tag}
+                            </span>
+                        ))}
+                    </div>
+                )}
 
                 {/* Recursive Nested Repost */}
                 {post.originalPost && (

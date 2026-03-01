@@ -27,6 +27,16 @@ type Post = CommunityPost;
 
 interface HomestayOption { id: string; name: string; address?: string; }
 
+const VIBE_TAGS = [
+    { label: '❓ Question', value: 'Question' },
+    { label: '📝 Trip Report', value: 'Trip Report' },
+    { label: '⭐ Review', value: 'Review' },
+    { label: '⚠️ Alert', value: 'Alert' },
+    { label: '✨ Hidden Gem', value: 'Hidden Gem' },
+    { label: '🏔️ Offbeat', value: 'Offbeat' },
+    { label: '🚗 Transport', value: 'Transport' },
+] as const;
+
 // ── Post Composer Inline ───────────────────────────────────────
 interface RepostTarget { id: string; authorName: string; textContent: string; }
 function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { postData?: Post; repostTarget?: RepostTarget; onSuccess: (post: Post) => void; onCancel: () => void; }) {
@@ -44,6 +54,15 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
     const fileRef = useRef<HTMLInputElement>(null);
     const [homestays, setHomestays] = useState<HomestayOption[]>([]);
     const [selectedHomestay, setSelectedHomestay] = useState(postData?.homestayId || '');
+    const [selectedTags, setSelectedTags] = useState<string[]>(postData?.tags || []);
+
+    const toggleTag = (tag: string) => {
+        setSelectedTags(prev =>
+            prev.includes(tag)
+                ? prev.filter(t => t !== tag)
+                : prev.length < 3 ? [...prev, tag] : prev
+        );
+    };
 
     useEffect(() => {
         if (postData) {
@@ -117,7 +136,8 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
             const payload: any = {
                 textContent: text,
                 locationName: location || 'North Bengal',
-                media: [...existingMedia, ...uploadedMedia]
+                media: [...existingMedia, ...uploadedMedia],
+                tags: selectedTags.length > 0 ? selectedTags : undefined,
             };
 
             if (selectedHomestay) {
@@ -285,6 +305,38 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                         />
                     </div>
 
+                    {/* ── Vibe Tag Badge Grid ── */}
+                    <div>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Vibe Tags {selectedTags.length > 0 && <span className="text-green-600">({selectedTags.length}/3)</span>}</p>
+                        <div className="flex flex-wrap gap-2">
+                            {VIBE_TAGS.map(tag => {
+                                const isSelected = selectedTags.includes(tag.value);
+                                const isDisabled = !isSelected && selectedTags.length >= 3;
+                                return (
+                                    <button
+                                        key={tag.value}
+                                        type="button"
+                                        onClick={() => toggleTag(tag.value)}
+                                        disabled={isDisabled}
+                                        className={cn(
+                                            'px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-200 select-none',
+                                            isSelected
+                                                ? 'bg-[#004d00] text-white border-[#004d00] shadow-md scale-105'
+                                                : isDisabled
+                                                    ? 'bg-gray-100 text-gray-300 border-gray-200 opacity-40 cursor-not-allowed'
+                                                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#004d00]/40 hover:bg-green-50'
+                                        )}
+                                    >
+                                        {tag.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {selectedTags.length >= 3 && (
+                            <p className="text-xs text-amber-600 mt-1.5 font-medium animate-in fade-in duration-300">Max 3 tags selected</p>
+                        )}
+                    </div>
+
                     <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingMedia.length === 0)}
                         className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md active:scale-[0.98] disabled:opacity-50 transition-all text-base mt-1">
                         {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -319,12 +371,14 @@ export default function CommunityPage() {
     const [postToEdit, setPostToEdit] = useState<Post | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
+    const [activeTag, setActiveTag] = useState<string | null>(null);
 
     const { ref, inView } = useInView({ threshold: 0.1 });
 
     const fetchPosts = async ({ pageParam = 0 }) => {
         const validPage = Number.isInteger(pageParam) ? pageParam : 0;
-        const { data } = await api.get(`/api/posts?page=${validPage}&size=10&sort=createdAt,desc`);
+        const tagParam = activeTag ? `&tag=${encodeURIComponent(activeTag)}` : '';
+        const { data } = await api.get(`/api/posts?page=${validPage}&size=10&sort=createdAt,desc${tagParam}`);
         return data;
     };
 
@@ -336,7 +390,7 @@ export default function CommunityPage() {
         isPending,
         isError
     } = useInfiniteQuery({
-        queryKey: ['community-posts'],
+        queryKey: ['community-posts', activeTag],
         queryFn: fetchPosts,
         initialPageParam: 0,
         getNextPageParam: (lastPage) => {
@@ -417,7 +471,38 @@ export default function CommunityPage() {
                 subtitle="Stories, tips, and incredible moments from North Bengal travellers."
             />
 
-            <div className="container mx-auto max-w-2xl px-4 py-8 space-y-8">
+            <div className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
+                {/* ── Sticky Glassmorphic Filter Bar ── */}
+                <div className="sticky top-[64px] z-30 -mx-4 px-4 py-3 backdrop-blur-md bg-white/80 border-b border-gray-200/50">
+                    <div className="flex flex-nowrap overflow-x-auto no-scrollbar gap-2 pb-0.5" style={{ scrollbarWidth: 'none' }}>
+                        <button
+                            onClick={() => setActiveTag(null)}
+                            className={cn(
+                                'whitespace-nowrap px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200 shrink-0',
+                                activeTag === null
+                                    ? 'bg-[#004d00] text-white border-[#004d00] shadow-md scale-105'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-[#004d00]/30 hover:bg-gray-50'
+                            )}
+                        >
+                            🌟 All
+                        </button>
+                        {VIBE_TAGS.map(tag => (
+                            <button
+                                key={tag.value}
+                                onClick={() => setActiveTag(tag.value)}
+                                className={cn(
+                                    'whitespace-nowrap px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200 shrink-0',
+                                    activeTag === tag.value
+                                        ? 'bg-[#004d00] text-white border-[#004d00] shadow-md scale-105'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-[#004d00]/30 hover:bg-gray-50'
+                                )}
+                            >
+                                {tag.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
                     <div className="relative w-full sm:max-w-md group">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-green-600 transition-colors" />

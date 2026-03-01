@@ -28,8 +28,9 @@ public class PostController {
 
     @GetMapping
     public ResponseEntity<Page<PostDto.Response>> getAllPosts(
+            @RequestParam(name = "tag", required = false) String tag,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(postService.getAllPosts(pageable));
+        return ResponseEntity.ok(postService.getAllPosts(tag, pageable));
     }
 
     @GetMapping("/search")

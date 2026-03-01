@@ -60,6 +60,7 @@ public class PostService {
         Post post = Post.builder()
                 .locationName(request.getLocationName())
                 .textContent(request.getTextContent())
+                .tags(request.getTags() != null ? request.getTags() : new java.util.ArrayList<>())
                 .mediaFiles(request.getMedia() != null ? request.getMedia().stream()
                         .map(dto -> com.nbh.backend.model.MediaResource.builder()
                                 .id(dto.getId())
@@ -89,9 +90,11 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "postsList", key = "#pageable.pageNumber + '-' + #pageable.pageSize", sync = true)
-    public Page<PostDto.Response> getAllPosts(Pageable pageable) {
-        Page<Post> postsPage = postRepository.findAll(pageable);
+    @Cacheable(value = "postsList", key = "(#tag ?: 'all') + '-' + #pageable.pageNumber + '-' + #pageable.pageSize", sync = true)
+    public Page<PostDto.Response> getAllPosts(String tag, Pageable pageable) {
+        Page<Post> postsPage = (tag != null && !tag.isBlank())
+                ? postRepository.findByTag(tag, pageable)
+                : postRepository.findAll(pageable);
         List<PostDto.Response> dtos = postsPage.getContent().stream()
                 .map(p -> mapToResponse(p, null))
                 .collect(Collectors.toList());
@@ -102,7 +105,7 @@ public class PostService {
     @Cacheable(value = "postsList", key = "'search-' + #query + '-' + #pageable.pageNumber", sync = true)
     public Page<PostDto.Response> searchPosts(String query, Pageable pageable) {
         if (query == null || query.isBlank()) {
-            return getAllPosts(pageable);
+            return getAllPosts(null, pageable);
         }
         Page<Post> postsPage = postRepository.findByLocationNameContainingIgnoreCase(query, pageable);
         List<PostDto.Response> dtos = postsPage.getContent().stream()
@@ -145,6 +148,8 @@ public class PostService {
             post.setLocationName(request.getLocationName());
         if (request.getTextContent() != null)
             post.setTextContent(request.getTextContent());
+        if (request.getTags() != null)
+            post.setTags(request.getTags());
 
         // --- CLOUD JANITOR DIFF: Purge images removed by the user ---
         java.util.List<com.nbh.backend.model.MediaResource> finalMergedMedia = new java.util.ArrayList<>();
@@ -380,6 +385,7 @@ public class PostService {
                 .isLikedByCurrentUser(isLiked)
                 .originalPost(originalPostDto)
                 .createdAt(post.getCreatedAt())
+                .tags(post.getTags() != null ? post.getTags() : java.util.Collections.emptyList())
                 .build();
     }
 }

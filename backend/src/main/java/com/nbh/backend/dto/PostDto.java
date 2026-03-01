@@ -29,6 +29,9 @@ public class PostDto {
         private List<MediaDto> media;
         private UUID homestayId;
         private UUID originalPostId;
+
+        @Size(max = 3, message = "Maximum 3 tags allowed")
+        private List<String> tags;
     }
 
     @Data
@@ -49,6 +52,7 @@ public class PostDto {
         private boolean isLikedByCurrentUser;
         private Response originalPost;
         private LocalDateTime createdAt;
+        private List<String> tags;
     }
 
     @Data
