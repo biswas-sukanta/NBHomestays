@@ -3,9 +3,22 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
-    <appender name="Logtail" class="com.logtail.logback.LogtailAppender">
-        <appName>nb-homestays-backend</appName>
-        <sourceToken>${LOGTAIL_SOURCE_TOKEN}</sourceToken>
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>${GRAFANA_LOKI_URL}/loki/api/v1/push</url>
+            <auth>
+                <username>${GRAFANA_LOKI_USER}</username>
+                <password>${GRAFANA_LOKI_TOKEN}</password>
+            </auth>
+        </http>
+        <format>
+            <label>
+                <pattern>app=nbh-backend,host=koyeb,env=prod</pattern>
+            </label>
+            <message>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            </message>
+        </format>
     </appender>
 
     <root level="INFO">
@@ -13,6 +26,6 @@
     </root>
 
     <logger name="com.nbh.backend" level="INFO" additivity="true">
-        <appender-ref ref="Logtail"/>
+        <appender-ref ref="LOKI"/>
     </logger>
 </configuration>
