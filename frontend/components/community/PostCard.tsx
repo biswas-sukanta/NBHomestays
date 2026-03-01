@@ -217,7 +217,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
     const articleClassName = cn(
         'bg-white border rounded-xl overflow-hidden transition-all duration-300',
-        isQuoted ? "border-gray-200 mt-3 hover:bg-gray-50/50" : "border-gray-200 mb-4 shadow-sm hover:shadow-md",
+        isQuoted ? "border-gray-200 mt-3 hover:bg-gray-50/50" : "border-border/40 mb-5 shadow-sm hover:shadow-lg",
     );
 
     const content = (
@@ -229,23 +229,16 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
             className={articleClassName}
         >
 
-            {/* Dynamic Image Collage */}
-            {post.media && post.media.length > 0 && (
-                <div className="relative z-10">
-                    <ImageCollage images={post.media.map(m => m.url)} onImageClick={(i) => setLightboxIndex(i)} />
-                </div>
-            )}
-
-            <div className={cn("p-4 relative z-10 pointer-events-none", isQuoted && "p-3")}>
-                {/* Header Sequence */}
-                <div className="flex items-start justify-between mb-3">
+            {/* ── Zone 1: Header ── */}
+            <div className={cn("px-4 pt-4 pb-3 relative z-10 pointer-events-none", isQuoted && "px-3 pt-3 pb-2")}>
+                <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-green-500 to-green-700 flex items-center justify-center text-white text-sm font-bold flex-none shadow-sm">
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#004d00] to-emerald-600 flex items-center justify-center text-white text-sm font-bold flex-none shadow-sm ring-2 ring-white">
                             {initials}
                         </div>
                         <div className="flex flex-col">
                             <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-sm text-gray-900 hover:underline cursor-pointer pointer-events-auto leading-tight">{authorName}</span>
+                                <span className="font-bold text-[15px] text-gray-900 hover:underline cursor-pointer pointer-events-auto leading-tight">{authorName}</span>
                                 {post.author?.isVerifiedHost && (
                                     <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-50" />
                                 )}
@@ -266,7 +259,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                         </div>
                     </div>
 
-                    {/* EXPLICIT ACTION BUTTONS ALIGNED RIGHT */}
+                    {/* Edit / Delete */}
                     {canModify && onDelete && (
                         <div className="flex items-center gap-3 ml-auto pointer-events-auto">
                             <button
@@ -286,14 +279,17 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                         </div>
                     )}
                 </div>
+            </div>
 
-                <p className={cn("text-sm text-gray-900 leading-relaxed whitespace-pre-line mb-3 font-normal", isQuoted && "text-xs")}>{post.textContent}</p>
+            {/* ── Zone 2: Body + Tags ── */}
+            <div className={cn("px-4 pb-3 pointer-events-none", isQuoted && "px-3 pb-2")}>
+                <p className={cn("text-[15px] text-gray-900 leading-relaxed whitespace-pre-line font-normal", isQuoted && "text-xs")}>{post.textContent}</p>
 
-                {/* Vibe Tags */}
+                {/* Vibrant Vibe Tags */}
                 {post.tags && post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-3">
+                    <div className="flex flex-wrap gap-1.5 mt-3">
                         {post.tags.map(tag => (
-                            <span key={tag} className="inline-flex items-center bg-gray-100 text-gray-600 text-[11px] font-medium rounded-full px-2.5 py-0.5 border border-gray-200/60">
+                            <span key={tag} className="inline-flex items-center bg-primary/10 text-primary text-xs font-semibold rounded-full px-3 py-1 border border-primary/20">
                                 {tag}
                             </span>
                         ))}
@@ -302,7 +298,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
                 {/* Recursive Nested Repost */}
                 {post.originalPost && (
-                    <div className="mb-3 mt-2 rounded-lg border border-gray-300 bg-gray-50 pointer-events-auto overflow-hidden">
+                    <div className="mt-3 rounded-lg border border-gray-300 bg-gray-50 pointer-events-auto overflow-hidden">
                         <PostCard
                             post={post.originalPost}
                             isQuoted={true}
@@ -312,6 +308,13 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 )}
             </div>
 
+            {/* ── Zone 3: Media ── */}
+            {post.media && post.media.length > 0 && (
+                <div className="relative z-10 border-t border-border/50">
+                    <ImageCollage images={post.media.map(m => m.url)} onImageClick={(i) => setLightboxIndex(i)} />
+                </div>
+            )}
+
             {/* ── Premium Action Bar (Hidden if quoting) ── */}
             {!isQuoted && (() => {
                 const commentCount = Math.max(0, Number(post.commentCount) || 0);
@@ -320,7 +323,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 const hasShares = safeShareCount > 0;
 
                 return (
-                    <div className="flex items-center justify-between px-3 py-2 border-t border-gray-100 pointer-events-auto bg-white relative z-10">
+                    <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/50 pointer-events-auto bg-white relative z-10">
                         {/* Like — instantly dispatches update to global state array on success */}
                         <LikeButton
                             postId={post.id}

@@ -18,6 +18,7 @@ import { PostCard, CommunityPost } from '@/components/community/PostCard';
 import { PostSkeleton } from '@/components/community/PostSkeleton';
 import { CommentsSection } from '@/components/comments-section';
 import { CustomCombobox } from '@/components/ui/combobox';
+import { FilterMatrix } from '@/components/ui/filter-matrix';
 import api from '@/lib/api';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
@@ -472,36 +473,15 @@ export default function CommunityPage() {
             />
 
             <div className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
-                {/* ── Sticky Glassmorphic Filter Bar ── */}
-                <div className="sticky top-[64px] z-30 -mx-4 px-4 py-3 backdrop-blur-md bg-white/80 border-b border-gray-200/50">
-                    <div className="flex flex-nowrap overflow-x-auto no-scrollbar gap-2 pb-0.5" style={{ scrollbarWidth: 'none' }}>
-                        <button
-                            onClick={() => setActiveTag(null)}
-                            className={cn(
-                                'whitespace-nowrap px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200 shrink-0',
-                                activeTag === null
-                                    ? 'bg-[#004d00] text-white border-[#004d00] shadow-md scale-105'
-                                    : 'bg-white text-gray-600 border-gray-200 hover:border-[#004d00]/30 hover:bg-gray-50'
-                            )}
-                        >
-                            🌟 All
-                        </button>
-                        {VIBE_TAGS.map(tag => (
-                            <button
-                                key={tag.value}
-                                onClick={() => setActiveTag(tag.value)}
-                                className={cn(
-                                    'whitespace-nowrap px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200 shrink-0',
-                                    activeTag === tag.value
-                                        ? 'bg-[#004d00] text-white border-[#004d00] shadow-md scale-105'
-                                        : 'bg-white text-gray-600 border-gray-200 hover:border-[#004d00]/30 hover:bg-gray-50'
-                                )}
-                            >
-                                {tag.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                {/* ── Tag Filter Matrix ── */}
+                <FilterMatrix
+                    options={[
+                        { label: '🌟 All', value: null },
+                        ...VIBE_TAGS.map(t => ({ label: t.label, value: t.value })),
+                    ]}
+                    activeValue={activeTag}
+                    onChange={setActiveTag}
+                />
 
                 <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
                     <div className="relative w-full sm:max-w-md group">
