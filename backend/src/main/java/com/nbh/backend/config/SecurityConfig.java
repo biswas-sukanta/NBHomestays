@@ -26,15 +26,7 @@ public class SecurityConfig {
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
                                 .csrf(AbstractHttpConfigurer::disable)
-                                .cors(cors -> cors.configurationSource(request -> {
-                                        var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-                                        corsConfig.setAllowedOriginPatterns(java.util.List.of("*"));
-                                        corsConfig.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE",
-                                                        "OPTIONS", "PATCH"));
-                                        corsConfig.setAllowedHeaders(java.util.List.of("*"));
-                                        corsConfig.setAllowCredentials(true);
-                                        return corsConfig;
-                                }))
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/api/auth/**", "/actuator/**", "/error",
                                                                 "/api/health/ping",
@@ -55,5 +47,21 @@ public class SecurityConfig {
                                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();
+        }
+
+        @Bean
+        public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+                org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+                configuration.setAllowedOrigins(
+                                java.util.Arrays.asList("https://nb-homestays.vercel.app", "http://localhost:3000"));
+                configuration.setAllowedMethods(
+                                java.util.Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+                configuration.setAllowedHeaders(java.util.Arrays.asList("Authorization", "Content-Type", "Accept",
+                                "Origin", "X-Requested-With", "Access-Control-Allow-Origin"));
+                configuration.setAllowCredentials(true);
+
+                org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+                return source;
         }
 }
