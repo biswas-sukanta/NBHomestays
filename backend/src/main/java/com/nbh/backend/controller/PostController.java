@@ -46,12 +46,13 @@ public class PostController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.Response> createPost(
-            @Valid @RequestBody PostDto.Request request,
+            @Valid @RequestPart("request") PostDto.Request request,
+            @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
             Authentication authentication) {
-        return ResponseEntity.ok(postService.createPost(request, authentication.getName()));
+        return ResponseEntity.ok(postService.createPost(request, files, authentication.getName()));
     }
 
     @GetMapping("/my-posts")
@@ -104,15 +105,16 @@ public class PostController {
         return ResponseEntity.ok(resp);
     }
 
-    @PostMapping("/{id}/repost")
+    @PostMapping(value = "/{id}/repost", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.Response> repost(
             @PathVariable("id") java.util.UUID id,
-            @RequestBody(required = false) PostDto.Request request,
+            @RequestPart(value = "request", required = false) PostDto.Request request,
+            @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
             Authentication authentication) {
         if (request == null) {
             request = new PostDto.Request();
         }
-        return ResponseEntity.ok(postService.repost(id, request, authentication.getName()));
+        return ResponseEntity.ok(postService.repost(id, request, files, authentication.getName()));
     }
 }

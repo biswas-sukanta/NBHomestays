@@ -126,8 +126,8 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
             toast.info(postData ? "Updating story..." : "Sharing story...");
             const endpoint = postData ? `/api/posts/${postData.id}` : '/api/posts';
             const res = postData
-                ? await api.put(endpoint, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-                : await api.post(endpoint, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                ? await api.put(endpoint, formData)
+                : await api.post(endpoint, formData);
 
             // Invalidate React Query cache
             queryClient.invalidateQueries({ queryKey: ['posts'] });

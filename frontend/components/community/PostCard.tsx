@@ -416,7 +416,7 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
             if (stagedFiles.length > 0) {
                 const form = new FormData();
                 stagedFiles.forEach(f => form.append('files', f.file));
-                const up = await api.post('/api/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+                const up = await api.post('/api/upload', form);
                 finalMedia = up.data;
             }
             const payload: any = {

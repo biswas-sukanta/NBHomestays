@@ -42,7 +42,8 @@ public class PostService {
     @Caching(evict = {
             @CacheEvict(value = "postsList", allEntries = true)
     })
-    public PostDto.Response createPost(PostDto.Request request, String userEmail) {
+    public PostDto.Response createPost(PostDto.Request request,
+            java.util.List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -277,7 +278,8 @@ public class PostService {
             @CacheEvict(value = "postsList", allEntries = true),
             @CacheEvict(value = "postDetail", key = "#originalPostId")
     })
-    public PostDto.Response repost(java.util.UUID originalPostId, PostDto.Request request, String userEmail) {
+    public PostDto.Response repost(java.util.UUID originalPostId, PostDto.Request request,
+            java.util.List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
