@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "playwright test",
-    "gen:api": "openapi-generator-cli generate -i http://localhost:8080/v3/api-docs -g typescript-axios -o ./src/lib/api -c openapi-config.json"
+    "gen:api": "openapi-generator-cli generate -i http://localhost:8080/v3/api-docs -g typescript-axios -o ./src/lib/api -c openapi-config.json",
+    "sentry:verify": "node verify-sentry.mjs"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
