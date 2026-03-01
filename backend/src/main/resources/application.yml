@@ -25,3 +25,12 @@ spring:
 
 server:
   port: 8080
+
+sentry:
+  dsn: ${SENTRY_DSN:}
+
+  # ZERO IMPACT: Only traces 10% of API calls to save JVM CPU and quota
+  traces-sample-rate: 0.1 
+
+  # Ensures Sentry catches errors before Spring's DefaultHandlerExceptionResolver hides them
+  exception-resolver-order: -2147483647 
