@@ -2,28 +2,26 @@ spring:
   application:
     name: nb-homestays-backend
   datasource:
-    # Strict binding: No default values to avoid 'postgres' user ghosting
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
-      connection-timeout: 120000 # 2-minute timeout for Supabase wake-up
+      connection-timeout: 120000
   jpa:
     hibernate:
-      ddl-auto: validate # CRITICAL: Ensure this is 'validate'
+      ddl-auto: validate # Hard-coded to validate as backup
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     enabled: true
-    # Force Flyway to use the exact same credentials as the main datasource
     url: ${SPRING_FLYWAY_URL:${spring.datasource.url}}
     user: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     baseline-on-migrate: true
-    connect-retries: 5 # Lower retries to avoid triggering Supabase circuit breakers
+    connect-retries: 5
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
@@ -36,15 +34,15 @@ server:
 application:
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY} # Required for secure startup
+      secret-key: ${JWT_SECRET_KEY}
       expiration: 86400000
       refresh-token:
-        expiration: 604800000 # 7 days
+        expiration: 604800000
 sentry:
   dsn: ${SENTRY_DSN}
-  # This pulls the automatic commit ID provided by the Koyeb platform
+  # Correctly capture the auto-injected Koyeb Commit SHA
   release: ${KOYEB_GIT_SHA:local-dev} 
   environment: ${SPRING_PROFILES_ACTIVE:prod}
-  # Set trace rate to 10% for production efficiency
+  logging: true # Enables the "Logs" tab in Sentry
   traces-sample-rate: 0.1
   exception-resolver-order: -2147483647
