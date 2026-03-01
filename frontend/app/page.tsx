@@ -50,7 +50,7 @@ export default function Home() {
             <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
               Why NBHomestays?
             </span>
-            <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-3">
+            <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-3 font-heading">
               Travel that feels personal
             </h2>
             <p className="text-muted-foreground max-w-md mx-auto">
@@ -96,7 +96,7 @@ export default function Home() {
           viewport={{ once: true }}
           className="container mx-auto px-4 text-center max-w-2xl"
         >
-          <h2 className="text-4xl font-extrabold text-white mb-6 tracking-tight">
+          <h2 className="text-4xl font-extrabold text-white mb-6 tracking-tight font-heading">
             Ready to find your vibe?
           </h2>
           <p className="text-white/80 mb-10 text-lg">

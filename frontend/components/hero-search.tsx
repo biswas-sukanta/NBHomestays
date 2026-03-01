@@ -51,7 +51,7 @@ export function HeroSearch() {
                     initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.9, delay: 0.2 }}
-                    className="mb-5 max-w-4xl text-4xl font-extrabold text-white leading-[1.1] tracking-tight md:text-6xl lg:text-7xl"
+                    className="mb-5 max-w-4xl text-4xl font-extrabold text-white leading-[1.1] tracking-tight md:text-6xl lg:text-7xl font-heading"
                     style={{ textShadow: '0 2px 20px rgba(0,0,0,0.35)' }}
                 >
                     Find Your Vibe<br className="hidden md:block" /> in North Bengal

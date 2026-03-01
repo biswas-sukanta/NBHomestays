@@ -13,12 +13,12 @@ export function SharedPageBanner({ title, subtitle, children, align = 'center' }
             <div className="w-full max-w-3xl mx-auto flex flex-col gap-4 relative z-10 w-full">
                 {align === 'center' ? (
                     <div className="flex flex-col items-center justify-center gap-2">
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">{title}</h1>
+                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm font-heading">{title}</h1>
                         {subtitle && (typeof subtitle === 'string' ? <p className="text-white/80 font-medium text-lg leading-snug">{subtitle}</p> : subtitle)}
                     </div>
                 ) : (
                     <div className="flex flex-col items-start justify-center gap-2">
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">{title}</h1>
+                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm font-heading">{title}</h1>
                         {subtitle && (typeof subtitle === 'string' ? <p className="text-white/80 font-medium text-lg leading-snug">{subtitle}</p> : subtitle)}
                     </div>
                 )}
