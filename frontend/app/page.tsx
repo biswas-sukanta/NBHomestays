@@ -107,7 +107,7 @@ export default function Home() {
             size="lg"
             className="bg-white text-primary rounded-full hover:bg-gray-50 h-14 px-8 text-base shadow-xl hover:-translate-y-1 transition-all duration-300"
           >
-            <Link href="/explore" className="gap-2 font-bold" prefetch={true}>
+            <Link href="/search" className="gap-2 font-bold" prefetch={true}>
               Explore listings <ArrowRight className="w-5 h-5" />
             </Link>
           </Button>
