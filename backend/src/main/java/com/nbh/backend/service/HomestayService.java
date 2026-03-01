@@ -26,6 +26,7 @@ import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class HomestayService {
 
         private final HomestayRepository repository;
@@ -35,9 +36,10 @@ public class HomestayService {
         private final DestinationService destinationService;
 
         @CacheEvict(value = "homestaysSearch", allEntries = true)
+        @org.springframework.transaction.annotation.Transactional
         public HomestayDto.Response createHomestay(HomestayDto.Request request, String userEmail) {
                 User owner = userRepository.findByEmail(userEmail)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
                 // ADMIN auto-approve, all others PENDING
                 Homestay.Status status = owner.getRole() == User.Role.ROLE_ADMIN
@@ -94,16 +96,8 @@ public class HomestayService {
                 // APPROVED homestays
                 if ((query == null || query.trim().isEmpty()) && (tag == null || tag.trim().isEmpty())
                                 && isFeatured == null) {
-                        List<HomestayDto.Response> allApproved = repository.findByStatus(Homestay.Status.APPROVED)
-                                        .stream()
-                                        .map(this::mapToResponse)
-                                        .collect(Collectors.toList());
-                        // Simple manual pagination for the fallback list
-                        int start = (int) pageable.getOffset();
-                        int end = Math.min((start + pageable.getPageSize()), allApproved.size());
-                        List<HomestayDto.Response> pagedList = start > allApproved.size() ? List.of()
-                                        : allApproved.subList(start, end);
-                        return new PageImpl<>(pagedList, pageable, allApproved.size());
+                        return repository.findByStatus(Homestay.Status.APPROVED, pageable)
+                                        .map(this::mapToResponse);
                 }
 
                 // Otherwise perform search
@@ -152,6 +146,7 @@ public class HomestayService {
 
         @Caching(put = { @CachePut(value = "homestay", key = "#id") }, evict = {
                         @CacheEvict(value = "homestaysSearch", allEntries = true) })
+        @org.springframework.transaction.annotation.Transactional
         public HomestayDto.Response updateHomestay(java.util.UUID id, HomestayDto.Request request,
                         java.util.List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
                 Homestay homestay = repository.findById(id)
@@ -215,8 +210,8 @@ public class HomestayService {
                                 for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
                                         if (oldResource.getFileId() != null
                                                         && !retainedFileIds.contains(oldResource.getFileId())) {
-                                                System.out.println("--- CLOUD JANITOR (HOMESTAY): Deleting File ID: "
-                                                                + oldResource.getFileId());
+                                                log.info("CLOUD JANITOR (HOMESTAY): Deleting File ID: {}",
+                                                                oldResource.getFileId());
                                                 imageUploadService.deleteFile(oldResource.getFileId());
                                         } else if (oldResource.getFileId() != null) {
                                                 finalMergedMedia.add(oldResource);
@@ -254,6 +249,7 @@ public class HomestayService {
                         @CacheEvict(value = "homestay", key = "#id"),
                         @CacheEvict(value = "homestaysSearch", allEntries = true)
         })
+        @org.springframework.transaction.annotation.Transactional
         public void deleteHomestay(java.util.UUID id, String userEmail) {
                 Homestay homestay = repository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -280,7 +276,7 @@ public class HomestayService {
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public Page<HomestayDto.Response> getHomestaysByOwner(String email, Pageable pageable) {
                 User owner = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
                 Page<Homestay> pageResults = repository.findByOwner(owner, pageable);
                 return pageResults.map(this::mapToResponse);
         }
@@ -365,7 +361,6 @@ public class HomestayService {
                                 .longitude(homestay.getLongitude())
                                 .locationName(homestay.getAddress())
                                 .ownerId(homestay.getOwner().getId())
-                                .ownerEmail(homestay.getOwner().getEmail())
                                 .featured(homestay.getFeatured())
                                 .destination(destinationService.mapToDto(homestay.getDestination()))
                                 .build();

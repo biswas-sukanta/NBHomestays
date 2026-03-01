@@ -1,5 +1,9 @@
 package com.nbh.backend.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,13 +18,32 @@ public class ReviewDto {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Request {
+        @NotNull(message = "Homestay ID is mandatory")
         private UUID homestayId;
+
+        @Min(value = 1, message = "Rating must be at least 1")
+        @Max(value = 5, message = "Rating cannot exceed 5")
         private Integer rating;
+
+        @Min(value = 1)
+        @Max(value = 5)
         private Integer atmosphereRating;
+
+        @Min(value = 1)
+        @Max(value = 5)
         private Integer serviceRating;
+
+        @Min(value = 1)
+        @Max(value = 5)
         private Integer accuracyRating;
+
+        @Min(value = 1)
+        @Max(value = 5)
         private Integer valueRating;
+
+        @Size(max = 2000, message = "Comment cannot exceed 2000 characters")
         private String comment;
+
         private java.util.List<String> photoUrls;
     }
 

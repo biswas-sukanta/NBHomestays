@@ -9,6 +9,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +31,8 @@ public class AuthenticationService {
                                 .enabled(true)
                                 .build();
                 if (repository.findByEmail(request.getEmail()).isPresent()) {
-                        throw new RuntimeException("User already exists with email: " + request.getEmail());
+                        throw new ResponseStatusException(HttpStatus.CONFLICT,
+                                        "User already exists with email: " + request.getEmail());
                 }
                 repository.save(user);
                 var jwtToken = jwtService.generateToken(java.util.Map.of(
@@ -74,6 +77,6 @@ public class AuthenticationService {
                                                 .build();
                         }
                 }
-                throw new RuntimeException("Invalid refresh token");
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
         }
 }

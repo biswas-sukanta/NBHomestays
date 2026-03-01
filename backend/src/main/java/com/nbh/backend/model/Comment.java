@@ -66,7 +66,7 @@ public class Comment {
     @Builder.Default
     private List<MediaResource> mediaFiles = new ArrayList<>();
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "comment_images", joinColumns = @JoinColumn(name = "comment_id"))
     @Column(name = "image_url")
     @Builder.Default

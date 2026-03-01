@@ -11,8 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.io.StringWriter;
-import java.io.PrintWriter;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -53,16 +51,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleAllExceptions(Exception ex) {
-        ex.printStackTrace(); // Print to server logs
+    public ResponseEntity<Map<String, String>> handleAllExceptions(Exception ex) {
+        logger.error("Unhandled exception: {}", ex.getMessage(), ex);
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("error", ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred");
-        body.put("type", ex.getClass().getName());
-
-        StringWriter sw = new StringWriter();
-        ex.printStackTrace(new PrintWriter(sw));
-        body.put("trace", sw.toString());
+        Map<String, String> body = new HashMap<>();
+        body.put("error", "An unexpected error occurred. Please try again later.");
 
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }

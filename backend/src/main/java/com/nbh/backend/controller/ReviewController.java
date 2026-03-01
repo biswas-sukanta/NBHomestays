@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +21,7 @@ public class ReviewController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_HOST') or hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ReviewDto.Response> addReview(@RequestBody ReviewDto.Request request,
+    public ResponseEntity<ReviewDto.Response> addReview(@Valid @RequestBody ReviewDto.Request request,
             Authentication authentication) {
         return ResponseEntity.ok(reviewService.addReview(request, authentication.getName()));
     }

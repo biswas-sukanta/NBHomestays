@@ -9,6 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import com.nbh.backend.model.User;
 import org.springframework.data.domain.Page;
@@ -48,7 +49,7 @@ public class PostController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.Response> createPost(
-            @RequestBody PostDto.Request request,
+            @Valid @RequestBody PostDto.Request request,
             Authentication authentication) {
         return ResponseEntity.ok(postService.createPost(request, authentication.getName()));
     }
@@ -92,8 +93,6 @@ public class PostController {
             PostDto.LikeResponse resp = postService.toggleLike(id, currentUser.getEmail());
             return ResponseEntity.ok(resp);
         } catch (Exception e) {
-            System.err.println("CRITICAL ERROR IN TOGGLE LIKE: " + e.getMessage());
-            e.printStackTrace();
             throw e;
         }
     }

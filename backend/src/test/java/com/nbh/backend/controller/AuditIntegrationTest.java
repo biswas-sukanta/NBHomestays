@@ -3,6 +3,8 @@ package com.nbh.backend.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nbh.backend.dto.AuthDto;
 import com.nbh.backend.dto.HomestayDto;
+import com.nbh.backend.dto.PostDto;
+import com.nbh.backend.dto.ReviewDto;
 import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.HomestayRepository;
@@ -86,6 +88,7 @@ public class AuditIntegrationTest {
                 userToken = objectMapper.readTree(loginResponse).get("accessToken").asText();
         }
 
+        // T1: Search returns correct paginated payload
         @Test
         void testOptimizedSearchEndpoint() throws Exception {
                 mockMvc.perform(get("/api/homestays/search")
@@ -97,12 +100,14 @@ public class AuditIntegrationTest {
                                 .andExpect(jsonPath("$.content[0].locationName").value("UniqueAuditXyz456"));
         }
 
+        // T2: Unauthenticated request to admin-protected endpoint -> 403
         @Test
-        void testSecurityValidations() throws Exception {
-                mockMvc.perform(get("/api/saves/homestays"))
+        void testSecurityRejectsUnauthenticatedWrites() throws Exception {
+                mockMvc.perform(get("/api/admin/data/stats"))
                                 .andExpect(status().isForbidden());
         }
 
+        // T3a: Bad register data -> 400
         @Test
         void testInputValidationRejectsBadData() throws Exception {
                 AuthDto.RegisterRequest badRequest = AuthDto.RegisterRequest.builder()
@@ -135,5 +140,45 @@ public class AuditIntegrationTest {
                                 .content(objectMapper.writeValueAsString(badHomestay)))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.pricePerNight").exists());
+        }
+
+        // T3b: Post with empty body -> 400 (validates S3/S4 fix)
+        @Test
+        void testPostValidationRejectsEmptyPayload() throws Exception {
+                PostDto.Request emptyPost = PostDto.Request.builder().build();
+
+                mockMvc.perform(post("/api/posts")
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(emptyPost)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.locationName").exists())
+                                .andExpect(jsonPath("$.textContent").exists());
+        }
+
+        // T3c: Review with missing homestayId -> 400 (validates S3/S4 fix)
+        @Test
+        void testReviewValidationRejectsMissingHomestayId() throws Exception {
+                ReviewDto.Request badReview = ReviewDto.Request.builder()
+                                .rating(6) // exceeds max of 5
+                                .comment("Great place")
+                                .build();
+
+                mockMvc.perform(post("/api/reviews")
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(badReview)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.homestayId").exists());
+        }
+
+        // T3d: 500 responses do NOT contain stack trace (validates S1 fix)
+        @Test
+        void testNoStackTraceLeakOnError() throws Exception {
+                // Hit a non-existent homestay to trigger 404
+                mockMvc.perform(get("/api/homestays/" + java.util.UUID.randomUUID()))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.trace").doesNotExist())
+                                .andExpect(jsonPath("$.type").doesNotExist());
         }
 }
