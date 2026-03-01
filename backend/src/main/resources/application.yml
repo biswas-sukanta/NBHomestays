@@ -2,37 +2,43 @@ spring:
   application:
     name: nb-homestays-backend
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/nbh_db}
+    url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 120000 # 2-minute timeout for cold starts
+      max-lifetime: 1800000
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: validate # Flyway handles schema
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     enabled: true
-    user: ${SPRING_FLYWAY_USER}
-    password: ${SPRING_FLYWAY_PASSWORD}
-    out-of-order: true
+    url: ${SPRING_FLYWAY_URL:${spring.datasource.url}}
+    user: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     baseline-on-migrate: true
-    validate-on-migrate: false
-    locations: classpath:db/migration
+    connect-retries: 10 # Lower retries to prevent fast circuit-breaker triggers
   data:
     redis:
-      host: localhost
-      port: 6379
-
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+      ssl:
+        enabled: ${SPRING_DATA_REDIS_SSL_ENABLED:false}
 server:
   port: 8080
-
+application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY}
+      expiration: 86400000 # 24 hours
 sentry:
   dsn: ${SENTRY_DSN:}
-
-  # ZERO IMPACT: Only traces 10% of API calls to save JVM CPU and quota
-  traces-sample-rate: 0.1 
-
-  # Ensures Sentry catches errors before Spring's DefaultHandlerExceptionResolver hides them
-  exception-resolver-order: -2147483647 
+  traces-sample-rate: 0.1
+  exception-resolver-order: -2147483647
