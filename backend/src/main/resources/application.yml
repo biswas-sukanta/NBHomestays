@@ -41,7 +41,7 @@ application:
       refresh-token:
         expiration: 604800000 # 7 days
 sentry:
-  dsn: ${SENTRY_DSN:}
+  dsn: ${SENTRY_DSN}
   # Links backend errors to the specific Git commit hash from Koyeb
   release: ${KOYEB_GIT_SHA:latest}
   environment: ${SPRING_PROFILES_ACTIVE:prod}
