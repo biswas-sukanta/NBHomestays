@@ -102,14 +102,15 @@ export default function Home() {
           <p className="text-white/80 mb-10 text-lg">
             Dozens of verified homestays waiting to be discovered in the serene heights of North Bengal.
           </p>
-          <Link href="/explore" passHref legacyBehavior>
-            <Button
-              size="lg"
-              className="bg-white text-primary rounded-full hover:bg-gray-50 h-14 px-8 text-base shadow-xl hover:-translate-y-1 transition-all duration-300 gap-2 font-bold"
-            >
+          <Button
+            asChild
+            size="lg"
+            className="bg-white text-primary rounded-full hover:bg-gray-50 h-14 px-8 text-base shadow-xl hover:-translate-y-1 transition-all duration-300"
+          >
+            <Link href="/explore" className="gap-2 font-bold" prefetch={true}>
               Explore listings <ArrowRight className="w-5 h-5" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </motion.div>
       </section>
     </div>
