@@ -101,3 +101,4 @@ test('Z-Index: Delete confirmation modal is visible and clickable', async ({ pag
     // After cancel, dialog should close
     await expect(dialog).not.toBeVisible();
 });
+

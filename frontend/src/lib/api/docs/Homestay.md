@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 **longitude** | **number** |  | [optional] [default to undefined]
 **address** | **string** |  | [optional] [default to undefined]
 **amenities** | **{ [key: string]: boolean; }** |  | [optional] [default to undefined]
-**photoUrls** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
+**media** | **Array&lt;{url: string, fileId?: string}&gt;** |  | [optional] [default to undefined]
 **vibeScore** | **number** |  | [optional] [default to undefined]
 **status** | **string** |  | [optional] [default to undefined]
 
@@ -33,7 +33,7 @@ const instance: Homestay = {
     longitude,
     address,
     amenities,
-    photoUrls,
+    media,
     vibeScore,
     status,
 };

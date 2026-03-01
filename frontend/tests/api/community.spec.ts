@@ -77,3 +77,4 @@ test.describe.serial('Domain: Community Feed & Interaction', () => {
         expect(res.status()).toBe(404);
     });
 });
+

@@ -16,7 +16,7 @@ interface HomestaySummary {
     name: string;
     pricePerNight: number;
     vibeScore: number;
-    photoUrls: string[];
+    media?: { url: string; fileId?: string }[];
     description?: string;
     amenities?: Record<string, boolean>;
 }
@@ -42,7 +42,7 @@ export function ComparisonModal({ isOpen, onClose, homestays }: ComparisonModalP
                         <div key={h.id} className="flex flex-col gap-4">
                             {/* Header */}
                             <div className="aspect-video w-full bg-gray-200 rounded-lg bg-cover bg-center relative"
-                                style={{ backgroundImage: `url(${h.photoUrls?.[0] || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233'})` }}>
+                                style={{ backgroundImage: `url(${h.media?.[0]?.url || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233'})` }}>
                                 <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold shadow">
                                     ★ {h.vibeScore}
                                 </div>

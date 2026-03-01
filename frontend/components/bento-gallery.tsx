@@ -9,16 +9,16 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 const FALLBACK = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=1965&auto=format&fit=crop';
 
 interface BentoGalleryProps {
-    photoUrls: string[];
+    mediaUrls: string[];
     name: string;
     className?: string;
 }
 
-export function BentoGallery({ photoUrls, name, className }: BentoGalleryProps) {
+export function BentoGallery({ mediaUrls, name, className }: BentoGalleryProps) {
     const [lightboxIndex, setLightboxIndex] = React.useState<number | null>(null);
 
     // Ensure we always have at least 5 slots (fill with fallback)
-    const photos = [...photoUrls];
+    const photos = [...mediaUrls];
     while (photos.length < 5) photos.push(FALLBACK);
     const displayPhotos = photos.slice(0, 5);
 

@@ -7,7 +7,7 @@ test.describe('Destination Data Sync and Sync Validation', () => {
         await page.route(/.*api\/homestays\/search\?tag=Darjeeling.*/, async (route) => {
             await route.fulfill({
                 json: {
-                    content: [{ id: 'mock-1', name: 'Mock Darjeeling Homestay', photoUrls: [] }],
+                    content: [{ id: 'mock-1', name: 'Mock Darjeeling Homestay', media: [] }],
                     last: true
                 }
             });
@@ -100,3 +100,4 @@ test.describe('Destination Data Sync and Sync Validation', () => {
         }
     });
 });
+

@@ -54,3 +54,4 @@ test.describe.serial('Domain 8: Security Edge Cases — No 500s Allowed', () => 
         expect(res.status(), 'Non-admin should get 403').toBe(403);
     });
 });
+

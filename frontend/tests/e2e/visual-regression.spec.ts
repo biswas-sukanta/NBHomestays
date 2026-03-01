@@ -60,3 +60,4 @@ test('Navbar remains visible after scrolling 500px', async ({ page }) => {
     expect(box).toBeTruthy();
     expect(box!.y).toBe(0);
 });
+

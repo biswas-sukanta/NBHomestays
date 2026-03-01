@@ -53,3 +53,4 @@ test.describe('Gate 2: Detail Page (UI Rendering)', () => {
         await page.screenshot({ path: 'gate2-detail-pass.png', fullPage: true });
     });
 });
+

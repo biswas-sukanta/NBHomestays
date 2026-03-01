@@ -53,7 +53,7 @@ test.describe('Scenario A: Host vs Admin Handshake', () => {
                 latitude: 27.05,
                 longitude: 88.26,
                 amenities: { wifi: true, breakfast: true },
-                photoUrls: ['https://images.unsplash.com/photo-1585543805890-6051f7829f98']
+                media: [{ url: '' }]
             }
         });
         expect(createRes.status()).toBe(200);
@@ -159,3 +159,4 @@ test.describe('Scenario B: Instant Post Flow', () => {
         console.log('Community search finds post ✓');
     });
 });
+

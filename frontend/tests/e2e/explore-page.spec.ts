@@ -52,7 +52,7 @@ test.describe('Search/Explore Page Automation Validation', () => {
         await page.route('**/api/homestays/search?page=0&size=12', async (route) => {
             const json = {
                 content: [
-                    { id: 'mock-1', name: 'Zostel Mock View', locationName: 'Mock City', pricePerNight: 2000, photoUrls: [] }
+                    { id: 'mock-1', name: 'Zostel Mock View', locationName: 'Mock City', pricePerNight: 2000, media: [] }
                 ],
                 last: false
             };
@@ -69,3 +69,4 @@ test.describe('Search/Explore Page Automation Validation', () => {
         await expect(card).toBeVisible({ timeout: 15000 });
     });
 });
+

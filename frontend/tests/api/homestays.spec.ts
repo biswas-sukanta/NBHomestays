@@ -20,7 +20,7 @@ test.describe.serial('Domain: Homestay Lifecycle & Discovery', () => {
                 latitude: 27.03,
                 longitude: 88.26,
                 amenities: { wifi: true, parking: true },
-                photoUrls: []
+                media: []
             }
         });
         await ApiClient.assertResponse('Create Homestay', res);
@@ -56,7 +56,7 @@ test.describe.serial('Domain: Homestay Lifecycle & Discovery', () => {
                 description: 'Updated description',
                 pricePerNight: 5500,
                 amenities: { wifi: true },
-                photoUrls: []
+                media: []
             }
         });
         await ApiClient.assertResponse('Update Homestay', res);
@@ -78,3 +78,4 @@ test.describe.serial('Domain: Homestay Lifecycle & Discovery', () => {
         await ApiClient.assertResponse('Delete Homestay', res);
     });
 });
+

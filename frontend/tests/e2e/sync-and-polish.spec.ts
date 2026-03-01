@@ -13,7 +13,7 @@ const BASE = 'http://localhost:3000';
  *   - Exit code 0
  *   - Generated model file exists with photoUrls array field
  */
-test('Contract: gen:api succeeds and generates Homestay model with photoUrls', async () => {
+test('Contract: gen:api succeeds and generates Homestay model with media', async () => {
     const frontendDir = path.resolve(__dirname, '../..');
 
     // Run the gen:api script
@@ -30,12 +30,12 @@ test('Contract: gen:api succeeds and generates Homestay model with photoUrls', a
 
     expect(exitCode).toBe(0);
 
-    // Assert the generated Homestay model contains photoUrls as array
+    // Assert the generated Homestay model contains media as array
     const modelPath = path.join(frontendDir, 'src', 'lib', 'api', 'models', 'homestay.ts');
     expect(fs.existsSync(modelPath)).toBe(true);
 
     const content = fs.readFileSync(modelPath, 'utf-8');
-    expect(content).toContain("'photoUrls'?: Array<string>");
+    expect(content).toContain("'media'?: Array<{ url: string; fileId?: string }>");
 });
 
 /**
@@ -80,3 +80,4 @@ test('Layout: search page title is below the fixed Navbar', async ({ page }) => 
     expect(box).toBeTruthy();
     expect(box!.y).toBeGreaterThan(60);
 });
+

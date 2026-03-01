@@ -124,3 +124,4 @@ test.describe('Featured Homestays Flow', () => {
     });
 
 });
+

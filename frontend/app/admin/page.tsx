@@ -12,7 +12,7 @@ import AdminDataManagement from '@/components/admin/AdminDataManagement';
 
 interface Homestay {
     id: string; name: string; description: string; pricePerNight: number;
-    status: string; photoUrls: string[]; ownerEmail: string; featured?: boolean;
+    status: string; media?: { url: string; fileId?: string }[]; ownerEmail: string; featured?: boolean;
 }
 interface Post {
     id: string; userName: string; locationName: string; textContent: string;

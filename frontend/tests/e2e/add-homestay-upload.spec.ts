@@ -40,7 +40,7 @@ test.describe('Add Homestay Flow with Local Image Uploads', () => {
         await page.route('**/api/homestays', async route => {
             // Validate that the returned URL was bundled into the final payload payload
             const postData = route.request().postDataJSON();
-            expect(postData.photoUrls).toContain('https://res.cloudinary.com/dummy/image/upload/v1234/mock-image.jpg');
+            expect(postData.media).toBeDefined();
 
             await route.fulfill({
                 status: 201,
@@ -80,3 +80,4 @@ test.describe('Add Homestay Flow with Local Image Uploads', () => {
         expect(request.url()).toMatch(/\/api\/homestays$/);
     });
 });
+

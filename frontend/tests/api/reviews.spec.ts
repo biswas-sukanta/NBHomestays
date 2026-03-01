@@ -33,7 +33,7 @@ test.describe.serial('Domain 5: Reviews', () => {
         if (!homestayId) { test.skip(); return; }
         const res = await request.post(`${API_BASE}/api/reviews`, {
             headers: { ...authHeaders(userToken), 'Content-Type': 'application/json' },
-            data: { homestayId, rating: 5, text: `Review ${Date.now()}`, photoUrls: [] },
+            data: { homestayId, rating: 5, text: `Review ${Date.now()}`, media: [] },
         });
         await assertOk('POST /reviews', res);
     });
@@ -47,3 +47,4 @@ test.describe.serial('Domain 5: Reviews', () => {
         await assertOk('GET /reviews (2nd/hit)', r2);
     });
 });
+

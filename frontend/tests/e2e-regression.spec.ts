@@ -111,3 +111,4 @@ test.describe('NBHomestays E2E Regression Suite (500 Error Hunter)', () => {
         // It should redirect to '/' or show Access Denied
     });
 });
+

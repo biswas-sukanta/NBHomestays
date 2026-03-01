@@ -60,3 +60,4 @@ test.describe('Community Feed - Guest User', () => {
         expect(content.includes('NaN')).toBeFalsy();
     });
 });
+

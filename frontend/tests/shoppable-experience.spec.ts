@@ -39,7 +39,7 @@ test.describe('Shoppable Experiences (Viral Loop)', () => {
                 longitude: 88.5,
                 locationName: 'Sittong',
                 amenities: { wifi: true },
-                photoUrls: ['https://images.unsplash.com/photo-1501785888041-af3ef285b470']
+                media: [{ url: '' }]
             }
         });
         const homestay = await createHomestayRes.json();
@@ -81,3 +81,4 @@ test.describe('Shoppable Experiences (Viral Loop)', () => {
         await expect(page.locator('h1')).toContainText(HOMESTAY_NAME);
     });
 });
+

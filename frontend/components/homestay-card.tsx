@@ -19,7 +19,6 @@ export interface HomestaySummary {
     longitude: number;
     amenities: Record<string, boolean>;
     media?: { url: string; fileId?: string }[];
-    photoUrls?: string[]; // Kept for legacy compatibility if any
     vibeScore: number;
     status: string;
     locationName?: string;
@@ -47,16 +46,13 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
     const isSelected = selectedIds.includes(homestay.id);
     const [currentIndex, setCurrentIndex] = React.useState(0);
 
-    // Extract images from new media or legacy photoUrls
+    // Extract images from new media
     const images = React.useMemo(() => {
         if (homestay.media && homestay.media.length > 0) {
             return homestay.media.map(m => m.url);
         }
-        if (homestay.photoUrls && homestay.photoUrls.length > 0) {
-            return homestay.photoUrls;
-        }
         return [FALLBACK_IMAGE];
-    }, [homestay.media, homestay.photoUrls]);
+    }, [homestay.media]);
 
     const handleCompare = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -78,7 +74,7 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
     const tripBoardItem = {
         id: homestay.id,
         name: homestay.name,
-        imageUrl: homestay.media?.[0]?.url || homestay.photoUrls?.[0] || FALLBACK_IMAGE,
+        imageUrl: homestay.media?.[0]?.url || FALLBACK_IMAGE,
         locationName: homestay.locationName || 'North Bengal Hills',
         pricePerNight: homestay.pricePerNight,
     };
@@ -94,12 +90,6 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
             <Link href={`/homestays/${homestay.id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
                 {/* Image Container */}
                 <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group-hover:shadow-lg border border-gray-100 transition-shadow duration-300 bg-gray-50 mb-3">
-                    {/* 
-                      Note: The Image URLs are now served by ImageKit.io.
-                      To optimize load times, you can dynamically append query parameters 
-                      to the photoUrl string for on-the-fly transformations. 
-                      Example: \`${homestay.photoUrls?.[0]}?tr=w-400,h-300\` 
-                    */}
                     {/* Optimized Image with async decoding and ImageKit scaling */}
                     <OptimizedImage
                         src={images[currentIndex]}

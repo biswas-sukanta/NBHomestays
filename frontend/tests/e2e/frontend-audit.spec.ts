@@ -60,3 +60,4 @@ test.describe('Frontend Production Audit - Performance & Resilience', () => {
         await expect(firstCardImg).toHaveAttribute('height', '450');
     });
 });
+

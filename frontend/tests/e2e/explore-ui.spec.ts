@@ -68,7 +68,7 @@ test.describe('Search/Explore Page UI Automation Validation', () => {
             if (url.includes('tag=Trending')) {
                 await route.fulfill({ json: { content: [], last: true } });
             } else if (url.includes('tag=Featured')) {
-                await route.fulfill({ json: { content: [{ id: 'mock-feat-1', name: 'Mock Featured Estate', photoUrls: [] }], last: true } });
+                await route.fulfill({ json: { content: [{ id: 'mock-feat-1', name: 'Mock Featured Estate', media: [] }], last: true } });
             } else {
                 // Catch standard, offbeat, or unspecified requests safely
                 await route.fulfill({ json: { content: [], last: true } });
@@ -86,3 +86,4 @@ test.describe('Search/Explore Page UI Automation Validation', () => {
         await expect(featuredHeader).toBeVisible();
     });
 });
+

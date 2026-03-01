@@ -62,3 +62,4 @@ test.describe.serial('Domain 6: Trip Board — Save/Unsave Lifecycle', () => {
         await assertOk('POST /saves (off)', res);
     });
 });
+

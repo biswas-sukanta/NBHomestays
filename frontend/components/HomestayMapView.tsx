@@ -87,7 +87,7 @@ export default function HomestayMapView({ homestays, onMapChange }: HomestayMapV
                                 <Link href={`/homestays/${homestay.id}`} className="block group w-56 overflow-hidden">
                                     <div className="relative aspect-[4/3] w-full overflow-hidden">
                                         <img
-                                            src={homestay.photoUrls?.[0] || '/placeholder-home.jpg'}
+                                            src={homestay.media?.[0]?.url || '/placeholder-home.jpg'}
                                             alt={homestay.name}
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                         />

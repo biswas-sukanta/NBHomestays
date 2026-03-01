@@ -15,7 +15,7 @@ test.describe('HomestayCard UI Data Binding', () => {
                         latitude: 27.0410,
                         longitude: 88.2663,
                         amenities: { "wifi": true },
-                        photoUrls: ['https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=800'],
+                        media: [{ url: '' }],
                         vibeScore: 4.8,
                         status: 'APPROVED',
                         locationName: 'Darjeeling' // Dynamic location
@@ -43,3 +43,4 @@ test.describe('HomestayCard UI Data Binding', () => {
         await expect(card.locator('text=North Bengal Hills')).toHaveCount(0);
     });
 });
+

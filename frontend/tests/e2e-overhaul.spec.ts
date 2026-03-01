@@ -111,9 +111,9 @@ test.describe('Section 1: Data Bootstrap', () => {
                 pricePerNight: 2500,
                 locationName: 'Darjeeling, West Bengal',
                 amenities: { wifi: true, mountainView: true, breakfast: true },
-                photoUrls: [
-                    'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80',
-                    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80',
+                media: [
+                    { url: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80' },
+                    { url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80' },
                 ],
             },
         });
@@ -499,3 +499,4 @@ test.describe('Section 7: Lighthouse Performance', () => {
         }
     });
 });
+

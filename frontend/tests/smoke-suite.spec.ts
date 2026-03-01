@@ -106,7 +106,7 @@ test.describe.serial('SMOKE SUITE: Management & Community Flow', () => {
                 longitude: 88.0,
                 locationName: 'Smoke City',
                 amenities: { wifi: true },
-                photoUrls: ['https://example.com/photo.jpg']
+                media: [{ url: '' }]
             }
         });
         expect(createRes.status()).toBe(200);
@@ -180,3 +180,4 @@ test.describe.serial('SMOKE SUITE: Management & Community Flow', () => {
         await expect(page.getByText('This is a smoke test post.')).toBeVisible();
     });
 });
+

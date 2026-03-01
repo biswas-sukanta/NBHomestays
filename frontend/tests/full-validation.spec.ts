@@ -68,7 +68,7 @@ test.describe('NB-HOMESTAY FULL SYSTEM VALIDATION', () => {
                     longitude: 88.0,
                     locationName: `City${timestamp}`,
                     amenities: { wifi: true, parking: true },
-                    photoUrls: ['https://images.unsplash.com/photo-1566073771259-6a8506099945']
+                    media: [{ url: '' }]
                 }
             });
             expect(homeRes.status()).toBe(200);
@@ -187,3 +187,4 @@ test.describe('NB-HOMESTAY FULL SYSTEM VALIDATION', () => {
         });
     });
 });
+

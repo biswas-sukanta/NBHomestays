@@ -19,3 +19,4 @@ test('Viral Flow: Search to Details', async ({ page }) => {
     // 4. Verify "Book Now" or Price is visible
     await expect(page.getByText(/night/i)).toBeVisible();
 });
+

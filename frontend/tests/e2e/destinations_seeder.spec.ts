@@ -52,3 +52,4 @@ test.describe('Admin Seeder and Search UI Pipeline', () => {
         await expect(orangeCard).toBeVisible({ timeout: 15000 });
     });
 });
+

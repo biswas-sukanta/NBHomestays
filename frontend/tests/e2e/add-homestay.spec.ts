@@ -82,3 +82,4 @@ test.describe('Add Homestay Flow', () => {
         expect(request.url()).toMatch(/\/api\/homestays$/);
     });
 });
+

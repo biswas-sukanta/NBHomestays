@@ -200,3 +200,4 @@ test.describe('iPhone 13 (390×844)', () => {
         await expect(carousel).toBeVisible({ timeout: 8000 });
     });
 });
+

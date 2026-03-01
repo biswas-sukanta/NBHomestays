@@ -91,7 +91,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
     // --- State Models ---
     const [basicInfo, setBasicInfo] = useState({ name: '', description: '', pricePerNight: '' });
     const [imageFiles, setImageFiles] = useState<StagedFile[]>([]);
-    const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
+    const [existingMedia, setExistingMedia] = useState<{ url: string; fileId?: string }[]>([]);
     const [location, setLocation] = useState({ latitude: null as number | null, longitude: null as number | null, locationName: '' });
     const [destinationId, setDestinationId] = useState<string>('');
     const [amenities, setAmenities] = useState<string[]>([]);
@@ -135,7 +135,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                 }
                 setAmenities(Object.keys(data.amenities || {}).filter(k => data.amenities[k]));
                 setPolicies(data.policies || []);
-                setExistingPhotoUrls(data.photoUrls || []);
+                setExistingMedia(data.media || []);
                 if (data.quickFacts) {
                     setQuickFacts({
                         checkIn: data.quickFacts['Check-in'] || '13:00',
@@ -186,7 +186,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                 newErrors.location = "Please pin your exact location on the map.";
             }
         } else if (currentStep === 3) {
-            if (existingPhotoUrls.length + imageFiles.length === 0) {
+            if (existingMedia.length + imageFiles.length === 0) {
                 newErrors.photos = "Please upload at least 1 property photo.";
             }
         } else if (currentStep === 7) {
@@ -250,11 +250,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                 latitude: location.latitude,
                 longitude: location.longitude,
                 locationName: location.locationName,
-                media: existingPhotoUrls.map(url => ({
-                    // Retained photoUrls need to be mapped to the generic 'media' list for the diff check.
-                    url: url,
-                    fileId: url.split('/').pop()?.split('?')[0] // Attempt to extract fileId from ImageKit URL format. If it fails, backend relies on DB ID.
-                })),
+                media: existingMedia,
                 destinationId: destinationId,
                 tags: Array.from(new Set(tags)),
                 // JSONB Conversions
@@ -422,7 +418,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                         <div className="space-y-8">
                             <div className="space-y-4">
                                 <Label className="text-lg font-bold">Property Photos</Label>
-                                <ImageDropzone files={imageFiles} setFiles={setImageFiles} existingUrls={existingPhotoUrls} setExistingUrls={setExistingPhotoUrls} maxFiles={10} />
+                                <ImageDropzone files={imageFiles} setFiles={setImageFiles} existingUrls={existingMedia.map(m => m.url)} setExistingUrls={(urls) => setExistingMedia(prev => prev.filter(m => (urls as unknown as string[]).includes(m.url)))} maxFiles={10} />
                                 {errors.photos && <p className="text-red-500 text-xs mt-2 font-medium">{errors.photos}</p>}
                             </div>
 

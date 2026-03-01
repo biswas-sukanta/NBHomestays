@@ -27,7 +27,7 @@ export interface Homestay {
     'longitude'?: number;
     'address'?: string;
     'amenities'?: { [key: string]: boolean; };
-    'photoUrls'?: Array<string>;
+    'media'?: Array<{ url: string; fileId?: string }>;
     'vibeScore'?: number;
     'status'?: HomestayStatusEnum;
 }

@@ -22,7 +22,7 @@ interface Post {
     id: string; textContent: string; locationName: string; createdAt: string;
 }
 interface SavedHomestay {
-    id: string; name: string; pricePerNight: number; photoUrls?: string[]; vibeScore?: number;
+    id: string; name: string; pricePerNight: number; media?: { url: string; fileId?: string }[]; vibeScore?: number;
 }
 
 const FALLBACK = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=600&q=80';

@@ -10,6 +10,8 @@ import com.nbh.backend.model.PostLike;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.repository.UserRepository;
+import com.nbh.backend.repository.HomestayRepository;
+import com.nbh.backend.repository.PostLikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,8 +35,8 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final com.nbh.backend.repository.HomestayRepository homestayRepository;
-    private final com.nbh.backend.repository.PostLikeRepository postLikeRepository;
+    private final HomestayRepository homestayRepository;
+    private final PostLikeRepository postLikeRepository;
     private final ImageUploadService imageUploadService;
 
     @Caching(evict = {
@@ -44,7 +46,7 @@ public class PostService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        com.nbh.backend.model.Homestay homestay = null;
+        Homestay homestay = null;
         if (request.getHomestayId() != null) {
             homestay = homestayRepository.findById(request.getHomestayId()).orElse(null);
         }

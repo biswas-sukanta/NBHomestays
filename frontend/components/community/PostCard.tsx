@@ -161,7 +161,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
         e.stopPropagation();
         if (sharing) return;
         setSharing(true);
-        const url = `${window.location.origin}/community/post/${post.id}`;
+        const url = `${window.location.origin}/community#post-${post.id}`;
         try {
             if (typeof navigator !== 'undefined' && navigator.share) {
                 await navigator.share({ title: 'North Bengal Homestays Story', text: post.textContent, url });

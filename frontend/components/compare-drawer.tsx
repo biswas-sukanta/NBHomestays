@@ -23,7 +23,7 @@ interface HomestaySummary {
     name: string;
     pricePerNight: number;
     vibeScore: number;
-    photoUrls: string[];
+    media?: { url: string; fileId?: string }[];
 }
 
 export function CompareDrawer() {
@@ -85,7 +85,7 @@ export function CompareDrawer() {
 
                                         <div
                                             className="h-16 w-16 bg-gray-200 rounded-lg bg-cover bg-center shrink-0"
-                                            style={{ backgroundImage: `url(${homestay.photoUrls?.[0] || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=100'})` }}
+                                            style={{ backgroundImage: `url(${homestay.media?.[0]?.url || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=100'})` }}
                                         />
 
                                         <div className="overflow-hidden">

@@ -89,7 +89,7 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
                 longitude: 88.0,
                 locationName: 'Test Location',
                 amenities: { wifi: true },
-                photoUrls: ['https://example.com/photo.jpg']
+                media: [{ url: '' }]
             }
         });
         expect(createRes.status()).toBe(200);
@@ -240,3 +240,4 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
 
 
 });
+
