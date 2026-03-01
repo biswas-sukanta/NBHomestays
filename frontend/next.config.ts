@@ -31,11 +31,14 @@ const nextConfig: NextConfig = {
 
 // Sentry configuration options
 const sentryOptions = {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
+  org: "nbh-jm",
+  project: "javascript-nextjs",
+
+  // An auth token is required for uploading source maps.
+  authToken: process.env.SENTRY_AUTH_TOKEN,
 
   // Only print logs for uploading source maps in build
-  silent: !process.env.CI,
+  silent: false,
 
   // Forwards certain Sentry config to the client-side
   widenClientFileUpload: true,
