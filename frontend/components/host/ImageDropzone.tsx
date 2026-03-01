@@ -5,7 +5,8 @@ import { useDropzone } from 'react-dropzone';
 import { X, UploadCloud, ImageIcon, Scissors, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ImageCropModal } from './ImageCropModal';
+import dynamic from 'next/dynamic';
+const ImageCropModal = dynamic(() => import('./ImageCropModal').then(m => m.ImageCropModal), { ssr: false });
 import { cn } from '@/lib/utils';
 
 export interface StagedFile {

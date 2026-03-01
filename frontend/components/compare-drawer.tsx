@@ -16,7 +16,8 @@ import { X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueries } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { ComparisonModal } from './comparison-modal';
+import dynamic from 'next/dynamic';
+const ComparisonModal = dynamic(() => import('./comparison-modal').then(m => m.ComparisonModal), { ssr: false });
 
 interface HomestaySummary {
     id: string;

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -82,9 +83,11 @@ export function DestinationDiscovery() {
                             className="group cursor-pointer snap-start shrink-0 w-32 md:w-40 mr-4"
                         >
                             <div className="relative aspect-[3/4] rounded-[999px] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5">
-                                <img
+                                <Image
                                     src={`/destinations/${dest.localImageName}`}
                                     alt={dest.name}
+                                    fill
+                                    sizes="(max-width: 768px) 128px, 160px"
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 flex flex-col items-center justify-end pb-8">

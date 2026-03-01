@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com', // Future proofing
+      },
+      {
+        protocol: 'https',
+        hostname: 'ik.imagekit.io',
       }
     ],
   },

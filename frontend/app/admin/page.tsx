@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -181,7 +182,7 @@ export default function AdminPage() {
                                         {p.media && p.media.length > 0 && (
                                             <div className="flex gap-1 mt-2">
                                                 {p.media.slice(0, 3).map((m, i) => (
-                                                    <img key={i} src={m.url} alt="" className="w-16 h-16 object-cover rounded-lg" />
+                                                    <Image key={i} src={m.url} alt="" width={64} height={64} className="w-16 h-16 object-cover rounded-lg" />
                                                 ))}
                                             </div>
                                         )}

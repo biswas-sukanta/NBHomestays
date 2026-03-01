@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, Suspense, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { CategoryFilterBar } from '@/components/category-filter-bar';
@@ -38,7 +39,7 @@ const DestinationCard = React.memo(({ dest, isActive }: { dest: { name: string; 
     return (
         <Link href={`/search?tag=${encodeURIComponent(dest.name)}`} data-active={isActive ? 'true' : undefined} className={`block w-[260px] sm:w-[280px] shrink-0 snap-start group outline-none overflow-hidden rounded-2xl relative shadow-sm hover:shadow-lg transition-all ${isActive ? 'ring-4 ring-[#004d00]/80 ring-offset-2' : ''}`}>
             <div className="w-full aspect-[4/3] bg-gray-100 relative z-0">
-                <img src={dest.image} alt={dest.name} width={400} height={300} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                <Image src={dest.image} alt={dest.name} fill sizes="(max-width: 640px) 260px, 280px" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
                 <div className="absolute inset-x-0 bottom-0 p-4 z-20">
                     <h3 className="text-xl font-bold text-white drop-shadow-md">{dest.name}</h3>

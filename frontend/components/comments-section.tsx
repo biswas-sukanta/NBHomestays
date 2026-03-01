@@ -8,8 +8,10 @@ import { cn } from '@/lib/utils';
 import { Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ImageCollage } from '@/components/community/ImageCollage';
-import { ImageLightbox } from '@/components/community/ImageLightbox';
+import dynamic from 'next/dynamic';
+const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox').then(m => m.ImageLightbox), { ssr: false });
 import { CommentSkeleton } from '@/components/community/CommentSkeleton';
+import Link from 'next/link';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -548,7 +550,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                     </div>
                                 ) : (
                                     <p className="text-[13px] text-gray-500 text-center py-2 font-medium">
-                                        <a href="/login" className="text-green-600 font-bold hover:underline content-center">Login</a> to join the conversation
+                                        <Link href="/login" className="text-green-600 font-bold hover:underline content-center">Login</Link> to join the conversation
                                     </p>
                                 )}
                             </div>
