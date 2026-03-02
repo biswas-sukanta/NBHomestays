@@ -85,15 +85,20 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-14"
+            className="text-center mb-8"
           >
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
-              Wander by Region
-            </span>
-            <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-3 font-heading">
+            <div className="flex items-center justify-center w-full max-w-3xl mx-auto mb-6">
+              <div className="h-px bg-border/60 flex-grow"></div>
+              <span className="px-5 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-emerald-800 bg-emerald-50/50 border border-emerald-100/50 rounded-full mx-4 py-1.5">
+                Wander By Region
+              </span>
+              <div className="h-px bg-border/60 flex-grow"></div>
+            </div>
+
+            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 tracking-tight mb-4 font-heading italic">
               Choose your state of mind
             </h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
+            <p className="text-muted-foreground max-w-xl mx-auto text-base md:text-lg font-medium">
               From misty hills to sacred lakes — each region holds its own magic.
             </p>
           </motion.div>
