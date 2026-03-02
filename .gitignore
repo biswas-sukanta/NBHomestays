@@ -33,3 +33,4 @@ backend_log.txt
 server_error.log
 temp/
 tmp/
+logback-test.xml
