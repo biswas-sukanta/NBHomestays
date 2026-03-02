@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DestinationDiscovery } from '@/components/destination-discovery';
 import { EmojiCategoryFilter } from '@/components/emoji-category-filter';
 import { EmptyState } from '@/components/ui/empty-state';
+import { SectionHeader } from '@/components/ui/section-header';
 
 interface DestinationItem {
     id: string;
@@ -123,38 +124,22 @@ export default function StatePage() {
 
             {/* ── Destinations Grid ── */}
             <section className="max-w-7xl mx-auto px-4 py-16">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="mb-10"
-                >
-                    <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
-                        Explore Destinations
-                    </span>
-                    <h2 className="text-3xl font-extrabold text-foreground tracking-tight font-heading">
-                        Destinations in {state.name}
-                    </h2>
-                </motion.div>
+                <SectionHeader
+                    pillText="EXPLORE DESTINATIONS"
+                    title={`Destinations in ${state.name}`}
+                    subtitle={`Discover the unique vibe of ${state.name}'s most beautiful regions.`}
+                />
 
                 <DestinationDiscovery stateSlug={slug as string} stateName={state.name} />
             </section>
 
             {/* ── Homestays in this State ── */}
             <section className="max-w-7xl mx-auto px-4 pb-16">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="mb-10"
-                >
-                    <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
-                        Featured Stays
-                    </span>
-                    <h2 className="text-3xl font-extrabold text-foreground tracking-tight font-heading">
-                        Homestays in {state.name}
-                    </h2>
-                </motion.div>
+                <SectionHeader
+                    pillText="FEATURED STAYS"
+                    title={`Homestays in ${state.name}`}
+                    subtitle="Handpicked properties curated for comfort, views, and authentic local hospitality."
+                />
 
                 {state.homestayCount > 0 && (
                     <div className="mb-8">

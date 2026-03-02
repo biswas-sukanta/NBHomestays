@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { WanderByRegion } from '@/components/wander-by-region';
 import { DestinationDiscovery } from '@/components/destination-discovery';
+import { SectionHeader } from '@/components/ui/section-header';
 
 // --- Hard-Hitting Value Propositions ---
 const VALUE_PROPS = [
@@ -81,27 +82,11 @@ export default function Home() {
       {/* ── Wander by Region (States) ── */}
       <section className="py-20 bg-background border-t">
         <div className="container mx-auto px-4 max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-8"
-          >
-            <div className="flex items-center justify-center w-full max-w-3xl mx-auto mb-6">
-              <div className="h-px bg-border/60 flex-grow"></div>
-              <span className="px-5 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-emerald-800 bg-emerald-50/50 border border-emerald-100/50 rounded-full mx-4 py-1.5">
-                Wander By Region
-              </span>
-              <div className="h-px bg-border/60 flex-grow"></div>
-            </div>
-
-            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 tracking-tight mb-4 font-heading italic">
-              Choose your state of mind
-            </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-base md:text-lg font-medium">
-              From misty hills to sacred lakes — each region holds its own magic.
-            </p>
-          </motion.div>
+          <SectionHeader
+            pillText="WANDER BY REGION"
+            title={<>Choose your <em>state of mind</em></>}
+            subtitle="From misty hills to sacred lakes — each region holds its own magic."
+          />
           <WanderByRegion />
         </div>
       </section>
@@ -109,19 +94,11 @@ export default function Home() {
       {/* ── Discover Destinations ── */}
       <section className="py-20 bg-[#FDFCFB] border-t">
         <div className="container mx-auto px-4 max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-10"
-          >
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
-              Discover Destinations
-            </span>
-            <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-3 font-heading">
-              Where will you go next?
-            </h2>
-          </motion.div>
+          <SectionHeader
+            pillText="DISCOVER DESTINATIONS"
+            title="Where will you go next?"
+            subtitle="Unwind in the most sought-after hills, valleys, and hidden hamlets of the East."
+          />
           <DestinationDiscovery />
         </div>
       </section>
@@ -129,22 +106,11 @@ export default function Home() {
       {/* ── Why NBHomestays Redesign (6-Card Grid) ── */}
       <section className="py-24 bg-white border-t">
         <div className="container mx-auto px-4 max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
-              Why NBHomestays?
-            </span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4 font-heading">
-              A better way to discover stays.
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-light">
-              We built this platform to fix everything wrong with modern travel booking. No hidden fees, no fake reviews, just authentic connections.
-            </p>
-          </motion.div>
+          <SectionHeader
+            pillText="WHY NBHOMESTAYS"
+            title="Travel that feels personal"
+            subtitle="We believe the best memories come from authentic places and genuine connections."
+          />
 
           {/* Bento-style 6 Card Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
