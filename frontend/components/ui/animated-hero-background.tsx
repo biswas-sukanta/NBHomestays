@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 interface AnimatedHeroBackgroundProps {
@@ -17,11 +18,17 @@ export function AnimatedHeroBackground({
     return (
         <div className={cn("relative w-full overflow-hidden select-none", className)}>
             {/* ── Ken Burns background ── */}
-            <div
-                className="absolute inset-0 h-full w-full bg-cover bg-center animate-ken-burns"
-                style={{ backgroundImage: `url('${imageUrl}')` }}
-                aria-hidden="true"
-            />
+            <div className="absolute inset-0 h-full w-full animate-ken-burns" aria-hidden="true">
+                <Image
+                    src={imageUrl}
+                    alt="Hero background"
+                    fill
+                    priority
+                    quality={100}
+                    sizes="100vw"
+                    className="object-cover"
+                />
+            </div>
 
             {/* ── Layered overlays for editorial depth ── */}
             <div className={cn("absolute inset-0", overlayClassName)} />

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { MapPin, Search } from 'lucide-react';
@@ -23,11 +24,17 @@ export function HeroSearch() {
     return (
         <div className="relative min-h-[60vh] md:min-h-[70vh] pb-16 w-full overflow-hidden select-none">
             {/* ── Ken Burns background ── */}
-            <div
-                className="absolute inset-0 h-full w-full bg-cover bg-center animate-ken-burns"
-                style={{ backgroundImage: "url('/hero_background.jpg')" }}
-                aria-hidden="true"
-            />
+            <div className="absolute inset-0 h-full w-full animate-ken-burns" aria-hidden="true">
+                <Image
+                    src="/hero_background.jpg"
+                    alt="North Bengal Homestays Background"
+                    fill
+                    priority
+                    quality={100}
+                    sizes="100vw"
+                    className="object-cover"
+                />
+            </div>
 
             {/* ── Layered overlays for editorial depth ── */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
