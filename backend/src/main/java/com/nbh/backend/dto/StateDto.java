@@ -5,22 +5,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DestinationDto {
+public class StateDto {
     private UUID id;
     private String slug;
     private String name;
-    private String district;
-    private String heroTitle;
     private String description;
-    private String localImageName;
-    private List<String> tags;
-    private String stateName;
-    private String stateSlug;
+    private String heroImageName;
+    private long destinationCount;
+    private long homestayCount;
 }

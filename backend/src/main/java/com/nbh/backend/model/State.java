@@ -1,5 +1,6 @@
 package com.nbh.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,40 +12,33 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "destinations")
+@Table(name = "states")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Destination {
+public class State {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(unique = true, nullable = false)
+    @Column(length = 100, unique = true, nullable = false)
     private String slug;
 
     @Column(nullable = false)
     private String name;
 
-    private String district;
-
-    private String heroTitle;
-
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private String localImageName;
+    @Column(name = "hero_image_name")
+    private String heroImageName;
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "state_id", nullable = false)
-    private State state;
-
-    @ElementCollection
-    @CollectionTable(name = "destination_tags", joinColumns = @JoinColumn(name = "destination_id"))
-    @Column(name = "tag")
+    @OneToMany(mappedBy = "state", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     @Builder.Default
-    private List<String> tags = new ArrayList<>();
+    private List<Destination> destinations = new ArrayList<>();
 }

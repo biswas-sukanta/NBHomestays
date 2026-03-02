@@ -6,6 +6,8 @@ import { HeroSearch } from '@/components/hero-search';
 import { MountainSnow, ShieldCheck, HeartHandshake, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { WanderByRegion } from '@/components/wander-by-region';
+import { DestinationDiscovery } from '@/components/destination-discovery';
 
 // --- Features ---
 const FEATURES = [
@@ -88,7 +90,48 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── CTA Banner ── */}
+      {/* ── Wander by Region (States) ── */}
+      <section className="py-20 bg-background border-t">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-14"
+          >
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
+              Wander by Region
+            </span>
+            <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-3 font-heading">
+              Choose your state of mind
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              From misty hills to sacred lakes — each region holds its own magic.
+            </p>
+          </motion.div>
+          <WanderByRegion />
+        </div>
+      </section>
+
+      {/* ── Discover Destinations ── */}
+      <section className="py-20 bg-[#FDFCFB] border-t">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-10"
+          >
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
+              Discover Destinations
+            </span>
+            <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-3 font-heading">
+              Where will you go next?
+            </h2>
+          </motion.div>
+          <DestinationDiscovery />
+        </div>
+      </section>
       <section className="py-20 bg-gradient-to-br from-primary to-[oklch(0.28_0.14_155)] border-t border-primary/20">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
