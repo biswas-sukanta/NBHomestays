@@ -85,7 +85,7 @@ export default function StatePage() {
         <div className="min-h-screen bg-[#FDFCFB]">
             {/* ── Animated Hero ── */}
             <AnimatedHeroBackground
-                imageUrl={`/states/${state.heroImageName}`}
+                imageUrl={`/states/hero-${state.slug}.webp`}
                 className="h-[60vh] w-full"
             >
                 <div className="flex flex-col items-center justify-center text-center p-4 h-full">
