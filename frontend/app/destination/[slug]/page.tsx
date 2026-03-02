@@ -9,6 +9,7 @@ import { HomestayCard } from '@/components/homestay-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import { MapPin, Info } from 'lucide-react';
+import { AnimatedHeroBackground } from '@/components/ui/animated-hero-background';
 
 export default function DestinationPage() {
     const { slug } = useParams();
@@ -50,13 +51,12 @@ export default function DestinationPage() {
     return (
         <div className="min-h-screen bg-[#FDFCFB]">
             {/* Edge-to-Edge Hero Banner */}
-            <div className="relative h-[70vh] w-full overflow-hidden">
-                <img
-                    src={`/destinations/${destination.localImageName}`}
-                    alt={destination.name}
-                    className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-4">
+            <AnimatedHeroBackground
+                imageUrl={`/destinations/${destination.localImageName}`}
+                className="h-[70vh] w-full"
+                overlayClassName="bg-black/40"
+            >
+                <div className="flex flex-col items-center justify-center text-center p-4 h-full">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -65,7 +65,7 @@ export default function DestinationPage() {
                         <span className="inline-block px-4 py-1 rounded-full bg-white/20 backdrop-blur-md text-white border border-white/30 text-sm font-medium mb-4">
                             Explore {destination.district}
                         </span>
-                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-2xl italic tracking-tight">
+                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-2xl italic tracking-tight font-heading">
                             {destination.heroTitle}
                         </h1>
                         <p className="text-white/90 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-light drop-shadow">
@@ -73,7 +73,7 @@ export default function DestinationPage() {
                         </p>
                     </motion.div>
                 </div>
-            </div>
+            </AnimatedHeroBackground>
 
             <div className="max-w-7xl mx-auto px-4 py-16">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 border-b border-gray-100 pb-8">
@@ -111,6 +111,6 @@ export default function DestinationPage() {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }
