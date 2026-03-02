@@ -156,12 +156,14 @@ export default function StatePage() {
                     </h2>
                 </motion.div>
 
-                <div className="mb-8">
-                    <EmojiCategoryFilter
-                        activeCategory={activeCategory}
-                        onCategoryChange={handleCategoryChange}
-                    />
-                </div>
+                {state.homestayCount > 0 && (
+                    <div className="mb-8">
+                        <EmojiCategoryFilter
+                            activeCategory={activeCategory}
+                            onCategoryChange={handleCategoryChange}
+                        />
+                    </div>
+                )}
 
                 {homestaysLoading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

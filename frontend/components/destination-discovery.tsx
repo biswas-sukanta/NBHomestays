@@ -70,7 +70,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
             </div>
 
             {/* Zostel-style Grid/Carousel */}
-            <CarouselWrapper>
+            <CarouselWrapper containerClassName="grid grid-rows-2 grid-flow-col auto-cols-[160px] md:auto-cols-[200px] gap-4">
                 <AnimatePresence mode='popLayout'>
                     {filteredDestinations?.map((dest) => (
                         <motion.div
@@ -81,7 +81,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                             exit={{ opacity: 0, scale: 0.9 }}
                             transition={{ duration: 0.3 }}
                             onClick={() => router.push(`/destination/${dest.slug}`)}
-                            className="group cursor-pointer snap-start shrink-0 w-32 md:w-40 mr-4"
+                            className="group cursor-pointer snap-start w-full h-full"
                         >
                             <div className="relative aspect-[3/4] rounded-[999px] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5">
                                 <Image

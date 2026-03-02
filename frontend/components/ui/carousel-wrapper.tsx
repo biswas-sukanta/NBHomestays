@@ -7,9 +7,10 @@ interface CarouselWrapperProps {
     children: ReactNode;
     headerLeft?: ReactNode; // Title/Description to be placed on the left
     className?: string; // Additional classes for the outer container
+    containerClassName?: string; // Classes for the inner scrollable container (overrides default flex)
 }
 
-export function CarouselWrapper({ children, headerLeft, className = '' }: CarouselWrapperProps) {
+export function CarouselWrapper({ children, headerLeft, className = '', containerClassName }: CarouselWrapperProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
@@ -85,7 +86,10 @@ export function CarouselWrapper({ children, headerLeft, className = '' }: Carous
             <div
                 ref={scrollContainerRef}
                 onScroll={checkScroll}
-                className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-6 relative w-full"
+                className={cn(
+                    "overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-6 relative w-full",
+                    containerClassName || "flex gap-4"
+                )}
             >
                 {children}
             </div>
