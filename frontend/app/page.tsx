@@ -3,34 +3,70 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { HeroSearch } from '@/components/hero-search';
-import { MountainSnow, ShieldCheck, HeartHandshake, ArrowRight } from 'lucide-react';
+import {
+  MountainSnow,
+  ShieldCheck,
+  HeartHandshake,
+  ArrowRight,
+  Wallet,
+  MessageCircle,
+  Users,
+  Tent
+} from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { WanderByRegion } from '@/components/wander-by-region';
 import { DestinationDiscovery } from '@/components/destination-discovery';
 
-// --- Features ---
-const FEATURES = [
+// --- Hard-Hitting Value Propositions ---
+const VALUE_PROPS = [
   {
-    icon: MountainSnow,
-    title: 'Curated by Vibe',
-    desc: 'Every stay is handpicked and scored for its unique character — mountain views, jungle retreats, river vibes.',
-    color: 'from-emerald-50 to-teal-50',
-    border: 'border-emerald-100',
+    icon: Wallet,
+    title: 'Zero Middleman Fees',
+    desc: 'Completely free to use. No hidden booking fees or platform markups. Keep your money for the trip.',
+    color: 'from-emerald-50/80 to-teal-50/50',
+    border: 'border-emerald-100/50',
+    iconColor: 'text-emerald-600',
+  },
+  {
+    icon: MessageCircle,
+    title: 'Direct to Host',
+    desc: "No corporate buffers. Get the host's direct WhatsApp number to negotiate and connect instantly.",
+    color: 'from-blue-50/80 to-indigo-50/50',
+    border: 'border-blue-100/50',
+    iconColor: 'text-blue-600',
   },
   {
     icon: ShieldCheck,
-    title: 'Verified Listings',
-    desc: 'Our team physically visits and verifies every property so you can book with complete confidence.',
-    color: 'from-amber-50 to-yellow-50',
-    border: 'border-amber-100',
+    title: '100% Verified Stays',
+    desc: "We physically visit properties. If it’s on our platform, it exists and meets our standards.",
+    color: 'from-amber-50/80 to-yellow-50/50',
+    border: 'border-amber-100/50',
+    iconColor: 'text-amber-600',
   },
   {
-    icon: HeartHandshake,
-    title: 'Direct to Host',
-    desc: 'No middlemen. Enquire via WhatsApp and connect directly with your host for the best experience.',
-    color: 'from-blue-50 to-indigo-50',
-    border: 'border-blue-100',
+    icon: MountainSnow,
+    title: 'The Vibe Score',
+    desc: 'Handpicked for character. Every stay is scored for mountain views, jungle retreats, and local charm.',
+    color: 'from-purple-50/80 to-fuchsia-50/50',
+    border: 'border-purple-100/50',
+    iconColor: 'text-purple-600',
+  },
+  {
+    icon: Users,
+    title: 'Community-Driven',
+    desc: 'Powered by travelers. Get real-time alerts, hidden gems, and honest reviews from the offbeat community.',
+    color: 'from-rose-50/80 to-pink-50/50',
+    border: 'border-rose-100/50',
+    iconColor: 'text-rose-600',
+  },
+  {
+    icon: Tent,
+    title: 'Made for Homestay Lovers',
+    desc: "We don't do commercial hotels. We strictly curate authentic, soul-touching local experiences.",
+    color: 'from-orange-50/80 to-amber-50/50',
+    border: 'border-orange-100/50',
+    iconColor: 'text-orange-600',
   },
 ];
 
@@ -40,55 +76,7 @@ export default function Home() {
       {/* ── Hero ── */}
       <HeroSearch />
 
-      {/* ── Why NBHomestays Features ── */}
-      <section className="py-20 bg-background border-t">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
-              Why NBHomestays?
-            </span>
-            <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-3 font-heading">
-              Travel that feels personal
-            </h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              We believe the best memories come from authentic places and genuine connections.
-            </p>
-          </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {FEATURES.map((f, i) => {
-              const Icon = f.icon;
-              return (
-                <motion.div
-                  key={f.title}
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.12 }}
-                  whileHover={{ y: -6, transition: { duration: 0.2 } }}
-                  className={`
-                                      relative bg-gradient-to-br ${f.color}
-                                      border ${f.border}
-                                      rounded-2xl p-7 shadow-sm hover:shadow-lg
-                                      transition-shadow duration-300 overflow-hidden group
-                                  `}
-                >
-                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                    <Icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-bold text-foreground mb-2">{f.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
       {/* ── Wander by Region (States) ── */}
       <section className="py-20 bg-background border-t">
@@ -130,6 +118,61 @@ export default function Home() {
             </h2>
           </motion.div>
           <DestinationDiscovery />
+        </div>
+      </section>
+
+      {/* ── Why NBHomestays Redesign (6-Card Grid) ── */}
+      <section className="py-24 bg-white border-t">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
+              Why NBHomestays?
+            </span>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4 font-heading">
+              A better way to discover stays.
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-light">
+              We built this platform to fix everything wrong with modern travel booking. No hidden fees, no fake reviews, just authentic connections.
+            </p>
+          </motion.div>
+
+          {/* Bento-style 6 Card Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {VALUE_PROPS.map((prop, i) => {
+              const Icon = prop.icon;
+              return (
+                <motion.div
+                  key={prop.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.4 }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                  className={`
+                    relative bg-gradient-to-br ${prop.color}
+                    border ${prop.border}
+                    rounded-3xl p-8 shadow-sm hover:shadow-xl
+                    transition-all duration-300 group overflow-hidden
+                  `}
+                >
+                  <div className="bg-white/80 backdrop-blur-sm w-14 h-14 rounded-2xl shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <Icon className={`w-7 h-7 ${prop.iconColor}`} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800 mb-3 tracking-tight">
+                    {prop.title}
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed font-light">
+                    {prop.desc}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </section>
       <section className="py-20 bg-gradient-to-br from-primary to-[oklch(0.28_0.14_155)] border-t border-primary/20">

@@ -51,8 +51,8 @@ export default function StatePage() {
     const { data: homestaysData, isLoading: homestaysLoading } = useQuery({
         queryKey: ['state-homestays', slug],
         queryFn: async () => {
-            // Fetch homestays from all destinations in this state
-            const res = await api.get(`/api/homestays?stateSlug=${slug}&size=12`);
+            // Fetch homestays from all destinations in this state using the search endpoint
+            const res = await api.get(`/api/homestays/search?stateSlug=${slug}&size=12`);
             return res.data.content ? res.data.content : res.data;
         },
         enabled: !!state
@@ -176,37 +176,45 @@ export default function StatePage() {
             </section>
 
             {/* ── Homestays in this State ── */}
-            {(homestaysLoading || homestays.length > 0) && (
-                <section className="max-w-7xl mx-auto px-4 pb-16">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="mb-10"
-                    >
-                        <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
-                            Featured Stays
-                        </span>
-                        <h2 className="text-3xl font-extrabold text-foreground tracking-tight font-heading">
-                            Homestays in {state.name}
-                        </h2>
-                    </motion.div>
+            <section className="max-w-7xl mx-auto px-4 pb-16">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="mb-10"
+                >
+                    <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 bg-primary/8 px-3 py-1 rounded-full">
+                        Featured Stays
+                    </span>
+                    <h2 className="text-3xl font-extrabold text-foreground tracking-tight font-heading">
+                        Homestays in {state.name}
+                    </h2>
+                </motion.div>
 
-                    {homestaysLoading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {[...Array(8)].map((_, i) => (
-                                <Skeleton key={i} className="h-72 w-full rounded-2xl" />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {homestays.map((homestay: any) => (
-                                <HomestayCard key={homestay.id} homestay={homestay} />
-                            ))}
-                        </div>
-                    )}
-                </section>
-            )}
+                {homestaysLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {[...Array(8)].map((_, i) => (
+                            <Skeleton key={i} className="h-72 w-full rounded-2xl" />
+                        ))}
+                    </div>
+                ) : homestays.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {homestays.map((homestay: any) => (
+                            <HomestayCard key={homestay.id} homestay={homestay} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="bg-white border rounded-3xl p-12 text-center max-w-3xl mx-auto shadow-sm">
+                        <Home className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-foreground mb-2">
+                            No homestays found in this region yet
+                        </h3>
+                        <p className="text-muted-foreground">
+                            We are constantly expanding our network. Check back soon for new, curated properties in {state.name}.
+                        </p>
+                    </div>
+                )}
+            </section>
 
             {/* ── Back to Regions CTA ── */}
             <section className="max-w-7xl mx-auto px-4 pb-16 text-center">

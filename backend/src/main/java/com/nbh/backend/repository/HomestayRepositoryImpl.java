@@ -32,13 +32,23 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
     }
 
     @Override
-    public Page<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, Boolean isFeatured,
+    public Page<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, String stateSlug,
+            Boolean isFeatured,
             Double minLat, Double maxLat, Double minLng, Double maxLng,
             Pageable pageable) {
         StringBuilder sql = new StringBuilder(
-                "SELECT h.id FROM homestays h WHERE h.is_deleted = false AND h.status = 'APPROVED' ");
+                "SELECT h.id FROM homestays h ");
         StringBuilder countSql = new StringBuilder(
-                "SELECT COUNT(*) FROM homestays h WHERE h.is_deleted = false AND h.status = 'APPROVED' ");
+                "SELECT COUNT(h.id) FROM homestays h ");
+
+        // Add JOINs if stateSlug is provided
+        if (stateSlug != null && !stateSlug.isBlank()) {
+            sql.append("JOIN destinations d ON h.destination_id = d.id JOIN states s ON d.state_id = s.id ");
+            countSql.append("JOIN destinations d ON h.destination_id = d.id JOIN states s ON d.state_id = s.id ");
+        }
+
+        sql.append("WHERE h.is_deleted = false AND h.status = 'APPROVED' ");
+        countSql.append("WHERE h.is_deleted = false AND h.status = 'APPROVED' ");
 
         StringBuilder conditions = new StringBuilder();
 
@@ -94,6 +104,11 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
                     .append("AND h.longitude BETWEEN :minLng AND :maxLng ");
         }
 
+        // State Slug Filter
+        if (stateSlug != null && !stateSlug.isBlank()) {
+            conditions.append("AND s.slug = :stateSlug ");
+        }
+
         sql.append(conditions);
         countSql.append(conditions);
 
@@ -138,6 +153,11 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
                 nativeCountQuery.setParameter("tagJson", tagJson);
                 nativeCountQuery.setParameter("tagLike", tagLike);
             }
+        }
+
+        if (stateSlug != null && !stateSlug.isBlank()) {
+            nativeQuery.setParameter("stateSlug", stateSlug);
+            nativeCountQuery.setParameter("stateSlug", stateSlug);
         }
 
         if (minLat != null && maxLat != null && minLng != null && maxLng != null) {
