@@ -70,49 +70,49 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
             </div>
 
             {/* Zostel-style Grid/Carousel */}
-            <CarouselWrapper containerClassName="grid grid-rows-2 grid-flow-col auto-cols-[160px] md:auto-cols-[200px] gap-4">
-                <AnimatePresence mode='popLayout'>
-                    {filteredDestinations?.map((dest) => (
-                        <motion.div
-                            key={dest.slug}
-                            layout
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.3 }}
-                            onClick={() => router.push(`/destination/${dest.slug}`)}
-                            className="group cursor-pointer snap-start w-full h-full"
-                        >
-                            <div className="relative aspect-[3/4] rounded-[999px] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5">
-                                <Image
-                                    src={`/destinations/${dest.localImageName}`}
-                                    alt={dest.name}
-                                    fill
-                                    sizes="(max-width: 768px) 128px, 160px"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 flex flex-col items-center justify-end pb-8">
-                                    <h3 className="text-white font-bold text-base md:text-lg tracking-tight drop-shadow-md text-center">
-                                        {dest.name}
-                                    </h3>
+            {!filteredDestinations?.length ? (
+                <div className="w-full max-w-3xl mx-auto mt-6">
+                    <EmptyState
+                        icon={<Map className="w-8 h-8 text-muted-foreground" />}
+                        title="No destinations found in this region yet"
+                        description={stateName
+                            ? `We are constantly exploring new places. Check back soon for curated destinations in ${stateName}.`
+                            : "We are constantly exploring new places. Check back soon for curated destinations in this region."}
+                    />
+                </div>
+            ) : (
+                <CarouselWrapper containerClassName="grid grid-rows-2 grid-flow-col auto-cols-[160px] md:auto-cols-[200px] gap-4">
+                    <AnimatePresence mode='popLayout'>
+                        {filteredDestinations?.map((dest) => (
+                            <motion.div
+                                key={dest.slug}
+                                layout
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                transition={{ duration: 0.3 }}
+                                onClick={() => router.push(`/destination/${dest.slug}`)}
+                                className="group cursor-pointer snap-start w-full h-full"
+                            >
+                                <div className="relative aspect-[3/4] rounded-[999px] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5">
+                                    <Image
+                                        src={`/destinations/${dest.localImageName}`}
+                                        alt={dest.name}
+                                        fill
+                                        sizes="(max-width: 768px) 128px, 160px"
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 flex flex-col items-center justify-end pb-8">
+                                        <h3 className="text-white font-bold text-base md:text-lg tracking-tight drop-shadow-md text-center">
+                                            {dest.name}
+                                        </h3>
+                                    </div>
                                 </div>
-                            </div>
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-
-                {!filteredDestinations?.length && (
-                    <div className="w-full py-8 px-4 flex justify-center">
-                        <EmptyState
-                            icon={<Map className="w-8 h-8 text-muted-foreground" />}
-                            title="No destinations found in this region yet"
-                            description={stateName
-                                ? `We are constantly exploring new places. Check back soon for curated destinations in ${stateName}.`
-                                : "We are constantly exploring new places. Check back soon for curated destinations in this region."}
-                        />
-                    </div>
-                )}
-            </CarouselWrapper>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </CarouselWrapper>
+            )}
         </div>
     );
 }
