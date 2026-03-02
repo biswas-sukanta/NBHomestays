@@ -42,6 +42,22 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
         );
     }
 
+    // EARLY RETURN: No destinations at all for this state.
+    // This prevents the filter pill wrapper from rendering a 'ghost container'.
+    if (!destinations || destinations.length === 0) {
+        return (
+            <div className="w-full max-w-3xl mx-auto mt-6">
+                <EmptyState
+                    icon={<Map className="w-8 h-8 text-muted-foreground" />}
+                    title="No destinations found in this region yet"
+                    description={stateName
+                        ? `We are constantly exploring new places. Check back soon for curated destinations in ${stateName}.`
+                        : "We are constantly exploring new places. Check back soon for curated destinations in this region."}
+                />
+            </div>
+        );
+    }
+
     const allTags = Array.from(new Set(destinations?.flatMap(d => d.tags) || []));
     const filteredDestinations = activeTag === '🌟 All'
         ? destinations
@@ -74,10 +90,8 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                 <div className="w-full max-w-3xl mx-auto mt-6">
                     <EmptyState
                         icon={<Map className="w-8 h-8 text-muted-foreground" />}
-                        title="No destinations found in this region yet"
-                        description={stateName
-                            ? `We are constantly exploring new places. Check back soon for curated destinations in ${stateName}.`
-                            : "We are constantly exploring new places. Check back soon for curated destinations in this region."}
+                        title="No destinations found for this filter"
+                        description="Try selecting a different category to explore more places."
                     />
                 </div>
             ) : (

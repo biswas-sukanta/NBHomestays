@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import { MapPin, Info } from 'lucide-react';
 import { AnimatedHeroBackground } from '@/components/ui/animated-hero-background';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function DestinationPage() {
     const { slug } = useParams();
@@ -76,7 +77,7 @@ export default function DestinationPage() {
             </AnimatedHeroBackground>
 
             <div className="max-w-7xl mx-auto px-4 py-16">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 border-b border-gray-100 pb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-gray-100 pb-8">
                     <div>
                         <div className="flex items-center gap-2 text-[#004d00] font-medium mb-2">
                             <MapPin className="w-4 h-4" />
@@ -104,10 +105,12 @@ export default function DestinationPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                        <Info className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-xl font-medium text-gray-600 mb-2">No listings yet in {destination.name}</h3>
-                        <p className="text-gray-400">Be the first to host a stay here!</p>
+                    <div className="w-full max-w-3xl mx-auto mt-6">
+                        <EmptyState
+                            icon={<MapPin className="w-8 h-8 text-muted-foreground" />}
+                            title={`No listings yet in ${destination.name}`}
+                            description="Be the first to host a stay here!"
+                        />
                     </div>
                 )}
             </div>

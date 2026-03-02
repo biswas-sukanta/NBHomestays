@@ -20,6 +20,7 @@ import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
     ssr: false,
@@ -343,11 +344,19 @@ function SearchResults() {
                                         <HomestayMapView homestays={allStays} onMapChange={handleMapChange} />
                                     </ErrorBoundary>
                                 </div>
-                            ) : (
+                            ) : allStays.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                     {allStays.map((h, i) => (
                                         <HomestayCard key={`${h.id}-${i}`} homestay={h} index={i % 12} />
                                     ))}
+                                </div>
+                            ) : !loadingAll && (
+                                <div className="w-full max-w-3xl mx-auto mt-6">
+                                    <EmptyState
+                                        icon={<MapIcon className="w-8 h-8 text-muted-foreground" />}
+                                        title="No homestays found"
+                                        description="We are constantly adding new properties. Check back soon for more stays."
+                                    />
                                 </div>
                             )}
 
@@ -415,13 +424,15 @@ function SearchResults() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-24 bg-gray-50 rounded-3xl border border-gray-200 border-dashed">
-                                <span className="text-5xl mb-4 block">🏡</span>
-                                <h3 className="text-2xl font-bold mb-2 text-gray-900">No stays found</h3>
-                                <p className="text-gray-500 mb-6 max-w-md mx-auto">We couldn't find any properties matching your current filters. Try changing your destination or vibe.</p>
+                            <div className="w-full max-w-3xl mx-auto mt-6 flex flex-col items-center">
+                                <EmptyState
+                                    icon={<Search className="w-8 h-8 text-muted-foreground" />}
+                                    title="No stays found"
+                                    description="We couldn't find any properties matching your current filters. Try changing your destination or vibe."
+                                />
                                 <button
                                     onClick={() => router.push('/search')}
-                                    className="px-6 py-2.5 rounded-full border border-gray-300 bg-white text-gray-900 font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                                    className="mt-6 px-6 py-2.5 rounded-full border border-gray-300 bg-white text-gray-900 font-bold hover:bg-gray-50 transition-colors shadow-sm"
                                 >
                                     Clear all filters
                                 </button>
