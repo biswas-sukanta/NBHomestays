@@ -15,14 +15,14 @@ test.describe('Search/Explore Page Automation Validation', () => {
         await expect(title).toHaveClass(/drop-shadow-sm/);
     });
 
-    test('UI Test 2: Mid-Navbar (CategoryFilterBar) renders and is sticky/centered', async ({ page }) => {
+    test('UI Test 2: Mid-Navbar (EmojiCategoryFilter) renders and is centered', async ({ page }) => {
         await page.goto('/search');
 
-        const navbarContainer = page.locator('.sticky.top-\\[64px\\]');
+        const navbarContainer = page.locator('.flex.justify-center.gap-6');
         await expect(navbarContainer).toBeVisible();
 
         // Check centering
-        await expect(navbarContainer).toHaveClass(/flex justify-center/);
+        await expect(navbarContainer).toHaveClass(/justify-start md:justify-center/);
 
         // Verify categories render (using text pattern to match "Trending Now" etc)
         const category = page.locator('span', { hasText: 'Trending Now' });

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -11,6 +11,8 @@ import { MapPin, Home, ArrowRight } from 'lucide-react';
 import { AnimatedHeroBackground } from '@/components/ui/animated-hero-background';
 import { HomestayCard } from '@/components/homestay-card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DestinationDiscovery } from '@/components/destination-discovery';
+import { EmojiCategoryFilter } from '@/components/emoji-category-filter';
 
 interface DestinationItem {
     id: string;
@@ -43,16 +45,17 @@ export default function StatePage() {
         queryFn: () => api.get(`/api/states/${slug}`).then(res => res.data)
     });
 
-    const { data: destinations, isLoading: destLoading } = useQuery<DestinationItem[]>({
-        queryKey: ['state-destinations', slug],
-        queryFn: () => api.get(`/api/states/${slug}/destinations`).then(res => res.data)
-    });
+    const [activeCategory, setActiveCategory] = useState('');
+    const handleCategoryChange = (cat: string) => {
+        setActiveCategory(prev => prev === cat ? '' : cat);
+    };
 
     const { data: homestaysData, isLoading: homestaysLoading } = useQuery({
-        queryKey: ['state-homestays', slug],
+        queryKey: ['state-homestays', slug, activeCategory],
         queryFn: async () => {
+            const tagParam = activeCategory ? `&tag=${encodeURIComponent(activeCategory)}` : '';
             // Fetch homestays from all destinations in this state using the search endpoint
-            const res = await api.get(`/api/homestays/search?stateSlug=${slug}&size=12`);
+            const res = await api.get(`/api/homestays/search?stateSlug=${slug}${tagParam}&size=12`);
             return res.data.content ? res.data.content : res.data;
         },
         enabled: !!state
@@ -133,46 +136,7 @@ export default function StatePage() {
                     </h2>
                 </motion.div>
 
-                {destLoading ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-                        {[...Array(10)].map((_, i) => (
-                            <Skeleton key={i} className="aspect-[3/4] rounded-[999px]" />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-                        {destinations?.map((dest, i) => (
-                            <motion.div
-                                key={dest.slug}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.04, duration: 0.4 }}
-                            >
-                                <Link
-                                    href={`/destination/${dest.slug}`}
-                                    className="group block cursor-pointer"
-                                >
-                                    <div className="relative aspect-[3/4] rounded-[999px] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5">
-                                        <Image
-                                            src={`/destinations/${dest.localImageName}`}
-                                            alt={dest.name}
-                                            fill
-                                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                                            className="object-cover group-hover:scale-110 transition-transform duration-700"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 flex flex-col items-center justify-end pb-8">
-                                            <h3 className="text-white font-bold text-base md:text-lg tracking-tight drop-shadow-md text-center">
-                                                {dest.name}
-                                            </h3>
-                                            <span className="text-white/60 text-xs mt-1">{dest.district}</span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            </motion.div>
-                        ))}
-                    </div>
-                )}
+                <DestinationDiscovery stateSlug={slug as string} />
             </section>
 
             {/* ── Homestays in this State ── */}
@@ -191,6 +155,13 @@ export default function StatePage() {
                     </h2>
                 </motion.div>
 
+                <div className="mb-8">
+                    <EmojiCategoryFilter
+                        activeCategory={activeCategory}
+                        onCategoryChange={handleCategoryChange}
+                    />
+                </div>
+
                 {homestaysLoading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {[...Array(8)].map((_, i) => (
@@ -207,10 +178,13 @@ export default function StatePage() {
                     <div className="bg-white border rounded-3xl p-12 text-center max-w-3xl mx-auto shadow-sm">
                         <Home className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
                         <h3 className="text-xl font-bold text-foreground mb-2">
-                            No homestays found in this region yet
+                            {activeCategory ? "No homestays found matching your vibe" : "No homestays found in this region yet"}
                         </h3>
                         <p className="text-muted-foreground">
-                            We are constantly expanding our network. Check back soon for new, curated properties in {state.name}.
+                            {activeCategory
+                                ? "Try selecting a different filter or clearing the current one."
+                                : `We are constantly expanding our network. Check back soon for new, curated properties in ${state.name}.`
+                            }
                         </p>
                     </div>
                 )}

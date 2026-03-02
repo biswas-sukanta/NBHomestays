@@ -4,7 +4,7 @@ import React, { useEffect, useState, Suspense, useRef, useCallback } from 'react
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { CategoryFilterBar } from '@/components/category-filter-bar';
+import { EmojiCategoryFilter } from '@/components/emoji-category-filter';
 import { HomestaySwimlane } from '@/components/homestay-swimlane';
 import { DestinationDiscovery } from '@/components/destination-discovery';
 import { HomestayCard, HomestaySummary } from '@/components/homestay-card';
@@ -68,6 +68,16 @@ function SearchResults() {
     const [mapBounds, setMapBounds] = useState<{ minLat: number, maxLat: number, minLng: number, maxLng: number } | null>(null);
 
     const isStorefront = !query && !tag;
+
+    const handleCategoryChange = (newCategory: string) => {
+        const params = new URLSearchParams(searchParams?.toString() || '');
+        if (tag === newCategory) {
+            params.delete('tag');
+        } else {
+            params.set('tag', newCategory);
+        }
+        router.push(`/search?${params.toString()}`);
+    };
 
     // Sync input box when URL query changes
     useEffect(() => {
@@ -244,7 +254,10 @@ function SearchResults() {
             {/* STEP 2: Sticky Edge-to-Edge Category Bar */}
             <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between py-2">
-                    <CategoryFilterBar />
+                    <EmojiCategoryFilter
+                        activeCategory={tag}
+                        onCategoryChange={handleCategoryChange}
+                    />
                 </div>
             </div>
 

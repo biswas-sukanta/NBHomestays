@@ -19,13 +19,13 @@ interface Destination {
     tags: string[];
 }
 
-export function DestinationDiscovery() {
+export function DestinationDiscovery({ stateSlug }: { stateSlug?: string }) {
     const router = useRouter();
     const [activeTag, setActiveTag] = useState('🌟 All');
 
     const { data: destinations, isLoading } = useQuery<Destination[]>({
-        queryKey: ['destinations'],
-        queryFn: () => api.get('/api/destinations').then(res => res.data)
+        queryKey: ['destinations', stateSlug],
+        queryFn: () => api.get(stateSlug ? `/api/states/${stateSlug}/destinations` : '/api/destinations').then(res => res.data)
     });
 
     if (isLoading) {
