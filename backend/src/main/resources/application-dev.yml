@@ -1,0 +1,6 @@
+spring:
+  flyway:
+    out-of-order: true
+    baseline-on-migrate: true
+    connect-retries: 5
+    enabled: true
