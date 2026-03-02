@@ -9,6 +9,7 @@ import com.nbh.backend.repository.StateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(name = "application.data-seeding.enabled", havingValue = "true", matchIfMissing = true)
 public class DestinationDataSeeder implements CommandLineRunner {
 
     private final DestinationRepository destinationRepository;

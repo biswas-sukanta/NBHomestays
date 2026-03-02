@@ -17,7 +17,7 @@ import org.springframework.data.domain.Pageable;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@ActiveProfiles("test")
+@ActiveProfiles({"test", "h2-test"})
 @Transactional
 public class HomestayRepositoryTest {
 

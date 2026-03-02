@@ -13,6 +13,8 @@ spring:
   flyway:
     enabled: false
     locations: classpath:db/migration
+    baseline-on-migrate: true
+    out-of-order: true
   data:
     redis:
       host: localhost

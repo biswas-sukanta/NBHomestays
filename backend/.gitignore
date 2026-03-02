@@ -5,6 +5,15 @@ target/
 *.war
 .mvn/wrapper/maven-wrapper.jar
 
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+
 # Logs
 logs/
 *.log
@@ -13,3 +22,33 @@ logs/
 application.properties
 .env
 input.txt
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+*.swp
+*~
+
+# Migration reports
+*_REPORT.md
+*_VALIDATION.md
+*_BASELINE.md
+*_PLAN.md
+
+# Test outputs
+test-output/
+surefire-reports/
+*.dump
+
+# Dependency trees
+dependency-tree.txt
+mvn-dependency-tree.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.temp
+*.orig

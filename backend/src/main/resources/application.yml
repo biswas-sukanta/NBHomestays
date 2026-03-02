@@ -26,6 +26,7 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
     baseline-on-migrate: true
     connect-retries: 5
+    out-of-order: true
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
