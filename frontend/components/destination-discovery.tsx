@@ -8,8 +8,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Compass } from 'lucide-react';
+import { Compass, Map } from 'lucide-react';
 import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface Destination {
     id: string;
@@ -19,7 +20,7 @@ interface Destination {
     tags: string[];
 }
 
-export function DestinationDiscovery({ stateSlug }: { stateSlug?: string }) {
+export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: string; stateName?: string }) {
     const router = useRouter();
     const [activeTag, setActiveTag] = useState('🌟 All');
 
@@ -101,9 +102,14 @@ export function DestinationDiscovery({ stateSlug }: { stateSlug?: string }) {
                 </AnimatePresence>
 
                 {!filteredDestinations?.length && (
-                    <div className="flex-1 py-12 text-center text-gray-400">
-                        <Compass className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                        <p>No destinations found for this filter</p>
+                    <div className="w-full py-8 px-4 flex justify-center">
+                        <EmptyState
+                            icon={<Map className="w-8 h-8 text-muted-foreground" />}
+                            title="No destinations found in this region yet"
+                            description={stateName
+                                ? `We are constantly exploring new places. Check back soon for curated destinations in ${stateName}.`
+                                : "We are constantly exploring new places. Check back soon for curated destinations in this region."}
+                        />
                     </div>
                 )}
             </CarouselWrapper>

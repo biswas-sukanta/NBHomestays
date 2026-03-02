@@ -13,6 +13,7 @@ import { HomestayCard } from '@/components/homestay-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DestinationDiscovery } from '@/components/destination-discovery';
 import { EmojiCategoryFilter } from '@/components/emoji-category-filter';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface DestinationItem {
     id: string;
@@ -136,7 +137,7 @@ export default function StatePage() {
                     </h2>
                 </motion.div>
 
-                <DestinationDiscovery stateSlug={slug as string} />
+                <DestinationDiscovery stateSlug={slug as string} stateName={state.name} />
             </section>
 
             {/* ── Homestays in this State ── */}
@@ -175,18 +176,14 @@ export default function StatePage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white border rounded-3xl p-12 text-center max-w-3xl mx-auto shadow-sm">
-                        <Home className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold text-foreground mb-2">
-                            {activeCategory ? "No homestays found matching your vibe" : "No homestays found in this region yet"}
-                        </h3>
-                        <p className="text-muted-foreground">
-                            {activeCategory
-                                ? "Try selecting a different filter or clearing the current one."
-                                : `We are constantly expanding our network. Check back soon for new, curated properties in ${state.name}.`
-                            }
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={<Home className="w-12 h-12 text-muted-foreground" />}
+                        title={activeCategory ? "No homestays found matching your vibe" : "No homestays found in this region yet"}
+                        description={activeCategory
+                            ? "Try selecting a different filter or clearing the current one."
+                            : `We are constantly expanding our network. Check back soon for new, curated properties in ${state.name}.`
+                        }
+                    />
                 )}
             </section>
 
