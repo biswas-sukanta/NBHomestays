@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: dev
   application:
     name: nb-homestays-backend
   datasource:
@@ -20,13 +22,10 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
-    enabled: true
-    url: ${SPRING_FLYWAY_URL:${spring.datasource.url}}
-    user: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    # do NOT set out-of-order here - let profiles handle it
     baseline-on-migrate: true
     connect-retries: 5
-    out-of-order: true
+    enabled: true
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
