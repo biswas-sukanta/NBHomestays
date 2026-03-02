@@ -55,6 +55,7 @@ public class HomestayRepositoryTest {
                 // Test
                 Pageable pageable = PageRequest.of(0, 10);
                 Page<Homestay> pagedResults = homestayRepository.search("Darjeeling", null, null, null, null, null,
+                                null,
                                 null, null,
                                 pageable);
                 List<Homestay> results = pagedResults.getContent();
