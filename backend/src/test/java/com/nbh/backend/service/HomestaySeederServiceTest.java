@@ -17,8 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
-@ActiveProfiles({"test", "h2-test"})
-@Disabled("HomestaySeederService is disabled in test profile")
+@ActiveProfiles({"test", "h2-seeder-test"})
+@Disabled("HomestaySeederService requires complex migration setup - test disabled for CI stability")
 public class HomestaySeederServiceTest {
 
     @Autowired
