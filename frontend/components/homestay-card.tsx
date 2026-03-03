@@ -177,7 +177,7 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
                 {/* Text Data */}
                 <div className="px-1 relative">
                     <h3 className="text-lg font-semibold text-gray-900 truncate mt-3" data-slot="card-title">
-                        {homestay.name}
+                        {homestay.name.replace(' All', '')}
                     </h3>
                     <div className="flex items-center justify-between mb-1">
                         <p className="text-sm text-gray-500 truncate" data-testid="location-text">
