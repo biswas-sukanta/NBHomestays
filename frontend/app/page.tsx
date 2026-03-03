@@ -30,7 +30,8 @@ export default function Home() {
         <div className="container mx-auto px-4 max-w-7xl">
           <SectionHeader
             pillText="WANDER BY REGION"
-            title={<span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">Choose your state of mind</span>}
+            titleClassName="text-3xl md:text-5xl"
+            title={<span className="text-slate-900 block px-4">Choose your state of mind</span>}
             subtitle="From misty hills to sacred lakes — each region holds its own magic."
           />
           <WanderByRegion />

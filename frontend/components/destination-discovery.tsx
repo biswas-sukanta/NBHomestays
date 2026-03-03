@@ -88,7 +88,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
         <div className="space-y-10">
             {/* ── Vibrant Filter Pills ── */}
             <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md py-4 -mx-4 px-4">
-                <div className="flex flex-nowrap overflow-x-auto no-scrollbar md:flex-wrap md:overflow-visible gap-3 pb-2">
+                <div className="flex flex-row overflow-x-auto snap-x snap-mandatory no-scrollbar md:flex-wrap md:overflow-visible gap-3 pb-2 w-full">
                     {allTags.map(tag => {
                         const isActive = activeTag === tag;
                         const TagIcon = TAG_ICONS[tag] || Compass;
@@ -97,7 +97,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                 key={tag}
                                 onClick={() => setActiveTag(tag)}
                                 className={cn(
-                                    "whitespace-nowrap flex items-center gap-2 px-7 py-3.5 rounded-full border-2 transition-all text-base font-bold",
+                                    "whitespace-nowrap flex items-center gap-2 px-4 py-2 text-sm md:px-7 md:py-3.5 md:text-base rounded-full border-2 transition-all font-bold snap-center",
                                     isActive
                                         ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-amber-500 shadow-[0_0_20px_rgba(218,165,32,0.4)] scale-105"
                                         : "bg-white text-gray-700 border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 hover:text-amber-800"
@@ -148,17 +148,10 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                             />
                                             {/* Text-protection gradient */}
                                             <div className={`absolute inset-0 bg-gradient-to-t ${tint} via-transparent to-transparent opacity-60`} />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
 
-                                            {/* Standard colorful bubble icon in bento cards */}
-                                            <div className="absolute top-4 left-4 z-10 transition-transform duration-500 group-hover:scale-110">
-                                                <div className={`bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-2.5 shadow-xl`}>
-                                                    <MapPin className="w-6 h-6 text-white drop-shadow-md" />
-                                                </div>
-                                            </div>
-
-                                            <div className="absolute inset-0 flex flex-col items-start justify-end p-5">
-                                                <h3 className="text-white font-extrabold text-lg md:text-xl tracking-tight drop-shadow-lg leading-tight">
+                                            <div className="absolute bottom-0 left-0 p-4 flex flex-col items-start w-full justify-end">
+                                                <h3 className="text-white font-bold text-lg md:text-xl tracking-tight drop-shadow-lg leading-tight">
                                                     {dest.name.replace(" All", "")}
                                                 </h3>
                                                 {dest.tags.length > 0 && (

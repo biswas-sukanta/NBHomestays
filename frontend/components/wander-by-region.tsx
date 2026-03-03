@@ -48,7 +48,7 @@ export function WanderByRegion() {
     if (!states?.length) return null;
 
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-[260px] lg:auto-rows-[300px]">
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 no-scrollbar md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5 auto-rows-[260px] lg:auto-rows-[300px]">
             {states.map((state, i) => {
                 const style = STATE_STYLES[state.slug] || fallbackStyle;
                 const Icon = style.icon;
@@ -62,7 +62,7 @@ export function WanderByRegion() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: i * 0.1, duration: 0.5 }}
-                        className={isHero ? 'col-span-2 row-span-2' : ''}
+                        className={`${isHero ? 'md:col-span-2 md:row-span-2' : ''} min-w-[85vw] lg:min-w-0 snap-center shrink-0 md:min-w-0 md:shrink`}
                     >
                         <Link
                             href={`/state/${state.slug}`}

@@ -34,6 +34,7 @@ public class SecurityConfig {
                                                                 "/api/homestays/**",
                                                                 "/api/posts/**",
                                                                 "/api/destinations/**",
+                                                                "/api/states/**",
                                                                 "/api/diagnostics",
                                                                 "/api/reviews/homestay/**", "/v3/api-docs/**",
                                                                 "/swagger-ui/**", "/swagger-ui.html")
