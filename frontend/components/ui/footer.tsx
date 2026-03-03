@@ -55,9 +55,6 @@ export function Footer() {
                 <h2 className="font-heading text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-900 leading-tight">
                     Crafted by a traveler.<br className="hidden sm:block" /> Dedicated to the offbeat soul. 🏔️
                 </h2>
-                <p className="text-stone-500 text-base mt-4 max-w-xl mx-auto leading-relaxed">
-                    Discover places with character across the East. Skip the corporate lobbies — find your next great story.
-                </p>
             </div>
 
             {/* ── Navigation Grid ── */}
