@@ -7,6 +7,7 @@ interface SectionHeaderProps {
     title: React.ReactNode; // Allows strings and JSX for e.g. italicising words
     subtitle?: React.ReactNode;
     className?: string;
+    titleClassName?: string;
     align?: 'center' | 'left'; // Defaults to center
 }
 
@@ -15,6 +16,7 @@ export function SectionHeader({
     title,
     subtitle,
     className,
+    titleClassName,
     align = 'center',
 }: SectionHeaderProps) {
     const isCentered = align === 'center';
@@ -45,7 +47,8 @@ export function SectionHeader({
             <h2
                 className={cn(
                     'font-serif text-5xl md:text-6xl font-medium tracking-tight text-gray-900',
-                    isCentered ? 'text-center' : 'text-left'
+                    isCentered ? 'text-center' : 'text-left',
+                    titleClassName
                 )}
             >
                 {title}
