@@ -177,6 +177,11 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
 
         if (currentStep === 1) {
             if (!basicInfo.name.trim()) newErrors.name = "Property name is required.";
+            if (!basicInfo.description.trim()) {
+                newErrors.description = "Description is required.";
+            } else if (basicInfo.description.trim().length < 10) {
+                newErrors.description = "Description must be at least 10 characters.";
+            }
             if (!basicInfo.pricePerNight || parseFloat(basicInfo.pricePerNight) <= 0) {
                 newErrors.price = "Valid price per night is required.";
             }
@@ -184,6 +189,9 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
             if (!destinationId) newErrors.destinationId = "Please select a Destination.";
             if (!location.latitude || !location.longitude) {
                 newErrors.location = "Please pin your exact location on the map.";
+            }
+            if (!location.locationName.trim()) {
+                newErrors.locationName = "Location name is required. Search for your area on the map.";
             }
         } else if (currentStep === 3) {
             if (existingMedia.length + imageFiles.length === 0) {
@@ -238,6 +246,22 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
     const removePolicy = (index: number) => setPolicies(prev => prev.filter((_, i) => i !== index));
 
     const handleSubmit = async () => {
+        // Re-validate all critical steps before submission to guard against any desync
+        const step1Valid = validateStep(1);
+        if (!step1Valid) {
+            setStep(1);
+            return;
+        }
+        const step2Valid = validateStep(2);
+        if (!step2Valid) {
+            setStep(2);
+            return;
+        }
+        const step3Valid = validateStep(3);
+        if (!step3Valid) {
+            setStep(3);
+            return;
+        }
         if (!validateStep(7)) return;
 
         setLoading(true);
@@ -357,15 +381,16 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="description">Description</Label>
+                                <Label htmlFor="description">Description *</Label>
                                 <Textarea
                                     id="description"
                                     value={basicInfo.description}
                                     onChange={e => setBasicInfo({ ...basicInfo, description: e.target.value })}
-                                    placeholder="Describe the vibe and surroundings..."
+                                    placeholder="Describe the vibe and surroundings in at least 10 characters..."
                                     className="h-32 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
                                     error={errors.description}
                                 />
+                                {errors.description && <p className="text-red-500 text-xs mt-1 font-medium">{errors.description}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="price">Price per Night (₹) *</Label>
@@ -409,6 +434,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                                     initialAddress={location.locationName}
                                 />
                                 {errors.location && <p className="text-red-500 text-xs mt-2 font-medium">{errors.location}</p>}
+                                {errors.locationName && <p className="text-red-500 text-xs mt-1 font-medium">{errors.locationName}</p>}
                             </div>
                         </div>
                     )}
