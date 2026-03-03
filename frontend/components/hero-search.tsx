@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Search, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export function HeroSearch() {
     const router = useRouter();
@@ -85,24 +86,20 @@ export function HeroSearch() {
                     initial={{ opacity: 0, scale: 0.94, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.7, delay: 0.5 }}
-                    className="w-full max-w-2xl"
+                    className="w-full w-full max-w-[92%] sm:max-w-md mx-auto"
                 >
                     <div
-                        className={`
-                            flex items-center
-                            bg-white rounded-full
-                            pl-6 pr-2 py-2
-                            shadow-2xl shadow-black/20
-                            transition-all duration-300
-                            ${focused ? 'ring-4 ring-amber-400/30 shadow-[0_0_40px_rgba(218,165,32,0.15)]' : ''}
-                        `}
+                        className={cn(
+                            "flex items-center p-1 bg-white/90 backdrop-blur-sm rounded-full shadow-lg transition-all duration-300",
+                            focused && "ring-4 ring-amber-400/30 shadow-[0_0_40px_rgba(218,165,32,0.15)]"
+                        )}
                     >
-                        <Search className="w-5 h-5 text-gray-400 flex-none mr-3" />
+                        <Search className="w-5 h-5 text-gray-500 flex-none ml-4 mr-2" />
                         <input
                             id="hero-search-input"
                             type="text"
                             placeholder="Where to next?"
-                            className="flex-1 bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none text-lg font-medium"
+                            className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder:text-gray-500 focus:outline-none text-base sm:text-lg font-medium px-2"
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -114,9 +111,9 @@ export function HeroSearch() {
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
                             className="
-                                ml-2 flex items-center justify-center gap-2
+                                flex-none flex items-center justify-center gap-2
                                 bg-gradient-to-r from-amber-500 to-amber-600 text-white
-                                px-7 py-3 rounded-full font-bold text-base
+                                px-5 py-2.5 sm:px-7 sm:py-3 rounded-full font-bold text-sm sm:text-base
                                 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40
                                 transition-all duration-300
                             "

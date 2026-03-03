@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Compass, Map, Train, Mountain, Trees, Waves, Tent, Sparkles, ArrowRight } from 'lucide-react';
@@ -42,7 +42,10 @@ const CARD_TINTS = [
 
 export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: string; stateName?: string }) {
     const router = useRouter();
+    const pathname = usePathname();
+    const isHome = pathname === '/';
     const [activeTag, setActiveTag] = useState('🌟 All');
+    const [visibleCount, setVisibleCount] = useState(8);
 
     const { data: destinations, isLoading } = useQuery<Destination[]>({
         queryKey: ['destinations', stateSlug],
@@ -121,7 +124,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                 <>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         <AnimatePresence mode='popLayout'>
-                            {filteredDestinations.slice(0, 8).map((dest, idx) => {
+                            {filteredDestinations.slice(0, isHome ? 8 : visibleCount).map((dest, idx) => {
                                 const tint = CARD_TINTS[idx % CARD_TINTS.length];
                                 return (
                                     <motion.div
@@ -167,8 +170,8 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                         </AnimatePresence>
                     </div>
 
-                    {/* View all link */}
-                    {filteredDestinations.length > 8 && (
+                    {/* View all link for Homepage */}
+                    {isHome && filteredDestinations.length > 8 && (
                         <div className="flex justify-center mt-10">
                             <Link
                                 href="/search"
@@ -177,6 +180,19 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                 View all {filteredDestinations.length}+ destinations
                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                             </Link>
+                        </div>
+                    )}
+
+                    {/* Load More button for Explore / Search Page */}
+                    {!isHome && filteredDestinations.length > visibleCount && (
+                        <div className="flex justify-center mt-10">
+                            <button
+                                onClick={() => setVisibleCount(prev => prev + 8)}
+                                className="group inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-full shadow-sm text-sm font-bold text-gray-700 hover:text-amber-600 hover:border-amber-200 hover:bg-amber-50 transition-all duration-300"
+                            >
+                                Load More Destinations
+                                <ArrowRight className="w-4 h-4 group-hover:translate-y-1 transition-transform duration-200 rotate-90" />
+                            </button>
                         </div>
                     )}
                 </>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, Search, MessageSquare, UserCircle, Hotel, LogOut, ChevronDown, LayoutDashboard, Plus } from 'lucide-react';
+import { Menu, X, Search, MessageSquare, UserCircle, Hotel, LogOut, ChevronDown, LayoutDashboard, Plus, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -247,6 +247,19 @@ export default function Navbar() {
                                     </p>
                                 </div>
                             )}
+
+                            {/* Premium Home Link */}
+                            <Link
+                                href="/"
+                                className={cn(
+                                    "px-4 py-3 rounded-xl font-bold flex items-center gap-3 transition-colors",
+                                    isHome ? "bg-amber-50 text-amber-700" : "text-gray-900 hover:bg-gray-50"
+                                )}
+                                onClick={() => setIsOpen(false)}
+                            >
+                                <Home className={cn("w-5 h-5", isHome ? "text-amber-600" : "text-gray-500")} />
+                                <span>Home</span>
+                            </Link>
 
                             {primaryLinks.map((link) => {
                                 const isActive = pathname === link.href;
