@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Search } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 
 // Fix for default marker icons in Next.js/Leaflet
 // @ts-ignore
@@ -23,6 +23,8 @@ interface LocationPickerProps {
     initialLng?: number;
     initialAddress?: string;
     readonly?: boolean;
+    /** When set, automatically triggers a map search for this query string. */
+    autoSearchQuery?: string;
 }
 
 function LocationMarker({ position, setPosition, onLocationSelect, readonly }: any) {
@@ -79,41 +81,60 @@ function LocationMarker({ position, setPosition, onLocationSelect, readonly }: a
     );
 }
 
-export default function LocationPicker({ onLocationSelect, initialLat, initialLng, initialAddress, readonly = false }: LocationPickerProps) {
+export default function LocationPicker({ onLocationSelect, initialLat, initialLng, initialAddress, readonly = false, autoSearchQuery }: LocationPickerProps) {
     const [position, setPosition] = useState<L.LatLng | null>(initialLat && initialLng ? new L.LatLng(initialLat, initialLng) : null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    const [autoSearchedFor, setAutoSearchedFor] = useState<string | null>(null);
+    const lastAutoQuery = useRef<string | null>(null);
 
     // Default center (North Bengal approx)
     const defaultCenter = [26.7271, 88.3953]; // Siliguri
 
-    const handleSearch = async () => {
-        if (!searchQuery) return;
+    const runSearch = async (query: string) => {
+        if (!query) return;
         setIsSearching(true);
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`, {
-                headers: {
-                    'User-Agent': 'NorthBengalHomestays/1.0 (Contact: biswas-sukanta/NBHomestays github)'
-                }
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&limit=1`, {
+                headers: { 'User-Agent': 'NorthBengalHomestays/1.0 (Contact: biswas-sukanta/NBHomestays github)' }
             });
             const data = await res.json();
             if (data && data.length > 0) {
                 const { lat, lon, display_name } = data[0];
                 const newPos = new L.LatLng(parseFloat(lat), parseFloat(lon));
                 setPosition(newPos);
-                if (onLocationSelect) {
-                    onLocationSelect(parseFloat(lat), parseFloat(lon), display_name);
-                }
+                if (onLocationSelect) onLocationSelect(parseFloat(lat), parseFloat(lon), display_name);
             }
         } catch (error) {
-            console.error("Search failed", error);
+            console.error('Search failed', error);
         } finally {
             setIsSearching(false);
         }
     };
 
+    const handleSearch = () => runSearch(searchQuery);
+
+    // Auto-search when destination is selected in the parent form
+    useEffect(() => {
+        if (autoSearchQuery && autoSearchQuery !== lastAutoQuery.current) {
+            lastAutoQuery.current = autoSearchQuery;
+            setSearchQuery(autoSearchQuery);
+            setAutoSearchedFor(autoSearchQuery);
+            runSearch(autoSearchQuery);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [autoSearchQuery]);
+
     return (
         <div className="space-y-4">
+            {/* Destination auto-search tooltip */}
+            {autoSearchedFor && !readonly && (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-sm font-medium">
+                    <MapPin className="w-4 h-4 flex-none text-emerald-600" />
+                    <span>Map centred on <strong>{autoSearchedFor}</strong>. Drag the pin to your exact location.</span>
+                </div>
+            )}
+
             {!readonly && (
                 <div className="flex gap-2">
                     <Input
@@ -153,3 +174,4 @@ export default function LocationPicker({ onLocationSelect, initialLat, initialLn
         </div>
     );
 }
+

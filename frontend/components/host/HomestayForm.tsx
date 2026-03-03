@@ -10,11 +10,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { Trash2, Plus } from 'lucide-react';
+import {
+    Trash2, Plus, Wifi, Mountain, Droplets, Zap, Coffee, UtensilsCrossed, Car, PawPrint,
+    Bed, Bath, Flame, Wind, ShieldCheck, Laptop, ChefHat, Package, BellRing, Ban,
+    Gamepad2, Tv2, Snowflake, Drumstick, BookOpen, Shirt, Thermometer, Camera, Sparkles
+} from 'lucide-react';
 import ImageDropzone, { StagedFile } from '@/components/host/ImageDropzone';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -41,6 +44,39 @@ const AMENITY_CATEGORIES: Record<string, string[]> = {
 const LOCATION_TYPE_OPTIONS = ['Remote', 'Village Center', 'Hill Station', 'Forest Retreat', 'Riverside', 'Town Outskirts'];
 const HIKE_OPTIONS = ['None', 'Short walk < 5 min', '5–15 min walk', '15–30 min hike', '30 min+ trail'];
 const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Bengali', 'Nepali', 'Assamese', 'Khasi', 'Garo', 'Bodo', 'Tibetan', 'Sikkimese'];
+
+// Lucide icon map for amenity pills — falls back gracefully if an amenity has no icon
+const AMENITY_ICONS: Record<string, React.ReactNode> = {
+    'Mountain View': <Mountain className="w-3.5 h-3.5" />,
+    'Hot water': <Droplets className="w-3.5 h-3.5" />,
+    'Free Wi-Fi': <Wifi className="w-3.5 h-3.5" />,
+    'Wifi': <Wifi className="w-3.5 h-3.5" />,
+    'Power Backup': <Zap className="w-3.5 h-3.5" />,
+    'Cafe': <Coffee className="w-3.5 h-3.5" />,
+    'Breakfast (Extra)': <UtensilsCrossed className="w-3.5 h-3.5" />,
+    'Parking (public)': <Car className="w-3.5 h-3.5" />,
+    'Pets Allowed': <PawPrint className="w-3.5 h-3.5" />,
+    'Bed linen': <Bed className="w-3.5 h-3.5" />,
+    'Bath': <Bath className="w-3.5 h-3.5" />,
+    'Indoor fireplace': <Flame className="w-3.5 h-3.5" />,
+    'Bonfire (Extra)': <Flame className="w-3.5 h-3.5" />,
+    'Portable fans': <Wind className="w-3.5 h-3.5" />,
+    'Smoke alarm': <ShieldCheck className="w-3.5 h-3.5" />,
+    'Dedicated workspace': <Laptop className="w-3.5 h-3.5" />,
+    'Kitchen': <ChefHat className="w-3.5 h-3.5" />,
+    'Cooking space': <ChefHat className="w-3.5 h-3.5" />,
+    'Fridge': <Package className="w-3.5 h-3.5" />,
+    'Host greets you': <BellRing className="w-3.5 h-3.5" />,
+    'TV': <Tv2 className="w-3.5 h-3.5" />,
+    'Air conditioning': <Snowflake className="w-3.5 h-3.5" />,
+    'Hairdryer': <Wind className="w-3.5 h-3.5" />,
+    'Indoor Games': <Gamepad2 className="w-3.5 h-3.5" />,
+    'Books/reading material': <BookOpen className="w-3.5 h-3.5" />,
+    'Iron': <Shirt className="w-3.5 h-3.5" />,
+    'Heating': <Thermometer className="w-3.5 h-3.5" />,
+    'Exterior security cameras': <Camera className="w-3.5 h-3.5" />,
+    'In-house Activities': <Sparkles className="w-3.5 h-3.5" />,
+};
 
 const TAG_CATEGORIES = [
     {
@@ -100,6 +136,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
     const [destinationId, setDestinationId] = useState<string>('');
     const [amenities, setAmenities] = useState<string[]>([]);
     const [tags, setTags] = useState<string[]>([]);
+    const [mapAutoSearch, setMapAutoSearch] = useState<string | undefined>(undefined);
 
     const { data: destinations } = useQuery({
         queryKey: ['destinations-form'],
@@ -425,7 +462,12 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <Label>Select Destination *</Label>
-                                <Select value={destinationId} onValueChange={setDestinationId}>
+                                <Select value={destinationId} onValueChange={(val) => {
+                                    setDestinationId(val);
+                                    // Auto-sync map: find dest name+district and pass to LocationPicker
+                                    const dest = destinations?.find((d: any) => d.id === val);
+                                    if (dest) setMapAutoSearch(`${dest.name}, ${dest.district}`);
+                                }}>
                                     <SelectTrigger error={errors.destinationId}><SelectValue placeholder="Choose a destination..." /></SelectTrigger>
                                     <SelectContent>
                                         <ScrollArea className="h-[300px]">
@@ -439,12 +481,13 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                                 </Select>
                             </div>
                             <div className="space-y-4">
-                                <p className="text-sm text-muted-foreground">Search for your area and drag the pin to the exact spot. This ensures guests can find you via GPS.</p>
+                                <p className="text-sm text-muted-foreground">Your destination is pre-centered on the map. Drag the pin to nail the exact spot.</p>
                                 <LocationPicker
                                     onLocationSelect={(lat, lng, addr) => setLocation({ latitude: lat, longitude: lng, locationName: addr })}
                                     initialLat={location.latitude || undefined}
                                     initialLng={location.longitude || undefined}
                                     initialAddress={location.locationName}
+                                    autoSearchQuery={mapAutoSearch}
                                 />
                                 {errors.location && <p className="text-red-500 text-xs mt-2 font-medium">{errors.location}</p>}
                                 {errors.locationName && <p className="text-red-500 text-xs mt-1 font-medium">{errors.locationName}</p>}
@@ -482,13 +525,14 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                                                             type="button"
                                                             key={item}
                                                             onClick={() => toggleAmenity(item)}
-                                                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 cursor-pointer ${selected
+                                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 cursor-pointer ${selected
                                                                 ? isUnavailable
                                                                     ? 'bg-red-50 text-red-700 border-red-200 line-through'
                                                                     : 'bg-emerald-700 text-white border-emerald-700'
                                                                 : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400 hover:bg-emerald-50'
                                                                 }`}
                                                         >
+                                                            {AMENITY_ICONS[item] && <span className="opacity-80">{AMENITY_ICONS[item]}</span>}
                                                             {item}
                                                         </button>
                                                     );
