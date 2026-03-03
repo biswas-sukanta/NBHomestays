@@ -245,7 +245,7 @@ function SearchResults() {
                     </div>
                     <button
                         type="submit"
-                        className="w-full sm:w-auto px-8 py-3.5 bg-[#004d00] text-white font-bold rounded-xl sm:rounded-full hover:bg-[#003300] transition-colors shadow-sm"
+                        className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 text-white font-bold rounded-xl sm:rounded-full hover:bg-slate-800 transition-colors shadow-md hover:shadow-lg"
                     >
                         Search
                     </button>
@@ -279,8 +279,8 @@ function SearchResults() {
                         <section>
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
                                 <div className="text-left">
-                                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight font-heading">UNFILTERED EXPERIENCES</h2>
-                                    <p className="text-gray-500 text-base font-medium">Your authentic story starts here.</p>
+                                    <h2 className="text-3xl md:text-4xl font-medium text-slate-900 mb-2 tracking-tight font-heading">UNFILTERED EXPERIENCES</h2>
+                                    <p className="text-slate-500 text-base font-medium">Your authentic story starts here.</p>
                                 </div>
                             </div>
                             <DestinationDiscovery />
@@ -305,9 +305,9 @@ function SearchResults() {
                         {/* STEP 4: Proper Infinite Paginated Grid */}
                         <div className="border-t border-gray-100 pt-16">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight font-heading relative">
+                                <h2 className="text-3xl md:text-4xl font-medium text-slate-900 tracking-tight font-heading relative">
                                     EVERY STAY, UNFILTERED
-                                    <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full"></span>
+                                    <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></span>
                                 </h2>
 
                                 <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm self-end sm:self-auto">

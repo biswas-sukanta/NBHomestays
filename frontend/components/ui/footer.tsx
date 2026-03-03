@@ -51,7 +51,7 @@ const NAV_COLUMNS = [
 
 export function Footer() {
     return (
-        <footer className="bg-[#0B1C14] w-full pt-24 pb-12">
+        <footer className="bg-gradient-to-b from-[#071A10] to-[#040F09] w-full pt-24 pb-12">
             {/* ── Soul Section ── */}
             <div className="w-full max-w-6xl mx-auto px-6 pb-20 text-center">
                 <div className="inline-flex items-center gap-2.5 mb-6">
@@ -72,7 +72,7 @@ export function Footer() {
                     return (
                         <div key={col.heading}>
                             <div className="flex items-center gap-2.5 mb-5">
-                                <Icon className={`w-6 h-6 ${col.iconColor}`} />
+                                <Icon className={`w-8 h-8 ${col.iconColor}`} />
                                 <p className="font-bold text-white text-base tracking-wide">
                                     {col.heading}
                                 </p>
@@ -94,6 +94,18 @@ export function Footer() {
                         </div>
                     );
                 })}
+            </div>
+
+            {/* ── CTA Button ── */}
+            <div className="flex justify-center mt-16">
+                <Link
+                    href="/search"
+                    className="group inline-flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-coral-500 to-rose-500 bg-[#FF6B6B] text-white font-bold text-lg rounded-full shadow-lg shadow-rose-500/30 hover:shadow-[0_0_40px_rgba(255,107,107,0.5)] hover:scale-105 transition-all duration-300"
+                >
+                    <Compass className="w-5 h-5 group-hover:rotate-45 transition-transform duration-300" />
+                    Explore All Listings
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
             </div>
 
             {/* ── Baseline ── */}

@@ -66,7 +66,7 @@ export function WanderByRegion() {
                     >
                         <Link
                             href={`/state/${state.slug}`}
-                            className="group block relative w-full h-[280px] md:h-full rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 ring-1 ring-white/10 hover:ring-amber-400/40 hover:shadow-[0_0_30px_rgba(218,165,32,0.15)]"
+                            className="group block relative w-full h-[280px] md:h-full rounded-3xl overflow-hidden shadow-lg hover:shadow-[0_0_40px_rgba(218,165,32,0.35)] transition-all duration-500 ring-1 ring-white/10 hover:ring-4 hover:ring-amber-400/60"
                         >
                             {/* Background Image */}
                             <Image
@@ -83,8 +83,8 @@ export function WanderByRegion() {
 
                             {/* State Icon Badge */}
                             <div className="absolute top-4 left-4 z-10">
-                                <div className={`${style.accent} rounded-2xl p-2.5 shadow-lg backdrop-blur-sm`}>
-                                    <Icon className="w-5 h-5 text-white" />
+                                <div className={`${style.accent} rounded-2xl p-3 shadow-lg backdrop-blur-sm group-hover:shadow-[0_0_20px_rgba(218,165,32,0.5)] group-hover:scale-110 transition-all duration-500`}>
+                                    <Icon className="w-6 h-6 text-white" />
                                 </div>
                             </div>
 
