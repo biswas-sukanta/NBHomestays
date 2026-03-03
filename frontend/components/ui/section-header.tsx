@@ -44,7 +44,7 @@ export function SectionHeader({
             {/* ── Title ── */}
             <h2
                 className={cn(
-                    'text-4xl md:text-5xl font-bold tracking-tight font-heading text-gray-900',
+                    'font-serif text-5xl md:text-6xl font-medium tracking-tight text-gray-900',
                     isCentered ? 'text-center' : 'text-left'
                 )}
             >

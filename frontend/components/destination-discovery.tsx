@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Compass, Map, Train, Mountain, Trees, Waves, Tent, Sparkles, ArrowRight } from 'lucide-react';
+import { Compass, Map, MapPin, Train, Mountain, Trees, Waves, Tent, Sparkles, ArrowRight } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 
 interface Destination {
@@ -137,7 +137,8 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                         onClick={() => router.push(`/destination/${dest.slug}`)}
                                         className="group cursor-pointer"
                                     >
-                                        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5 group-hover:ring-amber-400/30 group-hover:shadow-[0_4px_20px_rgba(218,165,32,0.15)]">
+                                        <div className="relative aspect-[4/3] rounded-[32px] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5 group-hover:ring-amber-400/30 group-hover:shadow-[0_4px_20px_rgba(218,165,32,0.15)]">
+                                            <div className="absolute inset-0 bg-transparent z-20 pointer-events-none" />
                                             <Image
                                                 src={`/destinations/${dest.localImageName}`}
                                                 alt={dest.name.replace(" All", "")}
@@ -146,8 +147,15 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                             />
                                             {/* Text-protection gradient */}
-                                            <div className={`absolute inset-0 bg-gradient-to-t ${tint} via-transparent to-transparent`} />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                                            <div className={`absolute inset-0 bg-gradient-to-t ${tint} via-transparent to-transparent opacity-60`} />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+
+                                            {/* Standard colorful bubble icon in bento cards */}
+                                            <div className="absolute top-4 left-4 z-10 transition-transform duration-500 group-hover:scale-110">
+                                                <div className={`bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-2.5 shadow-xl`}>
+                                                    <MapPin className="w-6 h-6 text-white drop-shadow-md" />
+                                                </div>
+                                            </div>
 
                                             <div className="absolute inset-0 flex flex-col items-start justify-end p-5">
                                                 <h3 className="text-white font-extrabold text-lg md:text-xl tracking-tight drop-shadow-lg leading-tight">
