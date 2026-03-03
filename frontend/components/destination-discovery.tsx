@@ -140,7 +140,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                         <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5 group-hover:ring-amber-400/30 group-hover:shadow-[0_4px_20px_rgba(218,165,32,0.15)]">
                                             <Image
                                                 src={`/destinations/${dest.localImageName}`}
-                                                alt={dest.name}
+                                                alt={dest.name.replace(" All", "")}
                                                 fill
                                                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
@@ -151,7 +151,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
 
                                             <div className="absolute inset-0 flex flex-col items-start justify-end p-5">
                                                 <h3 className="text-white font-extrabold text-lg md:text-xl tracking-tight drop-shadow-lg leading-tight">
-                                                    {dest.name}
+                                                    {dest.name.replace(" All", "")}
                                                 </h3>
                                                 {dest.tags.length > 0 && (
                                                     <div className="flex flex-wrap gap-1.5 mt-2">

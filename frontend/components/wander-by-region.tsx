@@ -66,14 +66,14 @@ export function WanderByRegion() {
                     >
                         <Link
                             href={`/state/${state.slug}`}
-                            className="group block relative w-full h-full rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 ring-1 ring-white/10 hover:ring-amber-400/40 hover:shadow-[0_0_30px_rgba(218,165,32,0.15)]"
+                            className="group block relative w-full h-[280px] md:h-full rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 ring-1 ring-white/10 hover:ring-amber-400/40 hover:shadow-[0_0_30px_rgba(218,165,32,0.15)]"
                         >
                             {/* Background Image */}
                             <Image
                                 src={`/states/thumb-${state.slug}.webp`}
                                 alt={state.name}
                                 fill
-                                sizes={isHero ? '(max-width: 640px) 100vw, 50vw' : '(max-width: 640px) 50vw, 25vw'}
+                                sizes={isHero ? '(max-width: 640px) 100vw, 50vw' : '(max-width: 640px) 100vw, 25vw'}
                                 className="object-cover group-hover:scale-110 transition-transform duration-700"
                             />
 
