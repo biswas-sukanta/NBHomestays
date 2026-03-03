@@ -25,10 +25,11 @@ public class HomestayDto {
         private String name;
 
         @NotBlank(message = "Description is mandatory")
+        @Size(min = 20, max = 2000, message = "Description must be between 20 and 2000 characters")
         private String description;
 
         @NotNull(message = "Price per night is mandatory")
-        @Min(value = 0, message = "Price cannot be negative")
+        @Min(value = 1, message = "Price must be at least ₹1 per night")
         private Integer pricePerNight;
 
         @NotNull(message = "Latitude is mandatory")
@@ -46,6 +47,8 @@ public class HomestayDto {
         private java.util.List<String> tags;
         private java.util.Map<String, Object> hostDetails;
         private java.util.List<MediaDto> media;
+
+        @NotBlank(message = "Destination is mandatory")
         private String destinationId;
     }
 

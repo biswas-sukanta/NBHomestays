@@ -25,18 +25,22 @@ const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
 });
 
 // --- Constants ---
-const AMENITY_CATEGORIES = {
-    Highlights: ['Mountain View', 'Hot water', 'Free Wi-Fi', 'Water Dispenser', 'Common hangout area', 'Cafe', 'In-house Activities', 'Bedside Lamps', 'Breakfast (Extra)', 'UPI Payment Accepted', 'Pets Allowed', 'Parking (public)', 'Charging Points', 'Power Backup', 'Indoor Games', 'Bonfire (Extra)'],
-    Bathroom: ['Bath', 'Hairdryer', 'Cleaning products', 'Shampoo', 'Body soap', 'Shower gel'],
-    'Bedroom & Laundry': ['Free washer', 'Free dryer', 'Essentials (Towels, bed sheets, soap, TP)', 'Hangers', 'Bed linen', 'Cotton linen', 'Extra pillows/blankets', 'Room-darkening blinds', 'Iron', 'Clothes drying rack', 'Clothes storage'],
-    'Entertainment & Family': ['Books/reading material', 'Children’s books/toys', 'Fireplace guards'],
-    'Heating & Cooling': ['Indoor fireplace', 'Portable fans', 'Heating'],
-    'Home Safety': ['Smoke alarm'],
-    'Internet & Office': ['Wifi', 'Dedicated workspace'],
-    'Kitchen & Dining': ['Kitchen', 'Cooking space', 'Fridge', 'Microwave', 'Cooking basics', 'Crockery/cutlery', 'Freezer', 'Dishwasher', 'Gas cooker', 'Oven', 'Kettle', 'Coffee maker', 'Wine glasses', 'Toaster', 'Blender', 'Dining table'],
-    Services: ['Luggage drop-off allowed', 'Host greets you'],
-    Unavailable: ['Lock on bedroom door', 'Exterior security cameras', 'TV', 'Air conditioning', 'Carbon monoxide alarm']
+const AMENITY_CATEGORIES: Record<string, string[]> = {
+    '⭐ Highlights': ['Mountain View', 'Hot water', 'Free Wi-Fi', 'Water Dispenser', 'Common hangout area', 'Cafe', 'In-house Activities', 'Bedside Lamps', 'Breakfast (Extra)', 'UPI Payment Accepted', 'Pets Allowed', 'Parking (public)', 'Charging Points', 'Power Backup', 'Indoor Games', 'Bonfire (Extra)'],
+    '🚿 Bathroom': ['Bath', 'Hairdryer', 'Cleaning products', 'Shampoo', 'Body soap', 'Shower gel'],
+    '🛏 Bedroom & Laundry': ['Free washer', 'Free dryer', 'Essentials (Towels, bed sheets, soap, TP)', 'Hangers', 'Bed linen', 'Cotton linen', 'Extra pillows/blankets', 'Room-darkening blinds', 'Iron', 'Clothes drying rack', 'Clothes storage'],
+    '🎭 Entertainment': ['Books/reading material', 'Children\'s books/toys', 'Fireplace guards'],
+    '🌡 Heating & Cooling': ['Indoor fireplace', 'Portable fans', 'Heating'],
+    '🔒 Safety': ['Smoke alarm'],
+    '💻 Internet & Office': ['Wifi', 'Dedicated workspace'],
+    '🍳 Kitchen & Dining': ['Kitchen', 'Cooking space', 'Fridge', 'Microwave', 'Cooking basics', 'Crockery/cutlery', 'Freezer', 'Dishwasher', 'Gas cooker', 'Oven', 'Kettle', 'Coffee maker', 'Wine glasses', 'Toaster', 'Blender', 'Dining table'],
+    '🛎 Services': ['Luggage drop-off allowed', 'Host greets you'],
+    '🚫 Unavailable': ['Lock on bedroom door', 'Exterior security cameras', 'TV', 'Air conditioning', 'Carbon monoxide alarm']
 };
+
+const LOCATION_TYPE_OPTIONS = ['Remote', 'Village Center', 'Hill Station', 'Forest Retreat', 'Riverside', 'Town Outskirts'];
+const HIKE_OPTIONS = ['None', 'Short walk < 5 min', '5–15 min walk', '15–30 min hike', '30 min+ trail'];
+const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Bengali', 'Nepali', 'Assamese', 'Khasi', 'Garo', 'Bodo', 'Tibetan', 'Sikkimese'];
 
 const TAG_CATEGORIES = [
     {
@@ -104,7 +108,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
 
     // Host Details
     const [hostDetails, setHostDetails] = useState({
-        reviewsCount: '', rating: '', yearsHosting: '', school: '', work: '', languages: '', currentLocation: '', bio: ''
+        reviewsCount: '', rating: '', yearsHosting: '', school: '', work: '', languages: [] as string[], currentLocation: '', bio: ''
     });
 
     // Policies
@@ -154,7 +158,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                         yearsHosting: data.hostDetails.yearsHosting?.toString() || '',
                         school: data.hostDetails.school || '',
                         work: data.hostDetails.work || '',
-                        languages: (data.hostDetails.languages || []).join(', '),
+                        languages: Array.isArray(data.hostDetails.languages) ? data.hostDetails.languages : [],
                         currentLocation: data.hostDetails.currentLocation || '',
                         bio: data.hostDetails.bio || ''
                     });
@@ -179,11 +183,13 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
             if (!basicInfo.name.trim()) newErrors.name = "Property name is required.";
             if (!basicInfo.description.trim()) {
                 newErrors.description = "Description is required.";
-            } else if (basicInfo.description.trim().length < 10) {
-                newErrors.description = "Description must be at least 10 characters.";
+            } else if (basicInfo.description.trim().length < 20) {
+                newErrors.description = "Description must be at least 20 characters.";
+            } else if (basicInfo.description.trim().length > 2000) {
+                newErrors.description = "Description cannot exceed 2000 characters.";
             }
-            if (!basicInfo.pricePerNight || parseFloat(basicInfo.pricePerNight) <= 0) {
-                newErrors.price = "Valid price per night is required.";
+            if (!basicInfo.pricePerNight || parseFloat(basicInfo.pricePerNight) < 1) {
+                newErrors.price = "Price must be at least ₹1 per night.";
             }
         } else if (currentStep === 2) {
             if (!destinationId) newErrors.destinationId = "Please select a Destination.";
@@ -295,7 +301,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                     yearsHosting: parseInt(hostDetails.yearsHosting) || 0,
                     school: hostDetails.school,
                     work: hostDetails.work,
-                    languages: hostDetails.languages.split(',').map(l => l.trim()).filter(Boolean),
+                    languages: hostDetails.languages.join(', ').trim() ? hostDetails.languages : [],
                     currentLocation: hostDetails.currentLocation,
                     bio: hostDetails.bio
                 }
@@ -381,16 +387,23 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="description">Description *</Label>
+                                <Label htmlFor="description">Description * <span className="text-xs text-muted-foreground font-normal">(20–2000 chars)</span></Label>
                                 <Textarea
                                     id="description"
                                     value={basicInfo.description}
                                     onChange={e => setBasicInfo({ ...basicInfo, description: e.target.value })}
-                                    placeholder="Describe the vibe and surroundings in at least 10 characters..."
-                                    className="h-32 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
+                                    placeholder="Describe the vibe, views, and surroundings in at least 20 characters..."
+                                    className="h-36 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
                                     error={errors.description}
                                 />
-                                {errors.description && <p className="text-red-500 text-xs mt-1 font-medium">{errors.description}</p>}
+                                <div className="flex justify-between items-center">
+                                    {errors.description
+                                        ? <p className="text-red-500 text-xs font-medium">{errors.description}</p>
+                                        : <span />}
+                                    <p className={`text-xs ml-auto ${basicInfo.description.length > 2000 ? 'text-red-500' :
+                                        basicInfo.description.length >= 20 ? 'text-green-600' : 'text-muted-foreground'
+                                        }`}>{basicInfo.description.length}/2000</p>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="price">Price per Night (₹) *</Label>
@@ -449,35 +462,41 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                             </div>
 
                             <div className="space-y-4">
-                                <Label className="text-lg font-bold">Amenities & Features</Label>
-                                <ScrollArea className="h-[400px] border rounded-lg p-2 bg-muted/10">
+                                <Label className="text-base font-bold">Amenities & Features</Label>
+                                <div className="space-y-6">
                                     {Object.entries(AMENITY_CATEGORIES).map(([category, items]) => (
-                                        <div key={category} className="mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <h3 className="font-bold text-lg text-primary">{category}</h3>
-                                                <div className="flex space-x-2 items-center">
-                                                    <button onClick={() => selectAllAmenitiesPreview(items)} className="text-xs text-green-700 hover:underline font-medium">Select All</button>
-                                                    <span className="text-gray-300">|</span>
-                                                    <button onClick={() => selectNoneAmenitiesPreview(items)} className="text-xs text-gray-500 hover:underline font-medium">Select None</button>
+                                        <div key={category} className="bg-gray-50 rounded-2xl border border-gray-100 p-5">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h3 className="font-semibold text-sm text-gray-800">{category}</h3>
+                                                <div className="flex gap-3">
+                                                    <button type="button" onClick={() => selectAllAmenitiesPreview(items)} className="text-xs text-emerald-700 hover:underline font-medium">All</button>
+                                                    <button type="button" onClick={() => selectNoneAmenitiesPreview(items)} className="text-xs text-gray-400 hover:underline font-medium">None</button>
                                                 </div>
                                             </div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                {items.map(item => (
-                                                    <div key={item} className="flex items-start space-x-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            id={item}
-                                                            checked={amenities.includes(item)}
-                                                            onChange={() => toggleAmenity(item)}
-                                                            className={`mt-1 h-4 w-4 rounded border-gray-300 text-green-700 accent-green-700 focus:ring-green-700 transition-all ${category === 'Unavailable' ? 'text-destructive accent-destructive border-destructive focus:ring-destructive' : ''}`}
-                                                        />
-                                                        <Label htmlFor={item} className={`text-sm leading-snug cursor-pointer font-medium text-gray-700 ${category === 'Unavailable' && amenities.includes(item) ? 'line-through text-muted-foreground' : ''}`}>{item}</Label>
-                                                    </div>
-                                                ))}
+                                            <div className="flex flex-wrap gap-2">
+                                                {items.map(item => {
+                                                    const isUnavailable = category === '🚫 Unavailable';
+                                                    const selected = amenities.includes(item);
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            key={item}
+                                                            onClick={() => toggleAmenity(item)}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 cursor-pointer ${selected
+                                                                ? isUnavailable
+                                                                    ? 'bg-red-50 text-red-700 border-red-200 line-through'
+                                                                    : 'bg-emerald-700 text-white border-emerald-700'
+                                                                : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400 hover:bg-emerald-50'
+                                                                }`}
+                                                        >
+                                                            {item}
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     ))}
-                                </ScrollArea>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -543,17 +562,21 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                             </div>
                             <div className="space-y-2">
                                 <Label>Location Type</Label>
-                                <Input
-                                    placeholder="e.g. Remote, Village Center"
-                                    value={quickFacts.locationType}
-                                    onChange={e => setQuickFacts({ ...quickFacts, locationType: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
-                                    error={errors.locationType}
-                                />
+                                <Select value={quickFacts.locationType} onValueChange={v => setQuickFacts({ ...quickFacts, locationType: v })}>
+                                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        {LOCATION_TYPE_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label>Hike / Walk to Property</Label>
-                                <Input placeholder="e.g. 150m hike, None" value={quickFacts.hike} onChange={e => setQuickFacts({ ...quickFacts, hike: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
+                                <Select value={quickFacts.hike} onValueChange={v => setQuickFacts({ ...quickFacts, hike: v })}>
+                                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        {HIKE_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label>Alcohol</Label>
@@ -619,8 +642,30 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                                     <Input value={hostDetails.work} onChange={e => setHostDetails({ ...hostDetails, work: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
-                                    <Label>Languages Spoken (Comma separated)</Label>
-                                    <Input value={hostDetails.languages} onChange={e => setHostDetails({ ...hostDetails, languages: e.target.value })} placeholder="English, Hindi, Bengali" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none" />
+                                    <Label>Languages Spoken</Label>
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                        {LANGUAGE_OPTIONS.map(lang => {
+                                            const selected = hostDetails.languages.includes(lang);
+                                            return (
+                                                <button
+                                                    type="button"
+                                                    key={lang}
+                                                    onClick={() => setHostDetails(prev => ({
+                                                        ...prev,
+                                                        languages: selected
+                                                            ? prev.languages.filter(l => l !== lang)
+                                                            : [...prev.languages, lang]
+                                                    }))}
+                                                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 ${selected
+                                                        ? 'bg-[#004d00] text-white border-[#004d00]'
+                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-[#004d00] hover:bg-[#004d00]/5'
+                                                        }`}
+                                                >
+                                                    {lang}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <Label>Current Origin Location</Label>
