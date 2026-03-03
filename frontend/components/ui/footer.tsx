@@ -65,16 +65,27 @@ export function Footer() {
                 </h2>
             </div>
 
-            {/* ── Explore CTA ── */}
-            <div className="flex justify-center py-8">
-                <Link
-                    href="/search"
-                    className="group inline-flex items-center gap-3 px-10 py-4 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-base shadow-xl shadow-amber-500/20 hover:shadow-amber-500/40 hover:scale-105 transition-all duration-300"
-                >
-                    <Sparkles className="w-5 h-5" />
-                    Explore All Stays
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
-                </Link>
+            {/* ── Premium Host Partnership ── */}
+            <div className="w-full bg-slate-900 border-y border-white/5 py-16 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzk5OCIvPjwvc3ZnPg==')] opacity-[0.05]" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px]" />
+                <div className="w-full max-w-4xl mx-auto px-6 text-center relative z-10">
+                    <h3 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-tight font-heading">
+                        Join the Inner Circle
+                    </h3>
+                    <p className="text-slate-300 text-lg md:text-xl font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
+                        Have a property that fits the vibe? Join our invite-only network of authentic hosts.
+                    </p>
+                    <Link
+                        href="/host"
+                        className="group relative inline-flex items-center justify-center gap-3 px-10 py-4 text-lg font-bold text-slate-900 transition-all duration-300 bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-200 rounded-full shadow-[0_0_40px_rgba(253,230,138,0.4)] hover:shadow-[0_0_60px_rgba(253,230,138,0.6)] hover:scale-105 overflow-hidden ring-4 ring-amber-500/20"
+                    >
+                        <span className="relative z-10 flex items-center gap-2">
+                            Host on NBH <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-300 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    </Link>
+                </div>
             </div>
 
             {/* ── Navigation Grid ── */}
