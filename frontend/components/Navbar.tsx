@@ -36,8 +36,9 @@ export default function Navbar() {
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
-    // Minimal primary nav — only Explore + Community
+    // Minimal primary nav — Home + Explore + Community
     const primaryLinks = [
+        { name: 'Home', href: '/', icon: Home },
         { name: 'Explore', href: '/search', icon: Search },
         { name: 'Community', href: '/community', icon: MessageSquare },
     ];
@@ -261,7 +262,7 @@ export default function Navbar() {
                                 <span>Home</span>
                             </Link>
 
-                            {primaryLinks.map((link) => {
+                            {primaryLinks.filter(l => l.name !== 'Home').map((link) => {
                                 const isActive = pathname === link.href;
                                 return (
                                     <Link

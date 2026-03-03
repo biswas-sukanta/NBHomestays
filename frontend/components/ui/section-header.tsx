@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface SectionHeaderProps {
-    pillText: string;
+    pillText: React.ReactNode;
     title: React.ReactNode; // Allows strings and JSX for e.g. italicising words
-    subtitle?: string;
+    subtitle?: React.ReactNode;
     className?: string;
     align?: 'center' | 'left'; // Defaults to center
 }

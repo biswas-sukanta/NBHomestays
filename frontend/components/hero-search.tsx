@@ -60,13 +60,11 @@ export function HeroSearch() {
                     initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.9, delay: 0.2 }}
-                    className="mb-5 max-w-5xl text-5xl font-extrabold leading-[1.05] tracking-tight md:text-7xl lg:text-8xl font-heading"
+                    className="mb-8 max-w-5xl text-5xl font-extrabold leading-[1.05] tracking-tight md:text-7xl lg:text-[5.5rem] font-heading"
                     style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4)' }}
                 >
-                    <span className="text-white">DISCOVER YOUR</span>
-                    <br />
                     <span className="bg-gradient-to-r from-amber-300 via-emerald-300 to-teal-200 bg-clip-text text-transparent">
-                        UNFILTERED Vibe
+                        DISCOVER YOUR UNFILTERED Vibe
                     </span>
                 </motion.h1>
 
@@ -86,12 +84,12 @@ export function HeroSearch() {
                     initial={{ opacity: 0, scale: 0.94, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.7, delay: 0.5 }}
-                    className="w-full w-full max-w-[92%] sm:max-w-md mx-auto"
+                    className="w-full max-w-[92%] sm:max-w-xl mx-auto"
                 >
                     <div
                         className={cn(
-                            "flex items-center p-1 bg-white/90 backdrop-blur-sm rounded-full shadow-lg transition-all duration-300",
-                            focused && "ring-4 ring-amber-400/30 shadow-[0_0_40px_rgba(218,165,32,0.15)]"
+                            "flex items-center p-1.5 bg-white/90 backdrop-blur-sm rounded-full shadow-[inset_0_2px_10px_rgba(0,0,0,0.05),0_10px_30px_rgba(0,0,0,0.2)] transition-all duration-300",
+                            focused && "ring-4 ring-amber-400/40 shadow-[0_0_40px_rgba(218,165,32,0.25)]"
                         )}
                     >
                         <Search className="w-5 h-5 text-gray-500 flex-none ml-4 mr-2" />
