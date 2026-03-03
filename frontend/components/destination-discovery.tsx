@@ -5,11 +5,11 @@ import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Compass, Map, Train, Mountain, Trees, Waves, Tent, Sparkles } from 'lucide-react';
-import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
+import { Compass, Map, Train, Mountain, Trees, Waves, Tent, Sparkles, ArrowRight } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 
 interface Destination {
@@ -20,7 +20,6 @@ interface Destination {
     tags: string[];
 }
 
-// Tag → Lucide icon mapping for vibrant filter pills
 const TAG_ICONS: Record<string, React.ElementType> = {
     'Heritage': Train,
     'Mountain View': Mountain,
@@ -30,7 +29,6 @@ const TAG_ICONS: Record<string, React.ElementType> = {
     'Trending Now': Sparkles,
 };
 
-// Per-card warm/cool gradient overlays for visual variety
 const CARD_TINTS = [
     'from-emerald-900/40',
     'from-amber-900/40',
@@ -96,13 +94,13 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                 key={tag}
                                 onClick={() => setActiveTag(tag)}
                                 className={cn(
-                                    "whitespace-nowrap flex items-center gap-2 px-6 py-3 rounded-full border-2 transition-all text-sm font-bold",
+                                    "whitespace-nowrap flex items-center gap-2 px-7 py-3.5 rounded-full border-2 transition-all text-base font-bold",
                                     isActive
                                         ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-amber-500 shadow-[0_0_20px_rgba(218,165,32,0.4)] scale-105"
                                         : "bg-white text-gray-700 border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 hover:text-amber-800"
                                 )}
                             >
-                                <TagIcon className={cn("w-4 h-4", isActive ? "text-white" : "text-gray-500")} />
+                                <TagIcon className={cn("w-5 h-5", isActive ? "text-white" : "text-gray-500")} />
                                 {tag}
                             </button>
                         );
@@ -110,7 +108,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                 </div>
             </div>
 
-            {/* ── Large Bento Destination Cards ── */}
+            {/* ── Curated Destination Cards (max 8) ── */}
             {!filteredDestinations?.length ? (
                 <div className="w-full max-w-3xl mx-auto mt-6">
                     <EmptyState
@@ -120,54 +118,68 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                     />
                 </div>
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    <AnimatePresence mode='popLayout'>
-                        {filteredDestinations?.map((dest, idx) => {
-                            const tint = CARD_TINTS[idx % CARD_TINTS.length];
-                            return (
-                                <motion.div
-                                    key={dest.slug}
-                                    layout
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ duration: 0.3 }}
-                                    onClick={() => router.push(`/destination/${dest.slug}`)}
-                                    className="group cursor-pointer snap-start"
-                                >
-                                    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5 group-hover:ring-amber-400/30 group-hover:shadow-[0_4px_20px_rgba(218,165,32,0.15)]">
-                                        <Image
-                                            src={`/destinations/${dest.localImageName}`}
-                                            alt={dest.name}
-                                            fill
-                                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                        />
-                                        {/* Color-tinted gradient */}
-                                        <div className={`absolute inset-0 bg-gradient-to-t ${tint} via-transparent to-transparent`} />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                <>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <AnimatePresence mode='popLayout'>
+                            {filteredDestinations.slice(0, 8).map((dest, idx) => {
+                                const tint = CARD_TINTS[idx % CARD_TINTS.length];
+                                return (
+                                    <motion.div
+                                        key={dest.slug}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        transition={{ duration: 0.3 }}
+                                        onClick={() => router.push(`/destination/${dest.slug}`)}
+                                        className="group cursor-pointer"
+                                    >
+                                        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5 group-hover:ring-amber-400/30 group-hover:shadow-[0_4px_20px_rgba(218,165,32,0.15)]">
+                                            <Image
+                                                src={`/destinations/${dest.localImageName}`}
+                                                alt={dest.name}
+                                                fill
+                                                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                            />
+                                            {/* Text-protection gradient */}
+                                            <div className={`absolute inset-0 bg-gradient-to-t ${tint} via-transparent to-transparent`} />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
 
-                                        {/* Content */}
-                                        <div className="absolute inset-0 flex flex-col items-start justify-end p-5">
-                                            <h3 className="text-white font-extrabold text-lg md:text-xl tracking-tight drop-shadow-lg text-left leading-tight">
-                                                {dest.name}
-                                            </h3>
-                                            {dest.tags.length > 0 && (
-                                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                                    {dest.tags.slice(0, 2).map(t => (
-                                                        <span key={t} className="text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-sm text-white/90 px-2 py-0.5 rounded-full">
-                                                            {t}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
+                                            <div className="absolute inset-0 flex flex-col items-start justify-end p-5">
+                                                <h3 className="text-white font-extrabold text-lg md:text-xl tracking-tight drop-shadow-lg leading-tight">
+                                                    {dest.name}
+                                                </h3>
+                                                {dest.tags.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                                        {dest.tags.slice(0, 2).map(t => (
+                                                            <span key={t} className="text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-sm text-white/90 px-2 py-0.5 rounded-full">
+                                                                {t}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-                    </AnimatePresence>
-                </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* View all link */}
+                    {filteredDestinations.length > 8 && (
+                        <div className="flex justify-center mt-10">
+                            <Link
+                                href="/search"
+                                className="group inline-flex items-center gap-2 text-base font-bold text-gray-700 hover:text-amber-600 transition-colors duration-200"
+                            >
+                                View all {filteredDestinations.length}+ destinations
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                            </Link>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

@@ -39,18 +39,18 @@ export function EmojiCategoryFilter({ activeCategory, onCategoryChange }: EmojiC
                             key={cat.tag}
                             onClick={() => onCategoryChange(cat.tag)}
                             className={cn(
-                                "flex flex-col items-center gap-1.5 cursor-pointer min-w-[72px] px-3 py-2 rounded-xl transition-all duration-200 snap-center",
+                                "flex flex-col items-center gap-2 cursor-pointer min-w-[80px] px-4 py-3 rounded-xl transition-all duration-200 snap-center",
                                 isSelected
                                     ? "bg-gradient-to-b from-amber-500 to-yellow-500 shadow-[0_0_16px_rgba(218,165,32,0.45)] scale-105"
                                     : "hover:bg-gray-100/80"
                             )}
                         >
                             <Icon className={cn(
-                                "w-6 h-6 transition-colors",
+                                "w-7 h-7 transition-colors",
                                 isSelected ? "text-white" : cat.color
                             )} />
                             <span className={cn(
-                                "text-xs font-bold whitespace-nowrap tracking-wide",
+                                "text-sm font-bold whitespace-nowrap tracking-wide",
                                 isSelected ? "text-white" : "text-gray-700"
                             )}>
                                 {cat.label}

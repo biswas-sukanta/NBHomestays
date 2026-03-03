@@ -6,13 +6,8 @@ import { HeroSearch } from '@/components/hero-search';
 import {
   ShieldCheck,
   MessageCircle,
-  ArrowRight,
   Mountain,
-  Key,
-  Sparkles,
 } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { WanderByRegion } from '@/components/wander-by-region';
 import { DestinationDiscovery } from '@/components/destination-discovery';
 import { SectionHeader } from '@/components/ui/section-header';
@@ -118,35 +113,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── CTA Banner ── */}
-      <section className="py-20 bg-gradient-to-br from-[#0d2818] via-[#102e1c] to-[#1a0a2e] border-t border-emerald-900/20">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="container mx-auto px-4 text-center max-w-2xl"
-        >
-          <div className="inline-flex items-center gap-2 mb-6 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 backdrop-blur-sm">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold tracking-[0.2em] uppercase text-white/70">Ready?</span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight font-heading leading-tight">
-            Find your <span className="bg-gradient-to-r from-amber-300 to-emerald-300 bg-clip-text text-transparent">unfiltered</span> vibe
-          </h2>
-          <p className="text-white/60 mb-10 text-lg">
-            Dozens of verified homestays waiting to be discovered in the serene heights of North Bengal.
-          </p>
-          <Button
-            asChild
-            size="lg"
-            className="bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-full hover:from-amber-400 hover:to-amber-500 h-14 px-10 text-base shadow-xl shadow-amber-500/25 hover:shadow-amber-500/40 hover:-translate-y-1 transition-all duration-300 border-0"
-          >
-            <Link href="/search" className="gap-2.5 font-bold" prefetch={true}>
-              Explore listings <ArrowRight className="w-5 h-5" />
-            </Link>
-          </Button>
-        </motion.div>
-      </section>
     </div>
   );
 }
