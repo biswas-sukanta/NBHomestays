@@ -2,18 +2,21 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import {
+    Flame, Laptop, Leaf, Mountain, Landmark, Trees, PawPrint, Heart, Users, Sparkles,
+} from 'lucide-react';
 
 const CATEGORIES = [
-    { label: 'Trending', tag: 'Trending Now', icon: '🔥' },
-    { label: 'Workations', tag: 'Workation', icon: '💻' },
-    { label: 'Offbeat', tag: 'Explore Offbeat', icon: '🍃' },
-    { label: 'Views', tag: 'Mountain View', icon: '🏔️' },
-    { label: 'Heritage', tag: 'Heritage', icon: '🏛️' },
-    { label: 'Nature', tag: 'Nature & Eco', icon: '🌲' },
-    { label: 'Pet Friendly', tag: 'Pet Friendly', icon: '🐾' },
-    { label: 'Couples', tag: 'Couples Getaway', icon: '❤️' },
-    { label: 'Groups', tag: 'Group Friendly', icon: '👥' },
-    { label: 'Premium', tag: 'Premium', icon: '✨' },
+    { label: 'Trending', tag: 'Trending Now', icon: Flame, color: 'text-orange-500' },
+    { label: 'Workations', tag: 'Workation', icon: Laptop, color: 'text-blue-500' },
+    { label: 'Offbeat', tag: 'Explore Offbeat', icon: Leaf, color: 'text-emerald-500' },
+    { label: 'Views', tag: 'Mountain View', icon: Mountain, color: 'text-indigo-500' },
+    { label: 'Heritage', tag: 'Heritage', icon: Landmark, color: 'text-amber-600' },
+    { label: 'Nature', tag: 'Nature & Eco', icon: Trees, color: 'text-green-600' },
+    { label: 'Pet Friendly', tag: 'Pet Friendly', icon: PawPrint, color: 'text-orange-400' },
+    { label: 'Couples', tag: 'Couples Getaway', icon: Heart, color: 'text-rose-500' },
+    { label: 'Groups', tag: 'Group Friendly', icon: Users, color: 'text-violet-500' },
+    { label: 'Premium', tag: 'Premium', icon: Sparkles, color: 'text-amber-500' },
 ];
 
 interface EmojiCategoryFilterProps {
@@ -24,26 +27,35 @@ interface EmojiCategoryFilterProps {
 export function EmojiCategoryFilter({ activeCategory, onCategoryChange }: EmojiCategoryFilterProps) {
     return (
         <div className="w-full flex justify-center">
-            <div className="flex justify-start md:justify-center gap-6 md:gap-10 overflow-x-auto snap-x hide-scrollbar py-4 px-4 w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div
+                className="flex justify-start md:justify-center gap-3 md:gap-4 overflow-x-auto snap-x hide-scrollbar py-3 px-2 w-full"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
                 {CATEGORIES.map((cat) => {
                     const isSelected = activeCategory === cat.tag;
+                    const Icon = cat.icon;
                     return (
-                        <div
+                        <button
                             key={cat.tag}
                             onClick={() => onCategoryChange(cat.tag)}
                             className={cn(
-                                "flex flex-col items-center gap-1 cursor-pointer min-w-[60px] opacity-70 hover:opacity-100 transition-opacity snap-center",
-                                isSelected ? "opacity-100 border-b-2 border-gray-900 pb-1" : "pb-1.5"
+                                "flex flex-col items-center gap-1.5 cursor-pointer min-w-[72px] px-3 py-2 rounded-xl transition-all duration-200 snap-center",
+                                isSelected
+                                    ? "bg-gradient-to-b from-amber-500 to-yellow-500 shadow-[0_0_16px_rgba(218,165,32,0.45)] scale-105"
+                                    : "hover:bg-gray-100/80"
                             )}
                         >
-                            <span className="text-2xl">{cat.icon}</span>
+                            <Icon className={cn(
+                                "w-6 h-6 transition-colors",
+                                isSelected ? "text-white" : cat.color
+                            )} />
                             <span className={cn(
-                                "text-xs font-semibold whitespace-nowrap",
-                                isSelected ? "text-gray-900" : "text-gray-700"
+                                "text-xs font-bold whitespace-nowrap tracking-wide",
+                                isSelected ? "text-white" : "text-gray-700"
                             )}>
                                 {cat.label}
                             </span>
-                        </div>
+                        </button>
                     );
                 })}
             </div>

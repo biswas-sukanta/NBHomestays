@@ -277,10 +277,10 @@ function SearchResults() {
                 ) : isStorefront ? (
                     <>
                         <section>
-                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
                                 <div className="text-left">
-                                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 tracking-tight italic">Destination Discovery</h2>
-                                    <p className="text-gray-500 text-base">Unwind in the most sought-after hills of North Bengal.</p>
+                                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight font-heading">UNFILTERED EXPERIENCES</h2>
+                                    <p className="text-gray-500 text-base font-medium">Your authentic story starts here.</p>
                                 </div>
                             </div>
                             <DestinationDiscovery />
@@ -305,9 +305,9 @@ function SearchResults() {
                         {/* STEP 4: Proper Infinite Paginated Grid */}
                         <div className="border-t border-gray-100 pt-16">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight italic relative">
-                                    All Homestays
-                                    <span className="absolute -bottom-1 left-0 w-12 h-1 bg-[#004d00] rounded-full"></span>
+                                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight font-heading relative">
+                                    EVERY STAY, UNFILTERED
+                                    <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full"></span>
                                 </h2>
 
                                 <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm self-end sm:self-auto">
@@ -316,7 +316,7 @@ function SearchResults() {
                                         className={cn(
                                             "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300",
                                             viewType === 'grid'
-                                                ? "bg-white text-[#004d00] shadow-md scale-105"
+                                                ? "bg-white text-blue-600 shadow-md shadow-blue-500/20 scale-105"
                                                 : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
                                         )}
                                     >
@@ -328,7 +328,7 @@ function SearchResults() {
                                         className={cn(
                                             "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300",
                                             viewType === 'map'
-                                                ? "bg-white text-[#004d00] shadow-md scale-105"
+                                                ? "bg-white text-blue-600 shadow-md shadow-blue-500/20 scale-105"
                                                 : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
                                         )}
                                     >
@@ -379,9 +379,9 @@ function SearchResults() {
                     /* Search Term Direct Results */
                     <div className="w-full">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                            <h2 className="text-2xl font-bold italic relative">
+                            <h2 className="text-3xl font-extrabold font-heading relative">
                                 Search Results
-                                <span className="absolute -bottom-1 left-0 w-12 h-1 bg-[#004d00] rounded-full"></span>
+                                <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full"></span>
                             </h2>
                             <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm self-end sm:self-auto">
                                 <button

@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Compass, Map } from 'lucide-react';
+import { Compass, Map, Train, Mountain, Trees, Waves, Tent, Sparkles } from 'lucide-react';
 import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -19,6 +19,28 @@ interface Destination {
     localImageName: string;
     tags: string[];
 }
+
+// Tag → Lucide icon mapping for vibrant filter pills
+const TAG_ICONS: Record<string, React.ElementType> = {
+    'Heritage': Train,
+    'Mountain View': Mountain,
+    'Nature & Eco': Trees,
+    'Riverside': Waves,
+    'Offbeat': Tent,
+    'Trending Now': Sparkles,
+};
+
+// Per-card warm/cool gradient overlays for visual variety
+const CARD_TINTS = [
+    'from-emerald-900/40',
+    'from-amber-900/40',
+    'from-indigo-900/40',
+    'from-rose-900/40',
+    'from-teal-900/40',
+    'from-violet-900/40',
+    'from-orange-900/40',
+    'from-cyan-900/40',
+];
 
 export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: string; stateName?: string }) {
     const router = useRouter();
@@ -32,18 +54,16 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
     if (isLoading) {
         return (
             <div className="space-y-8">
-                <div className="flex flex-nowrap overflow-hidden md:flex-wrap md:overflow-visible gap-2 pb-2">
-                    {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-24 rounded-full shrink-0 md:shrink" />)}
+                <div className="flex flex-nowrap overflow-hidden md:flex-wrap md:overflow-visible gap-3 pb-2">
+                    {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-28 rounded-full shrink-0 md:shrink" />)}
                 </div>
-                <div className="flex gap-6 overflow-hidden pb-4">
-                    {[...Array(5)].map((_, i) => <Skeleton key={i} className="w-32 md:w-40 aspect-[3/4] rounded-[999px]" />)}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {[...Array(8)].map((_, i) => <Skeleton key={i} className="aspect-[4/3] rounded-2xl" />)}
                 </div>
             </div>
         );
     }
 
-    // EARLY RETURN: No destinations at all for this state.
-    // This prevents the filter pill wrapper from rendering a 'ghost container'.
     if (!destinations || destinations.length === 0) {
         return (
             <div className="w-full max-w-3xl mx-auto mt-6">
@@ -64,28 +84,33 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
         : destinations?.filter(d => d.tags.includes(activeTag));
 
     return (
-        <div className="space-y-8">
-            {/* Horizontal Sticky Filter Row */}
-            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md py-4 -mx-4 px-4 mask-fade-edges">
-                <div className="flex flex-nowrap overflow-x-auto no-scrollbar md:flex-wrap md:overflow-visible gap-2 pb-2">
-                    {allTags.map(tag => (
-                        <button
-                            key={tag}
-                            onClick={() => setActiveTag(tag)}
-                            className={cn(
-                                "whitespace-nowrap px-6 py-2 rounded-full border transition-all text-sm font-medium",
-                                activeTag === tag
-                                    ? "bg-[#004d00] text-white border-[#004d00] shadow-md scale-105"
-                                    : "bg-white text-gray-600 border-gray-200 hover:border-[#004d00]/30 hover:bg-gray-50"
-                            )}
-                        >
-                            {tag}
-                        </button>
-                    ))}
+        <div className="space-y-10">
+            {/* ── Vibrant Filter Pills ── */}
+            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md py-4 -mx-4 px-4">
+                <div className="flex flex-nowrap overflow-x-auto no-scrollbar md:flex-wrap md:overflow-visible gap-3 pb-2">
+                    {allTags.map(tag => {
+                        const isActive = activeTag === tag;
+                        const TagIcon = TAG_ICONS[tag] || Compass;
+                        return (
+                            <button
+                                key={tag}
+                                onClick={() => setActiveTag(tag)}
+                                className={cn(
+                                    "whitespace-nowrap flex items-center gap-2 px-6 py-3 rounded-full border-2 transition-all text-sm font-bold",
+                                    isActive
+                                        ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-amber-500 shadow-[0_0_20px_rgba(218,165,32,0.4)] scale-105"
+                                        : "bg-white text-gray-700 border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 hover:text-amber-800"
+                                )}
+                            >
+                                <TagIcon className={cn("w-4 h-4", isActive ? "text-white" : "text-gray-500")} />
+                                {tag}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Zostel-style Grid/Carousel */}
+            {/* ── Large Bento Destination Cards ── */}
             {!filteredDestinations?.length ? (
                 <div className="w-full max-w-3xl mx-auto mt-6">
                     <EmptyState
@@ -95,37 +120,54 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                     />
                 </div>
             ) : (
-                <CarouselWrapper containerClassName="grid grid-rows-2 grid-flow-col auto-cols-[160px] md:auto-cols-[200px] gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     <AnimatePresence mode='popLayout'>
-                        {filteredDestinations?.map((dest) => (
-                            <motion.div
-                                key={dest.slug}
-                                layout
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                transition={{ duration: 0.3 }}
-                                onClick={() => router.push(`/destination/${dest.slug}`)}
-                                className="group cursor-pointer snap-start w-full h-full"
-                            >
-                                <div className="relative aspect-[3/4] rounded-[999px] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5">
-                                    <Image
-                                        src={`/destinations/${dest.localImageName}`}
-                                        alt={dest.name}
-                                        fill
-                                        sizes="(max-width: 768px) 128px, 160px"
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 flex flex-col items-center justify-end pb-8">
-                                        <h3 className="text-white font-bold text-base md:text-lg tracking-tight drop-shadow-md text-center">
-                                            {dest.name}
-                                        </h3>
+                        {filteredDestinations?.map((dest, idx) => {
+                            const tint = CARD_TINTS[idx % CARD_TINTS.length];
+                            return (
+                                <motion.div
+                                    key={dest.slug}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    transition={{ duration: 0.3 }}
+                                    onClick={() => router.push(`/destination/${dest.slug}`)}
+                                    className="group cursor-pointer snap-start"
+                                >
+                                    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5 group-hover:ring-amber-400/30 group-hover:shadow-[0_4px_20px_rgba(218,165,32,0.15)]">
+                                        <Image
+                                            src={`/destinations/${dest.localImageName}`}
+                                            alt={dest.name}
+                                            fill
+                                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                        />
+                                        {/* Color-tinted gradient */}
+                                        <div className={`absolute inset-0 bg-gradient-to-t ${tint} via-transparent to-transparent`} />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+
+                                        {/* Content */}
+                                        <div className="absolute inset-0 flex flex-col items-start justify-end p-5">
+                                            <h3 className="text-white font-extrabold text-lg md:text-xl tracking-tight drop-shadow-lg text-left leading-tight">
+                                                {dest.name}
+                                            </h3>
+                                            {dest.tags.length > 0 && (
+                                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                                    {dest.tags.slice(0, 2).map(t => (
+                                                        <span key={t} className="text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-sm text-white/90 px-2 py-0.5 rounded-full">
+                                                            {t}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            );
+                        })}
                     </AnimatePresence>
-                </CarouselWrapper>
+                </div>
             )}
         </div>
     );
