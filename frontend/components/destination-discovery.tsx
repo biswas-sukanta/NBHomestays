@@ -97,13 +97,13 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                 key={tag}
                                 onClick={() => setActiveTag(tag)}
                                 className={cn(
-                                    "whitespace-nowrap flex items-center gap-2 px-4 py-2 text-sm md:px-7 md:py-3.5 md:text-base rounded-full border transition-all font-semibold snap-center",
+                                    "whitespace-nowrap flex items-center gap-2 px-4 py-2 text-sm rounded-full transition-all font-medium snap-center",
                                     isActive
-                                        ? "bg-emerald-50 text-emerald-900 border-emerald-300 shadow-sm scale-105"
-                                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
+                                        ? "bg-slate-900 text-white shadow-md"
+                                        : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                                 )}
                             >
-                                <TagIcon className={cn("w-5 h-5", isActive ? "text-emerald-700" : "text-slate-400")} />
+                                <TagIcon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400")} />
                                 {tag}
                             </button>
                         );

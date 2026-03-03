@@ -34,8 +34,8 @@ export default function Home() {
                 WANDER BY REGION
               </span>
             }
-            titleClassName="text-3xl md:text-4xl"
-            title={<span className="text-slate-900 block px-4 leading-tight">Choose your state of mind</span>}
+            titleClassName="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900"
+            title={<span className="block px-4 leading-tight">Choose your state of mind</span>}
             subtitle={<span className="text-slate-600 block text-base md:text-lg">From misty hills to sacred lakes — each region holds its own magic.</span>}
           />
           <div className="mt-8">
@@ -53,9 +53,9 @@ export default function Home() {
                 DISCOVER DESTINATIONS
               </span>
             }
-            titleClassName="text-3xl md:text-4xl"
+            titleClassName="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900"
             title={
-              <span className="text-slate-900 block px-4 leading-tight">
+              <span className="block px-4 leading-tight">
                 Where will you go <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent italic">next?</span>
               </span>
             }
