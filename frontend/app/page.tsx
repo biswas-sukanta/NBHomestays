@@ -26,27 +26,44 @@ export default function Home() {
       <HeroSearch />
 
       {/* ── Wander by Region (States) ── */}
-      <section className="py-32 bg-background border-t">
+      <section className="py-24 md:py-32 bg-[#FAFAFA] border-t">
         <div className="container mx-auto px-4 max-w-7xl">
           <SectionHeader
-            pillText="WANDER BY REGION"
-            titleClassName="text-3xl md:text-5xl"
-            title={<span className="text-slate-900 block px-4">Choose your state of mind</span>}
-            subtitle="From misty hills to sacred lakes — each region holds its own magic."
+            pillText={
+              <span className="text-xs font-bold tracking-[0.2em] text-emerald-700 uppercase">
+                WANDER BY REGION
+              </span>
+            }
+            titleClassName="text-3xl md:text-4xl"
+            title={<span className="text-slate-900 block px-4 leading-tight">Choose your state of mind</span>}
+            subtitle={<span className="text-slate-600 block text-base md:text-lg">From misty hills to sacred lakes — each region holds its own magic.</span>}
           />
-          <WanderByRegion />
+          <div className="mt-8">
+            <WanderByRegion />
+          </div>
         </div>
       </section>
 
       {/* ── Discover Destinations ── */}
-      <section className="py-32 bg-[#FDFCFB] border-t">
+      <section className="py-24 md:py-32 bg-white border-t border-slate-100">
         <div className="container mx-auto px-4 max-w-7xl">
           <SectionHeader
-            pillText="DISCOVER DESTINATIONS"
-            title={<span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">Where will you go next?</span>}
-            subtitle="Unwind in the most sought-after hills, valleys, and hidden hamlets of the East."
+            pillText={
+              <span className="text-xs font-bold tracking-[0.2em] text-emerald-700 uppercase">
+                DISCOVER DESTINATIONS
+              </span>
+            }
+            titleClassName="text-3xl md:text-4xl"
+            title={
+              <span className="text-slate-900 block px-4 leading-tight">
+                Where will you go <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent italic">next?</span>
+              </span>
+            }
+            subtitle={<span className="text-slate-600 block text-base md:text-lg">Unwind in the most sought-after hills, valleys, and hidden hamlets of the East.</span>}
           />
-          <DestinationDiscovery />
+          <div className="mt-8">
+            <DestinationDiscovery />
+          </div>
         </div>
       </section>
 
