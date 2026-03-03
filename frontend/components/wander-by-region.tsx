@@ -79,7 +79,7 @@ export function WanderByRegion() {
 
                             {/* Color-tinted gradient overlay */}
                             <div className={`absolute inset-0 bg-gradient-to-t ${style.gradient} to-transparent`} />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
 
                             {/* State Icon Badge */}
                             <div className="absolute top-4 left-4 z-10">
@@ -90,7 +90,7 @@ export function WanderByRegion() {
 
                             {/* Content */}
                             <div className="absolute inset-0 flex flex-col justify-end p-5 lg:p-6">
-                                <h3 className={`text-white font-extrabold tracking-tight drop-shadow-lg font-heading mb-1.5 ${isHero ? 'text-3xl lg:text-4xl' : 'text-xl lg:text-2xl'}`}>
+                                <h3 className={`text-white font-medium tracking-tight drop-shadow-lg font-serif mb-2 ${isHero ? 'text-4xl lg:text-5xl' : 'text-2xl lg:text-3xl'}`}>
                                     {state.name}
                                 </h3>
                                 <p className={`text-white/70 line-clamp-2 mb-3 leading-relaxed ${isHero ? 'text-base' : 'text-sm'}`}>
