@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Instagram, Twitter, Mail, Mountain, Compass, Binoculars, Key, HeartPulse, ArrowRight, Sparkles } from 'lucide-react';
+import { Instagram, Twitter, Mail, Mountain, Compass, Binoculars, Key, HeartPulse } from 'lucide-react';
 
 const NAV_COLUMNS = [
     {
@@ -94,18 +94,6 @@ export function Footer() {
                         </div>
                     );
                 })}
-            </div>
-
-            {/* ── CTA Button ── */}
-            <div className="flex justify-center mt-16">
-                <Link
-                    href="/search"
-                    className="group inline-flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-coral-500 to-rose-500 bg-[#FF6B6B] text-white font-bold text-lg rounded-full shadow-lg shadow-rose-500/30 hover:shadow-[0_0_40px_rgba(255,107,107,0.5)] hover:scale-105 transition-all duration-300"
-                >
-                    <Compass className="w-5 h-5 group-hover:rotate-45 transition-transform duration-300" />
-                    Explore All Listings
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
             </div>
 
             {/* ── Baseline ── */}

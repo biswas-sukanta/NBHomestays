@@ -39,10 +39,10 @@ export function EmojiCategoryFilter({ activeCategory, onCategoryChange }: EmojiC
                             key={cat.tag}
                             onClick={() => onCategoryChange(cat.tag)}
                             className={cn(
-                                "flex flex-col items-center gap-2 cursor-pointer min-w-[80px] px-4 py-3 rounded-xl transition-all duration-300 snap-center",
+                                "flex flex-col items-center gap-2 cursor-pointer min-w-[80px] px-4 py-3 rounded-xl transition-all duration-300 ease-out snap-center",
                                 isSelected
-                                    ? "bg-slate-900 shadow-[0_0_20px_rgba(218,165,32,0.4)] ring-2 ring-amber-400/60 scale-105"
-                                    : "hover:bg-gray-100/80"
+                                    ? "bg-gradient-to-r from-amber-500 to-yellow-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105"
+                                    : "hover:bg-amber-50/50 hover:text-amber-600"
                             )}
                         >
                             <Icon className={cn(
