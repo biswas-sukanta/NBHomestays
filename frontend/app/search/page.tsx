@@ -265,10 +265,10 @@ function SearchResults() {
             {/* STEP 3: Bounded Core UI Layout Area */}
             <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col gap-12 md:gap-16">
                 {isLoading && allStays.length === 0 && !trendingStays.length ? (
-                    <div className="flex gap-4 overflow-hidden">
-                        {[...Array(4)].map((_, i) => (
-                            <div key={i} className="flex flex-col space-y-3 w-[280px] shrink-0">
-                                <Skeleton className="relative w-full aspect-[4/3] rounded-2xl bg-gray-100" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {[...Array(8)].map((_, i) => (
+                            <div key={i} className={cn("flex flex-col space-y-3", i % 5 === 0 ? 'sm:col-span-2' : '')}>
+                                <Skeleton className={cn("relative w-full rounded-2xl bg-gray-100", i % 5 === 0 ? 'aspect-[16/9]' : 'aspect-[4/3]')} />
                                 <Skeleton className="h-5 w-3/4 bg-gray-100" />
                                 <Skeleton className="h-4 w-1/2 bg-gray-100" />
                             </div>
@@ -347,7 +347,9 @@ function SearchResults() {
                             ) : allStays.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                     {allStays.map((h, i) => (
-                                        <HomestayCard key={`${h.id}-${i}`} homestay={h} index={i % 12} />
+                                        <div key={`${h.id}-${i}`} className={cn(i % 5 === 0 ? 'sm:col-span-2' : '')}>
+                                            <HomestayCard homestay={h} index={i % 12} featured={i % 5 === 0} />
+                                        </div>
                                     ))}
                                 </div>
                             ) : !loadingAll && (
@@ -420,7 +422,9 @@ function SearchResults() {
                         ) : searchGrid.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {searchGrid.map((h, i) => (
-                                    <HomestayCard key={h.id} homestay={h} index={i} />
+                                    <div key={h.id} className={cn(i % 5 === 0 ? 'sm:col-span-2' : '')}>
+                                        <HomestayCard homestay={h} index={i} featured={i % 5 === 0} />
+                                    </div>
                                 ))}
                             </div>
                         ) : (
@@ -441,6 +445,17 @@ function SearchResults() {
                     </div>
                 )}
             </main>
+
+            {/* Phase 5: Premium Floating Map Pill */}
+            {isStorefront && viewType === 'grid' && (
+                <button
+                    onClick={() => setViewType('map')}
+                    className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 inline-flex items-center gap-2.5 px-7 py-3.5 bg-slate-900 text-white font-bold text-sm rounded-full shadow-2xl shadow-black/30 hover:bg-slate-800 hover:shadow-[0_0_30px_rgba(0,0,0,0.4)] hover:scale-105 transition-all duration-300 border border-white/10"
+                >
+                    <MapIcon className="w-4.5 h-4.5" />
+                    Show Map
+                </button>
+            )}
         </div>
     );
 }

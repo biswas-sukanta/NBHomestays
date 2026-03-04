@@ -37,11 +37,12 @@ export interface HomestaySummary {
 interface HomestayCardProps {
     homestay: HomestaySummary;
     index?: number;
+    featured?: boolean;
 }
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3';
 
-export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardProps) => {
+export const HomestayCard = React.memo(({ homestay, index = 0, featured = false }: HomestayCardProps) => {
     const { addToCompare, selectedIds } = useCompareStore();
     const isSelected = selectedIds.includes(homestay.id);
     const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -79,27 +80,38 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
         pricePerNight: homestay.pricePerNight,
     };
 
+    // Curator vibe notes based on pricing
+    const curatorNote = featured
+        ? (homestay.pricePerNight > 5000 ? 'Editor\'s Pick · Sunset lovers' : 'Curated · Hidden gem')
+        : null;
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.05, ease: 'easeOut' }}
-            className="w-full sm:w-[280px] shrink-0 snap-start group cursor-pointer"
+            className="w-full group cursor-pointer"
             data-testid="homestay-card"
         >
             <Link href={`/homestays/${homestay.id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
                 {/* Image Container */}
-                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group-hover:shadow-lg border border-gray-100 transition-shadow duration-300 bg-gray-50 mb-3">
+                <div className={cn(
+                    "relative w-full rounded-2xl overflow-hidden shadow-sm group-hover:shadow-xl border border-gray-100 transition-all duration-500 bg-gray-50 mb-3",
+                    featured ? 'aspect-[16/9]' : 'aspect-[4/3]'
+                )}>
                     {/* Optimized Image with async decoding and ImageKit scaling */}
                     <OptimizedImage
                         src={images[currentIndex]}
                         alt={homestay.name}
-                        width={600}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        width={featured ? 900 : 600}
+                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                         onError={(e) => {
                             e.currentTarget.src = FALLBACK_IMAGE;
                         }}
                     />
+
+                    {/* Premium gradient overlay for text protection */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     {/* Premium Navigation Arrows */}
                     {images.length > 1 && (
@@ -142,6 +154,15 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
 
                     {/* Gradient overlay just at top/bottom edges for icons if needed */}
                     <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    {/* Curator's Note for featured cards */}
+                    {curatorNote && (
+                        <div className="absolute bottom-3 left-3 z-10">
+                            <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-slate-800 font-heading italic tracking-wide shadow-sm">
+                                {curatorNote}
+                            </span>
+                        </div>
+                    )}
 
                     {/* Top Left - Compare */}
                     <div className="absolute top-3 left-3 z-10">
@@ -193,8 +214,8 @@ export const HomestayCard = React.memo(({ homestay, index = 0 }: HomestayCardPro
                         )}
                     </div>
                     <div className="mt-1 flex items-center justify-between">
-                        <span className="font-semibold text-gray-900">
-                            ₹{homestay.pricePerNight.toLocaleString()} <span className="font-normal text-gray-500">/night</span>
+                        <span className="font-bold text-gray-900">
+                            From ₹{homestay.pricePerNight.toLocaleString()} <span className="font-normal text-gray-500 text-sm">/night</span>
                         </span>
                     </div>
                 </div>
