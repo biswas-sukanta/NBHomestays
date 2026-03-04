@@ -40,11 +40,13 @@ interface HomestayCardProps {
     homestay: HomestaySummary;
     index?: number;
     featured?: boolean;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
 }
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3';
 
-export const HomestayCard = React.memo(({ homestay, index = 0, featured = false }: HomestayCardProps) => {
+export const HomestayCard = React.memo(({ homestay, index = 0, featured = false, onMouseEnter, onMouseLeave }: HomestayCardProps) => {
     const { addToCompare, selectedIds } = useCompareStore();
     const isSelected = selectedIds.includes(homestay.id);
     const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -93,6 +95,8 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
             transition={{ duration: 0.4, delay: index * 0.05, ease: 'easeOut' }}
             className="w-full group cursor-pointer"
             data-testid="homestay-card"
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
         >
             <Link href={`/homestays/${homestay.id}`} className="block relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl border border-stone-200/60 bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow duration-200">
                 {/* Optimized Image with async decoding and ImageKit scaling */}

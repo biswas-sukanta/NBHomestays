@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
@@ -8,12 +8,21 @@ import { SharedPageBanner } from '@/components/shared-page-banner'; // Assuming 
 import { HomestayCard } from '@/components/homestay-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
-import { MapPin, Info } from 'lucide-react';
+import { MapPin, Info, LayoutGrid, Map as MapIcon } from 'lucide-react';
 import { AnimatedHeroBackground } from '@/components/ui/animated-hero-background';
 import { EmptyState } from '@/components/ui/empty-state';
+import dynamic from 'next/dynamic';
+import { cn } from '@/lib/utils';
+
+const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
+    ssr: false,
+    loading: () => <div className="h-[600px] w-full bg-secondary/10 animate-pulse rounded-2xl flex items-center justify-center text-muted-foreground">Loading Discovery Map...</div>
+});
 
 export default function DestinationPage() {
     const { slug } = useParams();
+    const [viewType, setViewType] = useState<'grid' | 'map'>('grid');
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
 
     const { data: destination, isLoading: destLoading } = useQuery({
         queryKey: ['destination', slug],
@@ -85,7 +94,7 @@ export default function DestinationPage() {
                         </div>
                         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Available Homestays</h2>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 md:max-w-[50%]">
                         {destination.tags.map((tag: string) => (
                             <span key={tag} className="px-3 py-1 bg-white border border-gray-200 rounded-full text-sm text-gray-600 shadow-sm">
                                 {tag}
@@ -94,16 +103,70 @@ export default function DestinationPage() {
                     </div>
                 </div>
 
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-gray-900 hidden sm:block">{homestays.length} Stays Found</h3>
+                    <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm ml-auto">
+                        <button
+                            onClick={() => setViewType('grid')}
+                            className={cn(
+                                "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300",
+                                viewType === 'grid'
+                                    ? "bg-white text-blue-600 shadow-md shadow-blue-500/20 scale-105"
+                                    : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+                            )}
+                        >
+                            <LayoutGrid className="w-4 h-4" />
+                            Grid
+                        </button>
+                        <button
+                            onClick={() => setViewType('map')}
+                            className={cn(
+                                "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300",
+                                viewType === 'map'
+                                    ? "bg-white text-blue-600 shadow-md shadow-blue-500/20 scale-105"
+                                    : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+                            )}
+                        >
+                            <MapIcon className="w-4 h-4" />
+                            Map
+                        </button>
+                    </div>
+                </div>
+
                 {homestaysLoading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                         {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-80 w-full rounded-3xl" />)}
                     </div>
                 ) : homestays.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                        {homestays.map((homestay: any) => (
-                            <HomestayCard key={homestay.id} homestay={homestay} />
-                        ))}
-                    </div>
+                    viewType === 'map' ? (
+                        <div className="flex flex-col lg:flex-row gap-6 h-[800px]">
+                            <div className="w-full lg:w-[55%] h-[400px] lg:h-full rounded-2xl overflow-hidden shadow-lg border border-stone-200/60 order-1 lg:order-none z-10 sticky top-[120px]">
+                                <HomestayMapView
+                                    homestays={homestays}
+                                    hoveredHomestayId={hoveredId}
+                                />
+                            </div>
+                            <div className="w-full lg:w-[45%] h-full overflow-y-auto pr-2 hide-scrollbar order-2 lg:order-none">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-12">
+                                    {homestays.map((homestay: any) => (
+                                        <div key={homestay.id} className="w-full">
+                                            <HomestayCard
+                                                homestay={homestay}
+                                                onMouseEnter={() => setHoveredId(homestay.id)}
+                                                onMouseLeave={() => setHoveredId(null)}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                            {homestays.map((homestay: any) => (
+                                <HomestayCard key={homestay.id} homestay={homestay} />
+                            ))}
+                        </div>
+                    )
                 ) : (
                     <div className="w-full max-w-3xl mx-auto mt-6">
                         <EmptyState

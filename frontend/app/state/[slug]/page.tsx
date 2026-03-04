@@ -7,7 +7,9 @@ import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { motion } from 'framer-motion';
-import { MapPin, Home, ArrowRight } from 'lucide-react';
+import { MapPin, Home, ArrowRight, LayoutGrid, Map as MapIcon } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { cn } from '@/lib/utils';
 import { AnimatedHeroBackground } from '@/components/ui/animated-hero-background';
 import { HomestayCard } from '@/components/homestay-card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,6 +17,11 @@ import { DestinationDiscovery } from '@/components/destination-discovery';
 import { EmojiCategoryFilter } from '@/components/emoji-category-filter';
 import { EmptyState } from '@/components/ui/empty-state';
 import { SectionHeader } from '@/components/ui/section-header';
+
+const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
+    ssr: false,
+    loading: () => <div className="h-[600px] w-full bg-secondary/10 animate-pulse rounded-2xl flex items-center justify-center text-muted-foreground">Loading Discovery Map...</div>
+});
 
 interface DestinationItem {
     id: string;
@@ -48,16 +55,24 @@ export default function StatePage() {
     });
 
     const [activeCategory, setActiveCategory] = useState('');
+    const [viewType, setViewType] = useState<'grid' | 'map'>('grid');
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
+    const [mapBounds, setMapBounds] = useState<any>(null);
+
     const handleCategoryChange = (cat: string) => {
         setActiveCategory(prev => prev === cat ? '' : cat);
     };
 
     const { data: homestaysData, isLoading: homestaysLoading } = useQuery({
-        queryKey: ['state-homestays', slug, activeCategory],
+        queryKey: ['state-homestays', slug, activeCategory, mapBounds ? 'bounded' : 'all'],
         queryFn: async () => {
             const tagParam = activeCategory ? `&tag=${encodeURIComponent(activeCategory)}` : '';
+            let boundsParam = '';
+            if (mapBounds) {
+                boundsParam = `&minLat=${mapBounds.getSouth()}&maxLat=${mapBounds.getNorth()}&minLng=${mapBounds.getWest()}&maxLng=${mapBounds.getEast()}`;
+            }
             // Fetch homestays from all destinations in this state using the search endpoint
-            const res = await api.get(`/api/homestays/search?stateSlug=${slug}${tagParam}&size=12`);
+            const res = await api.get(`/api/homestays/search?stateSlug=${slug}${tagParam}${boundsParam}&size=60`);
             return res.data.content ? res.data.content : res.data;
         },
         enabled: !!state
@@ -157,11 +172,68 @@ export default function StatePage() {
                         ))}
                     </div>
                 ) : homestays.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {homestays.map((homestay: any) => (
-                            <HomestayCard key={homestay.id} homestay={homestay} />
-                        ))}
-                    </div>
+                    <>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-gray-900 hidden sm:block">{homestays.length} Stays Found</h3>
+                            <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm ml-auto">
+                                <button
+                                    onClick={() => setViewType('grid')}
+                                    className={cn(
+                                        "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300",
+                                        viewType === 'grid'
+                                            ? "bg-white text-blue-600 shadow-md shadow-blue-500/20 scale-105"
+                                            : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+                                    )}
+                                >
+                                    <LayoutGrid className="w-4 h-4" />
+                                    Grid
+                                </button>
+                                <button
+                                    onClick={() => setViewType('map')}
+                                    className={cn(
+                                        "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300",
+                                        viewType === 'map'
+                                            ? "bg-white text-blue-600 shadow-md shadow-blue-500/20 scale-105"
+                                            : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+                                    )}
+                                >
+                                    <MapIcon className="w-4 h-4" />
+                                    Map
+                                </button>
+                            </div>
+                        </div>
+
+                        {viewType === 'map' ? (
+                            <div className="flex flex-col lg:flex-row gap-6 h-[800px]">
+                                <div className="w-full lg:w-[55%] h-[400px] lg:h-full rounded-2xl overflow-hidden shadow-lg border border-stone-200/60 order-1 lg:order-none z-10 sticky top-[120px]">
+                                    <HomestayMapView
+                                        homestays={homestays}
+                                        hoveredHomestayId={hoveredId}
+                                        onMapChange={setMapBounds}
+                                    />
+                                </div>
+                                <div className="w-full lg:w-[45%] h-full overflow-y-auto pr-2 hide-scrollbar order-2 lg:order-none">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-12">
+                                        {homestays.map((homestay: any) => (
+                                            <div key={homestay.id} className="w-full">
+                                                <HomestayCard
+                                                    homestay={homestay}
+                                                    onMouseEnter={() => setHoveredId(homestay.id)}
+                                                    onMouseLeave={() => setHoveredId(null)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {homestays.map((homestay: any) => (
+                                    <HomestayCard key={homestay.id} homestay={homestay} />
+                                ))}
+                            </div>
+                        )}
+                    </>
                 ) : (
                     <EmptyState
                         icon={<Home className="w-12 h-12 text-muted-foreground" />}

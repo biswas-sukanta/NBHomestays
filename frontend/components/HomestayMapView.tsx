@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { HomestaySummary } from './homestay-card';
@@ -37,6 +38,20 @@ const createPriceMarker = (price: number, vibeScore: number = 4.5, isActive: boo
 interface HomestayMapViewProps {
     homestays: HomestaySummary[];
     onMapChange?: (bounds: L.LatLngBounds) => void;
+    hoveredHomestayId?: string | null;
+}
+
+function MapHoverPan({ homestays, hoveredHomestayId }: { homestays: HomestaySummary[], hoveredHomestayId?: string | null }) {
+    const map = useMap();
+    useEffect(() => {
+        if (hoveredHomestayId) {
+            const h = homestays.find(x => x.id === hoveredHomestayId);
+            if (h && h.latitude && h.longitude) {
+                map.panTo([h.latitude, h.longitude], { animate: true, duration: 0.5 });
+            }
+        }
+    }, [hoveredHomestayId, homestays, map]);
+    return null;
 }
 
 function MapUpdater({ homestays, onMapChange, searchAsIMove }: { homestays: HomestaySummary[], onMapChange?: (bounds: L.LatLngBounds) => void, searchAsIMove: boolean }) {
@@ -60,7 +75,7 @@ function MapUpdater({ homestays, onMapChange, searchAsIMove }: { homestays: Home
     return null;
 }
 
-export default function HomestayMapView({ homestays, onMapChange }: HomestayMapViewProps) {
+export default function HomestayMapView({ homestays, onMapChange, hoveredHomestayId }: HomestayMapViewProps) {
     const [searchAsIMove, setSearchAsIMove] = useState(false);
     const defaultCenter: L.LatLngExpression = [26.7271, 88.3953]; // Siliguri
 
@@ -76,47 +91,50 @@ export default function HomestayMapView({ homestays, onMapChange }: HomestayMapV
                     url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                 />
 
-                {homestays.map((homestay) => (
-                    homestay.latitude && homestay.longitude && (
-                        <Marker
-                            key={homestay.id}
-                            position={[homestay.latitude, homestay.longitude]}
-                            icon={createPriceMarker(homestay.pricePerNight, homestay.vibeScore)}
-                        >
-                            <Popup className="premium-map-popup">
-                                <Link href={`/homestays/${homestay.id}`} className="block group w-56 overflow-hidden">
-                                    <div className="relative aspect-[4/3] w-full overflow-hidden">
-                                        <img
-                                            src={homestay.media?.[0]?.url || '/placeholder-home.jpg'}
-                                            alt={homestay.name}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                        <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#004d00] text-white text-[10px] font-bold rounded-full shadow-sm">
-                                            ₹{homestay.pricePerNight}
+                <MarkerClusterGroup chunkedLoading maxClusterRadius={40} showCoverageOnHover={false}>
+                    {homestays.map((homestay) => (
+                        homestay.latitude && homestay.longitude && (
+                            <Marker
+                                key={homestay.id}
+                                position={[homestay.latitude, homestay.longitude]}
+                                icon={createPriceMarker(homestay.pricePerNight, homestay.vibeScore, hoveredHomestayId === homestay.id)}
+                            >
+                                <Popup className="premium-map-popup">
+                                    <Link href={`/homestays/${homestay.id}`} className="block group w-56 overflow-hidden">
+                                        <div className="relative aspect-[4/3] w-full overflow-hidden">
+                                            <img
+                                                src={homestay.media?.[0]?.url || '/placeholder-home.jpg'}
+                                                alt={homestay.name}
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                            <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#004d00] text-white text-[10px] font-bold rounded-full shadow-sm">
+                                                ₹{homestay.pricePerNight}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="p-3 bg-white">
-                                        <h4 className="font-bold text-sm text-gray-900 line-clamp-1 group-hover:text-[#004d00] transition-colors">
-                                            {homestay.name}
-                                        </h4>
-                                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                                            <span className="truncate">{homestay.locationName || 'North Bengal Hills'}</span>
-                                            {homestay.vibeScore && (
-                                                <>
-                                                    <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-                                                    <span className="flex items-center gap-0.5 text-amber-500 font-bold">
-                                                        ★ {homestay.vibeScore.toFixed(1)}
-                                                    </span>
-                                                </>
-                                            )}
+                                        <div className="p-3 bg-white">
+                                            <h4 className="font-bold text-sm text-gray-900 line-clamp-1 group-hover:text-[#004d00] transition-colors">
+                                                {homestay.name}
+                                            </h4>
+                                            <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                                                <span className="truncate">{homestay.locationName || 'Eastern Himalayas'}</span>
+                                                {homestay.vibeScore && (
+                                                    <>
+                                                        <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                                                        <span className="flex items-center gap-0.5 text-amber-500 font-bold">
+                                                            ★ {homestay.vibeScore.toFixed(1)}
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </Link>
-                            </Popup>
-                        </Marker>
-                    )
-                ))}
+                                    </Link>
+                                </Popup>
+                            </Marker>
+                        )
+                    ))}
+                </MarkerClusterGroup>
+                <MapHoverPan homestays={homestays} hoveredHomestayId={hoveredHomestayId} />
 
                 <MapUpdater homestays={homestays} onMapChange={onMapChange} searchAsIMove={searchAsIMove} />
             </MapContainer>
