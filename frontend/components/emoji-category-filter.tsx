@@ -27,10 +27,45 @@ interface EmojiCategoryFilterProps {
 }
 
 export function EmojiCategoryFilter({ activeCategory, onCategoryChange }: EmojiCategoryFilterProps) {
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+    const [isDragging, setIsDragging] = React.useState(false);
+    const [startX, setStartX] = React.useState(0);
+    const [scrollLeft, setScrollLeft] = React.useState(0);
+
+    const onMouseDown = (e: React.MouseEvent) => {
+        if (!scrollRef.current) return;
+        setIsDragging(true);
+        setStartX(e.pageX - scrollRef.current.offsetLeft);
+        setScrollLeft(scrollRef.current.scrollLeft);
+    };
+
+    const onMouseLeave = () => setIsDragging(false);
+    const onMouseUp = () => setIsDragging(false);
+
+    const onMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging || !scrollRef.current) return;
+        e.preventDefault();
+        const x = e.pageX - scrollRef.current.offsetLeft;
+        const walk = (x - startX) * 2; // scroll speed multiplier
+        scrollRef.current.scrollLeft = scrollLeft - walk;
+    };
+
     return (
-        <div className="w-full flex justify-center">
+        <div className="relative w-full max-w-[100vw]">
+            {/* Scroll Affordance Fades */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-white/90 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-white/90 to-transparent z-10 pointer-events-none" />
+
             <div
-                className="flex justify-start md:justify-center gap-2 md:gap-3 overflow-x-auto snap-x hide-scrollbar py-2 px-2 w-full"
+                ref={scrollRef}
+                onMouseDown={onMouseDown}
+                onMouseLeave={onMouseLeave}
+                onMouseUp={onMouseUp}
+                onMouseMove={onMouseMove}
+                className={cn(
+                    "flex justify-start gap-3 overflow-x-auto snap-x hide-scrollbar py-2 px-6 md:px-12 w-full select-none",
+                    isDragging ? "cursor-grabbing snap-none" : "cursor-grab"
+                )}
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
                 {CATEGORIES.map((cat) => {
@@ -41,19 +76,21 @@ export function EmojiCategoryFilter({ activeCategory, onCategoryChange }: EmojiC
                             key={cat.tag}
                             onClick={() => onCategoryChange(cat.tag)}
                             className={cn(
-                                "flex items-center gap-1.5 cursor-pointer px-4 py-2.5 rounded-full transition-all duration-300 ease-out snap-center border whitespace-nowrap",
+                                "flex flex-col items-center justify-center gap-2 px-6 py-4 min-w-[110px] rounded-2xl transition-all duration-300 ease-out snap-center border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2",
                                 isSelected
-                                    ? "bg-gradient-to-r from-amber-500 to-yellow-500 shadow-[0_0_12px_rgba(245,158,11,0.4)] scale-105 border-transparent"
-                                    : "border-gray-200 hover:border-amber-300/60 hover:bg-amber-50/50 hover:text-amber-600"
+                                    ? "bg-gradient-to-t from-amber-500 to-yellow-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105 border-transparent"
+                                    : "bg-white border-gray-100 hover:border-amber-300/60 hover:bg-amber-50/50 hover:text-amber-600 shadow-sm hover:shadow-md"
                             )}
+                            aria-label={`Filter by ${cat.label}`}
+                            tabIndex={0}
                         >
                             <Icon className={cn(
-                                "w-5 h-5 transition-colors",
+                                "w-8 h-8 transition-colors duration-300",
                                 isSelected ? "text-white" : cat.color
                             )} />
                             <span className={cn(
-                                "text-sm font-semibold tracking-wide",
-                                isSelected ? "text-white" : "text-gray-700"
+                                "text-sm font-medium tracking-wide whitespace-nowrap",
+                                isSelected ? "text-white" : "text-slate-700"
                             )}>
                                 {cat.label}
                             </span>

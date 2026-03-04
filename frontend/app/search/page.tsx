@@ -302,10 +302,13 @@ function SearchResults() {
 
                         <div className="border-t border-gray-100 pt-10">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                                <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 relative">
-                                    Every Stay, Unfiltered
-                                    <span className="absolute -bottom-2 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></span>
-                                </h2>
+                                <div>
+                                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 relative inline-block">
+                                        Every Stay, Unfiltered
+                                        <span className="absolute -bottom-2 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></span>
+                                    </h2>
+                                    <p className="text-slate-500 text-lg font-medium mt-4">Handpicked places with real stories.</p>
+                                </div>
 
                                 <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm self-end sm:self-auto">
                                     <button
@@ -346,7 +349,7 @@ function SearchResults() {
                                     {/* Zone 1: Cinematic Hero Card */}
                                     {allStays[0] && (
                                         <Link href={`/homestays/${allStays[0].id}`} className="block group rounded-2xl overflow-hidden relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                                            <div className="relative w-full aspect-[21/9] md:aspect-[21/9] bg-gray-100">
+                                            <div className="relative w-full aspect-[4/3] md:aspect-[16/9] bg-gray-100">
                                                 <OptimizedImage
                                                     src={allStays[0].media?.[0]?.url || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=1400'}
                                                     alt={allStays[0].name}
@@ -391,7 +394,7 @@ function SearchResults() {
 
                                     {/* Zone 3: Uniform Grid (remaining cards) */}
                                     {allStays.length > 4 && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                                             {allStays.slice(4).map((h, i) => (
                                                 <HomestayCard key={`${h.id}-${i + 4}`} homestay={h} index={(i + 4) % 12} />
                                             ))}
