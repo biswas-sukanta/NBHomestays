@@ -62,7 +62,12 @@ export default function DestinationPage() {
     }, [inView, hasNextPage, fetchNextPage]);
 
     const homestays = React.useMemo(() => {
-        return infiniteData?.pages.flatMap(page => page.content || page) || [];
+        if (!infiniteData?.pages) return [];
+        return infiniteData.pages.flatMap(page => {
+            if (page && Array.isArray(page.content)) return page.content;
+            if (Array.isArray(page)) return page;
+            return [];
+        });
     }, [infiniteData]);
 
     const handleCategoryChange = (cat: string) => {
@@ -106,7 +111,7 @@ export default function DestinationPage() {
                         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Available Homestays</h2>
                     </div>
                     <div className="flex flex-wrap gap-2 md:max-w-[50%]">
-                        {destination.tags.map((tag: string) => (
+                        {destination?.tags?.map((tag: string) => (
                             <span key={tag} className="px-3 py-1 bg-white border border-gray-200 rounded-full text-sm text-gray-600 shadow-sm">
                                 {tag}
                             </span>

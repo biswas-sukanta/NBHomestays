@@ -204,18 +204,21 @@ export default function StatePage() {
                         </div>
 
                         {viewType === 'map' ? (
-                            <div className="flex flex-col lg:flex-row gap-6 h-[800px]">
-                                <div className="w-full lg:w-[55%] h-[400px] lg:h-full rounded-2xl overflow-hidden shadow-lg border border-stone-200/60 order-1 lg:order-none z-10 sticky top-[120px]">
+                            <div className="flex flex-col lg:flex-row gap-0 h-[calc(100vh-100px)] -mx-4 lg:-mx-8">
+                                {/* Left: Map (1.5fr) */}
+                                <div className="w-full lg:w-[60%] h-[400px] lg:h-full overflow-hidden border-r border-stone-200 relative">
                                     <HomestayMapView
                                         homestays={homestays}
                                         hoveredHomestayId={hoveredId}
                                         onMapChange={setMapBounds}
                                     />
                                 </div>
-                                <div className="w-full lg:w-[45%] h-full overflow-y-auto pr-2 hide-scrollbar order-2 lg:order-none">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-12">
+
+                                {/* Right: Listings (1fr) */}
+                                <div className="w-full lg:w-[40%] h-full flex flex-col bg-white">
+                                    <div className="flex-1 overflow-y-auto px-6 py-6 hide-scrollbar flex flex-col gap-6">
                                         {homestays.map((homestay: any) => (
-                                            <div key={homestay.id} className="w-full">
+                                            <div key={homestay.id} className="w-full transition-all duration-300">
                                                 <HomestayCard
                                                     homestay={homestay}
                                                     onMouseEnter={() => setHoveredId(homestay.id)}
