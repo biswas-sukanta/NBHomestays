@@ -71,6 +71,43 @@ function VibeCardsSection({ onCategoryChange, activeCategory }: { onCategoryChan
     );
 }
 
+function ExploreByRegionSection() {
+    const REGIONS = [
+        { name: 'West Bengal', slug: 'west-bengal', image: '/states/thumb-west-bengal.webp' },
+        { name: 'Sikkim', slug: 'sikkim', image: '/states/thumb-sikkim.webp' },
+        { name: 'Assam', slug: 'assam', image: '/states/thumb-assam.webp' },
+        { name: 'Meghalaya', slug: 'meghalaya', image: '/states/thumb-meghalaya.webp' },
+        { name: 'Arunachal Pradesh', slug: 'arunachal-pradesh', image: '/states/thumb-arunachal-pradesh.png' },
+    ];
+
+    return (
+        <section className="mb-12 border-b border-gray-100 pb-12">
+            <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900 mb-6">Explore by Region</h2>
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 hide-scrollbar md:grid md:grid-cols-5 md:overflow-visible" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {REGIONS.map(region => (
+                    <Link
+                        key={region.slug}
+                        href={`/state/${region.slug}`}
+                        className="relative w-[240px] md:w-full aspect-[4/5] rounded-2xl overflow-hidden shrink-0 snap-center group shadow-md hover:shadow-xl transition-all duration-500"
+                    >
+                        <Image
+                            src={region.image}
+                            alt={region.name}
+                            fill
+                            sizes="(max-width: 768px) 240px, 20vw"
+                            className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 p-4">
+                            <h3 className="text-white font-bold text-lg leading-tight drop-shadow-md">{region.name}</h3>
+                        </div>
+                    </Link>
+                ))}
+            </div>
+        </section>
+    );
+}
+
 // --- Destination Component ---
 const DESTINATIONS = [
     { name: 'Darjeeling', image: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=800' },
@@ -269,7 +306,7 @@ function SearchResults() {
         <div className="min-h-screen bg-white text-gray-900 pb-20">
             {/* STEP 1: Global Brand Green Banner */}
             <SharedPageBanner
-                title={query ? `"${query}"` : tag ? tag : 'Discover North Bengal'}
+                title={query ? `"${query}"` : tag ? tag : 'Discover Offbeat Stays Across the Eastern Himalayas'}
             >
                 <motion.form
                     onSubmit={handleSearch}
@@ -322,10 +359,12 @@ function SearchResults() {
                     <>
                         <VibeCardsSection onCategoryChange={handleCategoryChange} activeCategory={tag} />
 
+                        <ExploreByRegionSection />
+
                         <section className="mb-12 border-b border-gray-100 pb-12">
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                                 <div className="text-left">
-                                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 mb-2">Discover by Destination</h2>
+                                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 mb-2">Top Destinations Across Our Regions</h2>
                                     <p className="text-slate-500 text-base font-medium">Explore the hills, one town at a time.</p>
                                 </div>
                             </div>
@@ -334,14 +373,17 @@ function SearchResults() {
 
                         <HomestaySwimlane
                             title="Trending Now"
+                            subtitle="Places travelers are loving this week"
                             homestays={trendingStays}
                         />
                         <HomestaySwimlane
                             title="Featured Escapes"
+                            subtitle="Handpicked escapes curated by travelers"
                             homestays={featuredStays}
                         />
                         <HomestaySwimlane
                             title="Explore Offbeat"
+                            subtitle="Hidden gems away from tourist crowds"
                             homestays={offbeatStays}
                         />
 
@@ -349,7 +391,7 @@ function SearchResults() {
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                                 <div>
                                     <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 relative inline-block">
-                                        All Verified Stays Across North Bengal
+                                        Browse All Verified Homestays Across Our Regions
                                         <span className="absolute -bottom-2 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></span>
                                     </h2>
                                     <p className="text-slate-500 text-lg font-medium mt-4">Handpicked escapes curated by travelers.</p>

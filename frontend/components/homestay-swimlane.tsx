@@ -4,16 +4,20 @@ import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
 
 interface HomestaySwimlaneProps {
     title: string;
+    subtitle?: string;
     homestays: HomestaySummary[];
 }
 
-export function HomestaySwimlane({ title, homestays }: HomestaySwimlaneProps) {
+export function HomestaySwimlane({ title, subtitle, homestays }: HomestaySwimlaneProps) {
     if (!homestays || homestays.length === 0) return null;
 
     return (
         <CarouselWrapper
             headerLeft={
-                <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900">{title}</h2>
+                <div className="flex flex-col gap-1">
+                    <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900">{title}</h2>
+                    {subtitle && <p className="text-slate-500 text-sm md:text-base font-medium">{subtitle}</p>}
+                </div>
             }
         >
             {homestays.map((homestay, idx) => (
