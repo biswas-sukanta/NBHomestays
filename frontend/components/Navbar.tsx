@@ -49,9 +49,9 @@ export default function Navbar() {
     return (
         <nav
             className={cn(
-                'sticky top-0 w-full z-[9999] transition-all duration-300',
+                'sticky top-0 w-full z-[9999] transition-all duration-500',
                 isScrolled || !isHome
-                    ? 'bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-200/50 py-3'
+                    ? 'bg-white/70 backdrop-blur-xl shadow-[0_1px_3px_rgba(0,0,0,0.05)] border-b border-gray-200/50 py-3'
                     : 'bg-black/10 backdrop-blur-md py-5'
             )}
         >
@@ -118,6 +118,10 @@ export default function Navbar() {
                                     )}>
                                         {user?.firstName ? user.firstName[0].toUpperCase() : 'U'}
                                     </div>
+                                    <span className={cn(
+                                        "hidden lg:inline text-[10px] font-bold tracking-widest uppercase",
+                                        isDark ? "text-white/60" : "text-emerald-600"
+                                    )}>✦ Explorer</span>
                                     <ChevronDown className={cn(
                                         "w-3.5 h-3.5 transition-transform duration-200",
                                         avatarOpen && "rotate-180"

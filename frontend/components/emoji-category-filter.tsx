@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import {
-    Flame, Laptop, Leaf, Mountain, Landmark, Trees, PawPrint, Heart, Users, Sparkles,
+    Flame, Laptop, Leaf, Mountain, Landmark, Trees, PawPrint, Heart, Users, Sparkles, Zap, Coffee,
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -13,6 +13,8 @@ const CATEGORIES = [
     { label: 'Views', tag: 'Mountain View', icon: Mountain, color: 'text-indigo-500' },
     { label: 'Heritage', tag: 'Heritage', icon: Landmark, color: 'text-amber-600' },
     { label: 'Nature', tag: 'Nature & Eco', icon: Trees, color: 'text-green-600' },
+    { label: 'Off-the-grid', tag: 'Off Grid', icon: Zap, color: 'text-yellow-500' },
+    { label: 'Cozy Retreats', tag: 'Cozy', icon: Coffee, color: 'text-orange-600' },
     { label: 'Pet Friendly', tag: 'Pet Friendly', icon: PawPrint, color: 'text-orange-400' },
     { label: 'Couples', tag: 'Couples Getaway', icon: Heart, color: 'text-rose-500' },
     { label: 'Groups', tag: 'Group Friendly', icon: Users, color: 'text-violet-500' },
@@ -39,18 +41,18 @@ export function EmojiCategoryFilter({ activeCategory, onCategoryChange }: EmojiC
                             key={cat.tag}
                             onClick={() => onCategoryChange(cat.tag)}
                             className={cn(
-                                "flex flex-col items-center gap-2 cursor-pointer min-w-[80px] px-4 py-3 rounded-xl transition-all duration-300 ease-out snap-center",
+                                "flex flex-col items-center gap-2 cursor-pointer min-w-[88px] px-6 py-3.5 rounded-xl transition-all duration-300 ease-out snap-center border",
                                 isSelected
-                                    ? "bg-gradient-to-r from-amber-500 to-yellow-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105"
-                                    : "hover:bg-amber-50/50 hover:text-amber-600"
+                                    ? "bg-gradient-to-r from-amber-500 to-yellow-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105 border-transparent"
+                                    : "border-transparent hover:border-amber-300/60 hover:bg-amber-50/50 hover:text-amber-600"
                             )}
                         >
                             <Icon className={cn(
-                                "w-7 h-7 transition-colors",
+                                "w-8 h-8 transition-colors",
                                 isSelected ? "text-white" : cat.color
                             )} />
                             <span className={cn(
-                                "text-sm font-bold whitespace-nowrap tracking-wide",
+                                "text-sm md:text-base font-semibold whitespace-nowrap tracking-wide",
                                 isSelected ? "text-white" : "text-gray-700"
                             )}>
                                 {cat.label}
