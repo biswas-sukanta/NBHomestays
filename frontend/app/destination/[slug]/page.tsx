@@ -74,6 +74,23 @@ export default function DestinationPage() {
         setActiveCategory(prev => prev === cat ? '' : cat);
     };
 
+    if (destLoading) {
+        return (
+            <div className="min-h-screen bg-[#FDFCFB]">
+                <div className="h-[70vh] bg-secondary/10 animate-pulse" />
+                <div className="max-w-7xl mx-auto px-4 py-16">
+                    <Skeleton className="h-10 w-64 mb-4" />
+                    <Skeleton className="h-6 w-full mb-12" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-80 w-full rounded-3xl" />)}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!destination) return <div className="p-20 text-center text-muted-foreground">Destination not found</div>;
+
     return (
         <div className="min-h-screen bg-[#FDFCFB]">
             {/* Edge-to-Edge Hero Banner */}
