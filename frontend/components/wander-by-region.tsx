@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, Mountain, ChevronRight, Compass, Flower2, TreePine } from 'lucide-react';
+import { MapPin, Mountain, ChevronRight, Compass, Flower2, TreePine, Sunrise } from 'lucide-react';
 
 interface StateItem {
     id: string;
@@ -25,6 +25,7 @@ const STATE_STYLES: Record<string, { gradient: string; accent: string; icon: Rea
     'sikkim': { gradient: 'from-amber-900/60 via-amber-800/30', accent: 'bg-amber-500', icon: Mountain },
     'meghalaya': { gradient: 'from-indigo-900/60 via-indigo-800/30', accent: 'bg-indigo-500', icon: Flower2 },
     'assam': { gradient: 'from-rose-900/60 via-rose-800/30', accent: 'bg-rose-500', icon: TreePine },
+    'arunachal-pradesh': { gradient: 'from-[#8B0000]/60 via-[#CD5C5C]/30', accent: 'bg-[#8B0000]', icon: Sunrise },
 };
 
 const fallbackStyle = { gradient: 'from-slate-900/60 via-slate-800/30', accent: 'bg-slate-500', icon: Mountain };
@@ -37,9 +38,9 @@ export function WanderByRegion() {
 
     if (isLoading) {
         return (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-[280px] lg:auto-rows-[320px]">
-                {[...Array(4)].map((_, i) => (
-                    <Skeleton key={i} className={`rounded-3xl ${i === 0 ? 'col-span-2 row-span-2' : ''}`} />
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-5 auto-rows-[280px] lg:auto-rows-[320px]">
+                {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className={`rounded-3xl ${i === 0 ? 'col-span-2 md:col-span-1 md:row-span-2' : ''}`} />
                 ))}
             </div>
         );
@@ -48,11 +49,11 @@ export function WanderByRegion() {
     if (!states?.length) return null;
 
     return (
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 no-scrollbar md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5 auto-rows-[260px] lg:auto-rows-[300px]">
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 no-scrollbar md:grid md:grid-cols-3 md:grid-rows-2 md:gap-5 auto-rows-[260px] lg:auto-rows-[300px]">
             {states.map((state, i) => {
                 const style = STATE_STYLES[state.slug] || fallbackStyle;
                 const Icon = style.icon;
-                // First card spans 2 cols + 2 rows for bento hero effect
+                // First card spans 1 col + 2 rows for bento hero effect in the 3x2 grid
                 const isHero = i === 0;
 
                 return (
@@ -62,7 +63,7 @@ export function WanderByRegion() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: i * 0.1, duration: 0.5 }}
-                        className={`${isHero ? 'md:col-span-2 md:row-span-2' : ''} min-w-[85vw] lg:min-w-0 snap-center shrink-0 md:min-w-0 md:shrink`}
+                        className={`${isHero ? 'md:col-span-1 md:row-span-2' : ''} min-w-[85vw] lg:min-w-0 snap-center shrink-0 md:min-w-0 md:shrink`}
                     >
                         <Link
                             href={`/state/${state.slug}`}
@@ -70,10 +71,10 @@ export function WanderByRegion() {
                         >
                             {/* Background Image */}
                             <Image
-                                src={`/states/thumb-${state.slug}.webp`}
+                                src={`/states/thumb-${state.slug}.${state.slug === 'arunachal-pradesh' ? 'png' : 'webp'}`}
                                 alt={state.name}
                                 fill
-                                sizes={isHero ? '(max-width: 640px) 100vw, 50vw' : '(max-width: 640px) 100vw, 25vw'}
+                                sizes={isHero ? '(max-width: 640px) 100vw, 33vw' : '(max-width: 640px) 100vw, 25vw'}
                                 className="object-cover group-hover:scale-110 transition-transform duration-700"
                             />
 
