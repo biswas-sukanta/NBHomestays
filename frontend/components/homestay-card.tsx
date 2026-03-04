@@ -22,9 +22,11 @@ export interface HomestaySummary {
     vibeScore: number;
     status: string;
     locationName?: string;
+    tags?: string[];
     destination?: {
         name: string;
         district: string;
+        stateName?: string;
     };
     host?: {
         id: string;
@@ -80,10 +82,9 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
         pricePerNight: homestay.pricePerNight,
     };
 
-    // Curator vibe notes based on pricing
-    const curatorNote = featured
-        ? (homestay.pricePerNight > 5000 ? 'Editor\'s Pick · Sunset lovers' : 'Curated · Hidden gem')
-        : null;
+    // Curator vibe notes based on tags or pricing fallback
+    const featuredBadge = homestay.tags?.find(t => ['Curated', 'Offbeat', 'Community Pick', 'Heritage'].includes(t))
+        || (featured ? (homestay.pricePerNight > 5000 ? "Editor's Pick" : "Curated") : null);
 
     return (
         <motion.div
@@ -182,34 +183,38 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
                     </div>
                 </div>
 
-                {/* Text Data */}
-                <div className="px-1 relative">
-                    <div className="flex items-center gap-2 mt-2">
-                        <h3 className="text-base font-semibold text-gray-900 truncate flex-1" data-slot="card-title">
-                            {homestay.name.replace(/\s+All$/i, '')}
-                        </h3>
-                        {curatorNote && (
-                            <span className="shrink-0 px-2.5 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-200">
-                                {curatorNote}
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-sm text-gray-500 truncate" data-testid="location-text">
+                {/* Text Data - Editorial Hierarchy */}
+                <div className="px-1 relative mt-3">
+                    <div className="flex items-center justify-between mb-1">
+                        <p className="text-[11px] md:text-xs font-bold tracking-wider uppercase text-amber-700/80 truncate">
                             {homestay.destination
-                                ? `${homestay.destination.name}, ${homestay.destination.district}`
+                                ? `${homestay.destination.name} • ${homestay.destination.stateName || homestay.destination.district}`
                                 : (homestay.locationName || 'North Bengal Hills')}
                         </p>
                         {homestay.host?.isVerifiedHost && (
-                            <div className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full border border-blue-100">
+                            <div className="flex items-center gap-0.5 text-[10px] font-bold text-blue-600 bg-blue-50/80 px-1.5 py-0.5 rounded-sm">
                                 <CheckCircle2 className="w-2.5 h-2.5" />
                                 <span>VERIFIED</span>
                             </div>
                         )}
                     </div>
-                    <div className="mt-1 flex items-center justify-between">
-                        <span className="font-bold text-gray-900">
-                            From ₹{homestay.pricePerNight.toLocaleString()} <span className="font-normal text-gray-500 text-sm">/night</span>
+
+                    <div className="flex items-start gap-2">
+                        <h3 className="text-lg md:text-[19px] font-serif font-medium text-slate-900 truncate flex-1 leading-tight" data-slot="card-title">
+                            {homestay.name.replace(/\s+All$/i, '')}
+                        </h3>
+                    </div>
+
+                    <div className="mt-2.5 flex items-end justify-between">
+                        <div className="flex-1">
+                            {featuredBadge && (
+                                <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded-sm">
+                                    {featuredBadge}
+                                </span>
+                            )}
+                        </div>
+                        <span className="font-medium text-slate-900 leading-none">
+                            ₹{homestay.pricePerNight.toLocaleString()} <span className="font-normal text-slate-500 text-sm">/night</span>
                         </span>
                     </div>
                 </div>

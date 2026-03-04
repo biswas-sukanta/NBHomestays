@@ -28,6 +28,49 @@ const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
     loading: () => <div className="h-[600px] w-full bg-secondary/10 animate-pulse rounded-2xl flex items-center justify-center text-muted-foreground">Loading Discovery Map...</div>
 });
 
+const VIBE_CARDS = [
+    { label: 'Mountain View', tag: 'Mountain View', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=600' },
+    { label: 'Nature & Eco', tag: 'Nature & Eco', image: 'https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=80&w=600' },
+    { label: 'Tea Garden', tag: 'Tea Garden', image: 'https://images.unsplash.com/photo-1587595431973-160d0d94add1?auto=format&fit=crop&q=80&w=600' },
+    { label: 'Heritage', tag: 'Heritage', image: 'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?auto=format&fit=crop&q=80&w=600' },
+    { label: 'Offbeat', tag: 'Explore Offbeat', image: 'https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&q=80&w=600' },
+];
+
+function VibeCardsSection({ onCategoryChange, activeCategory }: { onCategoryChange: (c: string) => void, activeCategory: string }) {
+    return (
+        <section className="mb-12 border-b border-gray-100 pb-12">
+            <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900 mb-6">Find Your Vibe</h2>
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 hide-scrollbar md:grid md:grid-cols-5 md:overflow-visible" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {VIBE_CARDS.map(vibe => {
+                    const isActive = activeCategory === vibe.tag;
+                    return (
+                        <button
+                            key={vibe.tag}
+                            onClick={() => onCategoryChange(vibe.tag)}
+                            className={cn(
+                                "relative w-[200px] md:w-full md:aspect-[4/5] h-[250px] md:h-auto rounded-2xl overflow-hidden shrink-0 snap-start group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500",
+                                isActive ? "ring-4 ring-amber-500 ring-offset-2" : ""
+                            )}
+                        >
+                            <Image
+                                src={vibe.image}
+                                alt={vibe.label}
+                                fill
+                                sizes="(max-width: 768px) 200px, 20vw"
+                                className="object-cover group-hover:scale-110 transition-transform duration-700"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                            <div className="absolute inset-x-0 bottom-0 p-4">
+                                <h3 className="text-white font-bold text-lg leading-tight drop-shadow-md">{vibe.label}</h3>
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
+        </section>
+    );
+}
+
 // --- Destination Component ---
 const DESTINATIONS = [
     { name: 'Darjeeling', image: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=800' },
@@ -277,11 +320,13 @@ function SearchResults() {
                     </div>
                 ) : isStorefront ? (
                     <>
-                        <section>
+                        <VibeCardsSection onCategoryChange={handleCategoryChange} activeCategory={tag} />
+
+                        <section className="mb-12 border-b border-gray-100 pb-12">
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                                 <div className="text-left">
-                                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 mb-2">Unfiltered Experiences</h2>
-                                    <p className="text-slate-500 text-base font-medium">Your authentic story starts here.</p>
+                                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 mb-2">Discover by Destination</h2>
+                                    <p className="text-slate-500 text-base font-medium">Explore the hills, one town at a time.</p>
                                 </div>
                             </div>
                             <DestinationDiscovery />
@@ -304,10 +349,10 @@ function SearchResults() {
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                                 <div>
                                     <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 relative inline-block">
-                                        Every Stay, Unfiltered
+                                        All Verified Stays Across North Bengal
                                         <span className="absolute -bottom-2 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></span>
                                     </h2>
-                                    <p className="text-slate-500 text-lg font-medium mt-4">Handpicked places with real stories.</p>
+                                    <p className="text-slate-500 text-lg font-medium mt-4">Handpicked escapes curated by travelers.</p>
                                 </div>
 
                                 <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm self-end sm:self-auto">
