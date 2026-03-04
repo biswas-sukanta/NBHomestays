@@ -30,7 +30,7 @@ export function EmojiCategoryFilter({ activeCategory, onCategoryChange }: EmojiC
     return (
         <div className="w-full flex justify-center">
             <div
-                className="flex justify-start md:justify-center gap-3 md:gap-4 overflow-x-auto snap-x hide-scrollbar py-3 px-2 w-full"
+                className="flex justify-start md:justify-center gap-2 md:gap-3 overflow-x-auto snap-x hide-scrollbar py-2 px-2 w-full"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
                 {CATEGORIES.map((cat) => {
@@ -41,18 +41,18 @@ export function EmojiCategoryFilter({ activeCategory, onCategoryChange }: EmojiC
                             key={cat.tag}
                             onClick={() => onCategoryChange(cat.tag)}
                             className={cn(
-                                "flex flex-col items-center gap-2 cursor-pointer min-w-[88px] px-6 py-3.5 rounded-xl transition-all duration-300 ease-out snap-center border",
+                                "flex items-center gap-1.5 cursor-pointer px-4 py-2.5 rounded-full transition-all duration-300 ease-out snap-center border whitespace-nowrap",
                                 isSelected
-                                    ? "bg-gradient-to-r from-amber-500 to-yellow-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105 border-transparent"
-                                    : "border-transparent hover:border-amber-300/60 hover:bg-amber-50/50 hover:text-amber-600"
+                                    ? "bg-gradient-to-r from-amber-500 to-yellow-500 shadow-[0_0_12px_rgba(245,158,11,0.4)] scale-105 border-transparent"
+                                    : "border-gray-200 hover:border-amber-300/60 hover:bg-amber-50/50 hover:text-amber-600"
                             )}
                         >
                             <Icon className={cn(
-                                "w-8 h-8 transition-colors",
+                                "w-5 h-5 transition-colors",
                                 isSelected ? "text-white" : cat.color
                             )} />
                             <span className={cn(
-                                "text-sm md:text-base font-semibold whitespace-nowrap tracking-wide",
+                                "text-sm font-semibold tracking-wide",
                                 isSelected ? "text-white" : "text-gray-700"
                             )}>
                                 {cat.label}

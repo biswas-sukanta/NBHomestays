@@ -254,7 +254,7 @@ function SearchResults() {
 
             {/* STEP 2: Sticky Edge-to-Edge Category Bar */}
             <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4">
-                <div className="max-w-7xl mx-auto flex items-center justify-between py-2">
+                <div className="max-w-7xl mx-auto flex items-center justify-between py-1.5">
                     <EmojiCategoryFilter
                         activeCategory={tag}
                         onCategoryChange={handleCategoryChange}
@@ -265,10 +265,10 @@ function SearchResults() {
             {/* STEP 3: Bounded Core UI Layout Area */}
             <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-8">
                 {isLoading && allStays.length === 0 && !trendingStays.length ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                        {[...Array(8)].map((_, i) => (
-                            <div key={i} className={cn("flex flex-col space-y-3", (i % 6 === 0) ? 'md:col-span-2 md:row-span-2' : '')}>
-                                <Skeleton className={cn("relative w-full rounded-2xl bg-gray-100", (i % 6 === 0) ? 'aspect-[4/3]' : 'aspect-[4/3]')} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        {[...Array(7)].map((_, i) => (
+                            <div key={i} className={cn("flex flex-col space-y-3", i === 0 ? 'md:col-span-2' : '')}>
+                                <Skeleton className="relative w-full aspect-[4/3] rounded-2xl bg-gray-100" />
                                 <Skeleton className="h-5 w-3/4 bg-gray-100" />
                                 <Skeleton className="h-4 w-1/2 bg-gray-100" />
                             </div>
@@ -316,7 +316,7 @@ function SearchResults() {
                                                 : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
                                         )}
                                     >
-                                        <LayoutGrid className={cn("w-4 h-4", viewType === 'grid' ? "animate-pulse" : "")} />
+                                        <LayoutGrid className="w-4 h-4" />
                                         Grid
                                     </button>
                                     <button
@@ -328,7 +328,7 @@ function SearchResults() {
                                                 : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
                                         )}
                                     >
-                                        <MapIcon className={cn("w-4 h-4", viewType === 'map' ? "animate-pulse" : "")} />
+                                        <MapIcon className="w-4 h-4" />
                                         Map
                                     </button>
                                 </div>
@@ -341,11 +341,11 @@ function SearchResults() {
                                     </ErrorBoundary>
                                 </div>
                             ) : allStays.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                     {allStays.map((h, i) => {
-                                        const isFeatured = (i % 6 === 0) || (i % 6 === 5);
+                                        const isFeatured = i % 12 === 0;
                                         return (
-                                            <div key={`${h.id}-${i}`} className={cn(isFeatured ? 'md:col-span-2 md:row-span-2' : '')}>
+                                            <div key={`${h.id}-${i}`} className={cn(isFeatured ? 'md:col-span-2' : '')}>
                                                 <HomestayCard homestay={h} index={i % 12} featured={isFeatured} />
                                             </div>
                                         );
@@ -394,7 +394,7 @@ function SearchResults() {
                                             : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
                                     )}
                                 >
-                                    <LayoutGrid className={cn("w-4 h-4", viewType === 'grid' ? "animate-pulse" : "")} />
+                                    <LayoutGrid className="w-4 h-4" />
                                     Grid
                                 </button>
                                 <button
@@ -406,7 +406,7 @@ function SearchResults() {
                                             : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
                                     )}
                                 >
-                                    <MapIcon className={cn("w-4 h-4", viewType === 'map' ? "animate-pulse" : "")} />
+                                    <MapIcon className="w-4 h-4" />
                                     Map
                                 </button>
                             </div>
@@ -419,11 +419,11 @@ function SearchResults() {
                                 </ErrorBoundary>
                             </div>
                         ) : searchGrid.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                 {searchGrid.map((h, i) => {
-                                    const isFeatured = (i % 6 === 0) || (i % 6 === 5);
+                                    const isFeatured = i % 12 === 0;
                                     return (
-                                        <div key={h.id} className={cn(isFeatured ? 'md:col-span-2 md:row-span-2' : '')}>
+                                        <div key={h.id} className={cn(isFeatured ? 'md:col-span-2' : '')}>
                                             <HomestayCard homestay={h} index={i} featured={isFeatured} />
                                         </div>
                                     );

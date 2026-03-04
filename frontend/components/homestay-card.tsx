@@ -96,8 +96,7 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
             <Link href={`/homestays/${homestay.id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
                 {/* Image Container */}
                 <div className={cn(
-                    "relative w-full rounded-2xl overflow-hidden shadow-sm group-hover:shadow-xl border border-gray-100 transition-all duration-500 bg-gray-50 mb-3",
-                    featured ? 'aspect-[4/3] md:h-full' : 'aspect-[4/3]'
+                    "relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group-hover:shadow-2xl border border-gray-100 transition-all duration-500 bg-gray-50 mb-2"
                 )}>
                     {/* Optimized Image with async decoding and ImageKit scaling */}
                     <OptimizedImage
@@ -110,8 +109,8 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
                         }}
                     />
 
-                    {/* Persistent gradient overlay for text protection */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                    {/* Bottom-anchored gradient for text protection — preserves cinematic brightness */}
+                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
                     {/* Premium Navigation Arrows */}
                     {images.length > 1 && (
@@ -152,18 +151,6 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
                         </>
                     )}
 
-                    {/* Gradient overlay just at top/bottom edges for icons if needed */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                    {/* Curator's Note for featured cards */}
-                    {curatorNote && (
-                        <div className="absolute bottom-3 left-3 z-10">
-                            <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-slate-800 font-heading italic tracking-wide shadow-sm">
-                                {curatorNote}
-                            </span>
-                        </div>
-                    )}
-
                     {/* Top Left - Compare */}
                     <div className="absolute top-3 left-3 z-10">
                         <Button
@@ -197,10 +184,17 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
 
                 {/* Text Data */}
                 <div className="px-1 relative">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate mt-3" data-slot="card-title">
-                        {homestay.name.replace(/\s+All$/i, '')}
-                    </h3>
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2 mt-2">
+                        <h3 className="text-base font-semibold text-gray-900 truncate flex-1" data-slot="card-title">
+                            {homestay.name.replace(/\s+All$/i, '')}
+                        </h3>
+                        {curatorNote && (
+                            <span className="shrink-0 px-2.5 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-200">
+                                {curatorNote}
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
                         <p className="text-sm text-gray-500 truncate" data-testid="location-text">
                             {homestay.destination
                                 ? `${homestay.destination.name}, ${homestay.destination.district}`

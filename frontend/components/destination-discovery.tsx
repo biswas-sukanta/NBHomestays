@@ -87,7 +87,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
     return (
         <div className="space-y-10">
             {/* ── Vibrant Filter Pills ── */}
-            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md py-4 -mx-4 px-4">
+            <div className="bg-white/80 backdrop-blur-md py-4 -mx-4 px-4">
                 <div className="flex flex-row overflow-x-auto snap-x snap-mandatory no-scrollbar md:flex-wrap md:overflow-visible gap-3 pb-2 w-full">
                     {allTags.map(tag => {
                         const isActive = activeTag === tag;
@@ -137,7 +137,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                         onClick={() => router.push(`/destination/${dest.slug}`)}
                                         className="group cursor-pointer"
                                     >
-                                        <div className="relative aspect-[4/3] rounded-[32px] overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5 group-hover:ring-amber-400/30 group-hover:shadow-[0_4px_20px_rgba(218,165,32,0.15)]">
+                                        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5 group-hover:ring-amber-400/30 group-hover:shadow-[0_4px_20px_rgba(218,165,32,0.15)]">
                                             <div className="absolute inset-0 bg-transparent z-20 pointer-events-none" />
                                             <Image
                                                 src={`/destinations/${dest.localImageName}`}
