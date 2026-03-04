@@ -265,10 +265,10 @@ function SearchResults() {
             {/* STEP 3: Bounded Core UI Layout Area */}
             <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-8">
                 {isLoading && allStays.length === 0 && !trendingStays.length ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                         {[...Array(8)].map((_, i) => (
-                            <div key={i} className={cn("flex flex-col space-y-3", i % 5 === 0 ? 'sm:col-span-2' : '')}>
-                                <Skeleton className={cn("relative w-full rounded-2xl bg-gray-100", i % 5 === 0 ? 'aspect-[16/9]' : 'aspect-[4/3]')} />
+                            <div key={i} className={cn("flex flex-col space-y-3", (i % 6 === 0) ? 'md:col-span-2 md:row-span-2' : '')}>
+                                <Skeleton className={cn("relative w-full rounded-2xl bg-gray-100", (i % 6 === 0) ? 'aspect-[4/3]' : 'aspect-[4/3]')} />
                                 <Skeleton className="h-5 w-3/4 bg-gray-100" />
                                 <Skeleton className="h-4 w-1/2 bg-gray-100" />
                             </div>
@@ -279,7 +279,7 @@ function SearchResults() {
                         <section>
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                                 <div className="text-left">
-                                    <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-slate-900 mb-2">Unfiltered Experiences</h2>
+                                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 mb-2">Unfiltered Experiences</h2>
                                     <p className="text-slate-500 text-base font-medium">Your authentic story starts here.</p>
                                 </div>
                             </div>
@@ -301,7 +301,7 @@ function SearchResults() {
 
                         <div className="border-t border-gray-100 pt-10">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                                <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-slate-900 relative">
+                                <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 relative">
                                     Every Stay, Unfiltered
                                     <span className="absolute -bottom-2 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></span>
                                 </h2>
@@ -341,12 +341,15 @@ function SearchResults() {
                                     </ErrorBoundary>
                                 </div>
                             ) : allStays.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                    {allStays.map((h, i) => (
-                                        <div key={`${h.id}-${i}`} className={cn(i % 5 === 0 ? 'sm:col-span-2' : '')}>
-                                            <HomestayCard homestay={h} index={i % 12} featured={i % 5 === 0} />
-                                        </div>
-                                    ))}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                                    {allStays.map((h, i) => {
+                                        const isFeatured = (i % 6 === 0) || (i % 6 === 5);
+                                        return (
+                                            <div key={`${h.id}-${i}`} className={cn(isFeatured ? 'md:col-span-2 md:row-span-2' : '')}>
+                                                <HomestayCard homestay={h} index={i % 12} featured={isFeatured} />
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             ) : !loadingAll && (
                                 <div className="w-full max-w-3xl mx-auto mt-6">
@@ -377,7 +380,7 @@ function SearchResults() {
                     /* Search Term Direct Results */
                     <div className="w-full">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                            <h2 className="text-3xl font-extrabold font-heading relative">
+                            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 relative">
                                 Search Results
                                 <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full"></span>
                             </h2>
@@ -416,12 +419,15 @@ function SearchResults() {
                                 </ErrorBoundary>
                             </div>
                         ) : searchGrid.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                {searchGrid.map((h, i) => (
-                                    <div key={h.id} className={cn(i % 5 === 0 ? 'sm:col-span-2' : '')}>
-                                        <HomestayCard homestay={h} index={i} featured={i % 5 === 0} />
-                                    </div>
-                                ))}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                                {searchGrid.map((h, i) => {
+                                    const isFeatured = (i % 6 === 0) || (i % 6 === 5);
+                                    return (
+                                        <div key={h.id} className={cn(isFeatured ? 'md:col-span-2 md:row-span-2' : '')}>
+                                            <HomestayCard homestay={h} index={i} featured={isFeatured} />
+                                        </div>
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="w-full max-w-3xl mx-auto mt-6 flex flex-col items-center">

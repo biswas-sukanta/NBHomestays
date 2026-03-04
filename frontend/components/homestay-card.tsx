@@ -97,7 +97,7 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
                 {/* Image Container */}
                 <div className={cn(
                     "relative w-full rounded-2xl overflow-hidden shadow-sm group-hover:shadow-xl border border-gray-100 transition-all duration-500 bg-gray-50 mb-3",
-                    featured ? 'aspect-[16/9]' : 'aspect-[4/3]'
+                    featured ? 'aspect-[4/3] md:h-full' : 'aspect-[4/3]'
                 )}>
                     {/* Optimized Image with async decoding and ImageKit scaling */}
                     <OptimizedImage
@@ -110,8 +110,8 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
                         }}
                     />
 
-                    {/* Premium gradient overlay for text protection */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    {/* Persistent gradient overlay for text protection */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
                     {/* Premium Navigation Arrows */}
                     {images.length > 1 && (
@@ -198,7 +198,7 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
                 {/* Text Data */}
                 <div className="px-1 relative">
                     <h3 className="text-lg font-semibold text-gray-900 truncate mt-3" data-slot="card-title">
-                        {homestay.name.replace(' All', '')}
+                        {homestay.name.replace(/\s+All$/i, '')}
                     </h3>
                     <div className="flex items-center justify-between mb-1">
                         <p className="text-sm text-gray-500 truncate" data-testid="location-text">
