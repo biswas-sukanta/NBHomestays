@@ -14,13 +14,14 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { SharedPageBanner } from '@/components/shared-page-banner';
 import dynamic from 'next/dynamic';
-import { LayoutGrid, Map as MapIcon, Search } from 'lucide-react';
+import { LayoutGrid, Map as MapIcon, Search, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
 import { EmptyState } from '@/components/ui/empty-state';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
     ssr: false,
@@ -341,15 +342,61 @@ function SearchResults() {
                                     </ErrorBoundary>
                                 </div>
                             ) : allStays.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                                    {allStays.map((h, i) => {
-                                        const isFeatured = i % 12 === 0;
-                                        return (
-                                            <div key={`${h.id}-${i}`} className={cn(isFeatured ? 'md:col-span-2' : '')}>
-                                                <HomestayCard homestay={h} index={i % 12} featured={isFeatured} />
+                                <div className="space-y-8">
+                                    {/* Zone 1: Cinematic Hero Card */}
+                                    {allStays[0] && (
+                                        <Link href={`/homestays/${allStays[0].id}`} className="block group rounded-2xl overflow-hidden relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                                            <div className="relative w-full aspect-[21/9] md:aspect-[21/9] bg-gray-100">
+                                                <OptimizedImage
+                                                    src={allStays[0].media?.[0]?.url || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=1400'}
+                                                    alt={allStays[0].name}
+                                                    width={1400}
+                                                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700"
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                                                <div className="absolute inset-x-0 bottom-0 p-6 md:p-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                                                    <div>
+                                                        <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold text-white uppercase tracking-wider mb-3">
+                                                            Editor&apos;s Pick
+                                                        </span>
+                                                        <h3 className="text-2xl md:text-4xl font-serif font-medium text-white tracking-tight leading-tight">
+                                                            {allStays[0].name.replace(/\s+All$/i, '')}
+                                                        </h3>
+                                                        <p className="text-white/80 text-sm md:text-base mt-1">
+                                                            {allStays[0].destination ? `${allStays[0].destination.name}, ${allStays[0].destination.district}` : (allStays[0].locationName || 'North Bengal Hills')}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center gap-4 shrink-0">
+                                                        <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                                                            <Star className="w-4 h-4 fill-white text-white" />
+                                                            <span className="text-sm font-bold text-white">{(allStays[0].vibeScore || 4.5).toFixed(1)}</span>
+                                                        </div>
+                                                        <span className="text-white font-bold text-lg md:text-xl">
+                                                            From ₹{allStays[0].pricePerNight.toLocaleString()} <span className="font-normal text-white/70 text-sm">/night</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        );
-                                    })}
+                                        </Link>
+                                    )}
+
+                                    {/* Zone 2: Secondary 3-Card Row */}
+                                    {allStays.length > 1 && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                            {allStays.slice(1, 4).map((h, i) => (
+                                                <HomestayCard key={h.id} homestay={h} index={i + 1} />
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Zone 3: Uniform Grid (remaining cards) */}
+                                    {allStays.length > 4 && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                                            {allStays.slice(4).map((h, i) => (
+                                                <HomestayCard key={`${h.id}-${i + 4}`} homestay={h} index={(i + 4) % 12} />
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             ) : !loadingAll && (
                                 <div className="w-full max-w-3xl mx-auto mt-6">
