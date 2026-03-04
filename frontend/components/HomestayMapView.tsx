@@ -39,6 +39,8 @@ interface HomestayMapViewProps {
     homestays: HomestaySummary[];
     onMapChange?: (bounds: L.LatLngBounds) => void;
     hoveredHomestayId?: string | null;
+    onMarkerHover?: (id: string) => void;
+    onMarkerLeave?: () => void;
 }
 
 function MapHoverPan({ homestays, hoveredHomestayId }: { homestays: HomestaySummary[], hoveredHomestayId?: string | null }) {
@@ -75,7 +77,7 @@ function MapUpdater({ homestays, onMapChange, searchAsIMove }: { homestays: Home
     return null;
 }
 
-export default function HomestayMapView({ homestays, onMapChange, hoveredHomestayId }: HomestayMapViewProps) {
+export default function HomestayMapView({ homestays, onMapChange, hoveredHomestayId, onMarkerHover, onMarkerLeave }: HomestayMapViewProps) {
     const [searchAsIMove, setSearchAsIMove] = useState(false);
     const defaultCenter: L.LatLngExpression = [26.7271, 88.3953]; // Siliguri
 
@@ -98,6 +100,10 @@ export default function HomestayMapView({ homestays, onMapChange, hoveredHomesta
                                 key={homestay.id}
                                 position={[homestay.latitude, homestay.longitude]}
                                 icon={createPriceMarker(homestay.pricePerNight, homestay.vibeScore, hoveredHomestayId === homestay.id)}
+                                eventHandlers={{
+                                    mouseover: () => onMarkerHover?.(homestay.id),
+                                    mouseout: () => onMarkerLeave?.(),
+                                }}
                             >
                                 <Popup className="premium-map-popup">
                                     <Link href={`/homestays/${homestay.id}`} className="block group w-56 overflow-hidden">
@@ -189,16 +195,16 @@ export default function HomestayMapView({ homestays, onMapChange, hoveredHomesta
             <AnimatePresence>
                 {!searchAsIMove && (
                     <motion.div
-                        initial={{ opacity: 0, y: 20, x: '-50%' }}
+                        initial={{ opacity: 0, y: -20, x: '-50%' }}
                         animate={{ opacity: 1, y: 0, x: '-50%' }}
-                        exit={{ opacity: 0, y: 20, x: '-50%' }}
-                        className="absolute bottom-10 left-1/2 z-[400]"
+                        exit={{ opacity: 0, y: -20, x: '-50%' }}
+                        className="absolute top-4 left-1/2 z-[400]"
                     >
                         <Button
                             variant="default"
-                            className="rounded-full shadow-2xl bg-[#004d00] hover:bg-[#003300] text-white px-8 py-6 h-12 font-bold text-sm tracking-wide transition-all hover:scale-105 active:scale-95 flex items-center gap-2 group"
+                            className="rounded-full shadow-2xl bg-[#004d00] hover:bg-[#003300] text-white px-8 py-5 h-11 font-bold text-sm tracking-wide transition-all hover:scale-105 active:scale-95 flex items-center gap-2 group border border-white/20"
                             onClick={() => {
-                                // Manual refresh trigger
+                                // Manual refresh trigger logic handled via onMapChange
                             }}
                         >
                             <MapIcon className="w-4 h-4 group-hover:rotate-12 transition-transform" />

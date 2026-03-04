@@ -8,11 +8,14 @@ import { SharedPageBanner } from '@/components/shared-page-banner'; // Assuming 
 import { HomestayCard } from '@/components/homestay-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
-import { MapPin, Info, LayoutGrid, Map as MapIcon } from 'lucide-react';
+import { MapPin, Info, LayoutGrid, Map as MapIcon, SlidersHorizontal } from 'lucide-react';
 import { AnimatedHeroBackground } from '@/components/ui/animated-hero-background';
 import { EmptyState } from '@/components/ui/empty-state';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInView } from 'react-intersection-observer';
+import { EmojiCategoryFilter } from '@/components/emoji-category-filter';
 
 const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
     ssr: false,
@@ -23,40 +26,48 @@ export default function DestinationPage() {
     const { slug } = useParams();
     const [viewType, setViewType] = useState<'grid' | 'map'>('grid');
     const [hoveredId, setHoveredId] = useState<string | null>(null);
+    const [hoveredMarkerId, setHoveredMarkerId] = useState<string | null>(null);
+    const [activeCategory, setActiveCategory] = useState('');
+    const { ref, inView } = useInView();
 
     const { data: destination, isLoading: destLoading } = useQuery({
         queryKey: ['destination', slug],
         queryFn: () => api.get(`/api/destinations/${slug}`).then(res => res.data)
     });
 
-    const { data: homestaysPage, isLoading: homestaysLoading } = useQuery({
-        queryKey: ['destination-homestays', slug],
-        queryFn: async () => {
-            const res = await api.get(`/api/destinations/${slug}/homestays`);
-            // Safely extract the array whether it's wrapped in a Page object or not
-            return res.data.content ? res.data.content : res.data;
+    const {
+        data: infiniteData,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading: homestaysLoading
+    } = useInfiniteQuery({
+        queryKey: ['destination-homestays', slug, activeCategory],
+        queryFn: async ({ pageParam = 0 }) => {
+            const tagParam = activeCategory ? `&tag=${encodeURIComponent(activeCategory)}` : '';
+            const res = await api.get(`/api/destinations/${slug}/homestays?page=${pageParam}&size=10${tagParam}`);
+            return res.data;
+        },
+        initialPageParam: 0,
+        getNextPageParam: (lastPage) => {
+            if (lastPage.last || !lastPage.content) return undefined;
+            return lastPage.number + 1;
         }
     });
 
-    if (destLoading) {
-        return (
-            <div className="min-h-screen bg-[#FDFCFB]">
-                <div className="h-[60vh] bg-secondary/10 animate-pulse" />
-                <div className="max-w-7xl mx-auto px-4 py-12">
-                    <Skeleton className="h-12 w-64 mb-6" />
-                    <Skeleton className="h-6 w-full mb-2" />
-                    <Skeleton className="h-6 w-3/4 mb-12" />
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-72 w-full rounded-2xl" />)}
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    React.useEffect(() => {
+        if (inView && hasNextPage) {
+            fetchNextPage();
+        }
+    }, [inView, hasNextPage, fetchNextPage]);
 
-    if (!destination) return <div className="p-20 text-center">Destination not found</div>;
+    const homestays = React.useMemo(() => {
+        return infiniteData?.pages.flatMap(page => page.content || page) || [];
+    }, [infiniteData]);
 
-    const homestays = Array.isArray(homestaysPage) ? homestaysPage : [];
+    const handleCategoryChange = (cat: string) => {
+        setActiveCategory(prev => prev === cat ? '' : cat);
+    };
 
     return (
         <div className="min-h-screen bg-[#FDFCFB]">
@@ -104,7 +115,9 @@ export default function DestinationPage() {
                 </div>
 
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 hidden sm:block">{homestays.length} Stays Found</h3>
+                    <h3 className="text-xl font-bold text-gray-900 hidden sm:block">
+                        {homestays.length} stays in {destination.name}
+                    </h3>
                     <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm ml-auto">
                         <button
                             onClick={() => setViewType('grid')}
@@ -133,30 +146,59 @@ export default function DestinationPage() {
                     </div>
                 </div>
 
-                {homestaysLoading ? (
+                {homestaysLoading && !infiniteData ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                         {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-80 w-full rounded-3xl" />)}
                     </div>
                 ) : homestays.length > 0 ? (
                     viewType === 'map' ? (
-                        <div className="flex flex-col lg:flex-row gap-6 h-[800px]">
-                            <div className="w-full lg:w-[55%] h-[400px] lg:h-full rounded-2xl overflow-hidden shadow-lg border border-stone-200/60 order-1 lg:order-none z-10 sticky top-[120px]">
+                        <div className="flex flex-col lg:flex-row gap-0 h-[calc(100vh-100px)] -mx-4 lg:-mx-8">
+                            {/* Left: Map (1.5fr) */}
+                            <div className="w-full lg:w-[60%] h-[400px] lg:h-full overflow-hidden border-r border-stone-200 relative">
                                 <HomestayMapView
                                     homestays={homestays}
-                                    hoveredHomestayId={hoveredId}
+                                    hoveredHomestayId={hoveredId || hoveredMarkerId}
+                                    onMarkerHover={setHoveredMarkerId}
+                                    onMarkerLeave={() => setHoveredMarkerId(null)}
                                 />
                             </div>
-                            <div className="w-full lg:w-[45%] h-full overflow-y-auto pr-2 hide-scrollbar order-2 lg:order-none">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-12">
+
+                            {/* Right: Listings (1fr) */}
+                            <div className="w-full lg:w-[40%] h-full flex flex-col bg-white">
+                                {/* Sticky Filter Bar */}
+                                <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-bottom border-stone-100 px-6 py-4">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <SlidersHorizontal className="w-4 h-4 text-stone-400" />
+                                        <span className="text-xs font-bold uppercase tracking-widest text-stone-500">Filters</span>
+                                    </div>
+                                    <EmojiCategoryFilter
+                                        activeCategory={activeCategory}
+                                        onCategoryChange={handleCategoryChange}
+                                    />
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto px-6 py-6 hide-scrollbar flex flex-col gap-6">
                                     {homestays.map((homestay: any) => (
-                                        <div key={homestay.id} className="w-full">
+                                        <div key={homestay.id} className="w-full transition-all duration-300">
                                             <HomestayCard
                                                 homestay={homestay}
+                                                isHighlighted={hoveredMarkerId === homestay.id}
                                                 onMouseEnter={() => setHoveredId(homestay.id)}
                                                 onMouseLeave={() => setHoveredId(null)}
                                             />
                                         </div>
                                     ))}
+
+                                    {/* Infinite Scroll Anchor */}
+                                    <div ref={ref} className="h-10 flex items-center justify-center">
+                                        {isFetchingNextPage && (
+                                            <div className="flex gap-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-stone-300 animate-bounce" />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-stone-300 animate-bounce [animation-delay:-0.15s]" />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-stone-300 animate-bounce [animation-delay:-0.3s]" />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

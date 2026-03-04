@@ -35,18 +35,18 @@ export interface HomestaySummary {
         isVerifiedHost?: boolean;
     };
 }
-
 interface HomestayCardProps {
     homestay: HomestaySummary;
     index?: number;
     featured?: boolean;
+    isHighlighted?: boolean;
     onMouseEnter?: () => void;
     onMouseLeave?: () => void;
 }
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3';
 
-export const HomestayCard = React.memo(({ homestay, index = 0, featured = false, onMouseEnter, onMouseLeave }: HomestayCardProps) => {
+export const HomestayCard = React.memo(({ homestay, index = 0, featured = false, isHighlighted = false, onMouseEnter, onMouseLeave }: HomestayCardProps) => {
     const { addToCompare, selectedIds } = useCompareStore();
     const isSelected = selectedIds.includes(homestay.id);
     const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -98,7 +98,10 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false,
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
-            <Link href={`/homestays/${homestay.id}`} className="block relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl border border-stone-200/60 bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow duration-200">
+            <Link href={`/homestays/${homestay.id}`} className={cn(
+                "block relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl border bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300",
+                isHighlighted ? "border-[#004d00] shadow-2xl ring-2 ring-[#004d00]/20 scale-[1.02] z-50" : "border-stone-200/60"
+            )}>
                 {/* Optimized Image with async decoding and ImageKit scaling */}
                 <OptimizedImage
                     src={images[currentIndex]}
