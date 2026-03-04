@@ -426,10 +426,35 @@ function SearchResults() {
                             </div>
 
                             {viewType === 'map' ? (
-                                <div className="h-[600px] w-full mb-12">
-                                    <ErrorBoundary name="Discovery Map" fallback={<div className="h-[600px] w-full bg-red-50 rounded-2xl flex items-center justify-center text-red-600 font-medium border border-red-100 italic">Map failed to initialize. Please refresh or try again later.</div>}>
-                                        <HomestayMapView homestays={allStays} onMapChange={handleMapChange} />
-                                    </ErrorBoundary>
+                                <div className="flex flex-col lg:grid lg:grid-cols-[1fr_420px] gap-0 lg:h-[calc(100vh-72px)] lg:-mx-8 lg:mb-12">
+                                    {/* Left: Map (Fullscreen on mobile, relative split on desktop) */}
+                                    <div className="fixed inset-0 z-[40] lg:relative lg:z-auto w-full lg:h-full overflow-hidden border-r border-stone-200">
+                                        <ErrorBoundary name="Discovery Map" fallback={<div className="h-full w-full bg-red-50 flex items-center justify-center text-red-600 font-medium italic">Map failed to initialize. Please refresh or try again later.</div>}>
+                                            <HomestayMapView homestays={allStays} onMapChange={handleMapChange} />
+                                        </ErrorBoundary>
+
+                                        {/* Mobile Bottom Sheet Overlay for Cards */}
+                                        <div className="absolute lg:hidden bottom-0 inset-x-0 z-[50] pb-[80px] pt-12 bg-gradient-to-t from-black/60 to-transparent pointer-events-none flex flex-col justify-end">
+                                            <div className="pointer-events-auto w-full overflow-x-auto snap-x snap-mandatory flex gap-4 px-4 pb-4 hide-scrollbar">
+                                                {allStays.slice(0, 10).map((homestay: any) => (
+                                                    <div key={homestay.id} className="w-[85vw] max-w-[320px] shrink-0 snap-center">
+                                                        <HomestayCard homestay={homestay} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right: Desktop Listings Rail (Hidden on mobile map) */}
+                                    <div className="hidden lg:flex w-full h-full flex-col bg-white overflow-hidden">
+                                        <div className="flex-1 overflow-y-auto px-4 py-6 hide-scrollbar flex flex-col gap-6">
+                                            {allStays.map((homestay: any) => (
+                                                <div key={homestay.id} className="w-full transition-all duration-300">
+                                                    <HomestayCard homestay={homestay} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             ) : allStays.length > 0 ? (
                                 <div className="space-y-8">

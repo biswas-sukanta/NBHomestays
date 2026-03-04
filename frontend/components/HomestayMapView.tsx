@@ -67,9 +67,10 @@ function MapUpdater({ homestays, onMapChange, searchAsIMove }: { homestays: Home
 
     useEffect(() => {
         if (homestays.length > 0) {
-            const bounds = L.latLngBounds(homestays.map(h => [h.latitude || 0, h.longitude || 0]));
-            if (bounds.isValid()) {
-                map.fitBounds(bounds, { padding: [50, 50] });
+            const validHomestays = homestays.filter(h => h.latitude && h.longitude);
+            if (validHomestays.length > 0) {
+                const bounds = L.latLngBounds(validHomestays.map(h => [h.latitude as number, h.longitude as number]));
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14, animate: true, duration: 1.5 });
             }
         }
     }, [homestays, map]);
