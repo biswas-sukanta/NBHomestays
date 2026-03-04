@@ -113,8 +113,8 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false,
                     }}
                 />
 
-                {/* Bottom-anchored gradient for text protection */}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(transparent,rgba(0,0,0,0.65))] pointer-events-none" />
+                {/* Bottom-anchored gradient for text protection (40% height) */}
+                <div className="absolute inset-x-0 bottom-0 h-[40%] bg-[linear-gradient(transparent,rgba(0,0,0,0.65))] pointer-events-none" />
 
                 {/* Premium Navigation Arrows */}
                 {images.length > 1 && (
@@ -177,42 +177,41 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false,
                     </div>
                 </div>
 
-                {/* Bottom Overlay Row */}
-                <div className="absolute bottom-3 inset-x-3 flex justify-between items-end z-10 pointer-events-none">
-                    <div className="flex flex-col text-white max-w-[75%] pr-2">
-                        <div className="flex items-center gap-1.5 mb-1 text-[11px] font-bold tracking-[0.08em] uppercase text-white/85 shadow-sm">
-                            <span className="truncate">
-                                {homestay.destination
-                                    ? `${homestay.destination.name} • ${homestay.destination.stateName || homestay.destination.district}`
-                                    : (homestay.locationName || 'Eastern Himalayas')}
-                            </span>
-                            {homestay.host?.isVerifiedHost && (
-                                <CheckCircle2 className="w-3 h-3 text-blue-400 drop-shadow-md shrink-0" />
-                            )}
-                        </div>
-                        <h3 className="text-[17px] md:text-[19px] font-serif font-semibold text-white line-clamp-2 drop-shadow-md leading-[1.15]" data-slot="card-title">
-                            {homestay.name.replace(/\s+All$/i, '')}
-                        </h3>
+                {/* Absolute Text Container (Bottom Left) */}
+                <div className="absolute bottom-[12px] left-[14px] right-[60px] flex flex-col z-10 pointer-events-none">
+                    <div className="flex items-center gap-1.5 text-[11px] tracking-[0.08em] uppercase text-white/90 drop-shadow-sm">
+                        <span className="truncate">
+                            {homestay.destination
+                                ? `${homestay.destination.name} • ${homestay.destination.stateName || homestay.destination.district}`
+                                : (homestay.locationName || 'Eastern Himalayas')}
+                        </span>
+                        {homestay.host?.isVerifiedHost && (
+                            <CheckCircle2 className="w-3 h-3 text-blue-400 drop-shadow-md shrink-0" />
+                        )}
                     </div>
+                    <h3 className="text-[15px] font-semibold text-white line-clamp-2 drop-shadow-md leading-[1.25] mt-1 pr-2" data-slot="card-title">
+                        {homestay.name.replace(/\s+All$/i, '')}
+                    </h3>
+                </div>
 
-                    <div className="flex gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-auto pb-1 pr-1">
-                        <TripBoardButton item={tripBoardItem} size="sm" />
-                        <Button
-                            variant="secondary"
-                            size="icon"
-                            className={cn(
-                                'h-8 w-8 rounded-full shadow-lg transition-all duration-200 border border-white/20',
-                                isSelected
-                                    ? 'bg-primary text-white hover:bg-primary/90 border-transparent'
-                                    : 'bg-[rgba(0,0,0,0.45)] backdrop-blur-[6px] text-white hover:bg-black/60'
-                            )}
-                            onClick={handleCompare}
-                            title="Add to Compare"
-                            aria-label="Compare this homestay"
-                        >
-                            <Scale className="w-3.5 h-3.5" />
-                        </Button>
-                    </div>
+                {/* Absolute Action Icons (Bottom Right) */}
+                <div className="absolute bottom-[12px] right-[14px] flex gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-auto z-20">
+                    <TripBoardButton item={tripBoardItem} size="sm" />
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        className={cn(
+                            'h-8 w-8 rounded-full shadow-lg transition-all duration-200 border border-white/20',
+                            isSelected
+                                ? 'bg-primary text-white hover:bg-primary/90 border-transparent'
+                                : 'bg-[rgba(0,0,0,0.45)] backdrop-blur-[6px] text-white hover:bg-black/60'
+                        )}
+                        onClick={handleCompare}
+                        title="Add to Compare"
+                        aria-label="Compare this homestay"
+                    >
+                        <Scale className="w-3.5 h-3.5" />
+                    </Button>
                 </div>
             </Link>
         </motion.div>
