@@ -49,7 +49,7 @@ export function WanderByRegion() {
     if (!states?.length) return null;
 
     return (
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 no-scrollbar md:grid md:grid-cols-3 md:grid-rows-2 md:gap-5 auto-rows-[260px] lg:auto-rows-[300px]">
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 hide-scrollbar md:grid md:grid-cols-3 md:grid-rows-2 md:gap-6 md:min-h-[600px] lg:min-h-[700px] md:overflow-visible">
             {states.map((state, i) => {
                 const style = STATE_STYLES[state.slug] || fallbackStyle;
                 const Icon = style.icon;
@@ -63,7 +63,7 @@ export function WanderByRegion() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: i * 0.1, duration: 0.5 }}
-                        className={`${isHero ? 'md:col-span-1 md:row-span-2' : ''} min-w-[85vw] lg:min-w-0 snap-center shrink-0 md:min-w-0 md:shrink`}
+                        className={`${isHero ? 'md:col-span-1 md:row-span-2' : ''} relative overflow-hidden rounded-2xl w-[85vw] flex-shrink-0 snap-center md:w-full md:h-full md:flex-shrink-1`}
                     >
                         <Link
                             href={`/state/${state.slug}`}
@@ -75,7 +75,7 @@ export function WanderByRegion() {
                                 alt={state.name}
                                 fill
                                 sizes={isHero ? '(max-width: 640px) 100vw, 33vw' : '(max-width: 640px) 100vw, 25vw'}
-                                className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                             />
 
                             {/* Color-tinted gradient overlay */}
