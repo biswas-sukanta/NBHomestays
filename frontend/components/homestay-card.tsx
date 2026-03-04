@@ -104,14 +104,14 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false,
                     src={images[currentIndex]}
                     alt={homestay.name}
                     width={featured ? 900 : 600}
-                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-200 ease-out"
+                    className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-200 ease-out"
                     onError={(e) => {
                         e.currentTarget.src = FALLBACK_IMAGE;
                     }}
                 />
 
                 {/* Bottom-anchored gradient for text protection */}
-                <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(transparent,rgba(0,0,0,0.65))] pointer-events-none" />
 
                 {/* Premium Navigation Arrows */}
                 {images.length > 1 && (
@@ -143,8 +143,8 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false,
                                 <div
                                     key={i}
                                     className={cn(
-                                        'w-1.5 h-1.5 rounded-full transition-all duration-300',
-                                        i === currentIndex ? 'bg-white scale-125' : 'bg-white/50'
+                                        'w-[5px] h-[5px] rounded-full transition-all duration-300',
+                                        i === currentIndex ? 'bg-white opacity-100 scale-125' : 'bg-white opacity-60'
                                     )}
                                 />
                             ))}
@@ -154,29 +154,30 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false,
 
                 {/* Top Overlay Row */}
                 <div className="absolute top-3 inset-x-3 flex justify-between items-start z-10 pointer-events-none">
-                    <div className="flex flex-col gap-2 items-start">
+                    <div className="flex flex-col gap-1.5 items-start">
                         {featuredBadge && (
-                            <span className="px-2 py-1 bg-white/95 backdrop-blur shadow-sm text-slate-900 text-[10px] font-bold uppercase tracking-wider rounded-md pointer-events-auto">
+                            <span className="px-2.5 py-1 bg-[rgba(0,0,0,0.45)] backdrop-blur-[6px] text-white text-[10px] font-bold uppercase tracking-wider rounded-full pointer-events-auto">
                                 {featuredBadge}
                             </span>
                         )}
-                        <div className="bg-white/95 backdrop-blur shadow-sm px-2 py-1 rounded-full flex items-center gap-1 pointer-events-auto">
-                            <Star className="w-3.5 h-3.5 fill-gray-900 text-gray-900" />
-                            <span className="text-xs font-bold text-gray-900">{vibeScore.toFixed(1)}</span>
+                        <div className="bg-[rgba(0,0,0,0.45)] backdrop-blur-[6px] px-2.5 py-1 rounded-full flex items-center gap-1.5 pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+                            <Star className="w-3.5 h-3.5 fill-white text-white" />
+                            <span className="text-xs font-bold text-white tracking-wide">{vibeScore.toFixed(1)}</span>
                         </div>
                     </div>
 
-                    <div className="bg-white/95 backdrop-blur shadow-sm px-2.5 py-1 rounded-full pointer-events-auto">
-                        <span className="font-bold text-slate-900 text-xs tracking-tight">
-                            ₹{homestay.pricePerNight.toLocaleString()} <span className="font-normal text-slate-500">/ night</span>
+                    <div className="bg-[rgba(0,0,0,0.45)] backdrop-blur-[6px] px-3 py-1.5 rounded-2xl pointer-events-auto flex flex-col items-end leading-tight shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/10">
+                        <span className="font-bold text-white text-[13px] tracking-tight">
+                            ₹{homestay.pricePerNight.toLocaleString()}
                         </span>
+                        <span className="font-medium text-white/80 text-[10px]">/night</span>
                     </div>
                 </div>
 
                 {/* Bottom Overlay Row */}
                 <div className="absolute bottom-3 inset-x-3 flex justify-between items-end z-10 pointer-events-none">
-                    <div className="flex flex-col text-white max-w-[75%]">
-                        <div className="flex items-center gap-1.5 mb-1 text-[10px] font-bold tracking-[0.2em] uppercase text-white/90 shadow-sm">
+                    <div className="flex flex-col text-white max-w-[75%] pr-2">
+                        <div className="flex items-center gap-1.5 mb-1 text-[11px] font-bold tracking-[0.08em] uppercase text-white/85 shadow-sm">
                             <span className="truncate">
                                 {homestay.destination
                                     ? `${homestay.destination.name} • ${homestay.destination.stateName || homestay.destination.district}`
@@ -186,20 +187,21 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false,
                                 <CheckCircle2 className="w-3 h-3 text-blue-400 drop-shadow-md shrink-0" />
                             )}
                         </div>
-                        <h3 className="text-lg md:text-[20px] font-serif font-medium text-white truncate drop-shadow-md leading-tight" data-slot="card-title">
+                        <h3 className="text-[17px] md:text-[19px] font-serif font-semibold text-white line-clamp-2 drop-shadow-md leading-[1.15]" data-slot="card-title">
                             {homestay.name.replace(/\s+All$/i, '')}
                         </h3>
                     </div>
 
-                    <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 items-end pointer-events-auto">
+                    <div className="flex gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-auto pb-1 pr-1">
+                        <TripBoardButton item={tripBoardItem} size="sm" />
                         <Button
                             variant="secondary"
                             size="icon"
                             className={cn(
-                                'h-8 w-8 rounded-full shadow-md transition-all duration-200',
+                                'h-8 w-8 rounded-full shadow-lg transition-all duration-200 border border-white/20',
                                 isSelected
-                                    ? 'bg-primary text-white hover:bg-primary/90'
-                                    : 'bg-white/95 text-gray-700 hover:bg-white'
+                                    ? 'bg-primary text-white hover:bg-primary/90 border-transparent'
+                                    : 'bg-[rgba(0,0,0,0.45)] backdrop-blur-[6px] text-white hover:bg-black/60'
                             )}
                             onClick={handleCompare}
                             title="Add to Compare"
@@ -207,7 +209,6 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false,
                         >
                             <Scale className="w-3.5 h-3.5" />
                         </Button>
-                        <TripBoardButton item={tripBoardItem} size="sm" />
                     </div>
                 </div>
             </Link>
