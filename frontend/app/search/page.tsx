@@ -263,7 +263,7 @@ function SearchResults() {
             </div>
 
             {/* STEP 3: Bounded Core UI Layout Area */}
-            <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col gap-12 md:gap-16">
+            <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-8">
                 {isLoading && allStays.length === 0 && !trendingStays.length ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {[...Array(8)].map((_, i) => (
@@ -277,9 +277,9 @@ function SearchResults() {
                 ) : isStorefront ? (
                     <>
                         <section>
-                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                                 <div className="text-left">
-                                    <h2 className="text-3xl md:text-4xl font-medium text-slate-900 mb-2 tracking-tight font-heading">UNFILTERED EXPERIENCES</h2>
+                                    <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-slate-900 mb-2">Unfiltered Experiences</h2>
                                     <p className="text-slate-500 text-base font-medium">Your authentic story starts here.</p>
                                 </div>
                             </div>
@@ -288,26 +288,22 @@ function SearchResults() {
 
                         <HomestaySwimlane
                             title="Trending Now"
-                            emoji="🔥"
                             homestays={trendingStays}
                         />
                         <HomestaySwimlane
                             title="Featured Escapes"
-                            emoji="⭐"
                             homestays={featuredStays}
                         />
                         <HomestaySwimlane
                             title="Explore Offbeat"
-                            emoji="🌿"
                             homestays={offbeatStays}
                         />
 
-                        {/* STEP 4: Proper Infinite Paginated Grid */}
-                        <div className="border-t border-gray-100 pt-16">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                                <h2 className="text-3xl md:text-4xl font-medium text-slate-900 tracking-tight font-heading relative">
-                                    EVERY STAY, UNFILTERED
-                                    <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></span>
+                        <div className="border-t border-gray-100 pt-10">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                                <h2 className="font-serif text-4xl md:text-5xl font-medium tracking-tight text-slate-900 relative">
+                                    Every Stay, Unfiltered
+                                    <span className="absolute -bottom-2 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></span>
                                 </h2>
 
                                 <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm self-end sm:self-auto">
@@ -445,17 +441,6 @@ function SearchResults() {
                     </div>
                 )}
             </main>
-
-            {/* Phase 5: Premium Floating Map Pill */}
-            {isStorefront && viewType === 'grid' && (
-                <button
-                    onClick={() => setViewType('map')}
-                    className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 inline-flex items-center gap-2.5 px-7 py-3.5 bg-slate-900 text-white font-bold text-sm rounded-full shadow-2xl shadow-black/30 hover:bg-slate-800 hover:shadow-[0_0_30px_rgba(0,0,0,0.4)] hover:scale-105 transition-all duration-300 border border-white/10"
-                >
-                    <MapIcon className="w-4.5 h-4.5" />
-                    Show Map
-                </button>
-            )}
         </div>
     );
 }

@@ -4,20 +4,16 @@ import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
 
 interface HomestaySwimlaneProps {
     title: string;
-    emoji: string;
     homestays: HomestaySummary[];
 }
 
-export function HomestaySwimlane({ title, emoji, homestays }: HomestaySwimlaneProps) {
+export function HomestaySwimlane({ title, homestays }: HomestaySwimlaneProps) {
     if (!homestays || homestays.length === 0) return null;
 
     return (
         <CarouselWrapper
             headerLeft={
-                <div className="flex items-center gap-3">
-                    <span className="text-3xl" aria-hidden="true">{emoji}</span>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{title}</h2>
-                </div>
+                <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900">{title}</h2>
             }
         >
             {homestays.map((homestay, idx) => (
@@ -28,3 +24,4 @@ export function HomestaySwimlane({ title, emoji, homestays }: HomestaySwimlanePr
         </CarouselWrapper>
     );
 }
+
