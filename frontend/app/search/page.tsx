@@ -38,8 +38,8 @@ const VIBE_CARDS = [
 
 function VibeCardsSection({ onCategoryChange, activeCategory }: { onCategoryChange: (c: string) => void, activeCategory: string }) {
     return (
-        <section className="mb-12 border-b border-gray-100 pb-12">
-            <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900 mb-6">Find Your Vibe</h2>
+        <section className="mb-10 border-b border-stone-200/60 pb-12">
+            <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tighter leading-[1.1] text-slate-900 mb-6">Find Your Vibe</h2>
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 hide-scrollbar md:grid md:grid-cols-5 md:overflow-visible" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {VIBE_CARDS.map(vibe => {
                     const isActive = activeCategory === vibe.tag;
@@ -57,7 +57,7 @@ function VibeCardsSection({ onCategoryChange, activeCategory }: { onCategoryChan
                                 alt={vibe.label}
                                 fill
                                 sizes="(max-width: 768px) 200px, 20vw"
-                                className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                className="object-cover group-hover:scale-105 transition-transform duration-[1200ms] ease-[cubic-bezier(0.25,1,0.5,1)]"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                             <div className="absolute inset-x-0 bottom-0 p-4">
@@ -81,8 +81,8 @@ function ExploreByRegionSection() {
     ];
 
     return (
-        <section className="mb-12 border-b border-gray-100 pb-12">
-            <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900 mb-6">Explore by Region</h2>
+        <section className="mb-4 border-b border-stone-200/60 pb-12">
+            <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tighter leading-[1.1] text-slate-900 mb-6">Explore by Region</h2>
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 hide-scrollbar md:grid md:grid-cols-5 md:overflow-visible" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {REGIONS.map(region => (
                     <Link
@@ -99,7 +99,7 @@ function ExploreByRegionSection() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                         <div className="absolute inset-x-0 bottom-0 p-4">
-                            <h3 className="text-white font-bold text-lg leading-tight drop-shadow-md">{region.name}</h3>
+                            <h3 className="text-white font-bold text-lg leading-tight drop-shadow-md tracking-tight">{region.name}</h3>
                         </div>
                     </Link>
                 ))}
@@ -120,11 +120,11 @@ const DESTINATIONS = [
 const DestinationCard = React.memo(({ dest, isActive }: { dest: { name: string; image: string }, isActive: boolean }) => {
     return (
         <Link href={`/search?tag=${encodeURIComponent(dest.name)}`} data-active={isActive ? 'true' : undefined} className={`block w-[260px] sm:w-[280px] shrink-0 snap-start group outline-none overflow-hidden rounded-2xl relative shadow-sm hover:shadow-lg transition-all ${isActive ? 'ring-4 ring-[#004d00]/80 ring-offset-2' : ''}`}>
-            <div className="w-full aspect-[4/3] bg-gray-100 relative z-0">
-                <Image src={dest.image} alt={dest.name} fill sizes="(max-width: 640px) 260px, 280px" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
+            <div className="w-full aspect-[4/3] bg-stone-100 relative z-0">
+                <Image src={dest.image} alt={dest.name} fill sizes="(max-width: 640px) 260px, 280px" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1200ms] ease-[cubic-bezier(0.25,1,0.5,1)]" loading="lazy" />
+                <div className="absolute inset-0 bg-stone-900/20 group-hover:bg-stone-900/10 transition-colors z-10" />
                 <div className="absolute inset-x-0 bottom-0 p-4 z-20">
-                    <h3 className="text-xl font-bold text-white drop-shadow-md">{dest.name}</h3>
+                    <h3 className="text-xl font-bold text-white drop-shadow-md tracking-tight">{dest.name}</h3>
                 </div>
             </div>
         </Link>
@@ -303,7 +303,7 @@ function SearchResults() {
     const isLoading = isStorefront ? isAllInitialLoading : searchLoading;
 
     return (
-        <div className="min-h-screen bg-white text-gray-900 pb-20">
+        <div className="min-h-screen bg-[#FAF9F6] text-slate-900 pb-20">
             {/* STEP 1: Global Brand Green Banner */}
             <SharedPageBanner
                 title={query ? `"${query}"` : tag ? tag : 'Discover Offbeat Stays Across the Eastern Himalayas'}
@@ -334,7 +334,7 @@ function SearchResults() {
             </SharedPageBanner>
 
             {/* STEP 2: Sticky Edge-to-Edge Category Bar */}
-            <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4">
+            <div className="sticky top-0 z-40 bg-[#FAF9F6]/80 backdrop-blur-md border-b border-stone-200/60 px-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between py-1.5">
                     <EmojiCategoryFilter
                         activeCategory={tag}
@@ -349,9 +349,9 @@ function SearchResults() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                         {[...Array(7)].map((_, i) => (
                             <div key={i} className={cn("flex flex-col space-y-3", i === 0 ? 'md:col-span-2' : '')}>
-                                <Skeleton className="relative w-full aspect-[4/3] rounded-2xl bg-gray-100" />
-                                <Skeleton className="h-5 w-3/4 bg-gray-100" />
-                                <Skeleton className="h-4 w-1/2 bg-gray-100" />
+                                <Skeleton className="relative w-full aspect-[4/3] rounded-2xl bg-stone-200/60" />
+                                <Skeleton className="h-5 w-3/4 bg-stone-200/60" />
+                                <Skeleton className="h-4 w-1/2 bg-stone-200/60" />
                             </div>
                         ))}
                     </div>
@@ -361,10 +361,10 @@ function SearchResults() {
 
                         <ExploreByRegionSection />
 
-                        <section className="mb-12 border-b border-gray-100 pb-12">
+                        <section className="mb-12 border-b border-stone-200/60 pb-12">
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                                 <div className="text-left">
-                                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 mb-2">Top Destinations Across Our Regions</h2>
+                                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tighter leading-[1.1] text-slate-900 mb-2">Top Destinations Across Our Regions</h2>
                                     <p className="text-slate-500 text-base font-medium">Explore the hills, one town at a time.</p>
                                 </div>
                             </div>
@@ -387,14 +387,14 @@ function SearchResults() {
                             homestays={offbeatStays}
                         />
 
-                        <div className="border-t border-gray-100 pt-10">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                                <div>
-                                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 relative inline-block">
+                        <div className="border-t border-stone-200/60 pt-24 pb-12 mt-16 mb-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
+                                <div className="max-w-4xl">
+                                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tighter leading-[1.1] text-slate-900 relative inline-block">
                                         Browse All Verified Homestays Across Our Regions
-                                        <span className="absolute -bottom-2 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></span>
+                                        <span className="absolute -bottom-3 left-0 w-20 h-1 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></span>
                                     </h2>
-                                    <p className="text-slate-500 text-lg font-medium mt-4">Handpicked escapes curated by travelers.</p>
+                                    <p className="text-slate-500 text-lg md:text-xl font-medium mt-6">Handpicked escapes curated by travelers.</p>
                                 </div>
 
                                 <div className="flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200/50 shadow-sm self-end sm:self-auto">
@@ -449,7 +449,7 @@ function SearchResults() {
                                                         <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold text-white uppercase tracking-wider mb-3">
                                                             Editor&apos;s Pick
                                                         </span>
-                                                        <h3 className="text-2xl md:text-4xl font-serif font-medium text-white tracking-tight leading-tight">
+                                                        <h3 className="text-2xl md:text-4xl font-serif font-medium text-white tracking-tighter leading-tight">
                                                             {allStays[0].name.replace(/\s+All$/i, '')}
                                                         </h3>
                                                         <p className="text-white/80 text-sm md:text-base mt-1">
@@ -517,7 +517,7 @@ function SearchResults() {
                     /* Search Term Direct Results */
                     <div className="w-full">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-slate-900 relative">
+                            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tighter leading-none text-slate-900 relative">
                                 Search Results
                                 <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full"></span>
                             </h2>

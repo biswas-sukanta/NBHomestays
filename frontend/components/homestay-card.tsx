@@ -97,21 +97,21 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
             <Link href={`/homestays/${homestay.id}`} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl">
                 {/* Image Container */}
                 <div className={cn(
-                    "relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group-hover:shadow-2xl border border-gray-100 transition-all duration-500 bg-gray-50 mb-2"
+                    "relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-sm group-hover:shadow-2xl border border-stone-200/60 transition-all duration-700 bg-stone-50 mb-2"
                 )}>
                     {/* Optimized Image with async decoding and ImageKit scaling */}
                     <OptimizedImage
                         src={images[currentIndex]}
                         alt={homestay.name}
                         width={featured ? 900 : 600}
-                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-[1200ms] ease-[cubic-bezier(0.25,1,0.5,1)]"
                         onError={(e) => {
                             e.currentTarget.src = FALLBACK_IMAGE;
                         }}
                     />
 
-                    {/* Bottom-anchored gradient for text protection — preserves cinematic brightness */}
-                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    {/* Bottom-anchored gradient for text protection — preserves cinematic brightness with warmer tones */}
+                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-stone-900/80 via-stone-900/20 to-transparent" />
 
                     {/* Premium Navigation Arrows */}
                     {images.length > 1 && (
@@ -186,10 +186,10 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false 
                 {/* Text Data - Editorial Hierarchy */}
                 <div className="px-1 relative mt-3">
                     <div className="flex items-center justify-between mb-1">
-                        <p className="text-[11px] md:text-xs font-bold tracking-wider uppercase text-amber-700/80 truncate">
+                        <p className="text-[9px] font-bold tracking-[0.25em] uppercase text-stone-500 truncate mb-0.5">
                             {homestay.destination
                                 ? `${homestay.destination.name} • ${homestay.destination.stateName || homestay.destination.district}`
-                                : (homestay.locationName || 'North Bengal Hills')}
+                                : (homestay.locationName || 'Eastern Himalayas')}
                         </p>
                         {homestay.host?.isVerifiedHost && (
                             <div className="flex items-center gap-0.5 text-[10px] font-bold text-blue-600 bg-blue-50/80 px-1.5 py-0.5 rounded-sm">

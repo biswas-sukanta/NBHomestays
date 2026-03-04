@@ -15,7 +15,7 @@ export function HomestaySwimlane({ title, subtitle, homestays }: HomestaySwimlan
         <CarouselWrapper
             headerLeft={
                 <div className="flex flex-col gap-1">
-                    <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900">{title}</h2>
+                    <h2 className="font-serif text-3xl md:text-4xl font-medium tracking-tighter leading-tight text-slate-900">{title}</h2>
                     {subtitle && <p className="text-slate-500 text-sm md:text-base font-medium">{subtitle}</p>}
                 </div>
             }
