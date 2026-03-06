@@ -19,11 +19,16 @@ export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
                 transition={{ duration: 1.5, ease: "easeOut" }}
             >
                 <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none" />
-                <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
+                <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-zinc-950 to-transparent z-10 pointer-events-none" />
                 <img
-                    src="https://ik.imagekit.io/y4v82f1t1/tr:w-1600,q-70,f-webp/https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop"
+                    src="/images/community/community-hero-desktop.webp"
+                    className="w-full h-full object-cover hidden md:block"
                     alt="Community journeys in the Himalayas"
-                    className="w-full h-full object-cover"
+                />
+                <img
+                    src="/images/community/community-hero-mobile.webp"
+                    className="w-full h-full object-cover md:hidden"
+                    alt="Community journeys in the Himalayas"
                 />
             </motion.div>
 

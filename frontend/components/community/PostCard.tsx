@@ -233,54 +233,63 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
             {...(!isQuoted ? { whileHover: { y: -2 }, transition: { type: 'spring', stiffness: 400, damping: 30 } } : {})}
             className={articleClassName}
         >
-            {/* ── Background Image Layer ── */}
+            {/* ── Image Block ── */}
             <div
-                className={cn("absolute inset-0 z-0", post.media && post.media.length > 0 ? "cursor-pointer" : "")}
+                className={cn("relative z-10 w-full xl:min-h-[400px] bg-zinc-900 border-b border-white/10", post.media && post.media.length > 0 ? "cursor-pointer" : "")}
                 onClick={() => { if (post.media && post.media.length > 0) setLightboxIndex(0); }}
             >
                 <img
-                    src={`https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${coverImage}`}
+                    src={coverImage.startsWith('/') ? coverImage : `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${coverImage}`}
                     alt={post.locationName}
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                    className="w-full h-auto max-h-[600px] object-cover transition-transform duration-700 hover:scale-[1.02]"
                 />
-            </div>
 
-            {/* Full-card Scrims for text legibility */}
-            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10 pointer-events-none" />
-
-            {/* ── Header: Edit/Delete + Metadata ── */}
-            <div className="relative z-20 px-5 pt-5 flex justify-between items-start pointer-events-none">
-                <div className="flex flex-wrap gap-2 pointer-events-auto">
-                    <span className="inline-flex items-center bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-white/20 shadow-sm">
-                        {isQuoted ? 'Repost' : 'Community Story'}
-                    </span>
-                    {post.tags?.map(tag => (
-                        <span key={tag} className="inline-flex items-center bg-green-500/20 backdrop-blur-md text-green-100 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500/30">
-                            {tag}
+                {/* ── Header: Edit/Delete + Metadata (Moved inside image top) ── */}
+                <div className="absolute inset-x-0 top-0 pt-4 px-4 flex justify-between items-start pointer-events-none z-20 bg-gradient-to-b from-black/60 to-transparent pb-8">
+                    <div className="flex flex-wrap gap-2 pointer-events-auto">
+                        <span className="inline-flex items-center bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-white/20 shadow-sm">
+                            {isQuoted ? 'Repost' : 'Story'}
                         </span>
-                    ))}
+                        {post.tags?.map(tag => (
+                            <span key={tag} className="inline-flex items-center bg-green-500/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500 shadow-sm">
+                                {tag}
+                            </span>
+                        ))}
+                    </div>
+
+                    {canModify && onDelete && (
+                        <div className="flex items-center gap-2 pointer-events-auto bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 ring-1 ring-white/20">
+                            <button onClick={() => onEdit?.(post)} className="text-xs font-semibold text-gray-200 hover:text-white transition-colors">Edit</button>
+                            <span className="text-gray-500">•</span>
+                            <button onClick={() => onDelete(post.id)} className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors">Delete</button>
+                        </div>
+                    )}
                 </div>
 
-                {canModify && onDelete && (
-                    <div className="flex items-center gap-2 pointer-events-auto bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 ring-1 ring-white/10">
-                        <button onClick={() => onEdit?.(post)} className="text-xs font-semibold text-gray-300 hover:text-white transition-colors">Edit</button>
-                        <span className="text-gray-600">•</span>
-                        <button onClick={() => onDelete(post.id)} className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors">Delete</button>
+                {/* ── Bottom Left Overlay (Location & Title) ── */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5 z-20 pointer-events-none">
+                    <div className="flex items-center gap-1.5 text-rose-400 text-sm font-bold mb-1 uppercase tracking-wider drop-shadow-md">
+                        <MapPin className="w-4 h-4" /> {post.locationName}
                     </div>
-                )}
+                    {/* Multi-image indicator */}
+                    {post.media && post.media.length > 1 && (
+                        <div className="absolute right-4 bottom-4 pointer-events-auto">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setLightboxIndex(0); }}
+                                className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-lg ring-1 ring-white/20 hover:bg-black/80 transition-colors"
+                            >
+                                <ImageIcon className="w-4 h-4" /> +{post.media.length - 1}
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* ── Spacer to push content to bottom ── */}
-            <div className="relative min-h-[250px] md:min-h-[350px]" />
+            {/* ── Text Content & Author Below Image ── */}
+            <div className="relative z-20 px-5 pt-4 pb-4 pointer-events-none bg-zinc-950">
 
-            {/* ── Main Content Block (Bottom Left Overlay) ── */}
-            <div className="relative z-20 px-5 pb-5 pointer-events-none">
-                <div className="flex items-center gap-1.5 text-white/90 text-sm font-semibold mb-2 uppercase tracking-wide">
-                    <MapPin className="w-4 h-4 text-rose-400" /> {post.locationName}
-                </div>
 
-                <p className="text-xl md:text-2xl text-white leading-relaxed whitespace-pre-line font-serif drop-shadow-md mb-4 pointer-events-auto cursor-auto select-text">
+                <p className="text-base md:text-lg text-gray-200 leading-relaxed whitespace-pre-line font-serif mb-4 pointer-events-auto cursor-auto select-text line-clamp-4">
                     {post.textContent}
                 </p>
 
@@ -291,20 +300,8 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                     </div>
                 )}
 
-                {/* Multi-image indicator */}
-                {post.media && post.media.length > 1 && (
-                    <div className="absolute right-5 bottom-20 pointer-events-auto">
-                        <button
-                            onClick={() => setLightboxIndex(0)}
-                            className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-2 rounded-lg ring-1 ring-white/20 hover:bg-black/80 transition-colors"
-                        >
-                            <ImageIcon className="w-4 h-4" /> +{post.media.length - 1} Photos
-                        </button>
-                    </div>
-                )}
-
                 {/* Author Row */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 pt-2 border-t border-white/10 mt-2">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#004d00] to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-none shadow-lg ring-2 ring-white/20">
                         {initials}
                     </div>

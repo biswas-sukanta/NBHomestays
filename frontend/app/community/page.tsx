@@ -472,10 +472,44 @@ export default function CommunityPage() {
 
     const posts = data?.pages?.flatMap(page => page.content || page.data || []) || [];
 
-    const filteredPosts = posts.filter(p =>
+    // Adapter function for PHASE 2
+    const normalizePost = (post: any): Post => {
+        let imageUrl = '/images/community/trending-1.webp';
+
+        if (post.media && post.media.length > 0) {
+            imageUrl = post.media[0].url;
+        } else if (post.media_resources && post.media_resources.length > 0) {
+            imageUrl = post.media_resources[0].url;
+        }
+
+        return {
+            id: post.id,
+            author: post.author,
+            locationName: post.locationName,
+            textContent: post.textContent,
+            media: post.media?.length > 0 ? post.media : [{ url: imageUrl }],
+            createdAt: post.createdAt,
+            loveCount: post.loveCount || 0,
+            shareCount: post.shareCount || 0,
+            isLikedByCurrentUser: post.isLikedByCurrentUser || false,
+            commentCount: post.commentCount || 0,
+            homestayId: post.homestayId,
+            homestayName: post.homestayName,
+            originalPost: post.originalPost,
+            tags: post.tags,
+            // the adapted flat items for simpler use if needed:
+            imageUrl,
+            caption: post.textContent,
+            location: post.locationName
+        } as any;
+    };
+
+    const normalizedPosts = posts.map(normalizePost);
+
+    const filteredPosts = normalizedPosts.filter(p =>
         !searchQuery ||
-        p.textContent.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.locationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.textContent?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.locationName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.author?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 

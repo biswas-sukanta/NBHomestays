@@ -72,7 +72,7 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                                 <img
                                     src={story.media?.[0]?.url
                                         ? `https://ik.imagekit.io/y4v82f1t1/tr:w-600,q-70,f-webp/${story.media[0].url}`
-                                        : 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80'}
+                                        : `/images/community/trending-${i + 2}.webp`}
                                     alt={story.locationName}
                                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
