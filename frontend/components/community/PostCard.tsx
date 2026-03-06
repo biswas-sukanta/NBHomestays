@@ -72,10 +72,15 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
             return res.data;
         },
         onMutate: async () => {
+            // Check authentication first
             if (!isAuthenticated) {
-                toast.error('Sign in to love this story');
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+                toast(isMobile ? "Join the community to love this story" : "Sign in to show some love ❤️", {
+                    description: "Connect with travelers across the Himalayas.",
+                });
                 throw new Error('Unauthenticated');
             }
+
             setPopping(true);
             setTimeout(() => setPopping(false), 420);
 
@@ -123,14 +128,19 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
 
             return { previousPosts, previousTrending };
         },
-        onError: (err, newTodo, context: any) => {
+        onError: (err: any, newTodo, context: any) => {
             if (context?.previousPosts) {
                 queryClient.setQueryData(['community-posts'], context.previousPosts);
             }
             if (context?.previousTrending) {
                 queryClient.setQueryData(['trending-posts'], context.previousTrending);
             }
-            toast.error("Cloud sync failed. Reverting love.");
+
+            // Unauthenticated is handled in onMutate, so we only show errors for actual save failures
+            if (err.message !== 'Unauthenticated') {
+                const isNetworkError = !err.response || err.code === 'ERR_NETWORK' || err.message === 'Network Error';
+                toast.error(isNetworkError ? "Connection hiccup — try again" : "Couldn't save your love. Try again.");
+            }
         },
         onSettled: () => {
             // Background sync against the true server state

@@ -26,6 +26,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CommunityHero } from '@/components/community/community-hero';
 import { TrendingStories } from '@/components/community/trending-stories';
 import { CommunitySidebar } from '@/components/community/sidebar';
+import { CommunityPageSkeleton } from '@/components/community/Skeletons';
 import { normalizePost, NormalizedPost } from '@/lib/adapters/normalizePost';
 type Post = NormalizedPost;
 
@@ -448,11 +449,25 @@ export default function CommunityPage() {
     });
 
     if (isPending) {
-        return <CommunityFeedSkeleton />;
+        return <CommunityPageSkeleton />;
     }
 
     if (isError) {
-        return <div className="text-center py-20 text-red-500">Failed to load feed. Please try again.</div>;
+        return (
+            <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 text-center">
+                <div className="w-20 h-20 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center mb-6 shadow-2xl">
+                    <Loader2 className="w-8 h-8 text-zinc-500" />
+                </div>
+                <h2 className="text-3xl font-serif font-bold text-white mb-2 tracking-tight">Connection hiccup</h2>
+                <p className="text-zinc-500 mb-8 max-w-sm font-medium leading-relaxed">We couldn&apos;t reach the travelers&apos; network. Please check your connection and try again.</p>
+                <Button
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ['community-posts'] })}
+                    className="bg-white text-black hover:bg-zinc-100 rounded-full px-10 py-6 font-bold shadow-xl transition-all active:scale-95"
+                >
+                    Refresh Discovery
+                </Button>
+            </div>
+        );
     }
 
     const { content: trendingContent = [] } = trendingData as any || {};
