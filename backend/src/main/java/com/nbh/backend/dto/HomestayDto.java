@@ -83,4 +83,14 @@ public class HomestayDto {
         private Boolean featured;
         private DestinationDto destination;
     }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class LookupResponse {
+        private UUID id;
+        private String name;
+        private String locationName;
+    }
 }

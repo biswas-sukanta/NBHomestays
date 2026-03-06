@@ -29,6 +29,8 @@ import { CommunitySidebar } from '@/components/community/sidebar';
 import { CommunityPageSkeleton } from '@/components/community/Skeletons';
 import { LoginPromptModal } from '@/components/community/LoginPromptModal';
 import { normalizePost, NormalizedPost } from '@/lib/adapters/normalizePost';
+import { useHomestaysLookup } from '@/hooks/useHomestaysLookup';
+
 type Post = NormalizedPost;
 
 interface HomestayOption { id: string; name: string; address?: string; }
@@ -58,7 +60,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
         imageIdx: null,
     });
     const fileRef = useRef<HTMLInputElement>(null);
-    const [homestays, setHomestays] = useState<HomestayOption[]>([]);
+    const { data: homestays = [] } = useHomestaysLookup();
     const [selectedHomestay, setSelectedHomestay] = useState(postData?.homestayId || '');
     const [selectedTags, setSelectedTags] = useState<string[]>(postData?.tags || []);
 
@@ -78,12 +80,6 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
             setSelectedHomestay(postData.homestayId || '');
         }
     }, [postData]);
-
-    useEffect(() => {
-        api.get('/api/homestays')
-            .then(res => setHomestays(res.data.content || res.data || []))
-            .catch(err => console.error("Failed to fetch homestays for tagging:", err));
-    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -288,9 +284,9 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                     <div className="flex flex-col sm:flex-row items-center gap-4">
                         <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
                         <button data-testid="add-photo-btn" onClick={() => fileRef.current?.click()} disabled={submitting}
-                            className="w-full sm:w-auto flex-1 flex justify-center items-center gap-2 border border-blue-500/30 rounded-2xl py-4 bg-blue-500/5 text-blue-400 text-sm font-black uppercase tracking-wider hover:bg-blue-500/10 hover:border-blue-500/50 shadow-2xl transition-all active:scale-95" title="Add Photos">
+                            className="w-full sm:w-auto flex-[0.7] flex justify-center items-center gap-2 border border-white/10 rounded-2xl py-4 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 hover:border-white/20 shadow-2xl transition-all active:scale-95 text-sm font-bold uppercase tracking-wider" title="Add Photos">
                             <ImageIcon className="w-5 h-5" />
-                            <span>Add Visuals</span>
+                            <span>Visuals</span>
                         </button>
                         <div className="w-full sm:w-auto flex-[2] relative group">
                             <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-400 transition-colors" />

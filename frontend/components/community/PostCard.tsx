@@ -513,6 +513,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 // ── InternalMiniRepostComposer ──────────────────────────────────────────────
 // Full-featured repost modal with image upload, location, and homestay tagging.
 import { CustomCombobox } from '@/components/ui/combobox';
+import { useHomestaysLookup } from '@/hooks/useHomestaysLookup';
 
 interface HomestayOpt { id: string; name: string; }
 
@@ -522,15 +523,9 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
     const [location, setLocation] = useState('North Bengal');
     const [submitting, setSubmitting] = useState(false);
     const [stagedFiles, setStagedFiles] = useState<{ id: string; file: File; previewUrl: string }[]>([]);
-    const [homestays, setHomestays] = useState<HomestayOpt[]>([]);
+    const { data: homestays = [] } = useHomestaysLookup();
     const [selectedHomestay, setSelectedHomestay] = useState('');
     const fileRef = React.useRef<HTMLInputElement>(null);
-
-    React.useEffect(() => {
-        api.get('/api/homestays')
-            .then(res => setHomestays(res.data.content || res.data || []))
-            .catch(() => { });
-    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -641,12 +636,12 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                     )}
 
                     {/* Tools Row — Photo & Location side by side */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
                         <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-                        <button onClick={() => fileRef.current?.click()} className="flex-1 flex justify-center items-center gap-2 border border-blue-500/30 rounded-2xl py-4 bg-blue-500/5 text-blue-400 text-sm font-black uppercase tracking-widest hover:bg-blue-500/10 hover:border-blue-500/50 shadow-2xl transition-all active:scale-95">
+                        <button onClick={() => fileRef.current?.click()} disabled={submitting} className="w-full sm:w-auto flex-[0.7] flex justify-center items-center gap-2 border border-white/10 rounded-2xl py-4 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 hover:border-white/20 shadow-2xl transition-all active:scale-95 text-sm font-bold uppercase tracking-wider">
                             <ImageIcon className="w-5 h-5" /> Visuals
                         </button>
-                        <div className="flex-1 relative group">
+                        <div className="w-full sm:w-auto flex-[2] relative group">
                             <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 group-focus-within:text-green-400 transition-colors" />
                             <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Where did this happen?" className="w-full border border-white/10 bg-zinc-900/50 text-white placeholder-zinc-600 rounded-2xl pl-12 pr-5 py-4 text-sm font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 shadow-2xl transition-all outline-none" />
                         </div>

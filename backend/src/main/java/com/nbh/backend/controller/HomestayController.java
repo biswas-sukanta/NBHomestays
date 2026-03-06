@@ -39,6 +39,11 @@ public class HomestayController {
         return org.springframework.http.ResponseEntity.ok(homestayService.getAllHomestays());
     }
 
+    @GetMapping("/lookup")
+    public List<HomestayDto.LookupResponse> getHomestayLookups() {
+        return homestayService.getHomestayLookups();
+    }
+
     @GetMapping("/search")
     public Page<HomestayDto.Response> search(
             @RequestParam(value = "q", required = false) String q,

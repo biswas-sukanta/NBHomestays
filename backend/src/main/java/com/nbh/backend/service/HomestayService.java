@@ -124,6 +124,16 @@ public class HomestayService {
                                 .collect(Collectors.toList());
         }
 
+        public List<HomestayDto.LookupResponse> getHomestayLookups() {
+                return repository.findAll().stream()
+                                .map(h -> HomestayDto.LookupResponse.builder()
+                                                .id(h.getId())
+                                                .name(h.getName())
+                                                .locationName(h.getAddress())
+                                                .build())
+                                .collect(Collectors.toList());
+        }
+
         @Caching(evict = {
                         @CacheEvict(value = "homestay", key = "#id"),
                         @CacheEvict(value = "homestaysSearch", allEntries = true)
