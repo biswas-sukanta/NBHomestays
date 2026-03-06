@@ -48,7 +48,7 @@ function formatTime(iso: string) {
 
 function Initials({ name }: { name: string }) {
     return (
-        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-none">
+        <div className="w-9 h-9 rounded-full bg-zinc-900 border border-white/10 text-white text-xs font-black flex items-center justify-center flex-none shadow-xl tracking-tighter">
             {name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
         </div>
     );
@@ -148,13 +148,13 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                     <div className="flex justify-between items-start w-full">
                         <div className="flex flex-col flex-1 min-w-0">
                             {/* Bubble */}
-                            <div className="bg-secondary/60 rounded-xl px-3 py-2.5 text-sm">
-                                <span className="font-semibold text-foreground text-xs mr-1.5">{comment.author?.name || 'User'}</span>
+                            <div className="bg-zinc-900/80 ring-1 ring-white/5 rounded-2xl px-4 py-3.5 text-sm shadow-2xl backdrop-blur-sm">
+                                <span className="font-black text-white text-[10px] uppercase tracking-widest mr-2 opacity-90">{comment.author?.name || 'User'}</span>
                                 {isEditing ? (
-                                    <div className="mt-1 flex flex-col gap-2">
+                                    <div className="mt-2 flex flex-col gap-3">
                                         <textarea
                                             autoFocus
-                                            className="w-full bg-background border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary min-h-[60px]"
+                                            className="w-full bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 min-h-[80px] shadow-inner"
                                             value={editBody}
                                             onChange={e => setEditBody(e.target.value)}
                                             onKeyDown={e => {
@@ -165,44 +165,44 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                                                 if (e.key === 'Escape') { setIsEditing(false); setEditBody(comment.body); }
                                             }}
                                         />
-                                        <div className="flex justify-end gap-2">
-                                            <button onClick={() => { setIsEditing(false); setEditBody(comment.body); }} className="text-[11px] text-muted-foreground hover:text-foreground">Cancel</button>
-                                            <button onClick={handleEditSubmit} disabled={submitting} className="text-[11px] bg-primary text-primary-foreground px-2 py-0.5 rounded">Save</button>
+                                        <div className="flex justify-end gap-3">
+                                            <button onClick={() => { setIsEditing(false); setEditBody(comment.body); }} className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Cancel</button>
+                                            <button onClick={handleEditSubmit} disabled={submitting} className="text-[10px] font-black uppercase tracking-widest bg-white text-zinc-950 px-3 py-1 rounded-lg">Save</button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <span className="text-foreground leading-relaxed whitespace-pre-line">{comment.body}</span>
+                                    <span className="text-zinc-100 leading-relaxed whitespace-pre-line font-medium">{comment.body}</span>
                                 )}
                                 {comment.media && comment.media.length > 0 && (
-                                    <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                                    <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                                         <ImageCollage images={comment.media.map(m => m.url)} onImageClick={(i) => setLightboxIndex(i)} />
                                     </div>
                                 )}
                             </div>
 
                             {/* Meta row - EXPLICIT ACTIONS ON THE RIGHT */}
-                            <div className="flex items-center justify-between w-full mt-1 px-1">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-[11px] text-muted-foreground">{formatTime(comment.createdAt)}</span>
+                            <div className="flex items-center justify-between w-full mt-2 px-1">
+                                <div className="flex items-center gap-4">
+                                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{formatTime(comment.createdAt)}</span>
                                     {depth === 0 && (
                                         <button
                                             onClick={() => setReplying(r => !r)}
-                                            className="text-[11px] font-semibold text-green-600 hover:text-green-700"
+                                            className="text-[10px] font-black uppercase tracking-widest text-green-500 hover:text-green-400 transition-colors"
                                         >Reply</button>
                                     )}
                                 </div>
 
                                 {canModify && !isEditing && (
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-4">
                                         <button
                                             onClick={() => setIsEditing(true)}
-                                            className="text-[11px] font-semibold text-blue-600 hover:text-blue-800"
+                                            className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"
                                         >
                                             Edit
                                         </button>
                                         <button
                                             onClick={() => onDelete(comment.id)}
-                                            className="text-[11px] font-semibold text-red-600 hover:text-red-800"
+                                            className="text-[10px] font-black uppercase tracking-widest text-rose-500/70 hover:text-rose-400 transition-colors"
                                         >
                                             Delete
                                         </button>
@@ -221,7 +221,7 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="ml-8 mt-2 flex gap-2"
+                        className="ml-8 mt-3 flex gap-3"
                     >
                         <input
                             autoFocus
@@ -229,12 +229,12 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
                             onChange={e => setReplyBody(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && submitReply()}
                             placeholder="Write a reply..."
-                            className="flex-1 text-sm bg-secondary/60 border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="flex-1 text-sm bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-green-500 shadow-inner placeholder:text-zinc-600"
                         />
                         <button
                             onClick={submitReply}
                             disabled={!replyBody.trim() || submitting}
-                            className="p-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-green-600 text-white disabled:opacity-30 active:scale-95 transition-all shadow-lg"
                             aria-label="Send reply"
                         >
                             <Send className="w-4 h-4" />
@@ -247,9 +247,9 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
             {totalReplies > 0 && depth === 0 && (
                 <button
                     onClick={() => setShowReplies(s => !s)}
-                    className="ml-8 mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-primary hover:text-primary/80"
+                    className="ml-12 mt-2.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-500 hover:text-green-400 transition-colors"
                 >
-                    {showReplies ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    {showReplies ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     {showReplies ? 'Hide' : `View ${totalReplies} ${totalReplies === 1 ? 'reply' : 'replies'}`}
                 </button>
             )}
@@ -436,10 +436,10 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
             {!hideTrigger && (
                 <button
                     onClick={() => setInternalOpen(true)}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors"
+                    className="flex items-center gap-2 text-sm font-bold text-zinc-400 hover:text-white transition-all group"
                 >
-                    <MessageCircle className="w-5 h-5" />
-                    <span>{`Comments (${comments.length})`}</span>
+                    <MessageCircle className="w-5 h-5 group-hover:fill-white/10" />
+                    <span className="uppercase tracking-widest text-[11px]">{`Comments (${comments.length})`}</span>
                 </button>
             )}
 
@@ -461,32 +461,32 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 30 }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="relative z-10 w-full max-w-[700px] h-[90dvh] max-h-[90vh] md:max-h-[85vh] bg-white rounded-t-3xl md:rounded-xl shadow-2xl flex flex-col overflow-hidden"
+                            className="relative z-10 w-full max-w-[700px] h-[90dvh] max-h-[90vh] md:max-h-[85vh] bg-zinc-950 rounded-t-[2.5rem] md:rounded-3xl shadow-[0_30px_90px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden border border-white/5 ring-1 ring-white/10"
                         >
                             {/* Header — flex-none: NEVER shrinks or grows under zoom */}
-                            <div className="flex-none flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-white">
-                                <h2 className="font-extrabold text-lg text-gray-900">Comments</h2>
-                                <button onClick={handleClose} className="p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-all" aria-label="Close comments">
-                                    <X className="w-5 h-5" />
+                            <div className="flex-none flex items-center justify-between px-8 py-6 border-b border-white/5 bg-zinc-950">
+                                <h2 className="font-serif font-bold text-2xl md:text-3xl text-white tracking-tight">Comments</h2>
+                                <button onClick={handleClose} className="p-3 bg-zinc-900 hover:bg-zinc-800 rounded-full transition-all border border-white/10 group active:scale-90" aria-label="Close comments">
+                                    <X className="w-5 h-5 text-zinc-400 group-hover:text-white" />
                                 </button>
                             </div>
 
                             {/* Body — flex-1 min-h-0: only tier that flexes */}
-                            <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50/50 overscroll-contain min-h-0 space-y-4">
+                            <div className="flex-1 overflow-y-auto px-8 py-6 bg-zinc-950 overscroll-contain min-h-0 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
                                 {loading ? (
-                                    <div className="space-y-4">
+                                    <div className="space-y-6">
                                         {[1, 2, 3].map(i => <CommentSkeleton key={i} />)}
                                     </div>
                                 ) : comments.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full text-center">
-                                        <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-4 ring-8 ring-green-50/50">
-                                            <MessageCircle className="w-10 h-10 text-green-600" />
+                                    <div className="flex flex-col items-center justify-center h-full text-center px-10">
+                                        <div className="w-28 h-28 bg-zinc-900 rounded-full flex items-center justify-center mb-6 ring-1 ring-white/10 shadow-2xl">
+                                            <MessageCircle className="w-12 h-12 text-zinc-700" />
                                         </div>
-                                        <h3 className="text-base font-bold text-gray-900 mb-1">No comments yet</h3>
-                                        <p className="text-sm text-gray-500 max-w-[200px]">Be the first to share your thoughts on this story!</p>
+                                        <h3 className="text-xl font-bold text-white mb-2 font-serif">Quiet on the trail...</h3>
+                                        <p className="text-sm text-zinc-500 max-w-[240px] leading-relaxed">Be the first to share your thoughts and join the local conversation.</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-6">
+                                    <div className="space-y-8">
                                         {comments.map(c => (
                                             <SingleComment
                                                 key={c.id}
@@ -503,7 +503,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                             </div>
 
                             {/* Footer — flex-none: NEVER shrinks or grows under zoom */}
-                            <div className="flex-none p-3 border-t border-gray-200 bg-white">
+                            <div className="flex-none p-6 border-t border-white/5 bg-zinc-950">
                                 {isAuthenticated ? (
                                     <div className="flex flex-col gap-3">
                                         {/* Staging Area */}
@@ -520,11 +520,11 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                             </div>
                                         )}
 
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 flex-none rounded-full bg-gradient-to-tr from-green-500 to-green-700 flex items-center justify-center text-white text-[13px] font-bold shadow-sm">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-11 h-11 flex-none rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-white text-sm font-black shadow-2xl">
                                                 {user?.firstName?.[0] || 'U'}
                                             </div>
-                                            <div className="flex-1 flex items-center bg-gray-100 rounded-full px-4 py-2 border border-transparent focus-within:border-gray-300 focus-within:bg-white transition-all shadow-inner relative">
+                                            <div className="flex-1 flex items-center bg-zinc-900/50 rounded-2xl px-5 py-4 border border-white/10 focus-within:border-green-500/50 focus-within:bg-zinc-900 transition-all shadow-2xl relative">
                                                 <input data-testid="comment-image-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
                                                 <input
                                                     data-testid="comment-input"
@@ -532,9 +532,9 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                                     onChange={e => setNewComment(e.target.value)}
                                                     onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), submitComment())}
                                                     placeholder="Add a comment..."
-                                                    className="flex-1 bg-transparent text-[15px] font-medium text-gray-900 focus:outline-none placeholder:text-gray-500"
+                                                    className="flex-1 bg-transparent text-[15px] font-bold text-white focus:outline-none placeholder:text-zinc-600"
                                                 />
-                                                <button data-testid="comment-attach-btn" onClick={() => fileRef.current?.click()} className="text-gray-400 hover:text-green-600 transition-colors ml-2" aria-label="Attach photo">
+                                                <button data-testid="comment-attach-btn" onClick={() => fileRef.current?.click()} className="text-zinc-500 hover:text-green-500 transition-colors ml-3" aria-label="Attach photo">
                                                     <ImageIcon className="w-5 h-5" />
                                                 </button>
                                             </div>
@@ -542,9 +542,9 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                                 data-testid="comment-send-btn"
                                                 onClick={submitComment}
                                                 disabled={(!newComment.trim() && stagedFiles.length === 0) || submitting}
-                                                className="w-10 h-10 flex-none rounded-full bg-green-600 text-white flex items-center justify-center disabled:opacity-50 hover:bg-green-700 transition-all shadow-md active:scale-95"
+                                                className="w-12 h-12 flex-none rounded-2xl bg-white text-zinc-950 flex items-center justify-center disabled:opacity-30 hover:bg-zinc-100 transition-all shadow-2xl active:scale-95"
                                             >
-                                                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
+                                                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-0.5" />}
                                             </button>
                                         </div>
                                     </div>

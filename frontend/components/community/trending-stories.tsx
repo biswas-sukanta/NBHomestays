@@ -18,13 +18,13 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
     return (
         <section className="py-12 md:py-16">
             <div className="container mx-auto px-4 lg:px-6">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-orange-600" />
+                <div className="flex items-center gap-4 mb-10">
+                    <div className="w-12 h-12 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center shadow-2xl">
+                        <TrendingUp className="w-6 h-6 text-orange-500" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold font-serif tracking-tight text-gray-900">Trending Right Now</h2>
-                        <p className="text-sm text-gray-500 font-medium">Stories capturing the community&apos;s imagination</p>
+                        <h2 className="text-3xl font-bold font-serif tracking-tight text-white">Trending Stories</h2>
+                        <p className="text-sm text-zinc-500 font-bold uppercase tracking-widest">Captured by the community</p>
                     </div>
                 </div>
 
@@ -33,13 +33,13 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                     <div className="lg:col-span-7 h-[400px] lg:h-full relative group rounded-2xl overflow-hidden shadow-lg cursor-pointer">
                         {featured.imageUrl ? (
                             <img
-                                src={featured.imageUrl.startsWith('/') ? featured.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${featured.imageUrl}`}
+                                src={`${featured.imageUrl}?tr=w-1000,q-75,f-webp`}
                                 alt={featured.location}
                                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />
                         ) : (
-                            <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
-                                <img src="/_static/community/post_placeholder.webp" alt="Placeholder" className="w-full h-full object-cover opacity-50" />
+                            <div className="absolute inset-0 bg-zinc-900 border border-white/10 flex items-center justify-center p-8">
+                                <p className="text-zinc-500 font-serif italic text-center text-lg">&quot;{featured.caption}&quot;</p>
                             </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
@@ -55,15 +55,15 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                             </div>
                             <p className="text-2xl md:text-3xl font-bold text-white leading-tight font-serif mb-4 line-clamp-3 
                                 [text-shadow:_0_2px_10px_rgb(0_0_0_/_40%)]">
-                                {featured.title || featured.caption}
+                                {featured.caption}
                             </p>
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/50 shadow-md overflow-hidden">
-                                    {featured.avatar ? <img src={featured.avatar} alt={featured.author} className="w-full h-full object-cover rounded-full" /> : (featured.author ? featured.author.slice(0, 2).toUpperCase() : 'NB')}
+                                    {featured.authorAvatar ? <img src={featured.authorAvatar} alt={featured.authorName} className="w-full h-full object-cover rounded-full" /> : (featured.authorName ? featured.authorName.slice(0, 2).toUpperCase() : 'NB')}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-white">{featured.author || 'Explorer'}</p>
-                                    <p className="text-xs text-gray-300">Top Contributor</p>
+                                    <p className="text-sm font-bold text-white">{featured.authorName || 'Explorer'}</p>
+                                    <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Top Contributor</p>
                                 </div>
                             </div>
                         </div>
@@ -75,13 +75,13 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                             <div key={story.id} className="flex-1 relative group rounded-2xl overflow-hidden shadow-md cursor-pointer h-[250px] lg:h-auto">
                                 {story.imageUrl ? (
                                     <img
-                                        src={story.imageUrl.startsWith('/') ? story.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-600,q-70,f-webp/${story.imageUrl}`}
+                                        src={`${story.imageUrl}?tr=w-600,q-70,f-webp`}
                                         alt={story.location}
                                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                     />
                                 ) : (
-                                    <div className="absolute inset-0 bg-zinc-900">
-                                        <img src="/_static/community/post_placeholder.webp" alt="Placeholder" className="w-full h-full object-cover opacity-30" />
+                                    <div className="absolute inset-0 bg-zinc-900 border border-white/5 flex items-center justify-center p-6">
+                                        <p className="text-zinc-500 font-serif italic text-center text-sm">&quot;{story.caption}&quot;</p>
                                     </div>
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
@@ -91,13 +91,13 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                                         <MapPin className="w-3.5 h-3.5" /> {story.location}
                                     </span>
                                     <p className="text-lg font-bold text-white leading-snug font-serif mb-3 line-clamp-2">
-                                        {story.title || story.caption}
+                                        {story.caption}
                                     </p>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-700 flex items-center justify-center text-white font-bold text-xs ring-1 ring-white/50 overflow-hidden">
-                                            {story.avatar ? <img src={story.avatar} alt={story.author} className="w-full h-full object-cover rounded-full" /> : (story.author ? story.author.slice(0, 2).toUpperCase() : 'TR')}
+                                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold text-xs ring-1 ring-white/10 overflow-hidden">
+                                            {story.authorAvatar ? <img src={story.authorAvatar} alt={story.authorName} className="w-full h-full object-cover rounded-full" /> : (story.authorName ? story.authorName.slice(0, 2).toUpperCase() : 'TR')}
                                         </div>
-                                        <p className="text-sm font-medium text-gray-100">{story.author || 'Explorer'}</p>
+                                        <p className="text-sm font-bold text-zinc-100">{story.authorName || 'Explorer'}</p>
                                     </div>
                                 </div>
                             </div>

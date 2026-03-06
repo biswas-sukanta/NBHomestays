@@ -7,21 +7,14 @@ export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
     const topContributors = useMemo(() => {
         const counts: Record<string, { count: number, id: string; name: string, avatar: string | null }> = {};
         posts.forEach(p => {
-            const authorName = p.author || 'Traveller';
+            const authorName = p.authorName || 'Traveller';
             if (!counts[authorName]) {
-                counts[authorName] = { count: 0, id: p.authorId || '', name: authorName, avatar: p.avatar };
+                counts[authorName] = { count: 0, id: p.authorId || '', name: authorName, avatar: p.authorAvatar };
             }
             counts[authorName].count += 1;
         });
         const sorted = Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 3);
-        // Fallback dummy data if no posts
-        if (sorted.length === 0) {
-            return [
-                { name: "Rahul S.", role: "Mountain Expert", initials: "RS", color: "from-blue-500 to-indigo-600", count: 12, avatar: null },
-                { name: "Priya Das", role: "Offbeat Explorer", initials: "PD", color: "from-rose-500 to-pink-600", count: 8, avatar: null },
-                { name: "Aman K.", role: "Local Guide", initials: "AK", color: "from-emerald-500 to-teal-600", count: 5, avatar: null },
-            ];
-        }
+
         return sorted.map(u => ({
             name: u.name,
             role: "Top Contributor",
@@ -54,8 +47,8 @@ export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
         <aside className="hidden lg:flex flex-col gap-6 sticky top-24">
 
             {/* Top Contributors */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div className="flex items-center gap-2 mb-4 text-gray-900 border-b border-gray-100 pb-3">
+            <div className="bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-white/5 ring-1 ring-white/10 shadow-2xl p-6">
+                <div className="flex items-center gap-2 mb-6 text-white border-b border-white/5 pb-4">
                     <Award className="w-5 h-5 text-amber-500" />
                     <h3 className="font-bold font-serif text-lg tracking-tight">Top Contributors</h3>
                 </div>
@@ -70,8 +63,8 @@ export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
                                 </div>
                             )}
                             <div>
-                                <p className="text-sm font-bold text-gray-800 group-hover:text-green-700 transition-colors leading-tight">{user.name}</p>
-                                <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wide">{user.count} stories</p>
+                                <p className="text-sm font-bold text-white group-hover:text-green-400 transition-colors leading-tight">{user.name}</p>
+                                <p className="text-[11px] text-zinc-500 font-black uppercase tracking-widest">{user.count} stories</p>
                             </div>
                         </div>
                     ))}
@@ -79,14 +72,14 @@ export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
             </div>
 
             {/* Trending Topics */}
-            <div className="bg-zinc-50 rounded-2xl border border-gray-100 p-6">
-                <div className="flex items-center gap-2 mb-4 text-gray-900 border-b border-zinc-200 pb-3">
+            <div className="bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-white/5 ring-1 ring-white/10 shadow-2xl p-6">
+                <div className="flex items-center gap-2 mb-6 text-white border-b border-white/5 pb-4">
                     <Flame className="w-5 h-5 text-orange-500" />
                     <h3 className="font-bold font-serif text-lg tracking-tight">Trending Tags</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {trendingTags.map(tag => (
-                        <span key={tag} className="inline-block px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded-lg border border-gray-200 hover:border-gray-300 hover:text-black cursor-pointer transition-colors shadow-sm">
+                        <span key={tag} className="inline-block px-3 py-1.5 bg-zinc-800/80 text-zinc-300 text-xs font-bold rounded-lg border border-white/5 hover:border-green-500/50 hover:text-white cursor-pointer transition-all shadow-lg active:scale-95">
                             {(tag.startsWith('#') || tag.startsWith('❓') || tag.startsWith('📝') || tag.startsWith('⭐') || tag.startsWith('⚠️') || tag.startsWith('✨') || tag.startsWith('🏔️') || tag.startsWith('🚗')) ? tag : `#${tag}`}
                         </span>
                     ))}
@@ -96,7 +89,7 @@ export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
             {/* Editor's Pick */}
             <div className="relative rounded-2xl overflow-hidden shadow-sm h-56 cursor-pointer group">
                 <img
-                    src={editorPick?.imageUrl ? (editorPick.imageUrl.startsWith('/') ? editorPick.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-800,q-70,f-webp/${editorPick.imageUrl}`) : "/_static/community/post_placeholder.webp"}
+                    src={editorPick?.imageUrl ? `${editorPick.imageUrl}?tr=w-800,q-70,f-webp` : "https://ik.imagekit.io/y4v82f1t1/tr:w-800,q-70,f-webp/https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop"}
                     alt="Promo"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
@@ -109,7 +102,7 @@ export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
                         </div>
                     </div>
                     <p className="font-bold font-serif text-lg leading-snug line-clamp-2 drop-shadow-md">
-                        {editorPick ? (editorPick.title || editorPick.caption) : "The 5 Best Homestays in Kurseong"}
+                        {editorPick ? editorPick.caption : "The 5 Best Homestays in Kurseong"}
                     </p>
                     {editorPick && (
                         <div className="flex items-center gap-1.5 mt-2 opacity-80">

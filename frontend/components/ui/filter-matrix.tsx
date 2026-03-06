@@ -17,8 +17,8 @@ interface FilterMatrixProps {
 export function FilterMatrix({ options, activeValue, onChange, className }: FilterMatrixProps) {
     return (
         <div className={cn(
-            'sticky top-[64px] z-30 -mx-4 px-4 py-3',
-            'backdrop-blur-md bg-white/80 border-b border-gray-200/50',
+            'sticky top-[64px] z-30 -mx-4 px-4 py-4',
+            'backdrop-blur-xl bg-zinc-950/80 border-b border-white/5',
             className
         )}>
             <div className="flex flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible no-scrollbar gap-2 pb-0.5" style={{ scrollbarWidth: 'none' }}>
@@ -27,10 +27,10 @@ export function FilterMatrix({ options, activeValue, onChange, className }: Filt
                         key={opt.value ?? '__all__'}
                         onClick={() => onChange(opt.value)}
                         className={cn(
-                            'whitespace-nowrap px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200 shrink-0',
+                            'whitespace-nowrap px-5 py-2.5 rounded-full border text-xs font-black uppercase tracking-widest transition-all duration-300 shrink-0',
                             activeValue === opt.value
-                                ? 'bg-[#004d00] text-white border-[#004d00] shadow-md scale-[1.03]'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-[#004d00]/30 hover:bg-green-50/60'
+                                ? 'bg-green-600 text-white border-green-500 shadow-[0_0_20px_rgba(22,163,74,0.4)] scale-[1.05]'
+                                : 'bg-zinc-900/50 text-zinc-400 border-white/10 hover:border-white/20 hover:bg-zinc-800 hover:text-white'
                         )}
                     >
                         {opt.label}

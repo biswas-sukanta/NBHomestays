@@ -81,9 +81,11 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
 
             // Cancel outgoing refetches so they don't overwrite our optimistic update
             await queryClient.cancelQueries({ queryKey: ['community-posts'] });
+            await queryClient.cancelQueries({ queryKey: ['trending-posts'] });
             const previousPosts = queryClient.getQueryData(['community-posts']);
+            const previousTrending = queryClient.getQueryData(['trending-posts']);
 
-            // Optimistically update the cache
+            // Optimistically update the main feed cache
             queryClient.setQueryData(['community-posts'], (old: any) => {
                 if (!old || !old.pages) return old;
                 return {
@@ -103,17 +105,37 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
                 };
             });
 
-            return { previousPosts };
+            // Optimistically update the trending posts cache
+            queryClient.setQueryData(['trending-posts'], (old: any) => {
+                if (!old || !old.content) return old;
+                return {
+                    ...old,
+                    content: (old.content || []).map((post: any) => {
+                        if (post.id === postId) {
+                            const newIsLiked = !post.isLikedByCurrentUser;
+                            const newCount = newIsLiked ? post.loveCount + 1 : Math.max(0, post.loveCount - 1);
+                            return { ...post, isLikedByCurrentUser: newIsLiked, loveCount: newCount };
+                        }
+                        return post;
+                    })
+                };
+            });
+
+            return { previousPosts, previousTrending };
         },
         onError: (err, newTodo, context: any) => {
             if (context?.previousPosts) {
                 queryClient.setQueryData(['community-posts'], context.previousPosts);
-                toast.error("Cloud sync failed. Reverting love.");
             }
+            if (context?.previousTrending) {
+                queryClient.setQueryData(['trending-posts'], context.previousTrending);
+            }
+            toast.error("Cloud sync failed. Reverting love.");
         },
         onSettled: () => {
             // Background sync against the true server state
             queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+            queryClient.invalidateQueries({ queryKey: ['trending-posts'] });
             queryClient.invalidateQueries({ queryKey: ['post', postId] });
         }
     });
@@ -138,7 +160,8 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
 
 // ── PostCard ──────────────────────────────────────────────────────────────────
 export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepost, isQuoted = false, onOpenComments, onNewPost }: PostCardProps) {
-    const authorName = post.author || 'Traveller';
+    const authorName = post.authorName;
+    const authorAvatar = post.authorAvatar;
     const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
     const isOwner = String(currentUser?.id) === String(post.authorId);
@@ -203,7 +226,11 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
     // Prepare primary display image
     const coverImage = post.imageUrl;
-    const hasImage = coverImage && coverImage !== '/_static/community/post_placeholder.webp';
+    const hasImage = !!coverImage;
+    const isMultiImage = post.images && post.images.length > 1;
+
+    // Simple Carousel State
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
 
     const content = (
         <motion.article
@@ -213,66 +240,129 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
             {...(!isQuoted ? { whileHover: { y: -2 }, transition: { type: 'spring', stiffness: 400, damping: 30 } } : {})}
             className={articleClassName}
         >
-            {/* ── Image Block ── */}
-            <div
-                className={cn("relative z-10 w-full xl:min-h-[400px] bg-zinc-900 border-b border-white/10", hasImage ? "cursor-pointer" : "")}
-                onClick={() => { if (hasImage) setLightboxIndex(0); }}
-            >
-                {coverImage && (
-                    <img
-                        src={coverImage.startsWith('/') ? coverImage : `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${coverImage}`}
-                        alt={post.location}
-                        className="w-full h-auto max-h-[600px] object-cover transition-transform duration-700 hover:scale-[1.02]"
-                        onError={(e) => { e.currentTarget.src = '/_static/community/post_placeholder.webp'; }}
-                    />
-                )}
-                {!coverImage && (
-                    <div className="w-full h-64 bg-zinc-900 flex items-center justify-center">
-                        <img src="/_static/community/post_placeholder.webp" alt="Placeholder" className="w-full h-full object-cover" />
-                    </div>
-                )}
+            {/* ── Image/Carousel Block ── */}
+            {hasImage ? (
+                <div className="relative z-10 w-full overflow-hidden group">
+                    {isMultiImage ? (
+                        <div className="relative aspect-square md:aspect-video lg:min-h-[500px]">
+                            <motion.div
+                                drag="x"
+                                dragConstraints={{ left: 0, right: 0 }}
+                                onDragEnd={(_, info) => {
+                                    if (info.offset.x < -50 && activeImageIndex < post.images.length - 1) {
+                                        setActiveImageIndex(prev => prev + 1);
+                                    } else if (info.offset.x > 50 && activeImageIndex > 0) {
+                                        setActiveImageIndex(prev => prev - 1);
+                                    }
+                                }}
+                                animate={{ x: `-${activeImageIndex * 100}%` }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                className="absolute inset-0 flex h-full"
+                            >
+                                {post.images.map((img, idx) => (
+                                    <div key={idx} className="relative min-w-full h-full cursor-pointer" onClick={() => setLightboxIndex(idx)}>
+                                        <img
+                                            src={`${img.url}?tr=w-1200,q-70,f-webp`}
+                                            alt={`${post.location} - ${idx + 1}`}
+                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.02]"
+                                        />
+                                    </div>
+                                ))}
+                            </motion.div>
 
-                {/* ── Header: Edit/Delete + Metadata (Moved inside image top) ── */}
-                <div className="absolute inset-x-0 top-0 pt-4 px-4 flex justify-between items-start pointer-events-none z-20 bg-gradient-to-b from-black/60 to-transparent pb-8">
-                    <div className="flex flex-wrap gap-2 pointer-events-auto">
-                        <span className="inline-flex items-center bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-white/20 shadow-sm">
-                            {isQuoted ? 'Repost' : 'Story'}
-                        </span>
-                        {(post.tags ?? []).length > 0 ? (post.tags ?? []).map(tag => (
-                            <span key={tag} className="inline-flex items-center bg-green-500/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500 shadow-sm">
-                                {tag}
+                            {/* Carousel Indicators */}
+                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
+                                {post.images.map((_, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={cn(
+                                            "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                                            idx === activeImageIndex ? "bg-white w-4" : "bg-white/40"
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div
+                            className="relative aspect-square md:aspect-video lg:min-h-[400px] cursor-pointer"
+                            onClick={() => setLightboxIndex(0)}
+                        >
+                            <img
+                                src={`${coverImage}?tr=w-1200,q-70,f-webp`}
+                                alt={post.location}
+                                className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.02]"
+                            />
+                        </div>
+                    )}
+
+                    {/* ── Header Overlay (Shared for both Single & Multi) ── */}
+                    <div className="absolute inset-x-0 top-0 pt-6 px-6 flex justify-between items-start pointer-events-none z-20 bg-gradient-to-b from-black/60 to-transparent pb-10">
+                        <div className="flex flex-wrap gap-2 pointer-events-auto">
+                            <span className="inline-flex items-center bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-white/20">
+                                {isQuoted ? 'Repost' : 'Story'}
                             </span>
-                        )) : (
-                            <span className="inline-flex items-center bg-gray-500/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-gray-500 shadow-sm">
-                                No categories
-                            </span>
+                            {(post.tags ?? []).map(tag => (
+                                <span key={tag} className="inline-flex items-center bg-green-500/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500">
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+
+                        {canModify && onDelete && (
+                            <div className="flex items-center gap-2 pointer-events-auto bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 ring-1 ring-white/20">
+                                <button onClick={() => onEdit?.(post)} className="text-xs font-semibold text-gray-200 hover:text-white transition-colors">Edit</button>
+                                <span className="text-gray-500">•</span>
+                                <button onClick={() => onDelete(post.id)} className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors">Delete</button>
+                            </div>
                         )}
                     </div>
 
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 z-20 pointer-events-none">
+                        <div className="flex items-center gap-2 text-rose-400 text-sm font-bold uppercase tracking-wider">
+                            <MapPin className="w-4 h-4" /> {post.location}
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                /* ── Text-Only Layout ── */
+                <div className="relative z-10 w-full p-8 md:p-12 bg-gradient-to-br from-zinc-900 to-zinc-950 border-b border-white/10">
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex flex-wrap gap-2">
+                            <span className="inline-flex items-center bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-white/20">
+                                Editorial
+                            </span>
+                            {(post.tags ?? []).map(tag => (
+                                <span key={tag} className="inline-flex items-center bg-green-500/20 text-green-300 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500/30">
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-2 text-rose-400 text-sm font-bold uppercase tracking-wider">
+                            <MapPin className="w-4 h-4" /> {post.location}
+                        </div>
+                    </div>
+
+                    <p className="text-xl md:text-2xl lg:text-3xl text-white leading-relaxed font-serif italic mb-6">
+                        &quot;{post.caption}&quot;
+                    </p>
+
                     {canModify && onDelete && (
-                        <div className="flex items-center gap-2 pointer-events-auto bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 ring-1 ring-white/20">
-                            <button onClick={() => onEdit?.(post)} className="text-xs font-semibold text-gray-200 hover:text-white transition-colors">Edit</button>
-                            <span className="text-gray-500">•</span>
-                            <button onClick={() => onDelete(post.id)} className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors">Delete</button>
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => onEdit?.(post)} className="text-xs font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors">Edit Story</button>
+                            <button onClick={() => onDelete(post.id)} className="text-xs font-bold text-red-500/70 hover:text-red-400 uppercase tracking-widest transition-colors">Delete</button>
                         </div>
                     )}
                 </div>
+            )}
 
-                {/* ── Bottom Left Overlay (Location & Title) ── */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5 z-20 pointer-events-none">
-                    <div className="flex items-center gap-1.5 text-rose-400 text-sm font-bold mb-1 uppercase tracking-wider drop-shadow-md">
-                        <MapPin className="w-4 h-4" /> {post.location}
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Text Content & Author Below Image ── */}
-            <div className="relative z-20 px-5 pt-4 pb-4 pointer-events-none bg-zinc-950">
-
-
-                <p className="text-base md:text-lg text-gray-200 leading-relaxed whitespace-pre-line font-serif mb-4 pointer-events-auto cursor-auto select-text line-clamp-4">
-                    {post.caption}
-                </p>
+            {/* ── Meta Section (Caption & Author) ── */}
+            <div className={cn("relative z-20 px-6 pb-6 bg-zinc-950", hasImage ? "pt-6" : "pt-2")}>
+                {hasImage && (
+                    <p className="text-base md:text-lg text-gray-200 leading-relaxed whitespace-pre-line font-serif mb-6 pointer-events-auto select-text line-clamp-4">
+                        {post.caption}
+                    </p>
+                )}
 
                 {/* Recursive Nested Repost */}
                 {post.originalPost && (
@@ -284,7 +374,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 {/* Author Row */}
                 <div className="flex items-center gap-3 pt-2 border-t border-white/10 mt-2">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#004d00] to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-none shadow-lg ring-2 ring-white/20 overflow-hidden">
-                        {post.avatar ? <img src={post.avatar} alt={authorName} className="w-full h-full object-cover" /> : initials}
+                        {post.authorAvatar ? <img src={post.authorAvatar} alt={authorName} className="w-full h-full object-cover" /> : initials}
                     </div>
                     <div className="flex flex-col">
                         <div className="flex items-center gap-1.5 pointer-events-auto">
@@ -356,7 +446,11 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
             {/* Lightbox */}
             {lightboxIndex !== null && hasImage && (
-                <ImageLightbox images={[coverImage]} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+                <ImageLightbox
+                    images={post.images.map(img => img.url)}
+                    initialIndex={lightboxIndex}
+                    onClose={() => setLightboxIndex(null)}
+                />
             )}
         </motion.article>
     );
@@ -467,40 +561,41 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 30 }}
-                className="bg-white w-full h-[100dvh] flex flex-col md:w-[600px] md:h-auto md:max-h-[85vh] md:rounded-2xl shadow-2xl overflow-hidden relative z-10"
+                className="bg-zinc-950 w-full h-[100dvh] flex flex-col md:w-[620px] md:h-auto md:max-h-[85vh] md:rounded-3xl shadow-[0_30px_90px_rgba(0,0,0,0.8)] overflow-hidden relative z-10 border border-white/5 ring-1 ring-white/10"
             >
                 {/* Tier 1: Safe-Area Header (flex-none) */}
-                <div className="flex-none pt-[max(1.5rem,env(safe-area-inset-top))] md:pt-4 pb-4 px-4 flex justify-between items-center border-b border-gray-200 bg-white">
-                    <p className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat2 className="w-4 h-4 text-green-600" /> Repost Story</p>
-                    <button onClick={onCancel} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0" aria-label="Close">
-                        <X size={20} className="text-gray-600" />
+                <div className="flex-none pt-[max(1.5rem,env(safe-area-inset-top))] md:pt-6 pb-6 px-8 flex justify-between items-center border-b border-white/5 bg-zinc-950">
+                    <p className="font-bold text-white text-2xl md:text-3xl font-serif tracking-tight flex items-center gap-3"><Repeat2 className="w-5 h-5 text-green-500" /> Repost Story</p>
+                    <button onClick={onCancel} className="p-3 bg-zinc-900 hover:bg-zinc-800 rounded-full transition-all border border-white/10 flex-shrink-0 active:scale-90" aria-label="Close">
+                        <X size={20} className="text-zinc-400" />
                     </button>
                 </div>
 
                 {/* Tier 2: The Contained Body (flex-1 min-h-0) */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-4">
+                <div className="flex-1 min-h-0 overflow-y-auto p-8 flex flex-col gap-8 bg-zinc-950">
                     {/* Quoted Preview */}
-                    <div className="border border-green-300 rounded-xl p-4 bg-green-50">
-                        <p className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    <div className="border border-green-500/30 rounded-2xl p-5 bg-green-500/5 shadow-2xl relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent pointer-events-none" />
+                        <p className="text-[10px] font-black text-green-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
                             <Repeat2 className="w-3.5 h-3.5" /> Reposting {quote.authorName}&apos;s story
                         </p>
-                        <p className="text-sm text-gray-700 line-clamp-3">{quote.textContent}</p>
+                        <p className="text-base font-serif text-zinc-200 line-clamp-3 italic leading-relaxed">&quot;{quote.textContent}&quot;</p>
                     </div>
                     <textarea
                         value={text}
                         onChange={e => setText(e.target.value)}
                         placeholder="Add your thoughts..."
-                        className="w-full h-32 md:h-40 p-4 bg-gray-50 border border-gray-200 rounded-xl shadow-inner focus:bg-white focus:ring-2 focus:ring-green-500/40 focus:border-transparent resize-none text-base font-medium text-gray-900 placeholder:text-gray-400 transition-all duration-200"
+                        className="w-full h-32 md:h-40 p-6 bg-zinc-900/50 border border-white/10 rounded-3xl shadow-2xl focus:bg-zinc-900 focus:ring-4 focus:ring-green-500/20 focus:border-green-500/50 resize-none text-lg font-medium text-white placeholder:text-zinc-600 transition-all duration-300"
                     />
                     {/* Image staging */}
                     {stagedFiles.length > 0 && (
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-3 gap-4">
                             {stagedFiles.map((f, i) => (
-                                <div key={f.id} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-200">
+                                <div key={f.id} className="relative aspect-square rounded-2xl overflow-hidden group shadow-2xl bg-zinc-900 ring-1 ring-white/10">
                                     <OptimizedImage src={f.previewUrl} alt="preview" className="w-full h-full object-cover" width={200} />
                                     <button onClick={() => { URL.revokeObjectURL(f.previewUrl); setStagedFiles(p => p.filter((_, j) => j !== i)); }}
-                                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                                        <X className="w-5 h-5 text-white" />
+                                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                        <X className="w-7 h-7 text-white drop-shadow-2xl" />
                                     </button>
                                 </div>
                             ))}
@@ -508,26 +603,26 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
                     )}
 
                     {/* Tools Row — Photo & Location side by side */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                         <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-                        <button onClick={() => fileRef.current?.click()} className="flex-1 flex justify-center items-center gap-2 border border-gray-200 rounded-xl py-2.5 bg-white text-blue-600 text-sm font-semibold hover:bg-gray-50 shadow-sm transition-colors">
-                            <ImageIcon className="w-4 h-4" /> Photo
+                        <button onClick={() => fileRef.current?.click()} className="flex-1 flex justify-center items-center gap-2 border border-blue-500/30 rounded-2xl py-4 bg-blue-500/5 text-blue-400 text-sm font-black uppercase tracking-widest hover:bg-blue-500/10 hover:border-blue-500/50 shadow-2xl transition-all active:scale-95">
+                            <ImageIcon className="w-5 h-5" /> Visuals
                         </button>
-                        <div className="flex-1 relative">
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rose-500" />
-                            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location..." className="w-full border border-gray-200 bg-white text-rose-700 placeholder-rose-400 rounded-xl pl-8 pr-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-rose-200 focus:border-transparent focus:outline-none shadow-sm transition-all" />
+                        <div className="flex-1 relative group">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 group-focus-within:text-green-400 transition-colors" />
+                            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Where did this happen?" className="w-full border border-white/10 bg-zinc-900/50 text-white placeholder-zinc-600 rounded-2xl pl-12 pr-5 py-4 text-sm font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 shadow-2xl transition-all outline-none" />
                         </div>
                     </div>
 
                     {/* Tag Homestay */}
-                    <div className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                        <CustomCombobox options={homestays} value={selectedHomestay} onChange={setSelectedHomestay} placeholder="Tag Homestay" />
+                    <div className="border border-white/10 rounded-2xl shadow-2xl overflow-hidden bg-zinc-900/50">
+                        <CustomCombobox options={homestays} value={selectedHomestay} onChange={setSelectedHomestay} placeholder="Tag a specific Homestay" />
                     </div>
 
                     {/* Submit */}
-                    <button onClick={handleSubmit} disabled={submitting} className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 text-white text-base font-semibold rounded-xl shadow-md hover:bg-green-700 transition-all disabled:opacity-50 active:scale-[0.98] mt-1">
-                        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                        {submitting ? 'Posting...' : 'Repost'}
+                    <button onClick={handleSubmit} disabled={submitting} className="w-full flex items-center justify-center gap-3 py-5 bg-white hover:bg-zinc-100 text-zinc-950 font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-all active:scale-[0.98] disabled:opacity-30 mt-2 text-sm">
+                        {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                        {submitting ? 'Publishing...' : 'Publish Repost'}
                     </button>
                 </div>
             </motion.div>

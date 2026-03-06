@@ -63,17 +63,17 @@ export function CustomCombobox({ options, value, onChange, placeholder = "Tag Ho
             <div className={cn("relative", className)}>
                 <div
                     data-testid="homestay-selected-pill"
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-green-50 to-emerald-50 text-green-800 pl-3 pr-2 py-2 rounded-full text-sm font-semibold shadow-sm border border-green-200/60 hover:shadow-md transition-all duration-200 cursor-default group"
+                    className="inline-flex items-center gap-2.5 bg-zinc-900 text-white pl-4 pr-2.5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest shadow-2xl border border-white/10 hover:border-white/20 transition-all duration-300 cursor-default group ring-1 ring-white/5"
                 >
-                    <MapPin className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                     <span className="max-w-[200px] sm:max-w-[260px] truncate">{selectedOption.name}</span>
                     <button
                         onClick={handleClear}
                         data-testid="homestay-clear-btn"
-                        className="w-5 h-5 rounded-full bg-green-200/70 hover:bg-red-100 hover:text-red-600 flex items-center justify-center transition-colors duration-150 ml-0.5 flex-shrink-0"
+                        className="w-6 h-6 rounded-full bg-zinc-800 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all duration-200 ml-1 flex-shrink-0 border border-white/5 active:scale-90"
                         aria-label="Clear homestay tag"
                     >
-                        <X className="w-3 h-3" />
+                        <X className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>
@@ -95,18 +95,18 @@ export function CustomCombobox({ options, value, onChange, placeholder = "Tag Ho
                             <div className="relative w-full">
                                 <Combobox.Input
                                     data-testid="homestay-combobox-input"
-                                    className="w-full bg-emerald-50/80 border border-emerald-200/50 rounded-full pl-9 pr-10 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-400 text-gray-800 placeholder:text-emerald-600/60 transition-all duration-200 hover:bg-emerald-50"
+                                    className="w-full bg-zinc-900/50 border border-white/10 rounded-2xl pl-11 pr-11 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 text-white placeholder:text-zinc-600 transition-all duration-300 hover:bg-zinc-900 shadow-2xl"
                                     displayValue={(opt: Option) => opt?.name || ''}
                                     onChange={(event) => setQuery(event.target.value)}
                                     placeholder={placeholder}
                                     autoComplete="off"
                                 />
-                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
+                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 pointer-events-none" />
                                 <Combobox.Button
                                     data-testid="homestay-combobox-btn"
-                                    className="absolute inset-y-0 right-0 flex items-center pr-3"
+                                    className="absolute inset-y-0 right-0 flex items-center pr-4"
                                 >
-                                    <ChevronsUpDown className="h-4 w-4 text-emerald-500/80" aria-hidden="true" />
+                                    <ChevronsUpDown className="h-4 w-4 text-zinc-500" aria-hidden="true" />
                                 </Combobox.Button>
                             </div>
 
@@ -126,7 +126,7 @@ export function CustomCombobox({ options, value, onChange, placeholder = "Tag Ho
                                     <Combobox.Options
                                         static
                                         data-testid="homestay-dropdown"
-                                        className="fixed max-h-60 overflow-auto rounded-xl bg-white py-1.5 text-base shadow-2xl shadow-black/10 ring-1 ring-black/5 focus:outline-none sm:text-sm backdrop-blur-sm"
+                                        className="fixed max-h-64 overflow-auto rounded-2xl bg-zinc-900 py-2 text-base shadow-[0_30px_90px_rgba(0,0,0,0.6)] ring-1 ring-white/10 focus:outline-none sm:text-sm backdrop-blur-3xl scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent"
                                         style={{
                                             top: menuPos.top,
                                             left: menuPos.left,
@@ -146,8 +146,8 @@ export function CustomCombobox({ options, value, onChange, placeholder = "Tag Ho
                                                     data-testid={`combobox-option-${opt.id}`}
                                                     className={({ active }) =>
                                                         cn(
-                                                            'relative cursor-pointer select-none py-2.5 pl-10 pr-4 transition-colors duration-100',
-                                                            active ? 'bg-green-50 text-green-900' : 'text-gray-800'
+                                                            'relative cursor-pointer select-none py-3.5 pl-11 pr-5 transition-all duration-200',
+                                                            active ? 'bg-zinc-800 text-white' : 'text-zinc-400'
                                                         )
                                                     }
                                                     value={opt}
@@ -155,17 +155,17 @@ export function CustomCombobox({ options, value, onChange, placeholder = "Tag Ho
                                                     {({ selected, active }) => (
                                                         <>
                                                             <span className={cn(
-                                                                'block whitespace-normal break-words text-sm leading-snug',
-                                                                selected ? 'font-semibold text-green-700' : 'font-normal'
+                                                                'block whitespace-normal break-words text-sm font-bold tracking-tight leading-snug',
+                                                                selected ? 'text-green-500' : 'text-inherit'
                                                             )}>
                                                                 {opt.name}
                                                             </span>
                                                             {selected && (
                                                                 <span className={cn(
-                                                                    'absolute inset-y-0 left-0 flex items-center pl-3',
-                                                                    active ? 'text-green-700' : 'text-green-600'
+                                                                    'absolute inset-y-0 left-0 flex items-center pl-4',
+                                                                    active ? 'text-green-400' : 'text-green-500'
                                                                 )}>
-                                                                    <Check className="h-4 w-4" aria-hidden="true" />
+                                                                    <Check className="h-5 h-5 drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" aria-hidden="true" />
                                                                 </span>
                                                             )}
                                                         </>

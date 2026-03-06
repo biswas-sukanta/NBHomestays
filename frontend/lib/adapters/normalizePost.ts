@@ -1,48 +1,47 @@
 export interface NormalizedPost {
     id: string;
-    author: string;
-    avatar: string;
+    authorName: string;
+    authorAvatar: string;
+    authorId?: string;
     location: string;
     caption: string;
     imageUrl: string | null;
+    images: { url: string; fileId?: string }[];
     tags: string[];
     likes: number;
     comments: number;
+    shareCount: number;
     createdAt: string;
-    // Optional fields for extended functionality
-    authorAvatar?: string | null;
-    authorId?: string | null;
-    title?: string;
-    views?: number;
-    isLikedByCurrentUser?: boolean;
-    shareCount?: number;
+    // Optional/Legacy compatibility
     homestayId?: string;
     homestayName?: string;
-    originalPost?: any;
+    isLikedByCurrentUser?: boolean;
     isVerifiedHost?: boolean;
+    originalPost?: NormalizedPost;
 }
 
 export function normalizePost(post: any): NormalizedPost {
     if (!post) return {} as NormalizedPost;
 
+    const media = post.media ?? post.mediaResources ?? [];
+
     return {
         id: post.id,
-        author: post.author?.name ?? "Unknown",
-        avatar: post.author?.avatarUrl ?? "/images/default-avatar.webp",
+        authorName: post.author?.name ?? "Unknown",
+        authorAvatar: post.author?.avatarUrl ?? "/images/default-avatar.webp",
+        authorId: post.author?.id,
         location: post.locationName ?? "",
         caption: post.textContent ?? "",
-        imageUrl: post.media?.[0]?.url ?? post.mediaResources?.[0]?.url ?? null,
+        imageUrl: media[0]?.url ?? null,
+        images: media,
         tags: post.tags ?? [],
         likes: post.loveCount ?? 0,
         comments: post.commentCount ?? 0,
+        shareCount: post.shareCount ?? 0,
         createdAt: post.createdAt,
-        // Carry over other fields if present
-        authorAvatar: post.author?.avatarUrl ?? "/images/default-avatar.webp",
-        authorId: post.author?.id,
-        title: post.title ?? post.locationName ?? "",
-        isLikedByCurrentUser: post.isLikedByCurrentUser ?? false,
         homestayId: post.homestayId,
         homestayName: post.homestayName,
+        isLikedByCurrentUser: post.isLikedByCurrentUser ?? false,
         isVerifiedHost: post.author?.isVerifiedHost ?? post.author?.verifiedHost ?? false,
         originalPost: post.originalPost ? normalizePost(post.originalPost) : undefined
     };

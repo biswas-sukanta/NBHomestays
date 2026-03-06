@@ -45,7 +45,7 @@ export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
                     <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold text-white tracking-tight font-serif drop-shadow-lg [text-shadow:_0_4px_24px_rgb(0_0_0_/_60%)]">
                         Community
                     </h1>
-                    <p className="text-lg sm:text-xl md:text-2xl text-gray-200 font-medium max-w-2xl mx-auto drop-shadow-md">
+                    <p className="text-lg sm:text-xl md:text-2xl text-zinc-400 font-bold max-w-2xl mx-auto drop-shadow-md">
                         Real travelers. Real discoveries across the Himalayas.
                     </p>
 

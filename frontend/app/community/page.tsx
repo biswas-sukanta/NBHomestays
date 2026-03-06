@@ -49,7 +49,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
     const [text, setText] = useState(postData?.caption || '');
     const [location, setLocation] = useState(postData?.location || '');
     const [submitting, setSubmitting] = useState(false);
-    const [existingMedia, setExistingMedia] = useState<{ url: string; fileId?: string }[]>(postData?.imageUrl && postData.imageUrl !== '/_static/community/post_placeholder.webp' ? [{ url: postData.imageUrl }] : []);
+    const [existingMedia, setExistingMedia] = useState<{ url: string; fileId?: string }[]>(postData?.imageUrl ? [{ url: postData.imageUrl }] : []);
     const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
     const [cropModal, setCropModal] = useState<{ isOpen: boolean; imageIdx: number | null }>({
         isOpen: false,
@@ -72,7 +72,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
         if (postData) {
             setText(postData.caption || '');
             setLocation(postData.location || '');
-            setExistingMedia(postData.imageUrl && postData.imageUrl !== '/_static/community/post_placeholder.webp' ? [{ url: postData.imageUrl }] : []);
+            setExistingMedia(postData.imageUrl ? [{ url: postData.imageUrl }] : []);
             setSelectedHomestay(postData.homestayId || '');
         }
     }, [postData]);
@@ -213,28 +213,29 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 30 }}
-                className="bg-white w-full h-[100dvh] flex flex-col md:w-[600px] md:h-auto md:max-h-[85vh] md:rounded-2xl shadow-2xl overflow-hidden relative z-10"
+                className="bg-zinc-950 w-full h-[100dvh] flex flex-col md:w-[620px] md:h-auto md:max-h-[90vh] md:rounded-3xl shadow-[0_30px_90px_rgba(0,0,0,0.8)] overflow-hidden relative z-10 border border-white/5 ring-1 ring-white/10"
             >
-                <div className="flex-none pt-[max(1.5rem,env(safe-area-inset-top))] md:pt-6 pb-5 px-6 flex justify-between items-center border-b border-gray-100 bg-white">
-                    <h2 className="text-2xl font-bold font-serif text-gray-900 tracking-tight">
+                <div className="flex-none pt-[max(1.5rem,env(safe-area-inset-top))] md:pt-7 pb-6 px-8 flex justify-between items-center border-b border-white/5 bg-zinc-950">
+                    <h2 className="text-2xl md:text-3xl font-bold font-serif text-white tracking-tight">
                         {postData ? 'Edit Your Story' : repostTarget ? 'Repost Story' : 'Share Your Journey'}
                     </h2>
                     <button
                         onClick={onCancel}
-                        className="p-2.5 bg-gray-50 hover:bg-gray-100/80 rounded-full transition-colors flex-shrink-0 border border-gray-100 shadow-sm"
+                        className="p-3 bg-zinc-900 hover:bg-zinc-800 rounded-full transition-all flex-shrink-0 border border-white/10 shadow-xl group active:scale-90"
                         aria-label="Close"
                     >
-                        <X size={20} className="text-gray-500" />
+                        <X size={20} className="text-zinc-400 group-hover:text-white transition-colors" />
                     </button>
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto p-6 flex flex-col gap-6 bg-zinc-50/50">
+                <div className="flex-1 min-h-0 overflow-y-auto p-8 flex flex-col gap-8 bg-zinc-950">
                     {repostTarget && (
-                        <div className="border border-green-200 rounded-2xl p-4 bg-green-50 shadow-sm">
-                            <p className="text-[11px] font-bold text-green-700 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                        <div className="border border-green-500/30 rounded-2xl p-5 bg-green-500/5 shadow-2xl relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent pointer-events-none" />
+                            <p className="text-[10px] font-black text-green-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
                                 <Share2 className="w-3.5 h-3.5" /> Reposting {repostTarget.authorName}&apos;s story
                             </p>
-                            <p className="text-[15px] font-serif text-gray-800 line-clamp-3 italic">&quot;{repostTarget.textContent}&quot;</p>
+                            <p className="text-base font-serif text-zinc-200 line-clamp-3 italic leading-relaxed">&quot;{repostTarget.textContent}&quot;</p>
                         </div>
                     )}
 
@@ -246,27 +247,27 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                             if (error) setError('');
                         }}
                         placeholder={repostTarget ? 'Add your thoughts...' : "What's the atmosphere like? Tell the community..."}
-                        className="w-full h-32 md:h-48 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm focus:bg-white focus:ring-4 focus:ring-green-500/20 focus:border-green-500 resize-none text-[17px] font-medium text-gray-900 placeholder-gray-400 transition-all duration-200"
+                        className="w-full h-40 md:h-56 p-6 bg-zinc-900/50 border border-white/10 rounded-3xl shadow-2xl focus:bg-zinc-900 focus:ring-4 focus:ring-green-500/20 focus:border-green-500/50 resize-none text-lg font-medium text-white placeholder-zinc-600 transition-all duration-300"
                         error={error}
                     />
 
                     {(stagedFiles.length > 0 || existingMedia.length > 0) && (
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 p-1">
                             {existingMedia.map((mediaObj, i) => (
-                                <div key={`ex-${i}`} className="relative aspect-square rounded-2xl overflow-hidden group shadow-md bg-gray-100 ring-1 ring-black/5">
+                                <div key={`ex-${i}`} className="relative aspect-square rounded-2xl overflow-hidden group shadow-2xl bg-zinc-900 ring-1 ring-white/10">
                                     <OptimizedImage src={mediaObj.url} alt="existing" className="w-full h-full object-cover" width={200} />
                                     <button onClick={() => setExistingMedia(prev => prev.filter((_, idx) => idx !== i))}
-                                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                                        <X className="w-6 h-6 text-white drop-shadow-md" />
+                                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                        <X className="w-7 h-7 text-white drop-shadow-2xl" />
                                     </button>
                                 </div>
                             ))}
                             {stagedFiles.map((staged, i) => (
-                                <div key={staged.id} className="relative aspect-square rounded-2xl overflow-hidden group shadow-md bg-gray-100 ring-2 ring-green-500/50">
+                                <div key={staged.id} className="relative aspect-square rounded-2xl overflow-hidden group shadow-2xl bg-zinc-900 ring-2 ring-green-500/40">
                                     <OptimizedImage src={staged.previewUrl} alt="preview" className="w-full h-full object-cover" width={200} />
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-all">
-                                        <button onClick={() => setCropModal({ isOpen: true, imageIdx: i })} className="p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-900 hover:scale-110 transition-transform shadow-sm"><Scissors className="w-4 h-4" /></button>
-                                        <button onClick={() => removeStaged(staged.id)} className="p-2 bg-rose-500/90 backdrop-blur-sm rounded-full text-white hover:scale-110 transition-transform shadow-sm"><X className="w-4 h-4" /></button>
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-all backdrop-blur-[2px]">
+                                        <button onClick={() => setCropModal({ isOpen: true, imageIdx: i })} className="p-2.5 bg-white text-zinc-950 rounded-full hover:scale-110 transition-transform shadow-2xl"><Scissors className="w-4 h-4" /></button>
+                                        <button onClick={() => removeStaged(staged.id)} className="p-2.5 bg-rose-500 text-white rounded-full hover:scale-110 transition-transform shadow-2xl"><X className="w-4 h-4" /></button>
                                     </div>
                                 </div>
                             ))}
@@ -282,25 +283,25 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                         />
                     )}
 
-                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
                         <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
                         <button data-testid="add-photo-btn" onClick={() => fileRef.current?.click()} disabled={submitting}
-                            className="w-full sm:w-auto flex-1 flex justify-center items-center gap-2 border border-blue-200 rounded-2xl py-3.5 bg-blue-50/50 text-blue-700 text-sm font-bold hover:bg-blue-100/50 hover:border-blue-300 shadow-sm transition-colors" title="Add Photos">
+                            className="w-full sm:w-auto flex-1 flex justify-center items-center gap-2 border border-blue-500/30 rounded-2xl py-4 bg-blue-500/5 text-blue-400 text-sm font-black uppercase tracking-wider hover:bg-blue-500/10 hover:border-blue-500/50 shadow-2xl transition-all active:scale-95" title="Add Photos">
                             <ImageIcon className="w-5 h-5" />
-                            <span>Upload Photos</span>
+                            <span>Add Visuals</span>
                         </button>
                         <div className="w-full sm:w-auto flex-[2] relative group">
-                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 group-focus-within:text-emerald-600 transition-colors" />
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-400 transition-colors" />
                             <input
                                 value={location}
                                 onChange={e => setLocation(e.target.value)}
-                                placeholder="Add Location..."
-                                className="w-full border border-gray-200 bg-white text-gray-900 placeholder-gray-400 rounded-2xl pl-11 pr-4 py-3.5 text-sm font-semibold focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-sm transition-all outline-none"
+                                placeholder="Where did this happen?"
+                                className="w-full border border-white/10 bg-zinc-900/50 text-white placeholder-zinc-600 rounded-2xl pl-12 pr-5 py-4 text-sm font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 shadow-2xl transition-all outline-none"
                             />
                         </div>
                     </div>
 
-                    <div className="border border-gray-200 rounded-2xl shadow-sm overflow-hidden bg-white">
+                    <div className="border border-white/10 rounded-2xl shadow-2xl overflow-hidden bg-zinc-900/50">
                         <CustomCombobox
                             options={homestays}
                             value={selectedHomestay}
@@ -311,7 +312,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
 
                     {/* ── Vibe Tag Badge Grid ── */}
                     <div className="pt-2">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Post Category {selectedTags.length > 0 && <span className="text-green-600">({selectedTags.length}/3)</span>}</p>
+                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4">Post Category {selectedTags.length > 0 && <span className="text-green-500">({selectedTags.length}/3)</span>}</p>
                         <div className="flex flex-wrap gap-2.5">
                             {VIBE_TAGS.map(tag => {
                                 const isSelected = selectedTags.includes(tag.value);
@@ -323,12 +324,12 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                                         onClick={() => toggleTag(tag.value)}
                                         disabled={isDisabled}
                                         className={cn(
-                                            'px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 select-none shadow-sm',
+                                            'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all duration-300 select-none shadow-xl',
                                             isSelected
-                                                ? 'bg-zinc-900 text-white border-zinc-900 scale-[1.02]'
+                                                ? 'bg-green-600 text-white border-green-500 shadow-[0_0_20px_rgba(22,163,74,0.3)] scale-[1.05]'
                                                 : isDisabled
-                                                    ? 'bg-gray-50 text-gray-300 border-gray-100 opacity-50 cursor-not-allowed'
-                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-50'
+                                                    ? 'bg-zinc-900 text-zinc-700 border-white/5 opacity-50 cursor-not-allowed'
+                                                    : 'bg-zinc-900/50 text-zinc-400 border-white/10 hover:border-white/20 hover:text-white hover:bg-zinc-800'
                                         )}
                                     >
                                         {tag.label}
@@ -337,13 +338,13 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
                             })}
                         </div>
                         {selectedTags.length >= 3 && (
-                            <p className="text-xs text-amber-600 mt-2 font-semibold animate-in fade-in duration-300">Maximum tags reached</p>
+                            <p className="text-[10px] text-amber-500 mt-3 font-black uppercase tracking-widest animate-in fade-in duration-300">Maximum tags reached</p>
                         )}
                     </div>
 
-                    <div className="pt-4 mt-auto">
+                    <div className="pt-6 mt-auto">
                         <button data-testid="submit-post-btn" onClick={handleSubmit} disabled={submitting || (!text.trim() && stagedFiles.length === 0 && existingMedia.length === 0)}
-                            className="w-full flex items-center justify-center gap-2 py-4 bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all text-base">
+                            className="w-full flex items-center justify-center gap-3 py-5 bg-white hover:bg-zinc-100 text-zinc-950 font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:shadow-[0_25px_50px_rgba(255,255,255,0.15)] active:scale-[0.98] disabled:opacity-30 disabled:active:scale-100 transition-all text-sm">
                             {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                             {submitting ? 'Publishing...' : (postData ? 'Update Story' : repostTarget ? 'Publish Repost' : 'Publish Story')}
                         </button>
@@ -441,8 +442,8 @@ export default function CommunityPage() {
     const { data: trendingData } = useQuery({
         queryKey: ['trending-posts'],
         queryFn: async () => {
-            const { data } = await api.get('/api/posts?page=0&size=3&sort=likes');
-            return data.content || data.data || [];
+            const { data } = await api.get('/api/posts?page=0&size=3&sort=loveCount,desc');
+            return data; // Return full response to handle .content later
         }
     });
 
@@ -454,7 +455,8 @@ export default function CommunityPage() {
         return <div className="text-center py-20 text-red-500">Failed to load feed. Please try again.</div>;
     }
 
-    const trendingPosts = (trendingData?.content || trendingData || []).map(normalizePost);
+    const { content: trendingContent = [] } = trendingData as any || {};
+    const trendingPosts = (Array.isArray(trendingContent) ? trendingContent : []).map(normalizePost);
     console.log("Community Feed Data:", data);
     console.log("Trending Data:", trendingData);
 
@@ -491,11 +493,11 @@ export default function CommunityPage() {
         !searchQuery ||
         p.caption?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.author || '').toLowerCase().includes(searchQuery.toLowerCase())
+        (p.authorName || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
-        <div className="min-h-screen bg-zinc-50">
+        <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-green-500/30">
             {/* SEO Guard, Metadata hidden */}
             <CommunityHero onOpenComposer={() => { setPostToEdit(null); setComposerOpen(true); }} />
 
@@ -511,16 +513,16 @@ export default function CommunityPage() {
                     <div className="w-full space-y-8">
                         {/* ── Top Bar Controls ── */}
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
-                            <h2 className="text-3xl font-bold font-serif text-gray-900 tracking-tight">Community Feed</h2>
+                            <h2 className="text-3xl font-bold font-serif text-white tracking-tight">Community Feed</h2>
 
                             <div className="flex flex-col sm:flex-row gap-3 items-center">
                                 <div className="relative w-full sm:w-64 group">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-green-600 transition-colors" />
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-green-500 transition-colors" />
                                     <Input
                                         placeholder="Search stories..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="bg-white border-none rounded-full h-11 pl-11 shadow-sm ring-1 ring-gray-200 focus-visible:ring-2 focus-visible:ring-green-500/50 text-sm font-medium"
+                                        className="bg-zinc-900 border-none rounded-full h-11 pl-11 shadow-2xl ring-1 ring-white/10 focus-visible:ring-2 focus-visible:ring-green-500/50 text-sm font-medium text-white placeholder:text-zinc-500"
                                     />
                                 </div>
                             </div>
@@ -554,10 +556,11 @@ export default function CommunityPage() {
                         </AnimatePresence>
 
                         {filteredPosts.length === 0 && !isFetchingNextPage && (
-                            <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm text-gray-500">
-                                <div className="text-5xl mb-4 opacity-50">🍃</div>
-                                <p className="font-semibold text-xl text-gray-900 mb-2">No stories found</p>
-                                <p className="text-sm">Try adjusting your search or filters.</p>
+                            <div className="text-center py-24 bg-zinc-900/50 rounded-3xl border border-dashed border-white/10 shadow-2xl text-zinc-500 overflow-hidden relative isolate">
+                                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent -z-10" />
+                                <div className="text-6xl mb-6 opacity-30 animate-pulse">🍃</div>
+                                <p className="font-bold text-2xl text-white mb-2 font-serif">Deep silence here...</p>
+                                <p className="text-sm text-zinc-400 max-w-xs mx-auto">No stories found. Be the first to share a journey or try a different filter.</p>
                             </div>
                         )}
 
@@ -571,11 +574,11 @@ export default function CommunityPage() {
 
                         {/* ── Infinite Scroll / Load More Switch ── */}
                         {hasNextPage && !isFetchingNextPage && !isMobile && !searchQuery && (
-                            <div className="pt-4 pb-8 flex justify-center">
+                            <div className="pt-8 pb-12 flex justify-center">
                                 <Button
                                     onClick={() => fetchNextPage()}
                                     size="lg"
-                                    className="bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 font-semibold px-8 rounded-full shadow-sm"
+                                    className="bg-zinc-900 text-white border border-white/10 hover:bg-zinc-800 hover:border-white/20 font-bold px-12 py-7 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95"
                                 >
                                     Load More Stories
                                 </Button>
@@ -584,9 +587,9 @@ export default function CommunityPage() {
 
                         {/* End of Feed Sentinel */}
                         {!hasNextPage && filteredPosts.length > 0 && !searchQuery && (
-                            <div className="py-12 border-t border-gray-200 text-center">
-                                <p className="text-gray-400 text-xs font-bold tracking-widest uppercase">
-                                    You&apos;ve reached the end
+                            <div className="py-16 border-t border-white/10 text-center opacity-50">
+                                <p className="text-zinc-500 text-[10px] font-black tracking-[0.2em] uppercase">
+                                    End of Discovery
                                 </p>
                             </div>
                         )}
