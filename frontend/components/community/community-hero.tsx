@@ -11,12 +11,17 @@ interface CommunityHeroProps {
 export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
     return (
         <section className="relative w-full h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden bg-zinc-950">
-            {/* Background Image with Parallax & Ken Burns potential */}
+            {/* Background Image with Parallax & Ken Burns Effect */}
             <motion.div
                 className="absolute inset-0 z-0"
-                initial={{ scale: 1.05 }}
+                initial={{ scale: 1.25 }}
                 animate={{ scale: 1 }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
+                transition={{
+                    duration: 20,
+                    ease: "linear",
+                    repeat: Infinity,
+                    repeatType: "reverse"
+                }}
             >
                 <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none" />
                 <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-zinc-950 to-transparent z-10 pointer-events-none" />
@@ -24,13 +29,13 @@ export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
                     src="/_static/community/community_hero_desktop.webp?tr=w-1920,q-70,f-webp"
                     className="w-full h-full object-cover hidden md:block"
                     alt="Community journeys in the Himalayas"
-                    loading="lazy"
+                    loading="eager"
                 />
                 <img
                     src="/_static/community/community_hero_mobile.webp?tr=w-800,q-70,f-webp"
                     className="w-full h-full object-cover md:hidden"
                     alt="Community journeys in the Himalayas"
-                    loading="lazy"
+                    loading="eager"
                 />
             </motion.div>
 

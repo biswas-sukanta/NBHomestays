@@ -13,7 +13,7 @@ const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox
 import { CommentSkeleton } from '@/components/community/CommentSkeleton';
 import Link from 'next/link';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API = '/api';
 
 import {
     DropdownMenu,

@@ -16,6 +16,16 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CommentsSection } from '@/components/comments-section';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { LoginPromptModal } from './LoginPromptModal';
+
+// ── Icons for Tags ───────────────────────────────────────────────────────────
+const TAG_ICONS: Record<string, React.ReactNode> = {
+    'Hidden Gem': <CheckCircle2 className="w-3 h-3" />,
+    'Top Pick': <TrendingUp className="w-3 h-3" />, // Will import TrendingUp
+    'Himalayan Bliss': <MapPin className="w-3 h-3" />,
+    'Local Secret': <Send className="w-3 h-3" />,
+};
+import { TrendingUp } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 import { NormalizedPost } from '@/lib/adapters/normalizePost';
@@ -61,7 +71,7 @@ interface PostCardProps {
 }
 
 // ── LikeButton ────────────────────────────────────────────────────────────────
-function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle }: { postId: string; initialLiked: boolean; initialCount: number; darkMode?: boolean; onLikeToggle?: (loveCount: number, isLiked: boolean) => void }) {
+function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle, onUnauthenticated }: { postId: string; initialLiked: boolean; initialCount: number; darkMode?: boolean; onLikeToggle?: (loveCount: number, isLiked: boolean) => void; onUnauthenticated?: () => void }) {
     const { isAuthenticated } = useAuth() as any;
     const [popping, setPopping] = useState(false);
     const queryClient = useQueryClient();
@@ -74,10 +84,7 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
         onMutate: async () => {
             // Check authentication first
             if (!isAuthenticated) {
-                const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
-                toast(isMobile ? "Join the community to love this story" : "Sign in to show some love ❤️", {
-                    description: "Connect with travelers across the Himalayas.",
-                });
+                onUnauthenticated?.();
                 throw new Error('Unauthenticated');
             }
 
@@ -182,6 +189,10 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
     const [shareCount, setShareCount] = useState<number>(Number(post.shareCount) || 0);
     const [sharing, setSharing] = useState(false);
     const { isAuthenticated } = useAuth() as any;
+    const [loginModal, setLoginModal] = useState<{ open: boolean; action: 'love' | 'comment' | 'repost' | 'share' }>({
+        open: false,
+        action: 'love'
+    });
 
     // Share handler: native Web Share API → clipboard fallback → backend metric
     const handleShare = async (e: React.MouseEvent) => {
@@ -212,7 +223,10 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
     const handleRepost = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!isAuthenticated) { toast.error('Sign in to repost stories'); return; }
+        if (!isAuthenticated) {
+            setLoginModal({ open: true, action: 'repost' });
+            return;
+        }
         const quote: QuotePost = { id: post.id, authorName, textContent: post.caption };
         if (onRepost) {
             onRepost(quote);
@@ -313,7 +327,8 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                                 {isQuoted ? 'Repost' : 'Story'}
                             </span>
                             {(post.tags ?? []).map(tag => (
-                                <span key={tag} className="inline-flex items-center bg-green-500/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500">
+                                <span key={tag} className="inline-flex items-center gap-1.5 bg-green-500/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500">
+                                    {TAG_ICONS[tag] || null}
                                     {tag}
                                 </span>
                             ))}
@@ -343,7 +358,8 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                                 Editorial
                             </span>
                             {(post.tags ?? []).map(tag => (
-                                <span key={tag} className="inline-flex items-center bg-green-500/20 text-green-300 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500/30">
+                                <span key={tag} className="inline-flex items-center gap-1.5 bg-green-500/20 text-green-300 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500/30">
+                                    {TAG_ICONS[tag] || null}
                                     {tag}
                                 </span>
                             ))}
@@ -426,10 +442,16 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                             initialCount={Math.max(0, Number(post.likes) || 0)}
                             darkMode={true}
                             onLikeToggle={(newCount, newLiked) => onUpdate?.({ ...post, likes: newCount, isLikedByCurrentUser: newLiked })}
+                            onUnauthenticated={() => setLoginModal({ open: true, action: 'love' })}
                         />
 
                         {/* Comment */}
-                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenComments?.(post.id); }}
+                        <button onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isAuthenticated) { setLoginModal({ open: true, action: 'comment' }); return; }
+                            onOpenComments?.(post.id);
+                        }}
                             className={cn('flex-1 flex justify-center items-center gap-2 min-h-10 rounded-lg transition-transform active:scale-95 text-sm font-semibold group',
                                 hasComments ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
                             <MessageCircle className={cn('w-4 h-4', hasComments && 'fill-white')} />
@@ -462,6 +484,12 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                     onClose={() => setLightboxIndex(null)}
                 />
             )}
+            {/* Modal Layer */}
+            <LoginPromptModal
+                isOpen={loginModal.open}
+                action={loginModal.action}
+                onClose={() => setLoginModal(prev => ({ ...prev, open: false }))}
+            />
         </motion.article>
     );
 

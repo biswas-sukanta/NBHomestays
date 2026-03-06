@@ -69,7 +69,6 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                         </div>
                     </div>
 
-                    {/* Stacked Side Stories (Right Side) - Takes 5/12 cols */}
                     <div className="lg:col-span-5 flex flex-col gap-6">
                         {sideStories.map((story, i) => (
                             <div key={story.id} className="flex-1 relative group rounded-2xl overflow-hidden shadow-md cursor-pointer h-[250px] lg:h-auto">

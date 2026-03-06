@@ -42,7 +42,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     const { id } = await params;
 
     const isDev = process.env.NODE_ENV === 'development';
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+    const API_BASE = '/api';
     const fetchUrl = `${API_BASE}/api/homestays/${id}`;
 
     let homestay: Homestay;

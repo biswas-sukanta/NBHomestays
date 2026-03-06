@@ -25,7 +25,7 @@ interface Stats {
 }
 
 type Tab = 'pending' | 'all' | 'community' | 'featured' | 'analytics' | 'data';
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API = '/api';
 
 const statusColor: Record<string, string> = {
     PENDING: 'bg-yellow-100 text-yellow-800',

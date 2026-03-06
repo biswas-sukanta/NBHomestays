@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8080';
+    const apiBase = 'https://thoughtful-jemie-droidmaniac-8802977f.koyeb.app';
     return [
       {
         source: '/api/:path*',

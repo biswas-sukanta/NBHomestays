@@ -27,6 +27,7 @@ import { CommunityHero } from '@/components/community/community-hero';
 import { TrendingStories } from '@/components/community/trending-stories';
 import { CommunitySidebar } from '@/components/community/sidebar';
 import { CommunityPageSkeleton } from '@/components/community/Skeletons';
+import { LoginPromptModal } from '@/components/community/LoginPromptModal';
 import { normalizePost, NormalizedPost } from '@/lib/adapters/normalizePost';
 type Post = NormalizedPost;
 
@@ -377,6 +378,8 @@ export default function CommunityPage() {
     const queryClient = useQueryClient();
     const [composerOpen, setComposerOpen] = useState(false);
     const [postToEdit, setPostToEdit] = useState<Post | null>(null);
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+    const [loginAction, setLoginAction] = useState<'love' | 'comment' | 'repost' | 'share'>('share');
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
     const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -424,9 +427,8 @@ export default function CommunityPage() {
         },
     });
 
-    // Conditional infinite scroll: only auto-fire on mobile.
-    // On desktop, we require the explicit Load More Stories button click.
     const [isMobile, setIsMobile] = useState(false);
+
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 1024);
         checkMobile();
@@ -514,7 +516,15 @@ export default function CommunityPage() {
     return (
         <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-green-500/30">
             {/* SEO Guard, Metadata hidden */}
-            <CommunityHero onOpenComposer={() => { setPostToEdit(null); setComposerOpen(true); }} />
+            <CommunityHero onOpenComposer={() => {
+                if (!isAuthenticated) {
+                    setLoginAction('share');
+                    setIsLoginModalOpen(true);
+                    return;
+                }
+                setPostToEdit(null);
+                setComposerOpen(true);
+            }} />
 
             {/* Trending Curated Grid */}
             {!searchQuery && !activeTag && trendingPosts.length > 0 && (
@@ -627,6 +637,12 @@ export default function CommunityPage() {
                     </motion.button>
                 )}
             </AnimatePresence>
+
+            <LoginPromptModal
+                isOpen={isLoginModalOpen}
+                action={loginAction}
+                onClose={() => setIsLoginModalOpen(false)}
+            />
 
             <AnimatePresence>
                 {composerOpen && (

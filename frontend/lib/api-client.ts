@@ -6,7 +6,7 @@ import axios from 'axios';
 import { Configuration } from '@/src/lib/api/configuration';
 import { HomestayControllerApi } from '@/src/lib/api/clients/homestay-controller-api';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE = '/api';
 
 // Axios instance with JWT interceptor
 const axiosInstance = axios.create({ baseURL: API_BASE });
