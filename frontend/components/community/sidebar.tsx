@@ -1,7 +1,55 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Bookmark, Flame, MapPin, Award } from 'lucide-react';
+import { NormalizedPost } from '@/lib/adapters/normalizePost';
 
-export function CommunitySidebar() {
+export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
+    // Compute Top Contributors
+    const topContributors = useMemo(() => {
+        const counts: Record<string, { count: number, id: string; name: string, avatar: string | null }> = {};
+        posts.forEach(p => {
+            const authorName = p.author || 'Traveller';
+            if (!counts[authorName]) {
+                counts[authorName] = { count: 0, id: p.authorId || '', name: authorName, avatar: p.authorAvatar };
+            }
+            counts[authorName].count += 1;
+        });
+        const sorted = Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 3);
+        // Fallback dummy data if no posts
+        if (sorted.length === 0) {
+            return [
+                { name: "Rahul S.", role: "Mountain Expert", initials: "RS", color: "from-blue-500 to-indigo-600", count: 12, avatar: null },
+                { name: "Priya Das", role: "Offbeat Explorer", initials: "PD", color: "from-rose-500 to-pink-600", count: 8, avatar: null },
+                { name: "Aman K.", role: "Local Guide", initials: "AK", color: "from-emerald-500 to-teal-600", count: 5, avatar: null },
+            ];
+        }
+        return sorted.map(u => ({
+            name: u.name,
+            role: "Top Contributor",
+            initials: u.name.slice(0, 2).toUpperCase(),
+            color: "from-emerald-500 to-teal-700",
+            count: u.count,
+            avatar: u.avatar
+        }));
+    }, [posts]);
+
+    // Compute Trending Tags
+    const trendingTags = useMemo(() => {
+        const tags: Record<string, number> = {};
+        posts.forEach(p => {
+            (p.tags || []).forEach(tag => {
+                tags[tag] = (tags[tag] || 0) + 1;
+            });
+        });
+        const sorted = Object.entries(tags).sort((a, b) => b[1] - a[1]).map(t => t[0]).slice(0, 6);
+        return sorted.length > 0 ? sorted : ['DarjeelingDiaries', 'WinterTrek', 'HiddenGem', 'HomestayHost', 'Offbeat'];
+    }, [posts]);
+
+    // Compute Editor's Pick (Most liked post as fallback for Editor's Pick if not explicitly tagged)
+    const editorPick = useMemo(() => {
+        if (!posts || posts.length === 0) return null;
+        return [...posts].sort((a, b) => b.likes - a.likes)[0];
+    }, [posts]);
+
     return (
         <aside className="hidden lg:flex flex-col gap-6 sticky top-24">
 
@@ -12,18 +60,18 @@ export function CommunitySidebar() {
                     <h3 className="font-bold font-serif text-lg tracking-tight">Top Contributors</h3>
                 </div>
                 <div className="space-y-4">
-                    {[
-                        { name: "Rahul S.", role: "Mountain Expert", initials: "RS", color: "from-blue-500 to-indigo-600" },
-                        { name: "Priya Das", role: "Offbeat Explorer", initials: "PD", color: "from-rose-500 to-pink-600" },
-                        { name: "Aman K.", role: "Local Guide", initials: "AK", color: "from-emerald-500 to-teal-600" },
-                    ].map((user, i) => (
+                    {topContributors.map((user, i) => (
                         <div key={i} className="flex items-center gap-3 cursor-pointer group">
-                            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${user.color} flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent group-hover:ring-gray-200 transition-all`}>
-                                {user.initials}
-                            </div>
+                            {user.avatar ? (
+                                <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-transparent group-hover:ring-gray-200 transition-all" />
+                            ) : (
+                                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${user.color} flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent group-hover:ring-gray-200 transition-all`}>
+                                    {user.initials}
+                                </div>
+                            )}
                             <div>
                                 <p className="text-sm font-bold text-gray-800 group-hover:text-green-700 transition-colors leading-tight">{user.name}</p>
-                                <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wide">{user.role}</p>
+                                <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wide">{user.count} stories</p>
                             </div>
                         </div>
                     ))}
@@ -37,28 +85,38 @@ export function CommunitySidebar() {
                     <h3 className="font-bold font-serif text-lg tracking-tight">Trending Tags</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {['#DarjeelingDiaries', '#Offbeat', '#HiddenWaterfalls', '#TeaGarden', '#WinterTrek', '#HomestayLife'].map(tag => (
+                    {trendingTags.map(tag => (
                         <span key={tag} className="inline-block px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded-lg border border-gray-200 hover:border-gray-300 hover:text-black cursor-pointer transition-colors shadow-sm">
-                            {tag}
+                            {(tag.startsWith('#') || tag.startsWith('❓') || tag.startsWith('📝') || tag.startsWith('⭐') || tag.startsWith('⚠️') || tag.startsWith('✨') || tag.startsWith('🏔️') || tag.startsWith('🚗')) ? tag : `#${tag}`}
                         </span>
                     ))}
                 </div>
             </div>
 
-            {/* Featured Destinations Promo */}
-            <div className="relative rounded-2xl overflow-hidden shadow-sm h-48 cursor-pointer group">
+            {/* Editor's Pick */}
+            <div className="relative rounded-2xl overflow-hidden shadow-sm h-56 cursor-pointer group">
                 <img
-                    src="https://ik.imagekit.io/y4v82f1t1/tr:w-800,q-70,f-webp/https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop"
+                    src={editorPick?.imageUrl ? (editorPick.imageUrl.startsWith('/') ? editorPick.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-800,q-70,f-webp/${editorPick.imageUrl}`) : "https://ik.imagekit.io/y4v82f1t1/tr:w-800,q-70,f-webp/https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop"}
                     alt="Promo"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10 pointer-events-none" />
                 <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                    <div className="flex items-center gap-1.5 mb-1 opacity-90">
-                        <Bookmark className="w-3.5 h-3.5" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Editor&apos;s Pick</span>
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5 opacity-90 text-amber-400">
+                            <Bookmark className="w-4 h-4" fill="currentColor" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Editor&apos;s Pick</span>
+                        </div>
                     </div>
-                    <p className="font-bold font-serif text-lg leading-snug">The 5 Best Homestays in Kurseong</p>
+                    <p className="font-bold font-serif text-lg leading-snug line-clamp-2 drop-shadow-md">
+                        {editorPick ? (editorPick.title || editorPick.caption) : "The 5 Best Homestays in Kurseong"}
+                    </p>
+                    {editorPick && (
+                        <div className="flex items-center gap-1.5 mt-2 opacity-80">
+                            <MapPin className="w-3.5 h-3.5 text-rose-400" />
+                            <span className="text-xs font-semibold">{editorPick.location}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 

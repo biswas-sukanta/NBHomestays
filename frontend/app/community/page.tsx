@@ -20,13 +20,14 @@ import { CommentsSection } from '@/components/comments-section';
 import { CustomCombobox } from '@/components/ui/combobox';
 import { FilterMatrix } from '@/components/ui/filter-matrix';
 import api from '@/lib/api';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CommunityHero } from '@/components/community/community-hero';
 import { TrendingStories } from '@/components/community/trending-stories';
 import { CommunitySidebar } from '@/components/community/sidebar';
-type Post = CommunityPost;
+import { normalizePost, NormalizedPost } from '@/lib/adapters/normalizePost';
+type Post = NormalizedPost;
 
 interface HomestayOption { id: string; name: string; address?: string; }
 
@@ -45,10 +46,10 @@ interface RepostTarget { id: string; authorName: string; textContent: string; }
 function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { postData?: Post; repostTarget?: RepostTarget; onSuccess: (post: Post) => void; onCancel: () => void; }) {
     const { user } = useAuth();
     const queryClient = useQueryClient();
-    const [text, setText] = useState(postData?.textContent || '');
-    const [location, setLocation] = useState(postData?.locationName || '');
+    const [text, setText] = useState(postData?.caption || '');
+    const [location, setLocation] = useState(postData?.location || '');
     const [submitting, setSubmitting] = useState(false);
-    const [existingMedia, setExistingMedia] = useState<{ url: string; fileId?: string }[]>(postData?.media || []);
+    const [existingMedia, setExistingMedia] = useState<{ url: string; fileId?: string }[]>(postData?.imageUrl && postData.imageUrl !== '/_static/community/post_placeholder.webp' ? [{ url: postData.imageUrl }] : []);
     const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
     const [cropModal, setCropModal] = useState<{ isOpen: boolean; imageIdx: number | null }>({
         isOpen: false,
@@ -69,9 +70,9 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
 
     useEffect(() => {
         if (postData) {
-            setText(postData.textContent || '');
-            setLocation(postData.locationName || '');
-            setExistingMedia(postData.media || []);
+            setText(postData.caption || '');
+            setLocation(postData.location || '');
+            setExistingMedia(postData.imageUrl && postData.imageUrl !== '/_static/community/post_placeholder.webp' ? [{ url: postData.imageUrl }] : []);
             setSelectedHomestay(postData.homestayId || '');
         }
     }, [postData]);
@@ -445,6 +446,15 @@ export default function CommunityPage() {
         return <div className="text-center py-20 text-red-500">Failed to load feed. Please try again.</div>;
     }
 
+    const { data: trendingData } = useQuery({
+        queryKey: ['trending-posts'],
+        queryFn: async () => {
+            const { data } = await api.get('/api/posts?page=0&size=3&sort=likes');
+            return data.content || data.data || [];
+        }
+    });
+    const trendingPosts = (trendingData || []).map(normalizePost);
+
     const handleNewPost = () => {
         queryClient.invalidateQueries({ queryKey: ['community-posts'] });
         setComposerOpen(false);
@@ -472,45 +482,13 @@ export default function CommunityPage() {
 
     const posts = data?.pages?.flatMap(page => page.content || page.data || []) || [];
 
-    // Adapter function for PHASE 2
-    const normalizePost = (post: any): Post => {
-        let imageUrl = '/images/community/trending-1.webp';
-
-        if (post.media && post.media.length > 0) {
-            imageUrl = post.media[0].url;
-        } else if (post.media_resources && post.media_resources.length > 0) {
-            imageUrl = post.media_resources[0].url;
-        }
-
-        return {
-            id: post.id,
-            author: post.author,
-            locationName: post.locationName,
-            textContent: post.textContent,
-            media: post.media?.length > 0 ? post.media : [{ url: imageUrl }],
-            createdAt: post.createdAt,
-            loveCount: post.loveCount || 0,
-            shareCount: post.shareCount || 0,
-            isLikedByCurrentUser: post.isLikedByCurrentUser || false,
-            commentCount: post.commentCount || 0,
-            homestayId: post.homestayId,
-            homestayName: post.homestayName,
-            originalPost: post.originalPost,
-            tags: post.tags,
-            // the adapted flat items for simpler use if needed:
-            imageUrl,
-            caption: post.textContent,
-            location: post.locationName
-        } as any;
-    };
-
     const normalizedPosts = posts.map(normalizePost);
 
     const filteredPosts = normalizedPosts.filter(p =>
         !searchQuery ||
-        p.textContent?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.locationName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.author?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+        p.caption?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.author || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -519,8 +497,8 @@ export default function CommunityPage() {
             <CommunityHero onOpenComposer={() => { setPostToEdit(null); setComposerOpen(true); }} />
 
             {/* Trending Curated Grid */}
-            {!searchQuery && !activeTag && (
-                <TrendingStories stories={filteredPosts.slice(0, 4)} />
+            {!searchQuery && !activeTag && trendingPosts.length > 0 && (
+                <TrendingStories stories={trendingPosts} />
             )}
 
             <div className="container mx-auto px-4 lg:px-6 py-12">
@@ -613,7 +591,7 @@ export default function CommunityPage() {
 
                     {/* Right: Sidebar Rail (Desktop Only) */}
                     <div className="relative">
-                        <CommunitySidebar />
+                        <CommunitySidebar posts={normalizedPosts} />
                     </div>
                 </div>
             </div>

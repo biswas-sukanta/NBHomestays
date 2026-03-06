@@ -18,28 +18,9 @@ import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 
 // ── Types ────────────────────────────────────────────────────────────────────
-export interface CommunityPost {
-    id: string;
-    author: {
-        id: string;
-        name: string;
-        role: string;
-        avatarUrl?: string;
-        isVerifiedHost?: boolean;
-    };
-    locationName: string;
-    textContent: string;
-    media?: { id?: string; url: string; fileId?: string }[];
-    createdAt: string;
-    loveCount: number;
-    shareCount: number;
-    isLikedByCurrentUser: boolean;
-    commentCount?: number;
-    homestayId?: string;
-    homestayName?: string;
-    originalPost?: CommunityPost;
-    tags?: string[];
-}
+import { NormalizedPost } from '@/lib/adapters/normalizePost';
+
+export type CommunityPost = NormalizedPost;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 export function formatRelative(isoDate: string) {
@@ -157,10 +138,10 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
 
 // ── PostCard ──────────────────────────────────────────────────────────────────
 export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepost, isQuoted = false, onOpenComments, onNewPost }: PostCardProps) {
-    const authorName = post.author?.name || 'Traveller';
+    const authorName = post.author || 'Traveller';
     const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-    const isOwner = String(currentUser?.id) === String(post.author?.id);
+    const isOwner = String(currentUser?.id) === String(post.authorId);
     const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN';
     const canModify = isOwner || isAdmin;
 
@@ -178,7 +159,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
         const url = `${window.location.origin}/community#post-${post.id}`;
         try {
             if (typeof navigator !== 'undefined' && navigator.share) {
-                await navigator.share({ title: 'North Bengal Homestays Story', text: post.textContent, url });
+                await navigator.share({ title: 'North Bengal Homestays Story', text: post.caption, url });
                 setShareCount(prev => prev + 1);
                 await api.post(`/api/posts/${post.id}/share`);
             } else {
@@ -199,7 +180,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
         e.preventDefault();
         e.stopPropagation();
         if (!isAuthenticated) { toast.error('Sign in to repost stories'); return; }
-        const quote: QuotePost = { id: post.id, authorName, textContent: post.textContent };
+        const quote: QuotePost = { id: post.id, authorName, textContent: post.caption };
         if (onRepost) {
             onRepost(quote);
         } else {
@@ -221,9 +202,8 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
     );
 
     // Prepare primary display image
-    const coverImage = post.media && post.media.length > 0
-        ? post.media[0].url
-        : 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80'; // Fallback for pure text posts to maintain editorial layout
+    const coverImage = post.imageUrl;
+    const hasImage = coverImage && coverImage !== '/_static/community/post_placeholder.webp';
 
     const content = (
         <motion.article
@@ -235,12 +215,12 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
         >
             {/* ── Image Block ── */}
             <div
-                className={cn("relative z-10 w-full xl:min-h-[400px] bg-zinc-900 border-b border-white/10", post.media && post.media.length > 0 ? "cursor-pointer" : "")}
-                onClick={() => { if (post.media && post.media.length > 0) setLightboxIndex(0); }}
+                className={cn("relative z-10 w-full xl:min-h-[400px] bg-zinc-900 border-b border-white/10", hasImage ? "cursor-pointer" : "")}
+                onClick={() => { if (hasImage) setLightboxIndex(0); }}
             >
                 <img
                     src={coverImage.startsWith('/') ? coverImage : `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${coverImage}`}
-                    alt={post.locationName}
+                    alt={post.location}
                     className="w-full h-auto max-h-[600px] object-cover transition-transform duration-700 hover:scale-[1.02]"
                 />
 
@@ -269,19 +249,8 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 {/* ── Bottom Left Overlay (Location & Title) ── */}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5 z-20 pointer-events-none">
                     <div className="flex items-center gap-1.5 text-rose-400 text-sm font-bold mb-1 uppercase tracking-wider drop-shadow-md">
-                        <MapPin className="w-4 h-4" /> {post.locationName}
+                        <MapPin className="w-4 h-4" /> {post.location}
                     </div>
-                    {/* Multi-image indicator */}
-                    {post.media && post.media.length > 1 && (
-                        <div className="absolute right-4 bottom-4 pointer-events-auto">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setLightboxIndex(0); }}
-                                className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-lg ring-1 ring-white/20 hover:bg-black/80 transition-colors"
-                            >
-                                <ImageIcon className="w-4 h-4" /> +{post.media.length - 1}
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -290,7 +259,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
 
                 <p className="text-base md:text-lg text-gray-200 leading-relaxed whitespace-pre-line font-serif mb-4 pointer-events-auto cursor-auto select-text line-clamp-4">
-                    {post.textContent}
+                    {post.caption}
                 </p>
 
                 {/* Recursive Nested Repost */}
@@ -303,14 +272,14 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 {/* Author Row */}
                 <div className="flex items-center gap-3 pt-2 border-t border-white/10 mt-2">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#004d00] to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-none shadow-lg ring-2 ring-white/20">
-                        {initials}
+                        {post.authorAvatar ? <img src={post.authorAvatar} alt={authorName} className="w-full h-full object-cover rounded-full" /> : initials}
                     </div>
                     <div className="flex flex-col">
                         <div className="flex items-center gap-1.5 pointer-events-auto">
                             <span className="font-bold text-sm text-gray-100 hover:text-white hover:underline cursor-pointer leading-tight">
                                 {authorName}
                             </span>
-                            {post.author?.isVerifiedHost && <CheckCircle2 className="w-4 h-4 text-blue-400" />}
+                            {post.isVerifiedHost && <CheckCircle2 className="w-4 h-4 text-blue-400" />}
                         </div>
                         <span className="text-xs text-gray-400 font-medium">
                             {formatRelative(post.createdAt)}
@@ -331,7 +300,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
             {/* ── Premium Action Bar (Hidden if quoting) ── */}
             {!isQuoted && (() => {
-                const commentCount = Math.max(0, Number(post.commentCount) || 0);
+                const commentCount = Math.max(0, Number(post.comments) || 0);
                 const safeShareCount = Math.max(0, Number(shareCount) || 0);
                 const hasComments = commentCount > 0;
                 const hasShares = safeShareCount > 0;
@@ -341,10 +310,10 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                         {/* Like */}
                         <LikeButton
                             postId={post.id}
-                            initialLiked={post.isLikedByCurrentUser}
-                            initialCount={Math.max(0, Number(post.loveCount) || 0)}
+                            initialLiked={post.isLikedByCurrentUser || false}
+                            initialCount={Math.max(0, Number(post.likes) || 0)}
                             darkMode={true}
-                            onLikeToggle={(newCount, newLiked) => onUpdate?.({ ...post, loveCount: newCount, isLikedByCurrentUser: newLiked })}
+                            onLikeToggle={(newCount, newLiked) => onUpdate?.({ ...post, likes: newCount, isLikedByCurrentUser: newLiked })}
                         />
 
                         {/* Comment */}
@@ -352,7 +321,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                             className={cn('flex-1 flex justify-center items-center gap-2 min-h-10 rounded-lg transition-transform active:scale-95 text-sm font-semibold group',
                                 hasComments ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
                             <MessageCircle className={cn('w-4 h-4', hasComments && 'fill-white')} />
-                            <span>{Number(post.commentCount) || 0}</span>
+                            <span>{Number(post.comments) || 0}</span>
                         </button>
 
                         {/* Repost */}
@@ -374,8 +343,8 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
             })()}
 
             {/* Lightbox */}
-            {lightboxIndex !== null && post.media && post.media.length > 0 && (
-                <ImageLightbox images={post.media.map(m => m.url)} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+            {lightboxIndex !== null && hasImage && (
+                <ImageLightbox images={[coverImage]} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
             )}
         </motion.article>
     );

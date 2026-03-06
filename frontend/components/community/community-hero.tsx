@@ -21,14 +21,16 @@ export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
                 <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none" />
                 <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-zinc-950 to-transparent z-10 pointer-events-none" />
                 <img
-                    src="/images/community/community-hero-desktop.webp"
+                    src="/_static/community/community_hero_desktop.webp?tr=w-1920,q-70,f-webp"
                     className="w-full h-full object-cover hidden md:block"
                     alt="Community journeys in the Himalayas"
+                    loading="lazy"
                 />
                 <img
-                    src="/images/community/community-hero-mobile.webp"
+                    src="/_static/community/community_hero_mobile.webp?tr=w-800,q-70,f-webp"
                     className="w-full h-full object-cover md:hidden"
                     alt="Community journeys in the Himalayas"
+                    loading="lazy"
                 />
             </motion.div>
 

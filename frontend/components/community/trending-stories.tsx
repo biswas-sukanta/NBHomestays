@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CommunityPost } from './PostCard';
+import { NormalizedPost } from '@/lib/adapters/normalizePost';
 import { MapPin, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 
 interface TrendingStoriesProps {
-    stories: CommunityPost[];
+    stories: NormalizedPost[];
 }
 
 export function TrendingStories({ stories }: TrendingStoriesProps) {
@@ -32,10 +32,8 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                     {/* Featured (Left Side) - Takes 7/12 cols */}
                     <div className="lg:col-span-7 h-[400px] lg:h-full relative group rounded-2xl overflow-hidden shadow-lg cursor-pointer">
                         <img
-                            src={featured.media?.[0]?.url
-                                ? `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${featured.media[0].url}`
-                                : 'https://images.unsplash.com/photo-1626014903706-e7ddb2257d09?auto=format&fit=crop&q=80'}
-                            alt={featured.locationName}
+                            src={featured.imageUrl.startsWith('/') ? featured.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${featured.imageUrl}`}
+                            alt={featured.location}
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
@@ -46,19 +44,19 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                                     Feature
                                 </span>
                                 <span className="flex items-center gap-1 text-white/90 text-sm font-medium">
-                                    <MapPin className="w-4 h-4" /> {featured.locationName}
+                                    <MapPin className="w-4 h-4" /> {featured.location}
                                 </span>
                             </div>
                             <p className="text-2xl md:text-3xl font-bold text-white leading-tight font-serif mb-4 line-clamp-3 
                                 [text-shadow:_0_2px_10px_rgb(0_0_0_/_40%)]">
-                                {featured.textContent}
+                                {featured.title || featured.caption}
                             </p>
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/50 shadow-md">
-                                    {featured.author?.name ? featured.author.name.slice(0, 2).toUpperCase() : 'NB'}
+                                    {featured.authorAvatar ? <img src={featured.authorAvatar} alt={featured.author} className="w-full h-full object-cover rounded-full" /> : (featured.author ? featured.author.slice(0, 2).toUpperCase() : 'NB')}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-white">{featured.author?.name || 'Explorer'}</p>
+                                    <p className="text-sm font-bold text-white">{featured.author || 'Explorer'}</p>
                                     <p className="text-xs text-gray-300">Top Contributor</p>
                                 </div>
                             </div>
@@ -70,26 +68,24 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                         {sideStories.map((story, i) => (
                             <div key={story.id} className="flex-1 relative group rounded-2xl overflow-hidden shadow-md cursor-pointer h-[250px] lg:h-auto">
                                 <img
-                                    src={story.media?.[0]?.url
-                                        ? `https://ik.imagekit.io/y4v82f1t1/tr:w-600,q-70,f-webp/${story.media[0].url}`
-                                        : `/images/community/trending-${i + 2}.webp`}
-                                    alt={story.locationName}
+                                    src={story.imageUrl.startsWith('/') ? story.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-600,q-70,f-webp/${story.imageUrl}`}
+                                    alt={story.location}
                                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
                                 <div className="absolute inset-x-0 bottom-0 p-5">
                                     <span className="flex items-center gap-1 text-white/90 text-xs font-semibold mb-2 uppercase tracking-wide">
-                                        <MapPin className="w-3.5 h-3.5" /> {story.locationName}
+                                        <MapPin className="w-3.5 h-3.5" /> {story.location}
                                     </span>
                                     <p className="text-lg font-bold text-white leading-snug font-serif mb-3 line-clamp-2">
-                                        {story.textContent}
+                                        {story.title || story.caption}
                                     </p>
                                     <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-700 flex items-center justify-center text-white font-bold text-xs ring-1 ring-white/50">
-                                            {story.author?.name ? story.author.name.slice(0, 2).toUpperCase() : 'TR'}
+                                            {story.authorAvatar ? <img src={story.authorAvatar} alt={story.author} className="w-full h-full object-cover rounded-full" /> : (story.author ? story.author.slice(0, 2).toUpperCase() : 'TR')}
                                         </div>
-                                        <p className="text-sm font-medium text-gray-100">{story.author?.name || 'Explorer'}</p>
+                                        <p className="text-sm font-medium text-gray-100">{story.author || 'Explorer'}</p>
                                     </div>
                                 </div>
                             </div>
