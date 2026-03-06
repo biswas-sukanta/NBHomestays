@@ -41,7 +41,7 @@ export const AuthControllerApiAxiosParamCreator = function (configuration?: Conf
         authenticate: async (authenticationRequest: AuthenticationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'authenticationRequest' is not null or undefined
             assertParamExists('authenticate', 'authenticationRequest', authenticationRequest)
-            const localVarPath = `/api/auth/authenticate`;
+            const localVarPath = `/auth/authenticate`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
