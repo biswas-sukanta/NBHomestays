@@ -216,104 +216,121 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
     };
 
     const articleClassName = cn(
-        'bg-white border rounded-xl overflow-hidden transition-all duration-300',
-        isQuoted ? "border-gray-200 mt-3 hover:bg-gray-50/50" : "border-border/40 mb-5 shadow-sm hover:shadow-lg",
+        'relative bg-zinc-950 rounded-2xl overflow-hidden transition-all duration-300 isolate',
+        isQuoted ? "mt-3 hover:bg-zinc-900 ring-1 ring-white/10" : "mb-6 shadow-xl hover:shadow-2xl ring-1 ring-white/5",
     );
+
+    // Prepare primary display image
+    const coverImage = post.media && post.media.length > 0
+        ? post.media[0].url
+        : 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80'; // Fallback for pure text posts to maintain editorial layout
 
     const content = (
         <motion.article
             data-testid={isQuoted ? "quoted-post-card" : "post-card"}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            {...(!isQuoted ? { whileHover: { y: -3, scale: 1.005 }, transition: { type: 'spring', stiffness: 400, damping: 30 } } : {})}
+            {...(!isQuoted ? { whileHover: { y: -2 }, transition: { type: 'spring', stiffness: 400, damping: 30 } } : {})}
             className={articleClassName}
         >
+            {/* ── Background Image Layer ── */}
+            <div
+                className={cn("absolute inset-0 z-0", post.media && post.media.length > 0 ? "cursor-pointer" : "")}
+                onClick={() => { if (post.media && post.media.length > 0) setLightboxIndex(0); }}
+            >
+                <img
+                    src={`https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${coverImage}`}
+                    alt={post.locationName}
+                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                />
+            </div>
 
-            {/* ── Zone 1: Header ── */}
-            <div className={cn("px-4 pt-4 pb-3 relative z-10 pointer-events-none", isQuoted && "px-3 pt-3 pb-2")}>
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#004d00] to-emerald-600 flex items-center justify-center text-white text-sm font-bold flex-none shadow-sm ring-2 ring-white">
-                            {initials}
-                        </div>
-                        <div className="flex flex-col">
-                            <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-[15px] text-gray-900 hover:underline cursor-pointer pointer-events-auto leading-tight">{authorName}</span>
-                                {post.author?.isVerifiedHost && (
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-50" />
-                                )}
-                            </div>
-                            <span className="text-xs text-gray-500 leading-tight flex items-center gap-1 mt-0.5">
-                                {formatRelative(post.createdAt)} • <MapPin className="w-3 h-3 inline-block" /> {post.locationName}
+            {/* Full-card Scrims for text legibility */}
+            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10 pointer-events-none" />
+
+            {/* ── Header: Edit/Delete + Metadata ── */}
+            <div className="relative z-20 px-5 pt-5 flex justify-between items-start pointer-events-none">
+                <div className="flex flex-wrap gap-2 pointer-events-auto">
+                    <span className="inline-flex items-center bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-white/20 shadow-sm">
+                        {isQuoted ? 'Repost' : 'Community Story'}
+                    </span>
+                    {post.tags?.map(tag => (
+                        <span key={tag} className="inline-flex items-center bg-green-500/20 backdrop-blur-md text-green-100 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500/30">
+                            {tag}
+                        </span>
+                    ))}
+                </div>
+
+                {canModify && onDelete && (
+                    <div className="flex items-center gap-2 pointer-events-auto bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 ring-1 ring-white/10">
+                        <button onClick={() => onEdit?.(post)} className="text-xs font-semibold text-gray-300 hover:text-white transition-colors">Edit</button>
+                        <span className="text-gray-600">•</span>
+                        <button onClick={() => onDelete(post.id)} className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors">Delete</button>
+                    </div>
+                )}
+            </div>
+
+            {/* ── Spacer to push content to bottom ── */}
+            <div className="relative min-h-[250px] md:min-h-[350px]" />
+
+            {/* ── Main Content Block (Bottom Left Overlay) ── */}
+            <div className="relative z-20 px-5 pb-5 pointer-events-none">
+                <div className="flex items-center gap-1.5 text-white/90 text-sm font-semibold mb-2 uppercase tracking-wide">
+                    <MapPin className="w-4 h-4 text-rose-400" /> {post.locationName}
+                </div>
+
+                <p className="text-xl md:text-2xl text-white leading-relaxed whitespace-pre-line font-serif drop-shadow-md mb-4 pointer-events-auto cursor-auto select-text">
+                    {post.textContent}
+                </p>
+
+                {/* Recursive Nested Repost */}
+                {post.originalPost && (
+                    <div className="mb-5 rounded-xl border border-white/20 bg-black/40 backdrop-blur-md pointer-events-auto overflow-hidden">
+                        <PostCard post={post.originalPost} isQuoted={true} currentUser={currentUser} />
+                    </div>
+                )}
+
+                {/* Multi-image indicator */}
+                {post.media && post.media.length > 1 && (
+                    <div className="absolute right-5 bottom-20 pointer-events-auto">
+                        <button
+                            onClick={() => setLightboxIndex(0)}
+                            className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-2 rounded-lg ring-1 ring-white/20 hover:bg-black/80 transition-colors"
+                        >
+                            <ImageIcon className="w-4 h-4" /> +{post.media.length - 1} Photos
+                        </button>
+                    </div>
+                )}
+
+                {/* Author Row */}
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#004d00] to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-none shadow-lg ring-2 ring-white/20">
+                        {initials}
+                    </div>
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5 pointer-events-auto">
+                            <span className="font-bold text-sm text-gray-100 hover:text-white hover:underline cursor-pointer leading-tight">
+                                {authorName}
                             </span>
-
-                            {/* Homestay Tag Mini-Pill */}
-                            {post.homestayId && post.homestayName && (
-                                <div className="mt-1.5 pointer-events-auto">
-                                    <Link href={`/homestays/${post.homestayId}`} className="inline-flex items-center gap-1 bg-green-50 hover:bg-green-100 text-green-700 text-[11px] py-0.5 px-2 rounded-full font-semibold transition-colors border border-green-100">
-                                        <MapPin className="w-3 h-3" />
-                                        Linked to: {post.homestayName}
-                                    </Link>
-                                </div>
-                            )}
+                            {post.author?.isVerifiedHost && <CheckCircle2 className="w-4 h-4 text-blue-400" />}
                         </div>
+                        <span className="text-xs text-gray-400 font-medium">
+                            {formatRelative(post.createdAt)}
+                        </span>
                     </div>
 
-                    {/* Edit / Delete */}
-                    {canModify && onDelete && (
-                        <div className="flex items-center gap-3 ml-auto pointer-events-auto">
-                            <button
-                                data-testid="edit-post-btn"
-                                onClick={() => onEdit?.(post)}
-                                className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
-                            >
-                                Edit
-                            </button>
-                            <button
-                                data-testid="delete-post-btn"
-                                onClick={() => onDelete(post.id)}
-                                className="text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
-                            >
-                                Delete
-                            </button>
+                    {/* Quick Homestay Tag */}
+                    {post.homestayId && post.homestayName && (
+                        <div className="ml-auto pointer-events-auto">
+                            <Link href={`/homestays/${post.homestayId}`} className="inline-flex items-center gap-1.5 bg-green-500/20 backdrop-blur-md hover:bg-green-500/30 text-green-100 text-xs py-1.5 px-3 rounded-full font-semibold transition-colors ring-1 ring-green-500/40">
+                                <MapPin className="w-3.5 h-3.5" />
+                                <span className="truncate max-w-[120px]">{post.homestayName}</span>
+                            </Link>
                         </div>
                     )}
                 </div>
             </div>
-
-            {/* ── Zone 2: Body + Tags ── */}
-            <div className={cn("px-4 pb-3 pointer-events-none", isQuoted && "px-3 pb-2")}>
-                <p className={cn("text-[15px] text-gray-900 leading-relaxed whitespace-pre-line font-normal", isQuoted && "text-xs")}>{post.textContent}</p>
-
-                {/* Vibrant Vibe Tags */}
-                {post.tags && post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                        {post.tags.map(tag => (
-                            <span key={tag} className="inline-flex items-center bg-primary/10 text-primary text-xs font-semibold rounded-full px-3 py-1 border border-primary/20">
-                                {tag}
-                            </span>
-                        ))}
-                    </div>
-                )}
-
-                {/* Recursive Nested Repost */}
-                {post.originalPost && (
-                    <div className="mt-3 rounded-lg border border-gray-300 bg-gray-50 pointer-events-auto overflow-hidden">
-                        <PostCard
-                            post={post.originalPost}
-                            isQuoted={true}
-                            currentUser={currentUser}
-                        />
-                    </div>
-                )}
-            </div>
-
-            {/* ── Zone 3: Media ── */}
-            {post.media && post.media.length > 0 && (
-                <div className="relative z-10 border-t border-border/50">
-                    <ImageCollage images={post.media.map(m => m.url)} onImageClick={(i) => setLightboxIndex(i)} />
-                </div>
-            )}
 
             {/* ── Premium Action Bar (Hidden if quoting) ── */}
             {!isQuoted && (() => {
@@ -323,56 +340,36 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 const hasShares = safeShareCount > 0;
 
                 return (
-                    <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/50 pointer-events-auto bg-white relative z-10">
-                        {/* Like — instantly dispatches update to global state array on success */}
+                    <div className="relative z-20 flex items-center justify-between px-2 py-2 border-t border-white/10 pointer-events-auto bg-black/40 backdrop-blur-md">
+                        {/* Like */}
                         <LikeButton
                             postId={post.id}
                             initialLiked={post.isLikedByCurrentUser}
                             initialCount={Math.max(0, Number(post.loveCount) || 0)}
-                            onLikeToggle={(newLoveCount, newIsLiked) => {
-                                if (onUpdate) {
-                                    onUpdate({ ...post, loveCount: newLoveCount, isLikedByCurrentUser: newIsLiked });
-                                }
-                            }}
+                            darkMode={true}
+                            onLikeToggle={(newCount, newLiked) => onUpdate?.({ ...post, loveCount: newCount, isLikedByCurrentUser: newLiked })}
                         />
 
-                        {/* Comment — dynamic fill when comments exist */}
-                        <button
-                            data-testid="comment-btn"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenComments?.(post.id); }}
-                            className={cn(
-                                'flex-1 flex justify-center items-center gap-2 min-h-10 rounded-lg transition-transform duration-200 active:scale-75 text-sm font-semibold group cursor-pointer',
-                                hasComments ? 'text-green-600 hover:bg-green-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                            )}
-                        >
-                            <MessageCircle className={cn('w-5 h-5 transition-all duration-200', hasComments && 'fill-green-600 stroke-green-600 scale-110')} />
+                        {/* Comment */}
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpenComments?.(post.id); }}
+                            className={cn('flex-1 flex justify-center items-center gap-2 min-h-10 rounded-lg transition-transform active:scale-95 text-sm font-semibold group',
+                                hasComments ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
+                            <MessageCircle className={cn('w-4 h-4', hasComments && 'fill-white')} />
                             <span>{Number(post.commentCount) || 0}</span>
                         </button>
 
-                        {/* Repost — green tint when post has original */}
-                        <button
-                            data-testid="repost-btn"
-                            onClick={handleRepost}
-                            className={cn(
-                                'flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-all duration-200 active:scale-95 text-sm font-semibold group',
-                                post.originalPost ? 'text-green-600 hover:bg-green-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                            )}
-                            aria-label="Repost"
-                        >
-                            <Repeat2 className={cn('w-5 h-5 transition-all duration-200', post.originalPost && 'text-green-600')} />
+                        {/* Repost */}
+                        <button onClick={handleRepost}
+                            className={cn('flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-all active:scale-95 text-sm font-semibold group',
+                                post.originalPost ? 'text-green-400 bg-green-500/10' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
+                            <Repeat2 className="w-5 h-5" />
                         </button>
 
-                        {/* Share — purple accent when shared */}
-                        <button
-                            data-testid="share-btn"
-                            onClick={handleShare}
-                            className={cn(
-                                'flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-all duration-200 active:scale-95 text-sm font-semibold group',
-                                hasShares ? 'text-violet-600 hover:bg-violet-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                            )}
-                            aria-label="Share post"
-                        >
-                            <Share2 className={cn('w-5 h-5 transition-all duration-200', hasShares && 'text-violet-600')} />
+                        {/* Share */}
+                        <button onClick={handleShare}
+                            className={cn('flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg transition-all active:scale-95 text-sm font-semibold group',
+                                hasShares ? 'text-violet-400 bg-violet-500/10' : 'text-gray-400 hover:text-white hover:bg-white/5')}>
+                            <Share2 className="w-4 h-4" />
                             <span>{safeShareCount}</span>
                         </button>
                     </div>
@@ -381,11 +378,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
             {/* Lightbox */}
             {lightboxIndex !== null && post.media && post.media.length > 0 && (
-                <ImageLightbox
-                    images={post.media.map(m => m.url)}
-                    initialIndex={lightboxIndex}
-                    onClose={() => setLightboxIndex(null)}
-                />
+                <ImageLightbox images={post.media.map(m => m.url)} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
             )}
         </motion.article>
     );
