@@ -438,6 +438,14 @@ export default function CommunityPage() {
         }
     }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage, searchQuery, isMobile]);
 
+    const { data: trendingData } = useQuery({
+        queryKey: ['trending-posts'],
+        queryFn: async () => {
+            const { data } = await api.get('/api/posts?page=0&size=3&sort=likes');
+            return data.content || data.data || [];
+        }
+    });
+
     if (isPending) {
         return <CommunityFeedSkeleton />;
     }
@@ -446,13 +454,6 @@ export default function CommunityPage() {
         return <div className="text-center py-20 text-red-500">Failed to load feed. Please try again.</div>;
     }
 
-    const { data: trendingData } = useQuery({
-        queryKey: ['trending-posts'],
-        queryFn: async () => {
-            const { data } = await api.get('/api/posts?page=0&size=3&sort=likes');
-            return data.content || data.data || [];
-        }
-    });
     const trendingPosts = (trendingData?.content || trendingData || []).map(normalizePost);
     console.log("Community Feed Data:", data);
     console.log("Trending Data:", trendingData);
