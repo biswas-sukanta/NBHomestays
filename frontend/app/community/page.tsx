@@ -453,7 +453,9 @@ export default function CommunityPage() {
             return data.content || data.data || [];
         }
     });
-    const trendingPosts = (trendingData || []).map(normalizePost);
+    const trendingPosts = (trendingData?.content || trendingData || []).map(normalizePost);
+    console.log("Community Feed Data:", data);
+    console.log("Trending Data:", trendingData);
 
     const handleNewPost = () => {
         queryClient.invalidateQueries({ queryKey: ['community-posts'] });

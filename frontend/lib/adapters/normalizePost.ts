@@ -1,17 +1,19 @@
 export interface NormalizedPost {
     id: string;
     author: string;
-    authorAvatar: string | null;
-    authorId: string | null;
-    title: string;
-    caption: string;
+    avatar: string;
     location: string;
-    imageUrl: string;
+    caption: string;
+    imageUrl: string | null;
+    tags: string[];
     likes: number;
     comments: number;
-    views: number;
-    tags: string[];
     createdAt: string;
+    // Optional fields for extended functionality
+    authorAvatar?: string | null;
+    authorId?: string | null;
+    title?: string;
+    views?: number;
     isLikedByCurrentUser?: boolean;
     shareCount?: number;
     homestayId?: string;
@@ -20,38 +22,28 @@ export interface NormalizedPost {
     isVerifiedHost?: boolean;
 }
 
-export function resolveImageFromPost(post: any): string {
-    if (post?.mediaResources && post.mediaResources.length > 0 && post.mediaResources[0].url) {
-        return post.mediaResources[0].url;
-    }
-    if (post?.media && post.media.length > 0 && post.media[0].url) {
-        return post.media[0].url;
-    }
-    return '/_static/community/post_placeholder.webp';
-}
-
 export function normalizePost(post: any): NormalizedPost {
-    const imageUrl = resolveImageFromPost(post);
+    if (!post) return {} as NormalizedPost;
 
     return {
-        id: post?.id || '',
-        author: post?.author?.name || 'Unknown User',
-        authorAvatar: post?.author?.avatarUrl || null,
-        authorId: post?.author?.id || null,
-        title: post?.title || post?.locationName || '',
-        caption: post?.textContent || '',
-        location: post?.locationName || '',
-        imageUrl,
-        likes: post?.loveCount ?? post?.likes ?? 0,
-        comments: post?.commentCount ?? post?.comments ?? 0,
-        views: post?.views || 0,
-        tags: post?.tags ?? [],
-        createdAt: post?.createdAt || new Date().toISOString(),
-        isLikedByCurrentUser: post?.isLikedByCurrentUser || false,
-        shareCount: post?.shareCount || 0,
-        homestayId: post?.homestayId,
-        homestayName: post?.homestayName,
-        originalPost: post?.originalPost ? normalizePost(post.originalPost) : undefined,
-        isVerifiedHost: post?.author?.isVerifiedHost || post?.author?.verifiedHost || false,
+        id: post.id,
+        author: post.author?.name ?? "Unknown",
+        avatar: post.author?.avatarUrl ?? "/images/default-avatar.webp",
+        location: post.locationName ?? "",
+        caption: post.textContent ?? "",
+        imageUrl: post.media?.[0]?.url ?? post.mediaResources?.[0]?.url ?? null,
+        tags: post.tags ?? [],
+        likes: post.loveCount ?? 0,
+        comments: post.commentCount ?? 0,
+        createdAt: post.createdAt,
+        // Carry over other fields if present
+        authorAvatar: post.author?.avatarUrl ?? "/images/default-avatar.webp",
+        authorId: post.author?.id,
+        title: post.title ?? post.locationName ?? "",
+        isLikedByCurrentUser: post.isLikedByCurrentUser ?? false,
+        homestayId: post.homestayId,
+        homestayName: post.homestayName,
+        isVerifiedHost: post.author?.isVerifiedHost ?? post.author?.verifiedHost ?? false,
+        originalPost: post.originalPost ? normalizePost(post.originalPost) : undefined
     };
 }

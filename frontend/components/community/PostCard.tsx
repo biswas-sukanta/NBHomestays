@@ -218,12 +218,19 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 className={cn("relative z-10 w-full xl:min-h-[400px] bg-zinc-900 border-b border-white/10", hasImage ? "cursor-pointer" : "")}
                 onClick={() => { if (hasImage) setLightboxIndex(0); }}
             >
-                <img
-                    src={coverImage.startsWith('/') ? coverImage : `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${coverImage}`}
-                    alt={post.location}
-                    className="w-full h-auto max-h-[600px] object-cover transition-transform duration-700 hover:scale-[1.02]"
-                    onError={(e) => { e.currentTarget.src = '/_static/community/post_placeholder.webp'; }}
-                />
+                {coverImage && (
+                    <img
+                        src={coverImage.startsWith('/') ? coverImage : `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${coverImage}`}
+                        alt={post.location}
+                        className="w-full h-auto max-h-[600px] object-cover transition-transform duration-700 hover:scale-[1.02]"
+                        onError={(e) => { e.currentTarget.src = '/_static/community/post_placeholder.webp'; }}
+                    />
+                )}
+                {!coverImage && (
+                    <div className="w-full h-64 bg-zinc-900 flex items-center justify-center">
+                        <img src="/_static/community/post_placeholder.webp" alt="Placeholder" className="w-full h-full object-cover" />
+                    </div>
+                )}
 
                 {/* ── Header: Edit/Delete + Metadata (Moved inside image top) ── */}
                 <div className="absolute inset-x-0 top-0 pt-4 px-4 flex justify-between items-start pointer-events-none z-20 bg-gradient-to-b from-black/60 to-transparent pb-8">
@@ -276,8 +283,8 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
                 {/* Author Row */}
                 <div className="flex items-center gap-3 pt-2 border-t border-white/10 mt-2">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#004d00] to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-none shadow-lg ring-2 ring-white/20">
-                        {post.authorAvatar ? <img src={post.authorAvatar} alt={authorName} className="w-full h-full object-cover rounded-full" /> : initials}
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#004d00] to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-none shadow-lg ring-2 ring-white/20 overflow-hidden">
+                        {post.avatar ? <img src={post.avatar} alt={authorName} className="w-full h-full object-cover" /> : initials}
                     </div>
                     <div className="flex flex-col">
                         <div className="flex items-center gap-1.5 pointer-events-auto">

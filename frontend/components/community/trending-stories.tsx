@@ -31,11 +31,17 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto min-h-[500px]">
                     {/* Featured (Left Side) - Takes 7/12 cols */}
                     <div className="lg:col-span-7 h-[400px] lg:h-full relative group rounded-2xl overflow-hidden shadow-lg cursor-pointer">
-                        <img
-                            src={featured.imageUrl.startsWith('/') ? featured.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${featured.imageUrl}`}
-                            alt={featured.location}
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
+                        {featured.imageUrl ? (
+                            <img
+                                src={featured.imageUrl.startsWith('/') ? featured.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${featured.imageUrl}`}
+                                alt={featured.location}
+                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            />
+                        ) : (
+                            <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
+                                <img src="/_static/community/post_placeholder.webp" alt="Placeholder" className="w-full h-full object-cover opacity-50" />
+                            </div>
+                        )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
                         <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
@@ -52,8 +58,8 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                                 {featured.title || featured.caption}
                             </p>
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/50 shadow-md">
-                                    {featured.authorAvatar ? <img src={featured.authorAvatar} alt={featured.author} className="w-full h-full object-cover rounded-full" /> : (featured.author ? featured.author.slice(0, 2).toUpperCase() : 'NB')}
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/50 shadow-md overflow-hidden">
+                                    {featured.avatar ? <img src={featured.avatar} alt={featured.author} className="w-full h-full object-cover rounded-full" /> : (featured.author ? featured.author.slice(0, 2).toUpperCase() : 'NB')}
                                 </div>
                                 <div>
                                     <p className="text-sm font-bold text-white">{featured.author || 'Explorer'}</p>
@@ -67,11 +73,17 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                     <div className="lg:col-span-5 flex flex-col gap-6">
                         {sideStories.map((story, i) => (
                             <div key={story.id} className="flex-1 relative group rounded-2xl overflow-hidden shadow-md cursor-pointer h-[250px] lg:h-auto">
-                                <img
-                                    src={story.imageUrl.startsWith('/') ? story.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-600,q-70,f-webp/${story.imageUrl}`}
-                                    alt={story.location}
-                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                />
+                                {story.imageUrl ? (
+                                    <img
+                                        src={story.imageUrl.startsWith('/') ? story.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-600,q-70,f-webp/${story.imageUrl}`}
+                                        alt={story.location}
+                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                    />
+                                ) : (
+                                    <div className="absolute inset-0 bg-zinc-900">
+                                        <img src="/_static/community/post_placeholder.webp" alt="Placeholder" className="w-full h-full object-cover opacity-30" />
+                                    </div>
+                                )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
                                 <div className="absolute inset-x-0 bottom-0 p-5">
@@ -82,8 +94,8 @@ export function TrendingStories({ stories }: TrendingStoriesProps) {
                                         {story.title || story.caption}
                                     </p>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-700 flex items-center justify-center text-white font-bold text-xs ring-1 ring-white/50">
-                                            {story.authorAvatar ? <img src={story.authorAvatar} alt={story.author} className="w-full h-full object-cover rounded-full" /> : (story.author ? story.author.slice(0, 2).toUpperCase() : 'TR')}
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-700 flex items-center justify-center text-white font-bold text-xs ring-1 ring-white/50 overflow-hidden">
+                                            {story.avatar ? <img src={story.avatar} alt={story.author} className="w-full h-full object-cover rounded-full" /> : (story.author ? story.author.slice(0, 2).toUpperCase() : 'TR')}
                                         </div>
                                         <p className="text-sm font-medium text-gray-100">{story.author || 'Explorer'}</p>
                                     </div>

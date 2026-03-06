@@ -9,7 +9,7 @@ export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
         posts.forEach(p => {
             const authorName = p.author || 'Traveller';
             if (!counts[authorName]) {
-                counts[authorName] = { count: 0, id: p.authorId || '', name: authorName, avatar: p.authorAvatar };
+                counts[authorName] = { count: 0, id: p.authorId || '', name: authorName, avatar: p.avatar };
             }
             counts[authorName].count += 1;
         });
@@ -62,7 +62,7 @@ export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
                 <div className="space-y-4">
                     {topContributors.map((user, i) => (
                         <div key={i} className="flex items-center gap-3 cursor-pointer group">
-                            {user.avatar ? (
+                            {user.avatar && user.avatar !== "/images/default-avatar.webp" ? (
                                 <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-transparent group-hover:ring-gray-200 transition-all" />
                             ) : (
                                 <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${user.color} flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent group-hover:ring-gray-200 transition-all`}>
@@ -96,7 +96,7 @@ export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
             {/* Editor's Pick */}
             <div className="relative rounded-2xl overflow-hidden shadow-sm h-56 cursor-pointer group">
                 <img
-                    src={editorPick?.imageUrl ? (editorPick.imageUrl.startsWith('/') ? editorPick.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-800,q-70,f-webp/${editorPick.imageUrl}`) : "https://ik.imagekit.io/y4v82f1t1/tr:w-800,q-70,f-webp/https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop"}
+                    src={editorPick?.imageUrl ? (editorPick.imageUrl.startsWith('/') ? editorPick.imageUrl : `https://ik.imagekit.io/y4v82f1t1/tr:w-800,q-70,f-webp/${editorPick.imageUrl}`) : "/_static/community/post_placeholder.webp"}
                     alt="Promo"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
