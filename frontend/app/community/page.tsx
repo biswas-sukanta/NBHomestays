@@ -131,7 +131,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
             if (stagedFiles.length > 0) {
                 const form = new FormData();
                 stagedFiles.forEach(staged => form.append('files', staged.file));
-                const upres = await api.post('/api/upload', form);
+                const upres = await api.post('/upload', form);
                 uploadedMedia = upres.data;
             }
 
@@ -154,7 +154,7 @@ function PostComposerInline({ postData, repostTarget, onSuccess, onCancel }: { p
             // We NO LONGER append `files` directly to `/api/posts`, as they are now securely uploaded via `/api/upload`
 
             toast.info(postData ? "Updating story..." : "Sharing story...");
-            const endpoint = postData ? `/api/posts/${postData.id}` : '/api/posts';
+            const endpoint = postData ? `/posts/${postData.id}` : '/posts';
             const res = postData
                 ? await api.put(endpoint, formData)
                 : await api.post(endpoint, formData);
@@ -385,7 +385,7 @@ export default function CommunityPage() {
     const fetchPosts = async ({ pageParam = 0 }) => {
         const validPage = Number.isInteger(pageParam) ? pageParam : 0;
         const tagParam = activeTag ? `&tag=${encodeURIComponent(activeTag)}` : '';
-        const { data } = await api.get(`/api/posts?page=${validPage}&size=12&sort=createdAt,desc${tagParam}`);
+        const { data } = await api.get(`/posts?page=${validPage}&size=12&sort=createdAt,desc${tagParam}`);
         return data;
     };
 
@@ -441,7 +441,7 @@ export default function CommunityPage() {
     const { data: trendingData } = useQuery({
         queryKey: ['trending-posts'],
         queryFn: async () => {
-            const { data } = await api.get('/api/posts?page=0&size=3&sort=loveCount,desc');
+            const { data } = await api.get('/posts?page=0&size=3&sort=loveCount,desc');
             return data; // Return full response to handle .content later
         }
     });
@@ -490,7 +490,7 @@ export default function CommunityPage() {
     const handleDeletePost = async (id: string) => {
         if (!window.confirm("Are you sure you want to delete this story?")) return;
         try {
-            await api.delete(`/api/posts/${id}`);
+            await api.delete(`/posts/${id}`);
             queryClient.invalidateQueries({ queryKey: ['community-posts'] });
             toast.success('Story deleted');
         } catch (err) {

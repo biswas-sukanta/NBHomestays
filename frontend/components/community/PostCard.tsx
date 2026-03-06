@@ -78,7 +78,7 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
 
     const mutation = useMutation({
         mutationFn: async () => {
-            const res = await api.post(`/api/posts/${postId}/like`);
+            const res = await api.post(`/posts/${postId}/like`);
             return res.data;
         },
         onMutate: async () => {
@@ -205,7 +205,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
             if (typeof navigator !== 'undefined' && navigator.share) {
                 await navigator.share({ title: 'North Bengal Homestays Story', text: post.caption, url });
                 setShareCount(prev => prev + 1);
-                await api.post(`/api/posts/${post.id}/share`);
+                await api.post(`/posts/${post.id}/share`);
             } else {
                 await navigator.clipboard.writeText(url);
                 toast.success('Link copied to clipboard!');
@@ -542,7 +542,7 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
             if (stagedFiles.length > 0) {
                 const form = new FormData();
                 stagedFiles.forEach(f => form.append('files', f.file));
-                const up = await api.post('/api/upload', form);
+                const up = await api.post('/upload', form);
                 finalMedia = up.data;
             }
             const payload: any = {
@@ -559,7 +559,7 @@ function InternalMiniRepostComposer({ quote, onSuccess, onCancel }: { quote: Quo
 
             // Files could be appended directly here if we skip the separate /api/upload step, 
             // but preserving existing upload logic just sends the JSON Blob inside FormData
-            const res = await api.post('/api/posts', formData);
+            const res = await api.post('/posts', formData);
             toast.success('Reposted!');
 
             // Instantly inject the repost into the active feed BEFORE the background refetch completes

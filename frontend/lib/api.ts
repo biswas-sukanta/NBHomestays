@@ -62,7 +62,7 @@ api.interceptors.response.use(
                 }
 
                 // Use a clean axios instance to avert interceptor loops
-                const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/refresh`, { refreshToken });
+                const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/auth/refresh`, { refreshToken });
                 const newAccessToken = res.data.accessToken;
 
                 if (typeof window !== 'undefined') {

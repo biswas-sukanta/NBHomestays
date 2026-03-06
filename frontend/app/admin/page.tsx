@@ -56,10 +56,10 @@ export default function AdminPage() {
     const fetchData = async () => {
         try {
             const [pendingRes, allRes, postsRes, statsRes] = await Promise.all([
-                api.get('/api/homestays/pending'),
-                api.get('/api/homestays/all'),
-                api.get('/api/posts'),
-                api.get('/api/admin/stats'),
+                api.get('/homestays/pending'),
+                api.get('/homestays/all'),
+                api.get('/posts'),
+                api.get('/admin/stats'),
             ]);
             setPendingHomestays(pendingRes.data.content ? pendingRes.data.content : pendingRes.data);
             setAllHomestays(allRes.data.content ? allRes.data.content : allRes.data);
@@ -76,7 +76,7 @@ export default function AdminPage() {
         setPendingHomestays(prev => prev.filter(h => h.id !== id));
         setAllHomestays(prev => prev.map(h => h.id === id ? { ...h, status: 'APPROVED' } : h));
         toast.success('Homestay Approved!');
-        try { await api.put(`/api/homestays/${id}/approve`); }
+        try { await api.put(`/homestays/${id}/approve`); }
         catch { toast.error('Failed to approve'); fetchData(); }
     };
 
@@ -84,14 +84,14 @@ export default function AdminPage() {
         setPendingHomestays(prev => prev.filter(h => h.id !== id));
         setAllHomestays(prev => prev.map(h => h.id === id ? { ...h, status: 'REJECTED' } : h));
         toast.success('Homestay Rejected.');
-        try { await api.put(`/api/homestays/${id}/reject`); }
+        try { await api.put(`/homestays/${id}/reject`); }
         catch { toast.error('Failed to reject'); fetchData(); }
     };
 
     const handleDeletePost = async (postId: string) => {
         setPosts(prev => prev.filter(p => p.id !== postId));
         toast.success('Post deleted.');
-        try { await api.delete(`/api/admin/posts/${postId}`); }
+        try { await api.delete(`/admin/posts/${postId}`); }
         catch { toast.error('Failed to delete post'); fetchData(); }
     };
 
@@ -100,7 +100,7 @@ export default function AdminPage() {
         const originalState = [...allHomestays];
         setAllHomestays(prev => prev.map(h => h.id === id ? { ...h, featured: !currentFeatured } : h));
         try {
-            await api.put(`/api/admin/homestays/${id}/feature`);
+            await api.put(`/admin/homestays/${id}/feature`);
             toast.success(currentFeatured ? 'Removed from featured.' : 'Added to featured! ⭐');
         } catch {
             toast.error('Failed to toggle featured');

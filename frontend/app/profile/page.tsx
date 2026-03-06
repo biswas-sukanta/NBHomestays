@@ -105,7 +105,7 @@ function MyPostsTab() {
     const { data, isPending, isError } = useQuery({
         queryKey: ['my-posts'],
         queryFn: async () => {
-            const res = await api.get('/api/posts/my-posts');
+            const res = await api.get('/posts/my-posts');
             return res.data;
         }
     });
@@ -156,7 +156,7 @@ function SettingsTab() {
                     defaultValue={user?.bio}
                     className="bg-white border-border/50 text-sm italic"
                     onBlur={(e) => {
-                        api.put('/api/users/profile', { bio: e.target.value })
+                        api.put('/users/profile', { bio: e.target.value })
                             .then(() => toast.success('Bio updated!'))
                             .catch(() => toast.error('Failed to update bio'));
                     }}

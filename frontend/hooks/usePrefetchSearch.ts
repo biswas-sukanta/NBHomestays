@@ -25,31 +25,31 @@ export const usePrefetchSearch = () => {
                 // 1. Destination Discovery row
                 queryClient.prefetchQuery({
                     queryKey: ['destinations'],
-                    queryFn: () => api.get('/api/destinations').then(res => res.data),
+                    queryFn: () => api.get('/destinations').then(res => res.data),
                 }),
 
                 // 2. Trending Now swimlane
                 queryClient.prefetchQuery({
                     queryKey: ['swimlane', 'Trending Now'],
-                    queryFn: () => api.get('/api/homestays/search?tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6').then(res => res.data.content || []),
+                    queryFn: () => api.get('/homestays/search?tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6').then(res => res.data.content || []),
                 }),
 
                 // 3. Explore Offbeat swimlane
                 queryClient.prefetchQuery({
                     queryKey: ['swimlane', 'Explore Offbeat'],
-                    queryFn: () => api.get('/api/homestays/search?tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6').then(res => res.data.content || []),
+                    queryFn: () => api.get('/homestays/search?tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6').then(res => res.data.content || []),
                 }),
 
                 // 4. Featured Escapes swimlane
                 queryClient.prefetchQuery({
                     queryKey: ['swimlane', 'featured'],
-                    queryFn: () => api.get('/api/homestays/search?isFeatured=true&page=0&size=8').then(res => res.data.content || []),
+                    queryFn: () => api.get('/homestays/search?isFeatured=true&page=0&size=8').then(res => res.data.content || []),
                 }),
 
                 // 5. All Homestays first page (seeds infinite scroll)
                 queryClient.prefetchInfiniteQuery({
                     queryKey: ['allHomestays'],
-                    queryFn: () => api.get('/api/homestays/search?page=0&size=12').then(res => res.data),
+                    queryFn: () => api.get('/homestays/search?page=0&size=12').then(res => res.data),
                     initialPageParam: 0,
                 }),
             ]);

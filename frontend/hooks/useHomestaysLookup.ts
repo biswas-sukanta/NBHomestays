@@ -11,7 +11,7 @@ export function useHomestaysLookup() {
     return useQuery<HomestayLookup[]>({
         queryKey: ['homestays-lookup'],
         queryFn: async () => {
-            const { data } = await api.get('/api/homestays/lookup');
+            const { data } = await api.get('/homestays/lookup');
             return data;
         },
         staleTime: 1000 * 60 * 60, // 1 hour

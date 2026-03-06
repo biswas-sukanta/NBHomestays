@@ -140,7 +140,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
 
     const { data: destinations } = useQuery({
         queryKey: ['destinations-form'],
-        queryFn: () => api.get('/api/destinations').then(res => res.data)
+        queryFn: () => api.get('/destinations').then(res => res.data)
     });
 
     // Host Details
@@ -162,7 +162,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
     useEffect(() => {
         if (isEditMode && id) {
             setIsFetching(true);
-            api.get(`/api/homestays/${id}`).then(res => {
+            api.get(`/homestays/${id}`).then(res => {
                 const data = res.data;
                 console.log("[EDIT FLOW] API Success. Data received:", data);
                 // ... rest of mapping
@@ -357,11 +357,11 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
             toast.info(isEditMode ? "Updating homestay..." : "Creating homestay...");
 
             if (isEditMode) {
-                await api.put(`/api/homestays/${id}`, formData);
+                await api.put(`/homestays/${id}`, formData);
                 toast.success("Homestay updated successfully!");
                 queryClient.invalidateQueries({ queryKey: ['homestay', id] });
             } else {
-                await api.post('/api/homestays', formData);
+                await api.post('/homestays', formData);
                 toast.success("Homestay created successfully!");
             }
             // Invalidate both lists to ensure the new thumbnail propagates everywhere

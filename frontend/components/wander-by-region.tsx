@@ -33,7 +33,7 @@ const fallbackStyle = { gradient: 'from-slate-900/60 via-slate-800/30', accent: 
 export function WanderByRegion() {
     const { data: states, isLoading } = useQuery<StateItem[]>({
         queryKey: ['states'],
-        queryFn: () => api.get('/api/states').then(res => res.data)
+        queryFn: () => api.get('/states').then(res => res.data)
     });
 
     if (isLoading) {

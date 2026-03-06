@@ -173,21 +173,21 @@ function SearchResults() {
     // Swimlane: Trending Now
     const { data: trendingStays = [] } = useQuery<HomestaySummary[]>({
         queryKey: ['swimlane', 'Trending Now'],
-        queryFn: () => api.get('/api/homestays/search?tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6').then(res => res.data.content || []),
+        queryFn: () => api.get('/homestays/search?tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6').then(res => res.data.content || []),
         enabled: isStorefront,
     });
 
     // Swimlane: Explore Offbeat
     const { data: offbeatStays = [] } = useQuery<HomestaySummary[]>({
         queryKey: ['swimlane', 'Explore Offbeat'],
-        queryFn: () => api.get('/api/homestays/search?tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6').then(res => res.data.content || []),
+        queryFn: () => api.get('/homestays/search?tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6').then(res => res.data.content || []),
         enabled: isStorefront,
     });
 
     // Swimlane: Featured Escapes
     const { data: featuredStays = [] } = useQuery<HomestaySummary[]>({
         queryKey: ['swimlane', 'featured'],
-        queryFn: () => api.get('/api/homestays/search?isFeatured=true&page=0&size=8').then(res => res.data.content || []),
+        queryFn: () => api.get('/homestays/search?isFeatured=true&page=0&size=8').then(res => res.data.content || []),
         enabled: isStorefront,
     });
 
@@ -201,7 +201,7 @@ function SearchResults() {
     } = useInfiniteQuery({
         queryKey: ['allHomestays'],
         queryFn: async ({ pageParam = 0 }) => {
-            const res = await api.get(`/api/homestays/search?page=${pageParam}&size=12`);
+            const res = await api.get(`/homestays/search?page=${pageParam}&size=12`);
             return res.data;
         },
         initialPageParam: 0,
@@ -252,8 +252,8 @@ function SearchResults() {
             setSearchLoading(true);
             try {
                 const endpoint = query
-                    ? `/api/homestays/search?q=${encodeURIComponent(query)}&page=0&size=50`
-                    : `/api/homestays/search?tag=${encodeURIComponent(tag)}&page=0&size=50`;
+                    ? `/homestays/search?q=${encodeURIComponent(query)}&page=0&size=50`
+                    : `/homestays/search?tag=${encodeURIComponent(tag)}&page=0&size=50`;
                 const res = await api.get(endpoint);
                 setSearchGrid(res.data.content || []);
             } catch (err) {
@@ -280,7 +280,7 @@ function SearchResults() {
         try {
             const queryPart = query ? `&q=${encodeURIComponent(query)}` : '';
             const tagPart = tag ? `&tag=${encodeURIComponent(tag)}` : '';
-            const res = await api.get(`/api/homestays/search?minLat=${newBounds.minLat}&maxLat=${newBounds.maxLat}&minLng=${newBounds.minLng}&maxLng=${newBounds.maxLng}${queryPart}${tagPart}&size=100`);
+            const res = await api.get(`/homestays/search?minLat=${newBounds.minLat}&maxLat=${newBounds.maxLat}&minLng=${newBounds.minLng}&maxLng=${newBounds.maxLng}${queryPart}${tagPart}&size=100`);
 
             const homestaysInArea = res.data.content || [];
             if (query || tag) {
