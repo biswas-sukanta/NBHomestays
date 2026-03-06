@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const apiBase = 'https://thoughtful-jemie-droidmaniac-8802977f.koyeb.app';
+    const apiBase = process.env.BACKEND_URL || 'http://localhost:8080';
     return [
       {
         source: '/api/:path*',
