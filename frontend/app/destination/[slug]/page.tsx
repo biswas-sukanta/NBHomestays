@@ -32,7 +32,7 @@ export default function DestinationPage() {
 
     const { data: destination, isLoading: destLoading } = useQuery({
         queryKey: ['destination', slug],
-        queryFn: () => api.get(`/api/destinations/${slug}`).then(res => res.data)
+        queryFn: () => api.get(`/destinations/${slug}`).then(res => res.data)
     });
 
     const {
@@ -45,7 +45,7 @@ export default function DestinationPage() {
         queryKey: ['destination-homestays', slug, activeCategory],
         queryFn: async ({ pageParam = 0 }) => {
             const tagParam = activeCategory ? `&tag=${encodeURIComponent(activeCategory)}` : '';
-            const res = await api.get(`/api/destinations/${slug}/homestays?page=${pageParam}&size=10${tagParam}`);
+            const res = await api.get(`/destinations/${slug}/homestays?page=${pageParam}&size=10${tagParam}`);
             return res.data;
         },
         initialPageParam: 0,

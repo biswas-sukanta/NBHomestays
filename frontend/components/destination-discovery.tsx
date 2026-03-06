@@ -49,7 +49,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
 
     const { data: destinations, isLoading } = useQuery<Destination[]>({
         queryKey: ['destinations', stateSlug],
-        queryFn: () => api.get(stateSlug ? `/api/states/${stateSlug}/destinations` : '/api/destinations').then(res => res.data)
+        queryFn: () => api.get(stateSlug ? `/states/${stateSlug}/destinations` : '/destinations').then(res => res.data)
     });
 
     if (isLoading) {

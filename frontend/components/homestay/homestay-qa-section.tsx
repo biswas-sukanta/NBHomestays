@@ -47,13 +47,13 @@ export function HomestayQASection({ homestayId }: { homestayId: string }) {
     const { data: questions = [], isLoading } = useQuery({
         queryKey: ['questions', homestayId],
         queryFn: async () => {
-            const res = await api.get(`/api/homestays/${homestayId}/questions`);
+            const res = await api.get(`/homestays/${homestayId}/questions`);
             return res.data as HomestayQuestion[];
         },
     });
 
     const askMutation = useMutation({
-        mutationFn: async (text: string) => await api.post(`/api/homestays/${homestayId}/questions`, { text }),
+        mutationFn: async (text: string) => await api.post(`/homestays/${homestayId}/questions`, { text }),
         onSuccess: () => {
             toast.success('Question posted successfully!');
             setNewQuestion('');
@@ -62,27 +62,27 @@ export function HomestayQASection({ homestayId }: { homestayId: string }) {
     });
 
     const editQMutation = useMutation({
-        mutationFn: async ({ id, text }: { id: string, text: string }) => await api.put(`/api/questions/${id}`, { text }),
+        mutationFn: async ({ id, text }: { id: string, text: string }) => await api.put(`/questions/${id}`, { text }),
         onSuccess: () => { setEditingQ(null); queryClient.invalidateQueries({ queryKey: ['questions', homestayId] }); }
     });
 
     const deleteQMutation = useMutation({
-        mutationFn: async (id: string) => await api.delete(`/api/questions/${id}`),
+        mutationFn: async (id: string) => await api.delete(`/questions/${id}`),
         onSuccess: () => { toast.success('Question deleted'); queryClient.invalidateQueries({ queryKey: ['questions', homestayId] }); }
     });
 
     const replyMutation = useMutation({
-        mutationFn: async ({ qId, text }: { qId: string, text: string }) => await api.post(`/api/questions/${qId}/answers`, { text }),
+        mutationFn: async ({ qId, text }: { qId: string, text: string }) => await api.post(`/questions/${qId}/answers`, { text }),
         onSuccess: () => { setReplyingTo(null); setReplyText(''); queryClient.invalidateQueries({ queryKey: ['questions', homestayId] }); }
     });
 
     const editAMutation = useMutation({
-        mutationFn: async ({ id, text }: { id: string, text: string }) => await api.put(`/api/answers/${id}`, { text }),
+        mutationFn: async ({ id, text }: { id: string, text: string }) => await api.put(`/answers/${id}`, { text }),
         onSuccess: () => { setEditingA(null); queryClient.invalidateQueries({ queryKey: ['questions', homestayId] }); }
     });
 
     const deleteAMutation = useMutation({
-        mutationFn: async (id: string) => await api.delete(`/api/answers/${id}`),
+        mutationFn: async (id: string) => await api.delete(`/answers/${id}`),
         onSuccess: () => { toast.success('Reply deleted'); queryClient.invalidateQueries({ queryKey: ['questions', homestayId] }); }
     });
 

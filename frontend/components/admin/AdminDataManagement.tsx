@@ -27,7 +27,7 @@ export default function AdminDataManagement() {
         }
         setIsDeletingSpecific(true);
         try {
-            const res = await api.delete(`/api/admin/homestays?limit=${deleteCount}`);
+            const res = await api.delete(`/admin/homestays?limit=${deleteCount}`);
             if (res.status === 200) {
                 toast.success(`Successfully deleted ${res.data.deletedCount} homestays!`);
                 setDeleteCount('');
@@ -43,7 +43,7 @@ export default function AdminDataManagement() {
         setIsDeletingAll(true);
         setShowConfirmModal(false);
         try {
-            const res = await api.delete('/api/admin/homestays/all');
+            const res = await api.delete('/admin/homestays/all');
             if (res.status === 200) {
                 toast.success('Nuclear wipe executed: All homestays deleted.');
             }
@@ -61,7 +61,7 @@ export default function AdminDataManagement() {
         }
         setIsSeeding(true);
         try {
-            const res = await api.post(`/api/admin/homestays/seed?count=${seedCount}`, {});
+            const res = await api.post(`/admin/homestays/seed?count=${seedCount}`, {});
             if (res.status === 200) {
                 toast.success(`Successfully generated ${res.data.insertedCount} hyper-realistic homestays!`);
                 setSeedCount('');

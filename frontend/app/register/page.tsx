@@ -43,7 +43,7 @@ export default function RegisterPage() {
         }
 
         try {
-            const res = await api.post('/api/auth/register', formData);
+            const res = await api.post('/auth/register', formData);
             login(res.data.accessToken, res.data.refreshToken);
             router.push('/');
         } catch (err: any) {

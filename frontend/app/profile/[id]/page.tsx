@@ -28,7 +28,7 @@ export default function PublicProfilePage() {
 
     useEffect(() => {
         if (!id) return;
-        api.get(`/api/users/${id}/profile`)
+        api.get(`/users/${id}/profile`)
             .then(res => setProfile(res.data))
             .catch(err => console.error("Failed to load profile", err))
             .finally(() => setLoading(false));

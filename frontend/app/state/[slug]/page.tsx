@@ -51,7 +51,7 @@ export default function StatePage() {
 
     const { data: state, isLoading: stateLoading } = useQuery<StateItem>({
         queryKey: ['state', slug],
-        queryFn: () => api.get(`/api/states/${slug}`).then(res => res.data)
+        queryFn: () => api.get(`/states/${slug}`).then(res => res.data)
     });
 
     const [activeCategory, setActiveCategory] = useState('');
@@ -72,7 +72,7 @@ export default function StatePage() {
                 boundsParam = `&minLat=${mapBounds.getSouth()}&maxLat=${mapBounds.getNorth()}&minLng=${mapBounds.getWest()}&maxLng=${mapBounds.getEast()}`;
             }
             // Fetch homestays from all destinations in this state using the search endpoint
-            const res = await api.get(`/api/homestays/search?stateSlug=${slug}${tagParam}${boundsParam}&size=60`);
+            const res = await api.get(`/homestays/search?stateSlug=${slug}${tagParam}${boundsParam}&size=60`);
             return res.data.content ? res.data.content : res.data;
         },
         enabled: !!state
