@@ -384,7 +384,7 @@ export default function CommunityPage() {
     const fetchPosts = async ({ pageParam = 0 }) => {
         const validPage = Number.isInteger(pageParam) ? pageParam : 0;
         const tagParam = activeTag ? `&tag=${encodeURIComponent(activeTag)}` : '';
-        const { data } = await api.get(`/api/posts?page=${validPage}&size=10&sort=createdAt,desc${tagParam}`);
+        const { data } = await api.get(`/api/posts?page=${validPage}&size=12&sort=createdAt,desc${tagParam}`);
         return data;
     };
 

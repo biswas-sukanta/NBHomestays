@@ -222,6 +222,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                     src={coverImage.startsWith('/') ? coverImage : `https://ik.imagekit.io/y4v82f1t1/tr:w-1000,q-75,f-webp/${coverImage}`}
                     alt={post.location}
                     className="w-full h-auto max-h-[600px] object-cover transition-transform duration-700 hover:scale-[1.02]"
+                    onError={(e) => { e.currentTarget.src = '/_static/community/post_placeholder.webp'; }}
                 />
 
                 {/* ── Header: Edit/Delete + Metadata (Moved inside image top) ── */}
@@ -230,11 +231,15 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                         <span className="inline-flex items-center bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-white/20 shadow-sm">
                             {isQuoted ? 'Repost' : 'Story'}
                         </span>
-                        {post.tags?.map(tag => (
+                        {(post.tags ?? []).length > 0 ? (post.tags ?? []).map(tag => (
                             <span key={tag} className="inline-flex items-center bg-green-500/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500 shadow-sm">
                                 {tag}
                             </span>
-                        ))}
+                        )) : (
+                            <span className="inline-flex items-center bg-gray-500/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-gray-500 shadow-sm">
+                                No categories
+                            </span>
+                        )}
                     </div>
 
                     {canModify && onDelete && (
