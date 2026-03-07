@@ -12,8 +12,7 @@ import dynamic from 'next/dynamic';
 const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox').then(m => m.ImageLightbox), { ssr: false });
 import { CommentSkeleton } from '@/components/community/CommentSkeleton';
 import Link from 'next/link';
-
-const API = '/api';
+import { apiFetch } from '@/lib/api-client';
 
 import {
     DropdownMenu,
@@ -87,7 +86,7 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
         if (!replyBody.trim() || submitting) return;
         setSubmitting(true);
         try {
-            const res = await fetch(`${API}/posts/${postId}/comments/${comment.id}/replies`, {
+            const res = await apiFetch(`/posts/${postId}/comments/${comment.id}/replies`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -112,7 +111,7 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
         }
         setSubmitting(true);
         try {
-            const res = await fetch(`${API}/posts/${postId}/comments/${comment.id}`, {
+            const res = await apiFetch(`/posts/${postId}/comments/${comment.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -324,7 +323,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
 
     useEffect(() => {
         if (!open) return;
-        fetch(`${API}/posts/${postId}/comments?page=0&size=20`)
+        apiFetch(`/posts/${postId}/comments?page=0&size=20`)
             .then(r => r.json())
             .then(data => setComments(data.content ?? data ?? []))
             .catch(console.error)
@@ -360,7 +359,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
             if (stagedFiles.length > 0) {
                 const formData = new FormData();
                 stagedFiles.forEach(s => formData.append('files', s.file));
-                const uploadRes = await fetch(`${API}/images/upload-multiple`, {
+                const uploadRes = await apiFetch(`/images/upload-multiple`, {
                     method: 'POST',
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     body: formData,
@@ -370,7 +369,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
             }
 
             // 2. Submit Comment
-            const res = await fetch(`${API}/posts/${postId}/comments`, {
+            const res = await apiFetch(`/posts/${postId}/comments`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -400,7 +399,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
     const deleteComment = async (commentId: string) => {
         const confirmToast = toast.loading("Deleting comment...");
         try {
-            const res = await fetch(`${API}/comments/${commentId}`, {
+            const res = await apiFetch(`/comments/${commentId}`, {
                 method: 'DELETE',
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
             });

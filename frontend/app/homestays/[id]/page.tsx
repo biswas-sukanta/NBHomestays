@@ -56,7 +56,8 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
     let homestay: Homestay;
     try {
-        const res = await fetch(fetchUrl, { cache: 'no-store' });
+        const { apiFetch } = await import('@/lib/api-client');
+        const res = await apiFetch(`/homestays/${id}`, { cache: 'no-store' });
         if (!res.ok) {
             console.error(`[HOMESTAY PAGE] Fetch failed with status: ${res.status}`);
             return notFound();
