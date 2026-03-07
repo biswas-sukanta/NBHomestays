@@ -11,15 +11,17 @@ const FALLBACK = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?q
 interface BentoGalleryProps {
     mediaUrls: string[];
     name: string;
+    locationName?: string;
     className?: string;
 }
 
-export function BentoGallery({ mediaUrls, name, className }: BentoGalleryProps) {
+export function BentoGallery({ mediaUrls, name, locationName, className }: BentoGalleryProps) {
     const [lightboxIndex, setLightboxIndex] = React.useState<number | null>(null);
 
     // Ensure we always have at least 5 slots (fill with fallback)
     const photos = [...mediaUrls];
     while (photos.length < 5) photos.push(FALLBACK);
+    const totalPhotos = mediaUrls.length || 5;
     const displayPhotos = photos.slice(0, 5);
 
     const openLightbox = (i: number) => setLightboxIndex(i);
@@ -32,25 +34,29 @@ export function BentoGallery({ mediaUrls, name, className }: BentoGalleryProps) 
         i !== null ? (i + 1) % displayPhotos.length : null
     );
 
-    // Respond to arrow keys
+    // Keyboard navigation
     React.useEffect(() => {
         if (lightboxIndex === null) return;
+        document.body.style.overflow = 'hidden';
         const handler = (e: KeyboardEvent) => {
             if (e.key === 'ArrowLeft') prev();
             if (e.key === 'ArrowRight') next();
             if (e.key === 'Escape') closeLightbox();
         };
         window.addEventListener('keydown', handler);
-        return () => window.removeEventListener('keydown', handler);
+        return () => {
+            window.removeEventListener('keydown', handler);
+            document.body.style.overflow = 'unset';
+        };
     }, [lightboxIndex]);
 
     return (
         <>
-            {/* ── Bento Grid ── */}
+            {/* ── Desktop Bento Grid ── */}
             <div
                 className={cn(
                     'hidden md:grid rounded-2xl overflow-hidden',
-                    'grid-cols-4 grid-rows-2 gap-1.5 h-[480px]',
+                    'grid-cols-4 grid-rows-2 gap-1.5 h-[520px]',
                     className
                 )}
             >
@@ -66,7 +72,14 @@ export function BentoGallery({ mediaUrls, name, className }: BentoGalleryProps) 
                         width={1200}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-300" />
+                    {/* Gradient overlay with name + location */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-y-2 group-hover:translate-y-0">
+                        <h2 className="text-white text-2xl font-bold tracking-tight drop-shadow-lg">{name}</h2>
+                        {locationName && (
+                            <p className="text-white/80 text-sm font-medium mt-1 drop-shadow-md">{locationName}</p>
+                        )}
+                    </div>
                 </button>
 
                 {/* 4 thumbnails */}
@@ -89,7 +102,7 @@ export function BentoGallery({ mediaUrls, name, className }: BentoGalleryProps) 
                             <div className="absolute inset-0 flex items-end p-3 pointer-events-none">
                                 <span className="glass text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md">
                                     <Images className="w-4 h-4" />
-                                    Show all photos
+                                    {totalPhotos > 5 ? `Show all ${totalPhotos} photos` : 'Show all photos'}
                                 </span>
                             </div>
                         )}
@@ -97,30 +110,47 @@ export function BentoGallery({ mediaUrls, name, className }: BentoGalleryProps) 
                 ))}
             </div>
 
-            {/* ── Mobile: snap-scroll carousel ── */}
-            <div className="md:hidden flex overflow-x-auto snap-x snap-mandatory gap-2 rounded-xl h-72 scrollbar-hide">
-                {displayPhotos.map((url, idx) => (
-                    <button
-                        key={idx}
-                        className="flex-none w-[90vw] snap-center rounded-xl overflow-hidden focus:outline-none"
-                        onClick={() => openLightbox(idx)}
-                    >
-                        <OptimizedImage
-                            src={url}
-                            alt={`${name} — photo ${idx + 1}`}
-                            width={800}
-                            className="w-full h-full object-cover"
+            {/* ── Mobile: snap-scroll carousel with counter ── */}
+            <div className="md:hidden relative">
+                <div className="flex overflow-x-auto snap-x snap-mandatory gap-0 h-72 scrollbar-hide" id="mobile-gallery-scroll">
+                    {displayPhotos.map((url, idx) => (
+                        <button
+                            key={idx}
+                            className="flex-none w-full snap-center overflow-hidden focus:outline-none relative"
+                            onClick={() => openLightbox(idx)}
+                        >
+                            <OptimizedImage
+                                src={url}
+                                alt={`${name} — photo ${idx + 1}`}
+                                width={800}
+                                className="w-full h-full object-cover"
+                            />
+                        </button>
+                    ))}
+                </div>
+                {/* Edge fade hints */}
+                <div className="absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-black/15 to-transparent pointer-events-none" />
+                <div className="absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-black/15 to-transparent pointer-events-none" />
+                {/* Image counter dots */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {displayPhotos.map((_, i) => (
+                        <span
+                            key={i}
+                            className={cn(
+                                'rounded-full transition-all duration-300',
+                                i === 0 ? 'bg-white w-5 h-1.5' : 'bg-white/50 w-1.5 h-1.5'
+                            )}
                         />
-                    </button>
-                ))}
+                    ))}
+                </div>
             </div>
 
-            {/* ── Lightbox ── */}
+            {/* ── Premium Lightbox ── */}
             <AnimatePresence>
                 {lightboxIndex !== null && (
                     <motion.div
                         key="lightbox"
-                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/92"
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -128,16 +158,21 @@ export function BentoGallery({ mediaUrls, name, className }: BentoGalleryProps) 
                     >
                         {/* Close */}
                         <button
-                            className="absolute top-4 right-4 z-10 glass-dark rounded-full p-2 text-white"
+                            className="absolute top-4 right-4 z-10 bg-white/10 backdrop-blur-md rounded-full p-2.5 text-white hover:bg-white/20 transition-colors"
                             onClick={closeLightbox}
                             aria-label="Close gallery"
                         >
-                            <X className="w-6 h-6" />
+                            <X className="w-5 h-5" />
                         </button>
+
+                        {/* Image Counter */}
+                        <div className="absolute top-5 left-1/2 -translate-x-1/2 z-10 text-white/70 text-sm font-medium tracking-wider">
+                            {lightboxIndex + 1} / {displayPhotos.length}
+                        </div>
 
                         {/* Prev */}
                         <button
-                            className="absolute left-4 z-10 glass-dark rounded-full p-3 text-white disabled:opacity-30"
+                            className="absolute left-4 z-10 bg-white/10 backdrop-blur-md rounded-full p-3 text-white hover:bg-white/20 transition-colors"
                             onClick={(e) => { e.stopPropagation(); prev(); }}
                             aria-label="Previous photo"
                         >
@@ -149,7 +184,7 @@ export function BentoGallery({ mediaUrls, name, className }: BentoGalleryProps) 
                             key={lightboxIndex}
                             src={displayPhotos[lightboxIndex]}
                             alt={`${name} — photo ${lightboxIndex + 1}`}
-                            className="max-h-[90vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
+                            className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
                             initial={{ opacity: 0, scale: 0.92 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.92 }}
@@ -159,7 +194,7 @@ export function BentoGallery({ mediaUrls, name, className }: BentoGalleryProps) 
 
                         {/* Next */}
                         <button
-                            className="absolute right-4 z-10 glass-dark rounded-full p-3 text-white"
+                            className="absolute right-4 z-10 bg-white/10 backdrop-blur-md rounded-full p-3 text-white hover:bg-white/20 transition-colors"
                             onClick={(e) => { e.stopPropagation(); next(); }}
                             aria-label="Next photo"
                         >

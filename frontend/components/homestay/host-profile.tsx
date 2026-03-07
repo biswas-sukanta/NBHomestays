@@ -1,12 +1,11 @@
-import { User, Shield, GraduationCap, Briefcase, Globe, Star } from 'lucide-react';
+import { User, Shield, GraduationCap, Briefcase, Globe, Star, Award } from 'lucide-react';
+import Link from 'next/link';
 
 interface HostProfileProps {
     ownerId?: string;
     ownerName?: string;
     hostDetails?: Record<string, any>;
 }
-
-import Link from 'next/link';
 
 export function HostProfile({ ownerId, ownerName = 'Host', hostDetails }: HostProfileProps) {
     if (!hostDetails) return null;
@@ -22,22 +21,35 @@ export function HostProfile({ ownerId, ownerName = 'Host', hostDetails }: HostPr
         bio
     } = hostDetails;
 
+    const isSuperhost = rating >= 4.5;
+
     return (
-        <div className="py-8 border-b border-gray-200">
-            <h2 className="text-xl md:text-2xl font-bold mb-8 text-gray-900">Meet your host</h2>
+        <section id="host" className="py-10 border-b border-gray-200">
+            <h2 className="text-[22px] font-bold mb-8 text-gray-900">Meet your host</h2>
 
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-8 max-w-2xl flex flex-col items-center relative overflow-hidden mx-auto md:mx-0">
-                {/* Decorative Icon */}
+                {/* Decorative watermark */}
                 <div className="absolute -top-4 -right-4 p-4 opacity-[0.03]">
                     <Shield className="w-48 h-48" />
                 </div>
 
-                {/* Avatar */}
-                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-gray-800 to-gray-600 flex items-center justify-center text-white text-4xl font-bold mb-4 shadow-md z-10">
-                    {ownerName ? ownerName.charAt(0).toUpperCase() : <User />}
+                {/* Avatar with gradient ring */}
+                <div className="relative mb-4">
+                    <div className="w-[104px] h-[104px] rounded-full p-[3px] bg-gradient-to-tr from-emerald-500 via-primary to-blue-500 shadow-lg">
+                        <div className="w-full h-full rounded-full bg-gradient-to-tr from-gray-800 to-gray-600 flex items-center justify-center text-white text-4xl font-bold">
+                            {ownerName ? ownerName.charAt(0).toUpperCase() : <User />}
+                        </div>
+                    </div>
+                    {/* Superhost badge */}
+                    {isSuperhost && (
+                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-primary text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md whitespace-nowrap">
+                            <Award className="w-3 h-3" />
+                            Superhost
+                        </div>
+                    )}
                 </div>
 
-                <h3 className="text-2xl font-bold text-gray-900 z-10 tracking-tight">{ownerName}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 z-10 tracking-tight mt-2">{ownerName}</h3>
                 {currentLocation && <p className="text-sm text-gray-500 mb-6 font-medium z-10">{currentLocation}</p>}
 
                 {/* Stats Grid */}
@@ -58,14 +70,14 @@ export function HostProfile({ ownerId, ownerName = 'Host', hostDetails }: HostPr
                     </div>
                 </div>
 
-                {/* Bio / Tagline */}
+                {/* Bio quote */}
                 {bio && (
-                    <div className="w-full text-left mb-8 z-10">
-                        <p className="text-gray-800 leading-relaxed text-base italic font-medium">"{bio}"</p>
+                    <div className="w-full text-left mb-8 z-10 relative pl-4 border-l-[3px] border-primary/30">
+                        <p className="text-gray-700 leading-relaxed text-base italic font-medium">"{bio}"</p>
                     </div>
                 )}
 
-                {/* Personal Details List */}
+                {/* Personal Details */}
                 <div className="w-full flex flex-col gap-4 text-sm md:text-base text-gray-700 z-10">
                     {school && (
                         <div className="flex items-start gap-4">
@@ -98,6 +110,6 @@ export function HostProfile({ ownerId, ownerName = 'Host', hostDetails }: HostPr
                     </Link>
                 )}
             </div>
-        </div>
+        </section>
     );
 }

@@ -6,9 +6,9 @@ export const fetchCache = 'force-no-store';
 import { BentoGallery } from '@/components/bento-gallery';
 import { StickyMobileBar } from '@/components/sticky-mobile-bar';
 import { InquirySection } from '@/components/inquiry-section';
-import { MapPin, Star, UtensilsCrossed, Leaf, MessageCircle } from 'lucide-react';
+import { MapPin, Star, Mountain, Wifi, Flame, CookingPot, TrendingUp, MessageSquare } from 'lucide-react';
 
-// New Architecture Components
+// Architecture Components
 import { Highlights } from '@/components/homestay/highlights';
 import { QuickFacts } from '@/components/homestay/quick-facts';
 import { AmenitiesSection } from '@/components/homestay/amenities-section';
@@ -16,6 +16,8 @@ import { HostProfile } from '@/components/homestay/host-profile';
 import { PoliciesSection } from '@/components/homestay/policies-section';
 import { LocationMapSection } from '@/components/homestay/location-map-section';
 import { HomestayQASection } from '@/components/homestay/homestay-qa-section';
+import { MealsSection } from '@/components/homestay/meals-section';
+import { SectionNav } from '@/components/homestay/section-nav';
 
 interface MediaItem { id: string; type: 'image' | 'video'; url: string; }
 
@@ -63,7 +65,6 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
             return notFound();
         }
 
-        // Ensure we handle responses that might be wrapped under `{ data: ... }` if that occurs
         const responseData = await res.json();
         homestay = responseData.data ? responseData.data : responseData;
 
@@ -91,15 +92,24 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
         highlightsItems.push({ id: '1', title: 'Stunning Views', subtitle: 'Enjoy panoramic mountain views right from your property.', iconKey: 'Mountain View' });
     }
     if (homestay.amenities?.['Wifi'] || homestay.amenities?.['Free Wi-Fi']) {
-        highlightsItems.push({ id: '2', title: 'Dedicated Workspace', subtitle: 'A room with wifi that’s well-suited for working.', iconKey: 'Dedicated workspace' });
+        highlightsItems.push({ id: '2', title: 'Dedicated Workspace', subtitle: "A room with wifi that's well-suited for working.", iconKey: 'Dedicated workspace' });
     }
     if (homestay.hostDetails?.reviewsCount && homestay.hostDetails.reviewsCount > 50) {
         highlightsItems.push({ id: '3', title: 'Highly Rated Host', subtitle: `${homestay.hostDetails.reviewsCount} recent guests praised this host.`, iconKey: 'Host greets you' });
     }
-    // Fallback if empty
     if (highlightsItems.length === 0) {
         highlightsItems.push({ id: '4', title: 'Great Location', subtitle: '100% of recent guests gave the location a 5-star rating.', iconKey: 'Location' });
         highlightsItems.push({ id: '5', title: 'Self check-in', subtitle: 'Check yourself in with the lockbox.', iconKey: 'Check-in' });
+    }
+
+    // Stay Highlights chips (data-driven from amenities)
+    const stayChips: { label: string; icon: React.ReactNode }[] = [];
+    if (homestay.amenities?.['Mountain View']) stayChips.push({ label: 'Mountain View', icon: <Mountain className="w-3.5 h-3.5" /> });
+    if (homestay.amenities?.['Wifi'] || homestay.amenities?.['Free Wi-Fi']) stayChips.push({ label: 'Fast Wi-Fi', icon: <Wifi className="w-3.5 h-3.5" /> });
+    if (homestay.amenities?.['Bonfire (Extra)']) stayChips.push({ label: 'Bonfire Evenings', icon: <Flame className="w-3.5 h-3.5" /> });
+    if (homestay.mealConfig?.mealsIncludedPerDay && homestay.mealConfig.mealsIncludedPerDay > 0) stayChips.push({ label: 'Home-Cooked Meals', icon: <CookingPot className="w-3.5 h-3.5" /> });
+    if (stayChips.length === 0) {
+        stayChips.push({ label: 'Nature Retreat', icon: <Mountain className="w-3.5 h-3.5" /> });
     }
 
     // Extract Owner Name
@@ -107,49 +117,74 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
     return (
         <div className="min-h-screen bg-background pb-28 md:pb-10">
-            {/* ════════════════════════════════════════
-                GALLERY (Bento desktop / Snap-scroll mobile)
-            ════════════════════════════════════════ */}
+            {/* ═══════ GALLERY ═══════ */}
             <div className="md:container md:mx-auto md:px-4 md:pt-6">
                 <BentoGallery
                     mediaUrls={homestay.media?.map(m => m.url) || []}
                     name={homestay.name}
+                    locationName={homestay.locationName}
                     data-testid="bento-gallery"
                 />
             </div>
 
-            {/* ════════════════════════════════════════
-                DETAILS W/ SIDEBAR ARCHITECTURE
-            ════════════════════════════════════════ */}
+            {/* ═══════ STICKY SECTION NAV ═══════ */}
+            <SectionNav />
+
+            {/* ═══════ DETAILS W/ SIDEBAR ═══════ */}
             <div className="container mx-auto px-4 md:px-6 mt-6 md:mt-10 flex flex-col md:flex-row gap-12 lg:gap-20 max-w-[1280px]">
 
                 {/* Main Content Column */}
                 <div className="flex-1 max-w-[700px]">
                     {/* ── Header ── */}
-                    <div className="flex items-start justify-between gap-4 mb-3">
+                    <div id="overview" className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-3xl md:text-[32px] font-extrabold text-gray-900 tracking-tight leading-[1.15]">
+                            <h1 className="text-3xl md:text-[34px] font-extrabold text-gray-900 tracking-tight leading-[1.15]">
                                 {homestay.name}
                             </h1>
-                            <div className="flex items-center gap-2 mt-2 text-gray-700 text-sm md:text-base font-medium">
-                                <MapPin className="w-4 h-4 text-primary flex-none" />
-                                <span className="underline underline-offset-4 decoration-gray-300 font-semibold">{homestay.locationName || 'North Bengal'}</span>
+                            <div className="flex items-center gap-3 mt-2 text-gray-700 text-sm md:text-base font-medium flex-wrap">
+                                <span className="flex items-center gap-1.5">
+                                    <MapPin className="w-4 h-4 text-primary flex-none" />
+                                    <span className="underline underline-offset-4 decoration-gray-300 font-semibold">{homestay.locationName || 'North Bengal'}</span>
+                                </span>
+                                {/* Desktop inline rating */}
+                                <span className="hidden md:flex items-center gap-1 text-sm">
+                                    <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
+                                    <span className="font-bold">{vibeScore.toFixed(1)}</span>
+                                </span>
+                                {/* Desktop inline price */}
+                                <span className="hidden md:inline text-sm text-gray-500">·</span>
+                                <span className="hidden md:inline text-sm font-semibold text-gray-900">
+                                    ₹{homestay.pricePerNight.toLocaleString()}<span className="text-gray-500 font-medium"> / night</span>
+                                </span>
                             </div>
                         </div>
 
-                        {/* Vibe Score badge (Desktop hidden, managed below for bigger effect) */}
+                        {/* Mobile vibe badge */}
                         <div className={`md:hidden flex-none flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold shadow-md ${vibeClass}`}>
                             <Star className="w-4 h-4 fill-current" />
                             <span>{vibeScore.toFixed(1)}</span>
                         </div>
                     </div>
 
-                    {/* Price strip (Mobile Only, Desktop handled by Sidebar) */}
-                    <div className="flex items-baseline gap-1.5 mb-6 md:hidden">
+                    {/* Price strip (Mobile Only) */}
+                    <div className="flex items-baseline gap-1.5 mb-4 md:hidden">
                         <span className="text-2xl font-extrabold text-gray-900">
                             ₹{homestay.pricePerNight.toLocaleString()}
                         </span>
                         <span className="text-gray-600 font-medium tracking-wide text-sm">/ night</span>
+                    </div>
+
+                    {/* ── Stay Highlights Chips ── */}
+                    <div className="flex flex-wrap gap-2 mb-6">
+                        {stayChips.map((chip) => (
+                            <span
+                                key={chip.label}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary/5 border border-primary/15 rounded-full text-xs font-semibold text-primary"
+                            >
+                                {chip.icon}
+                                {chip.label}
+                            </span>
+                        ))}
                     </div>
 
                     <hr className="border-gray-200 mb-0" />
@@ -157,13 +192,31 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {/* ── Highlights ── */}
                     <Highlights items={highlightsItems} />
 
-                    {/* ── Description ── */}
-                    <section className="py-8 border-b border-gray-200">
-                        <h2 className="text-[22px] font-bold text-gray-900 mb-5">About this stay</h2>
-                        <p className="text-gray-700 leading-[1.65] text-base whitespace-pre-line font-medium">
-                            {homestay.description}
-                        </p>
+                    {/* ── Stay Story (Editorial) ── */}
+                    <section className="py-10 border-b border-gray-200">
+                        <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">Stay Story</h2>
+                        <div className="pl-4 border-l-[3px] border-primary/20">
+                            <p className="text-gray-700 leading-[1.75] text-base whitespace-pre-line font-medium italic first-line:not-italic first-line:font-semibold first-line:text-gray-900">
+                                {homestay.description}
+                            </p>
+                        </div>
                     </section>
+
+                    {/* ── Visual Rhythm: Image Break ── */}
+                    {homestay.media && homestay.media.length > 1 && (
+                        <section className="py-6 border-b border-gray-200">
+                            <div className="rounded-2xl overflow-hidden h-[200px] md:h-[280px] relative">
+                                <img
+                                    src={homestay.media[1]?.url}
+                                    alt={`${homestay.name} — atmosphere`}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                            </div>
+                        </section>
+                    )}
 
                     {/* ── Quick Facts ── */}
                     {homestay.quickFacts && Object.keys(homestay.quickFacts).length > 0 && (
@@ -181,65 +234,8 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     )}
 
                     {/* ── Meals & Dining ── */}
-                    {homestay.mealConfig && homestay.mealConfig.defaultMealPlan && homestay.mealConfig.defaultMealPlan !== 'none' && (
-                        <section className="py-8 border-b border-gray-200" data-testid="meals-section">
-                            <h2 className="text-[22px] font-bold text-gray-900 mb-5 flex items-center gap-2">
-                                <UtensilsCrossed className="w-5 h-5 text-emerald-700" />
-                                Meals & Dining
-                            </h2>
-                            <div className="space-y-4">
-                                {/* Meal plan summary */}
-                                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
-                                    <p className="text-sm font-semibold text-emerald-900">
-                                        {homestay.mealConfig.mealsIncludedPerDay && homestay.mealConfig.mealsIncludedPerDay > 0
-                                            ? (!homestay.mealConfig.mealPricePerGuest
-                                                ? `${homestay.mealConfig.mealsIncludedPerDay} meal${homestay.mealConfig.mealsIncludedPerDay > 1 ? 's' : ''}/day included in room price`
-                                                : `${homestay.mealConfig.mealsIncludedPerDay} meal${homestay.mealConfig.mealsIncludedPerDay > 1 ? 's' : ''}/day available at ₹${homestay.mealConfig.mealPricePerGuest}/guest/day`)
-                                            : 'Meals available on request'}
-                                    </p>
-                                </div>
-
-                                {/* Diet types */}
-                                {homestay.mealConfig.dietTypes && homestay.mealConfig.dietTypes.length > 0 && (
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-                                            <Leaf className="w-3.5 h-3.5 text-emerald-600" /> Diet Options
-                                        </h3>
-                                        <div className="flex flex-wrap gap-2">
-                                            {homestay.mealConfig.dietTypes.map((dt: string) => {
-                                                const labels: Record<string, string> = { 'veg': '🥬 Veg', 'non-veg': '🍗 Non-Veg', 'jain': '🪷 Jain', 'vegan': '🌱 Vegan', 'organic': '🌿 Organic', 'children': '👶 Children' };
-                                                return (
-                                                    <span key={dt} className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-semibold text-gray-700">
-                                                        {labels[dt] || dt}
-                                                    </span>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Extras */}
-                                {homestay.mealConfig.extras && homestay.mealConfig.extras.length > 0 && (
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Available Extras</h3>
-                                        <div className="space-y-2">
-                                            {homestay.mealConfig.extras.map((extra: any) => (
-                                                <div key={extra.code} className="flex justify-between items-center bg-gray-50 border border-gray-100 rounded-lg px-4 py-2.5">
-                                                    <span className="text-sm font-medium text-gray-800">{extra.title}</span>
-                                                    <span className="text-sm font-bold text-emerald-700">₹{extra.price}/{extra.unit}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* CTA */}
-                                <div className="flex items-center gap-2 pt-2 text-sm text-gray-500">
-                                    <MessageCircle className="w-4 h-4" />
-                                    <span>Contact host for special dietary requirements or custom meals</span>
-                                </div>
-                            </div>
-                        </section>
+                    {homestay.mealConfig && (
+                        <MealsSection mealConfig={homestay.mealConfig} />
                     )}
 
                     {/* ── Meet Your Host ── */}
@@ -254,8 +250,21 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                         locationName={homestay.locationName}
                     />
 
+                    {/* ── Social Proof / Reviews Placeholder ── */}
+                    <section className="py-10 border-b border-gray-200">
+                        <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight flex items-center gap-2">
+                            <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                            Guest Reviews
+                        </h2>
+                        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 text-center">
+                            <MessageSquare className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                            <p className="text-gray-500 font-medium">Be the first guest to review this stay.</p>
+                            <p className="text-gray-400 text-sm mt-1">Reviews from guests help future travelers make great choices.</p>
+                        </div>
+                    </section>
+
                     {/* ── Desktop QA Section ── */}
-                    <div className="hidden md:block">
+                    <div id="qa" className="hidden md:block">
                         <HomestayQASection homestayId={homestay.id} />
                     </div>
                 </div>
@@ -263,8 +272,11 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                 {/* Desktop Sticky Sidebar (Pricing / Inquiry) */}
                 <div className="hidden md:block w-[350px] lg:w-[400px] flex-none relative">
                     <div className="sticky top-28">
-                        <div className="bg-white rounded-[24px] shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 p-6 object-cover overflow-hidden relative">
-                            <div className="flex items-end justify-between mb-6">
+                        <div className="bg-white/80 backdrop-blur-xl rounded-[24px] shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 p-6 overflow-hidden relative">
+                            {/* Subtle gradient border effect */}
+                            <div className="absolute inset-0 rounded-[24px] border border-transparent bg-gradient-to-br from-primary/5 via-transparent to-emerald-50/30 pointer-events-none" />
+
+                            <div className="flex items-end justify-between mb-4 relative z-10">
                                 <div className="flex items-baseline gap-1.5 flex-wrap">
                                     <span className="text-[32px] font-extrabold text-gray-900 leading-tight">
                                         ₹{homestay.pricePerNight.toLocaleString()}
@@ -277,6 +289,12 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                 </div>
                             </div>
 
+                            {/* Demand signal */}
+                            <div className="flex items-center gap-2 mb-5 px-3 py-2 bg-rose-50 border border-rose-100 rounded-xl relative z-10">
+                                <TrendingUp className="w-4 h-4 text-rose-600" />
+                                <span className="text-xs font-semibold text-rose-700">High demand this season — book early</span>
+                            </div>
+
                             <hr className="border-gray-200 mb-6" />
 
                             <InquirySection homestayName={homestay.name} />
@@ -285,14 +303,12 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                 </div>
 
                 {/* Mobile QA Section */}
-                <div className="md:hidden w-full">
+                <div className="md:hidden w-full" id="qa-mobile">
                     <HomestayQASection homestayId={homestay.id} />
                 </div>
             </div>
 
-            {/* ════════════════════════════════════════
-                STICKY MOBILE ACTION BAR
-            ════════════════════════════════════════ */}
+            {/* ═══════ STICKY MOBILE ACTION BAR ═══════ */}
             <div className="md:hidden">
                 <StickyMobileBar
                     homestayName={homestay.name}
@@ -302,4 +318,3 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
         </div>
     );
 }
-

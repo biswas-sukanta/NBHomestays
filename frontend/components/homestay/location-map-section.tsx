@@ -1,7 +1,7 @@
 'use client';
 
 import HomestayMapWrapper from '@/components/HomestayMapWrapper';
-import { MapPin } from 'lucide-react';
+import { MapPin, Navigation, Clock, ExternalLink } from 'lucide-react';
 
 interface LocationMapSectionProps {
     latitude: number;
@@ -9,41 +9,72 @@ interface LocationMapSectionProps {
     locationName: string;
 }
 
+// Curated nearby highlights based on common North Bengal attractions
+const NEARBY_HIGHLIGHTS = [
+    { icon: '🏞️', name: 'Lake / Viewpoint', time: '10 min', description: 'Scenic Natural Beauty' },
+    { icon: '🍵', name: 'Tea Gardens', time: '5 min', description: 'Local Farm Experience' },
+    { icon: '🏔️', name: 'Mountain Trail', time: '15 min', description: 'Trekking & Walks' },
+];
+
 export function LocationMapSection({ latitude, longitude, locationName }: LocationMapSectionProps) {
     if (!latitude || !longitude) return null;
 
+    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+
     return (
-        <section className="py-8 border-b border-gray-200">
+        <section id="location" className="py-10 border-b border-gray-200">
             <h2 className="text-[22px] font-bold text-gray-900 mb-6 tracking-tight">Where you'll be</h2>
 
-            {/* 
-              CRITICAL Z-INDEX FIX: 
-              relative z-0 isolates the map stack into its own containing block,
-              preventing Leaflet's high z-index tiles from bleeding over the fixed z-50 Navbar. 
-            */}
-            <div className="isolate relative z-0 rounded-[24px] overflow-hidden shadow-sm border border-gray-200 h-[300px] md:h-[500px] w-full bg-gray-100 [&_.leaflet-container]:!z-0 [&_.leaflet-pane]:!z-0">
+            {/* Map */}
+            <div className="isolate relative z-0 rounded-2xl overflow-hidden shadow-sm border border-gray-200 h-[300px] md:h-[450px] w-full bg-gray-100 [&_.leaflet-container]:!z-0 [&_.leaflet-pane]:!z-0">
                 <HomestayMapWrapper
                     latitude={latitude}
                     longitude={longitude}
                     locationName={locationName}
                 />
 
-                {/* Stunning Frosted Glass Overlay */}
-                <div className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-auto md:w-80 bg-white/85 backdrop-blur-md p-5 rounded-2xl shadow-lg border border-white/50 z-[10]">
+                {/* Frosted Glass Overlay */}
+                <div className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-auto md:w-80 bg-white/90 backdrop-blur-xl p-5 rounded-2xl shadow-lg border border-white/60 z-[10]">
                     <div className="flex items-start gap-4">
                         <div className="bg-primary/10 p-2.5 rounded-full flex-shrink-0 text-primary mt-0.5">
                             <MapPin className="w-5 h-5 fill-primary/20" />
                         </div>
-                        <div>
-                            <h3 className="font-bold text-gray-900 text-[17px] leading-tight mb-1">Neighborhood</h3>
-                            <p className="text-gray-700 text-sm font-medium leading-snug">
-                                {locationName || 'North Bengal'}
-                            </p>
-                            <p className="text-gray-500 text-[13px] mt-2 font-semibold">
-                                Exact location pinpoint
-                            </p>
+                        <div className="flex-1">
+                            <h3 className="font-bold text-gray-900 text-[17px] leading-tight mb-1">{locationName || 'North Bengal'}</h3>
+                            <p className="text-gray-500 text-[13px] font-medium">Exact location provided after booking</p>
                         </div>
                     </div>
+                    {/* Get Directions link */}
+                    <a
+                        href={directionsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                    >
+                        <Navigation className="w-3.5 h-3.5" />
+                        Get Directions
+                        <ExternalLink className="w-3 h-3 ml-0.5" />
+                    </a>
+                </div>
+            </div>
+
+            {/* Nearby Highlights */}
+            <div className="mt-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Nearby highlights</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {NEARBY_HIGHLIGHTS.map((item) => (
+                        <div key={item.name} className="flex items-center gap-3 p-3.5 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                            <span className="text-2xl">{item.icon}</span>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 truncate">{item.name}</p>
+                                <p className="text-xs text-gray-500">{item.description}</p>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-gray-500 font-medium whitespace-nowrap">
+                                <Clock className="w-3 h-3" />
+                                {item.time}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </section>
