@@ -126,6 +126,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     mediaUrls={homestay.media?.map(m => m.url) || []}
                     name={homestay.name}
                     locationName={homestay.locationName}
+                    editorialLead={homestay.editorialLead}
                     data-testid="bento-gallery"
                 />
             </div>
@@ -141,10 +142,15 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {/* ── Header ── */}
                     <div id="overview" className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-3xl md:text-[34px] font-extrabold text-gray-900 tracking-tight leading-[1.15]">
+                            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-[1.15]">
                                 {homestay.name}
                             </h1>
-                            <div className="flex items-center gap-3 mt-2 text-gray-700 text-sm md:text-base font-medium flex-wrap">
+                            {homestay.editorialLead && (
+                                <p className="text-xl text-gray-700 font-medium italic mt-3 mb-4 leading-relaxed tracking-wide">
+                                    {homestay.editorialLead}
+                                </p>
+                            )}
+                            <div className="flex items-center gap-3 mt-2 text-gray-600 text-sm font-medium flex-wrap">
                                 <span className="flex items-center gap-1.5">
                                     <MapPin className="w-4 h-4 text-primary flex-none" />
                                     <span className="underline underline-offset-4 decoration-gray-300 font-semibold">{homestay.locationName || 'North Bengal'}</span>
@@ -170,24 +176,11 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     </div>
 
                     {/* Price strip (Mobile Only) */}
-                    <div className="flex items-baseline gap-1.5 mb-4 md:hidden">
-                        <span className="text-2xl font-extrabold text-gray-900">
+                    <div className="flex items-baseline gap-1.5 mb-6 md:hidden">
+                        <span className="text-3xl font-extrabold text-gray-900">
                             ₹{homestay.pricePerNight.toLocaleString()}
                         </span>
                         <span className="text-gray-600 font-medium tracking-wide text-sm">/ night</span>
-                    </div>
-
-                    {/* ── Stay Highlights Chips ── */}
-                    <div className="flex flex-wrap gap-2 mb-6">
-                        {stayChips.map((chip) => (
-                            <span
-                                key={chip.label}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary/5 border border-primary/15 rounded-full text-xs font-semibold text-primary"
-                            >
-                                {chip.icon}
-                                {chip.label}
-                            </span>
-                        ))}
                     </div>
 
                     <hr className="border-gray-200 mb-0" />
@@ -197,15 +190,31 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {/* ── Stay Story (Editorial) ── */}
                     {homestay.editorialLead || homestay.description ? (
-                        <section className="py-10 border-b border-gray-200">
+                        <section className="py-10 border-t border-b border-gray-200 mt-6">
                             <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">Stay Story</h2>
-                            <div className="pl-4 border-l-[3px] border-primary/20">
-                                <p className="text-gray-700 leading-[1.75] text-base whitespace-pre-line font-medium italic first-line:not-italic first-line:font-semibold first-line:text-gray-900">
+                            <div className="pl-5 py-2 border-l-[4px] border-primary/40 bg-gray-50/50 rounded-r-2xl shadow-sm">
+                                <p className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-line font-medium italic">
                                     {homestay.editorialLead || homestay.description}
                                 </p>
                             </div>
                         </section>
                     ) : null}
+
+                    {/* ── Experience Highlights ── */}
+                    <section className="py-10 border-b border-gray-200">
+                        <h3 className="text-xl font-bold text-gray-900 mb-5 tracking-tight">Experience Highlights</h3>
+                        <div className="flex flex-wrap gap-3">
+                            {stayChips.map((chip) => (
+                                <span
+                                    key={chip.label}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-full text-sm font-semibold text-gray-800 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md hover:border-primary/30 transition-all cursor-default"
+                                >
+                                    {chip.icon}
+                                    {chip.label}
+                                </span>
+                            ))}
+                        </div>
+                    </section>
 
                     {/* ── Visual Rhythm: Image Break ── */}
                     {homestay.media && homestay.media.length > 1 && (
@@ -236,6 +245,22 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {/* ── Policies ── */}
                     {homestay.policies && homestay.policies.length > 0 && (
                         <PoliciesSection policies={homestay.policies} />
+                    )}
+
+                    {/* ── Visual Rhythm: Secondary Image Break ── */}
+                    {homestay.media && homestay.media.length > 2 && (
+                        <section className="py-8 border-b border-gray-200">
+                            <div className="rounded-2xl overflow-hidden h-[200px] md:h-[260px] relative shadow-sm">
+                                <img
+                                    src={homestay.media[2]?.url}
+                                    alt={`${homestay.name} — details`}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                            </div>
+                        </section>
                     )}
 
                     {/* ── Meals & Dining ── */}

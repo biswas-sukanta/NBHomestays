@@ -31,11 +31,11 @@ const DIET_LABELS: Record<string, string> = {
 };
 
 const MEAL_PLAN_LABELS: Record<string, string> = {
-    '1_meal': 'Single Meal',
-    '2_meals_bd': 'Breakfast + Dinner',
-    '2_meals_ld': 'Lunch + Dinner',
-    '3_meals': 'Breakfast + Lunch + Dinner',
-    '4_meals': 'All Meals + Evening Snacks',
+    'none': 'Meals not included',
+    '1_bd': 'Breakfast included',
+    '2_bd': 'Breakfast & Dinner',
+    '2_ld': 'Lunch & Dinner',
+    '3_all': 'All meals included',
 };
 
 const EXTRA_ICONS: Record<string, React.ReactNode> = {

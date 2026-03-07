@@ -15,6 +15,18 @@ export function InquirySection({ homestayName }: InquirySectionProps) {
                 <h3 className="text-xl font-bold text-green-900 mb-2">Love this vibe?</h3>
                 <p className="text-green-800 mb-6">Connect directly with the host to check availability and plan your trip.</p>
 
+                <div className="space-y-3 mb-6 bg-white/50 p-3.5 rounded-xl border border-green-200/50 shadow-sm">
+                    <div className="flex items-center gap-2.5 text-sm text-green-900 font-medium tracking-wide">
+                        <span className="bg-white p-1 rounded-full shadow-sm text-base">⚡</span> Usually responds within an hour
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-green-900 font-medium tracking-wide">
+                        <span className="bg-white p-1 rounded-full shadow-sm text-base">🎯</span> Popular for weekend stays
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm text-green-900 font-medium tracking-wide">
+                        <span className="bg-white p-1 rounded-full shadow-sm text-base">🤝</span> Hosted by trusted locals
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 gap-3">
                     <Button
                         size="lg"
@@ -28,7 +40,7 @@ export function InquirySection({ homestayName }: InquirySectionProps) {
                     <Button
                         variant="outline"
                         size="lg"
-                        className="w-full border-2 border-primary text-primary hover:bg-primary/5 rounded-xl py-7 text-lg font-bold transition-all"
+                        className="w-full border-2 border-primary text-primary hover:bg-primary/5 rounded-xl py-7 text-lg font-bold transition-all bg-white"
                         onClick={() => toast.success("Added to your Trip Board!")}
                     >
                         <Star className="mr-2 h-5 w-5" />

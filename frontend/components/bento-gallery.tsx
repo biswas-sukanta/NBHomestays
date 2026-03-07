@@ -12,10 +12,11 @@ interface BentoGalleryProps {
     mediaUrls: string[];
     name: string;
     locationName?: string;
+    editorialLead?: string;
     className?: string;
 }
 
-export function BentoGallery({ mediaUrls, name, locationName, className }: BentoGalleryProps) {
+export function BentoGallery({ mediaUrls, name, locationName, editorialLead, className }: BentoGalleryProps) {
     const [lightboxIndex, setLightboxIndex] = React.useState<number | null>(null);
 
     // Ensure we always have at least 5 slots (fill with fallback)
@@ -72,12 +73,17 @@ export function BentoGallery({ mediaUrls, name, locationName, className }: Bento
                         width={1200}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    {/* Gradient overlay with name + location */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-y-2 group-hover:translate-y-0">
-                        <h2 className="text-white text-2xl font-bold tracking-tight drop-shadow-lg">{name}</h2>
+                    {/* Gradient overlay always visible for editorial look */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 transform transition-transform duration-500 translate-y-2 group-hover:translate-y-0 text-left">
+                        <h2 className="text-white text-3xl md:text-5xl font-extrabold tracking-tight drop-shadow-lg mb-2">{name}</h2>
+                        {editorialLead && (
+                            <p className="text-white/90 text-sm md:text-base font-medium italic drop-shadow-md mb-2 max-w-[90%] line-clamp-2">{editorialLead}</p>
+                        )}
                         {locationName && (
-                            <p className="text-white/80 text-sm font-medium mt-1 drop-shadow-md">{locationName}</p>
+                            <p className="text-white/70 text-xs font-semibold tracking-wider uppercase drop-shadow-md flex items-center gap-1.5">
+                                📍 {locationName}
+                            </p>
                         )}
                     </div>
                 </button>
