@@ -16,7 +16,8 @@ import { toast } from 'sonner';
 import {
     Trash2, Plus, Wifi, Mountain, Droplets, Zap, Coffee, UtensilsCrossed, Car, PawPrint,
     Bed, Bath, Flame, Wind, ShieldCheck, Laptop, ChefHat, Package, BellRing, Ban,
-    Gamepad2, Tv2, Snowflake, Drumstick, BookOpen, Shirt, Thermometer, Camera, Sparkles
+    Gamepad2, Tv2, Snowflake, Drumstick, BookOpen, Shirt, Thermometer, Camera, Sparkles,
+    Utensils, Leaf, Salad
 } from 'lucide-react';
 import ImageDropzone, { StagedFile } from '@/components/host/ImageDropzone';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -96,6 +97,26 @@ const TAG_CATEGORIES = [
     }
 ];
 
+// --- Meal Plan Presets ---
+const MEAL_PRESETS = [
+    { code: 'none', label: 'No Meals', meals: 0 },
+    { code: '1_dinner', label: '1 meal/day (Dinner)', meals: 1 },
+    { code: '2_bd', label: '2 meals/day (B+D)', meals: 2 },
+    { code: '2_ld', label: '2 meals/day (L+D)', meals: 2 },
+    { code: '3_bld', label: '3 meals/day', meals: 3 },
+    { code: '4_all', label: '4 meals/day', meals: 4 },
+];
+
+const DIET_TYPES = ['veg', 'non-veg', 'jain', 'vegan', 'organic', 'children'] as const;
+const DIET_LABELS: Record<string, string> = { 'veg': '🥬 Veg', 'non-veg': '🍗 Non-Veg', 'jain': '🪷 Jain', 'vegan': '🌱 Vegan', 'organic': '🌿 Organic', 'children': '👶 Children' };
+
+const DEFAULT_EXTRAS = [
+    { code: 'bonfire', title: 'Bonfire', price: 0, unit: 'per session', enabled: false },
+    { code: 'chicken_bbq', title: 'Chicken Barbeque', price: 0, unit: 'per group', enabled: false },
+    { code: 'organic_veg', title: 'Organic Farm Vegetables', price: 0, unit: 'per meal', enabled: false },
+    { code: 'child_meal', title: 'Custom Meal for Children', price: 0, unit: 'per child', enabled: false },
+];
+
 const DEFAULT_POLICIES = [
     '50% advance payment required; balance at check-in.',
     'Standard Check-in: 1 PM, Check-out: 10 AM (Early/late subject to fee).',
@@ -151,6 +172,13 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
     // Policies
     const [policies, setPolicies] = useState<string[]>([...DEFAULT_POLICIES]);
 
+    // Meal Config
+    const [mealPlan, setMealPlan] = useState('none');
+    const [mealsPerDay, setMealsPerDay] = useState(0);
+    const [mealPrice, setMealPrice] = useState('');
+    const [dietTypes, setDietTypes] = useState<string[]>([]);
+    const [extras, setExtras] = useState([...DEFAULT_EXTRAS]);
+
     // Quick Facts
     const [quickFacts, setQuickFacts] = useState({
         checkIn: '13:00', checkOut: '10:00', locationType: 'Remote', alcohol: 'Allowed only in common area', hike: 'None', mobileNetwork: 'Good Connectivity', outsiders: 'Not Allowed'
@@ -200,6 +228,19 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                         bio: data.hostDetails.bio || ''
                     });
                 }
+                // Meal Config
+                if (data.mealConfig && Object.keys(data.mealConfig).length > 0) {
+                    setMealPlan(data.mealConfig.defaultMealPlan || 'none');
+                    setMealsPerDay(data.mealConfig.mealsIncludedPerDay || 0);
+                    setMealPrice(data.mealConfig.mealPricePerGuest?.toString() || '');
+                    setDietTypes(Array.isArray(data.mealConfig.dietTypes) ? data.mealConfig.dietTypes : []);
+                    if (Array.isArray(data.mealConfig.extras)) {
+                        setExtras(DEFAULT_EXTRAS.map(de => {
+                            const saved = data.mealConfig.extras.find((e: any) => e.code === de.code);
+                            return saved ? { ...de, ...saved, enabled: true } : de;
+                        }));
+                    }
+                }
             }).catch(err => {
                 console.error("[EDIT FLOW] API Error:", err);
                 toast.error("Failed to load homestay data.");
@@ -240,7 +281,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
             if (existingMedia.length + imageFiles.length === 0) {
                 newErrors.photos = "Please upload at least 1 property photo.";
             }
-        } else if (currentStep === 7) {
+        } else if (currentStep === 8) {
             if (hostDetails.yearsHosting && parseInt(hostDetails.yearsHosting) < 0) {
                 newErrors.yearsHosting = "Years hosting cannot be negative.";
             }
@@ -305,7 +346,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
             setStep(3);
             return;
         }
-        if (!validateStep(7)) return;
+        if (!validateStep(8)) return;
 
         setLoading(true);
         try {
@@ -341,6 +382,13 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                     languages: hostDetails.languages.join(', ').trim() ? hostDetails.languages : [],
                     currentLocation: hostDetails.currentLocation,
                     bio: hostDetails.bio
+                },
+                mealConfig: {
+                    defaultMealPlan: mealPlan,
+                    mealsIncludedPerDay: mealsPerDay,
+                    mealPricePerGuest: mealPrice ? parseFloat(mealPrice) : null,
+                    dietTypes,
+                    extras: extras.filter(e => e.enabled).map(({ enabled, ...rest }) => rest)
                 }
             };
 
@@ -393,7 +441,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
 
             {/* Progress Bar */}
             <div className="w-full bg-secondary h-2 rounded-full mb-8 overflow-hidden">
-                <div className="bg-[#004d00] h-full transition-all duration-500 ease-in-out" style={{ width: `${(step / 7) * 100}%` }} />
+                <div className="bg-[#004d00] h-full transition-all duration-500 ease-in-out" style={{ width: `${(step / 8) * 100}%` }} />
             </div>
 
             <Card className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 mb-12 overflow-hidden">
@@ -405,7 +453,8 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                         {step === 4 && "Homestay Tags & Vibes"}
                         {step === 5 && "Property Policies"}
                         {step === 6 && "Quick Facts / Know Before You Go"}
-                        {step === 7 && "Meet Your Host Profile"}
+                        {step === 7 && "Food & Meals"}
+                        {step === 8 && "Meet Your Host Profile"}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6 md:p-8">
@@ -658,8 +707,115 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                         </div>
                     )}
 
-                    {/* STEP 7: Host Details */}
+                    {/* STEP 7: Food & Meals */}
                     {step === 7 && (
+                        <div className="space-y-6">
+                            {/* Meal Plan Presets */}
+                            <div className="space-y-3">
+                                <Label className="text-base font-bold flex items-center gap-2"><Utensils className="w-4 h-4" /> Meal Plan</Label>
+                                <p className="text-sm text-muted-foreground">Select a preset to auto-fill meal details. Guests will see this on your listing.</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {MEAL_PRESETS.map(p => (
+                                        <button
+                                            type="button"
+                                            key={p.code}
+                                            onClick={() => { setMealPlan(p.code); setMealsPerDay(p.meals); }}
+                                            className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all cursor-pointer ${mealPlan === p.code
+                                                    ? 'bg-[#004d00] text-white border-[#004d00]'
+                                                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#004d00] hover:bg-[#004d00]/5'
+                                                }`}
+                                        >
+                                            {p.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Price per Guest */}
+                            <div className="space-y-2">
+                                <Label>Meal Price per Guest per Day (₹) <span className="text-xs text-muted-foreground font-normal">(Leave empty if meals are included in room price)</span></Label>
+                                <Input
+                                    type="number"
+                                    value={mealPrice}
+                                    onChange={e => setMealPrice(e.target.value)}
+                                    placeholder="e.g. 300 (leave empty if included)"
+                                    min="0"
+                                    className="w-full max-w-xs px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#004d00]/20 focus:border-[#004d00] transition-all outline-none"
+                                />
+                            </div>
+
+                            {/* Diet Types */}
+                            <div className="space-y-3">
+                                <Label className="text-base font-bold flex items-center gap-2"><Leaf className="w-4 h-4" /> Diet Types Available</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {DIET_TYPES.map(dt => (
+                                        <button
+                                            type="button"
+                                            key={dt}
+                                            onClick={() => setDietTypes(prev => prev.includes(dt) ? prev.filter(d => d !== dt) : [...prev, dt])}
+                                            className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all cursor-pointer ${dietTypes.includes(dt)
+                                                    ? 'bg-emerald-700 text-white border-emerald-700'
+                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400 hover:bg-emerald-50'
+                                                }`}
+                                        >
+                                            {DIET_LABELS[dt]}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Extras */}
+                            <div className="space-y-3">
+                                <Label className="text-base font-bold flex items-center gap-2"><Sparkles className="w-4 h-4" /> Food Extras</Label>
+                                <p className="text-sm text-muted-foreground">Toggle extras available at your property. Price is required when enabled.</p>
+                                <div className="space-y-3">
+                                    {extras.map((extra, idx) => (
+                                        <div key={extra.code} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${extra.enabled ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-100'
+                                            }`}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setExtras(prev => prev.map((e, i) => i === idx ? { ...e, enabled: !e.enabled } : e))}
+                                                className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${extra.enabled ? 'bg-emerald-700 border-emerald-700 text-white' : 'border-gray-300 bg-white'
+                                                    }`}
+                                            >
+                                                {extra.enabled && <span className="text-xs">✓</span>}
+                                            </button>
+                                            <span className="font-medium text-sm flex-1">{extra.title}</span>
+                                            {extra.enabled && (
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-xs text-muted-foreground">₹</span>
+                                                    <Input
+                                                        type="number"
+                                                        value={extra.price || ''}
+                                                        onChange={e => setExtras(prev => prev.map((ex, i) => i === idx ? { ...ex, price: parseInt(e.target.value) || 0 } : ex))}
+                                                        placeholder="Price"
+                                                        min="0"
+                                                        className="w-20 h-8 text-sm px-2 py-1 rounded-lg border border-gray-200"
+                                                    />
+                                                    <span className="text-xs text-muted-foreground">/{extra.unit}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Live Preview */}
+                            {mealPlan !== 'none' && (
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                    <p className="text-sm font-semibold text-amber-900 mb-1">👀 Guest Preview</p>
+                                    <p className="text-sm text-amber-800">
+                                        {`Includes ${MEAL_PRESETS.find(p => p.code === mealPlan)?.label?.toLowerCase() || mealPlan}.`}
+                                        {dietTypes.length > 0 && ` ${dietTypes.map(d => DIET_LABELS[d]?.replace(/^.\s/, '') || d).join(' and ')} meals available.`}
+                                        {mealPrice && ` +₹${mealPrice}/guest/day.`}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* STEP 8: Host Details */}
+                    {step === 8 && (
                         <div className="space-y-5">
                             <p className="text-sm text-muted-foreground mb-4">Introduce yourself to guests. This builds trust and increases bookings.</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -731,7 +887,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                 </CardContent>
                 <CardFooter className="flex justify-between bg-muted/10 border-t border-border/50 p-6">
                     <Button variant="outline" onClick={handleBack} disabled={step === 1} className="w-24">Back</Button>
-                    {step < 7 ? (
+                    {step < 8 ? (
                         <Button onClick={handleNext} className="w-24">Next</Button>
                     ) : (
                         <Button onClick={handleSubmit} disabled={loading} className="w-32 bg-green-600 hover:bg-green-700 font-bold transition-all">

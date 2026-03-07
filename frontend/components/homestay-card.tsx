@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Star, Scale, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Star, Scale, ChevronLeft, ChevronRight, CheckCircle2, UtensilsCrossed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompareStore } from '@/store/useCompareStore';
 import { TripBoardButton } from '@/components/trip-board-button';
@@ -33,6 +33,13 @@ export interface HomestaySummary {
         name: string;
         avatarUrl?: string;
         isVerifiedHost?: boolean;
+    };
+    mealConfig?: {
+        defaultMealPlan?: string;
+        mealsIncludedPerDay?: number;
+        mealPricePerGuest?: number | null;
+        dietTypes?: string[];
+        extras?: { code: string; title: string; price: number; unit: string }[];
     };
 }
 interface HomestayCardProps {
@@ -174,6 +181,15 @@ export const HomestayCard = React.memo(({ homestay, index = 0, featured = false,
                             ₹{homestay.pricePerNight.toLocaleString()}
                         </span>
                         <span className="font-medium text-white/80 text-[10px]">/night</span>
+                        {/* Meal indicator */}
+                        {homestay.mealConfig && homestay.mealConfig.mealsIncludedPerDay != null && homestay.mealConfig.mealsIncludedPerDay > 0 && (
+                            <span className="flex items-center gap-0.5 text-[9px] text-emerald-300 font-semibold mt-0.5" data-testid="meal-indicator">
+                                <UtensilsCrossed className="w-2.5 h-2.5" />
+                                {(!homestay.mealConfig.mealPricePerGuest)
+                                    ? `incl. ${homestay.mealConfig.mealsIncludedPerDay} meals`
+                                    : `+₹${homestay.mealConfig.mealPricePerGuest}/guest/day`}
+                            </span>
+                        )}
                     </div>
                 </div>
 

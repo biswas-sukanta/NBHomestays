@@ -6,7 +6,7 @@ export const fetchCache = 'force-no-store';
 import { BentoGallery } from '@/components/bento-gallery';
 import { StickyMobileBar } from '@/components/sticky-mobile-bar';
 import { InquirySection } from '@/components/inquiry-section';
-import { MapPin, Star } from 'lucide-react';
+import { MapPin, Star, UtensilsCrossed, Leaf, MessageCircle } from 'lucide-react';
 
 // New Architecture Components
 import { Highlights } from '@/components/homestay/highlights';
@@ -36,6 +36,13 @@ interface Homestay {
     media?: { url: string; fileId?: string }[];
     ownerId?: string;
     ownerEmail?: string;
+    mealConfig?: {
+        defaultMealPlan?: string;
+        mealsIncludedPerDay?: number;
+        mealPricePerGuest?: number | null;
+        dietTypes?: string[];
+        extras?: { code: string; title: string; price: number; unit: string }[];
+    };
 }
 
 export default async function HomestayPage({ params }: { params: Promise<{ id: string }> }) {
@@ -170,6 +177,68 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {/* ── Policies ── */}
                     {homestay.policies && homestay.policies.length > 0 && (
                         <PoliciesSection policies={homestay.policies} />
+                    )}
+
+                    {/* ── Meals & Dining ── */}
+                    {homestay.mealConfig && homestay.mealConfig.defaultMealPlan && homestay.mealConfig.defaultMealPlan !== 'none' && (
+                        <section className="py-8 border-b border-gray-200" data-testid="meals-section">
+                            <h2 className="text-[22px] font-bold text-gray-900 mb-5 flex items-center gap-2">
+                                <UtensilsCrossed className="w-5 h-5 text-emerald-700" />
+                                Meals & Dining
+                            </h2>
+                            <div className="space-y-4">
+                                {/* Meal plan summary */}
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+                                    <p className="text-sm font-semibold text-emerald-900">
+                                        {homestay.mealConfig.mealsIncludedPerDay && homestay.mealConfig.mealsIncludedPerDay > 0
+                                            ? (!homestay.mealConfig.mealPricePerGuest
+                                                ? `${homestay.mealConfig.mealsIncludedPerDay} meal${homestay.mealConfig.mealsIncludedPerDay > 1 ? 's' : ''}/day included in room price`
+                                                : `${homestay.mealConfig.mealsIncludedPerDay} meal${homestay.mealConfig.mealsIncludedPerDay > 1 ? 's' : ''}/day available at ₹${homestay.mealConfig.mealPricePerGuest}/guest/day`)
+                                            : 'Meals available on request'}
+                                    </p>
+                                </div>
+
+                                {/* Diet types */}
+                                {homestay.mealConfig.dietTypes && homestay.mealConfig.dietTypes.length > 0 && (
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                                            <Leaf className="w-3.5 h-3.5 text-emerald-600" /> Diet Options
+                                        </h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {homestay.mealConfig.dietTypes.map((dt: string) => {
+                                                const labels: Record<string, string> = { 'veg': '🥬 Veg', 'non-veg': '🍗 Non-Veg', 'jain': '🪷 Jain', 'vegan': '🌱 Vegan', 'organic': '🌿 Organic', 'children': '👶 Children' };
+                                                return (
+                                                    <span key={dt} className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-semibold text-gray-700">
+                                                        {labels[dt] || dt}
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Extras */}
+                                {homestay.mealConfig.extras && homestay.mealConfig.extras.length > 0 && (
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Available Extras</h3>
+                                        <div className="space-y-2">
+                                            {homestay.mealConfig.extras.map((extra: any) => (
+                                                <div key={extra.code} className="flex justify-between items-center bg-gray-50 border border-gray-100 rounded-lg px-4 py-2.5">
+                                                    <span className="text-sm font-medium text-gray-800">{extra.title}</span>
+                                                    <span className="text-sm font-bold text-emerald-700">₹{extra.price}/{extra.unit}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CTA */}
+                                <div className="flex items-center gap-2 pt-2 text-sm text-gray-500">
+                                    <MessageCircle className="w-4 h-4" />
+                                    <span>Contact host for special dietary requirements or custom meals</span>
+                                </div>
+                            </div>
+                        </section>
                     )}
 
                     {/* ── Meet Your Host ── */}
