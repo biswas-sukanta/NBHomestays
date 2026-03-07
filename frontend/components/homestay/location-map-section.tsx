@@ -7,16 +7,10 @@ interface LocationMapSectionProps {
     latitude: number;
     longitude: number;
     locationName: string;
+    nearbyHighlights?: string[];
 }
 
-// Curated nearby highlights based on common North Bengal attractions
-const NEARBY_HIGHLIGHTS = [
-    { icon: '🏞️', name: 'Lake / Viewpoint', time: '10 min', description: 'Scenic Natural Beauty' },
-    { icon: '🍵', name: 'Tea Gardens', time: '5 min', description: 'Local Farm Experience' },
-    { icon: '🏔️', name: 'Mountain Trail', time: '15 min', description: 'Trekking & Walks' },
-];
-
-export function LocationMapSection({ latitude, longitude, locationName }: LocationMapSectionProps) {
+export function LocationMapSection({ latitude, longitude, locationName, nearbyHighlights }: LocationMapSectionProps) {
     if (!latitude || !longitude) return null;
 
     const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
@@ -58,25 +52,22 @@ export function LocationMapSection({ latitude, longitude, locationName }: Locati
                 </div>
             </div>
 
-            {/* Nearby Highlights */}
-            <div className="mt-6">
-                <h3 className="text-base font-semibold text-gray-900 mb-4">Nearby highlights</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {NEARBY_HIGHLIGHTS.map((item) => (
-                        <div key={item.name} className="flex items-center gap-3 p-3.5 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
-                            <span className="text-2xl">{item.icon}</span>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{item.name}</p>
-                                <p className="text-xs text-gray-500">{item.description}</p>
+            {/* Nearby Highlights - Render only if backend returns them */}
+            {nearbyHighlights && nearbyHighlights.length > 0 && (
+                <div className="mt-6">
+                    <h3 className="text-base font-semibold text-gray-900 mb-4">Nearby highlights</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {nearbyHighlights.map((highlight, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-3.5 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <span className="text-2xl">📍</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{highlight}</p>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1 text-xs text-gray-500 font-medium whitespace-nowrap">
-                                <Clock className="w-3 h-3" />
-                                {item.time}
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
         </section>
     );
 }

@@ -45,6 +45,9 @@ interface Homestay {
         dietTypes?: string[];
         extras?: { code: string; title: string; price: number; unit: string }[];
     };
+    editorialLead?: string;
+    nearbyHighlights?: string[];
+    bookingHeatScore?: number;
 }
 
 export default async function HomestayPage({ params }: { params: Promise<{ id: string }> }) {
@@ -193,14 +196,16 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     <Highlights items={highlightsItems} />
 
                     {/* ── Stay Story (Editorial) ── */}
-                    <section className="py-10 border-b border-gray-200">
-                        <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">Stay Story</h2>
-                        <div className="pl-4 border-l-[3px] border-primary/20">
-                            <p className="text-gray-700 leading-[1.75] text-base whitespace-pre-line font-medium italic first-line:not-italic first-line:font-semibold first-line:text-gray-900">
-                                {homestay.description}
-                            </p>
-                        </div>
-                    </section>
+                    {homestay.editorialLead || homestay.description ? (
+                        <section className="py-10 border-b border-gray-200">
+                            <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">Stay Story</h2>
+                            <div className="pl-4 border-l-[3px] border-primary/20">
+                                <p className="text-gray-700 leading-[1.75] text-base whitespace-pre-line font-medium italic first-line:not-italic first-line:font-semibold first-line:text-gray-900">
+                                    {homestay.editorialLead || homestay.description}
+                                </p>
+                            </div>
+                        </section>
+                    ) : null}
 
                     {/* ── Visual Rhythm: Image Break ── */}
                     {homestay.media && homestay.media.length > 1 && (
@@ -248,6 +253,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                         latitude={homestay.latitude}
                         longitude={homestay.longitude}
                         locationName={homestay.locationName}
+                        nearbyHighlights={homestay.nearbyHighlights}
                     />
 
                     {/* ── Social Proof / Reviews Placeholder ── */}
