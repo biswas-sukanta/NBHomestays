@@ -10,11 +10,11 @@ import { DestinationDiscovery } from '@/components/destination-discovery';
 import { HomestayCard, HomestaySummary } from '@/components/homestay-card';
 import type L from 'leaflet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { SharedPageBanner } from '@/components/shared-page-banner';
 import dynamic from 'next/dynamic';
-import { LayoutGrid, Map as MapIcon, Search, Star } from 'lucide-react';
+import { LayoutGrid, Map as MapIcon, Search, Star, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -148,35 +148,7 @@ const DestinationCard = React.memo(({ dest, isActive }: { dest: { name: string; 
 
 DestinationCard.displayName = 'DestinationCard';
 
-function MobileIntersectionObserver({ setActiveHomestayId }: { setActiveHomestayId: (id: string | null) => void }) {
-    useEffect(() => {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const id = entry.target.getAttribute('data-id');
-                    if (id) {
-                        setActiveHomestayId(id);
-                    }
-                }
-            });
-        }, {
-            root: null,
-            threshold: 0.6
-        });
 
-        const timeout = setTimeout(() => {
-            const cards = document.querySelectorAll('.observer-card');
-            cards.forEach(card => observer.observe(card));
-        }, 500);
-
-        return () => {
-            clearTimeout(timeout);
-            observer.disconnect();
-        };
-    }, [setActiveHomestayId]);
-
-    return null;
-}
 
 function SearchResults() {
     const searchParams = useSearchParams();
@@ -194,6 +166,7 @@ function SearchResults() {
     const [viewType, setViewType] = useState<'grid' | 'map'>('grid');
     const [mapBounds, setMapBounds] = useState<{ minLat: number, maxLat: number, minLng: number, maxLng: number } | null>(null);
     const [activeHomestayId, setActiveHomestayId] = useState<string | null>(null);
+    const [selectedHomestayId, setSelectedHomestayId] = useState<string | null>(null);
 
     const isStorefront = !query && !tag;
 
@@ -380,7 +353,7 @@ function SearchResults() {
             </SharedPageBanner>
 
             {/* STEP 2: Sticky Edge-to-Edge Category Bar */}
-            <div className="sticky top-0 z-40 bg-[#FAF9F6]/80 backdrop-blur-md border-b border-stone-200/60 px-4">
+            <div className="sticky top-0 z-[900] bg-[#FAF9F6]/80 backdrop-blur-md border-b border-stone-200/60 px-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between py-1.5">
                     <EmojiCategoryFilter
                         activeCategory={tag}
@@ -480,24 +453,89 @@ function SearchResults() {
                                                 homestays={allStays}
                                                 onMapChange={handleMapChange}
                                                 hoveredHomestayId={activeHomestayId}
+                                                selectedHomestayId={selectedHomestayId}
+                                                setSelectedHomestayId={setSelectedHomestayId}
                                             />
                                         </ErrorBoundary>
 
-                                        {/* Mobile Bottom Sheet Overlay for Cards */}
-                                        <div className="absolute lg:hidden bottom-0 inset-x-0 z-[50] h-[30vh] max-h-[280px] bg-gradient-to-t from-black/60 to-transparent pointer-events-none flex flex-col justify-end pb-6">
-                                            <div className="pointer-events-auto w-full overflow-x-auto snap-x snap-mandatory flex gap-4 px-4 hide-scrollbar">
-                                                {allStays.slice(0, 10).map((homestay: any) => (
-                                                    <div
-                                                        key={homestay.id}
-                                                        id={`homestay-card-${homestay.id}`}
-                                                        className="w-[85vw] max-w-[320px] shrink-0 snap-center transition-all duration-300 transform-gpu observer-card"
-                                                        data-id={homestay.id}
+                                        {/* Mobile Floating Preview Card (Airbnb Style) */}
+                                        <AnimatePresence>
+                                            {selectedHomestayId && (
+                                                <div className="absolute lg:hidden bottom-8 inset-x-0 z-[700] flex justify-center px-4 pointer-events-none">
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 100 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: 100 }}
+                                                        drag="x"
+                                                        dragConstraints={{ left: 0, right: 0 }}
+                                                        onDragEnd={(_, info) => {
+                                                            const threshold = 50;
+                                                            if (info.offset.x < -threshold) {
+                                                                // Swipe Left -> Next
+                                                                const currentIndex = allStays.findIndex(h => h.id === selectedHomestayId);
+                                                                if (currentIndex < allStays.length - 1) {
+                                                                    setSelectedHomestayId(allStays[currentIndex + 1].id);
+                                                                }
+                                                            } else if (info.offset.x > threshold) {
+                                                                // Swipe Right -> Prev
+                                                                const currentIndex = allStays.findIndex(h => h.id === selectedHomestayId);
+                                                                if (currentIndex > 0) {
+                                                                    setSelectedHomestayId(allStays[currentIndex - 1].id);
+                                                                }
+                                                            }
+                                                        }}
+                                                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                                                        className="pointer-events-auto w-full max-w-[340px] bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.25)] overflow-hidden border border-gray-100 relative group active:scale-95 transition-transform"
                                                     >
-                                                        <HomestayCard homestay={homestay} />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
+                                                        {allStays.find(h => h.id === selectedHomestayId) && (() => {
+                                                            const h = allStays.find(h => h.id === selectedHomestayId);
+                                                            return (
+                                                                <Link href={`/homestays/${h.id}`} className="flex h-[110px]">
+                                                                    <div className="w-[110px] h-full shrink-0 relative bg-gray-100">
+                                                                        <Image
+                                                                            src={h.media?.[0]?.url || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=300'}
+                                                                            alt={h.name}
+                                                                            fill
+                                                                            className="object-cover"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
+                                                                        <div>
+                                                                            <div className="flex justify-between items-start gap-2">
+                                                                                <h3 className="font-bold text-sm text-gray-900 line-clamp-1 tracking-tight">{h.name}</h3>
+                                                                                <div className="flex items-center gap-1 shrink-0 text-xs font-bold">
+                                                                                    <Star className="w-3 h-3 fill-gray-900" />
+                                                                                    {(h.vibeScore || 4.5).toFixed(1)}
+                                                                                </div>
+                                                                            </div>
+                                                                            <p className="text-[11px] text-gray-500 mt-0.5 truncate uppercase tracking-wider font-semibold">
+                                                                                {h.locationName || 'Eastern Himalayas'}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="flex items-end justify-between">
+                                                                            <div className="text-gray-900 font-black text-sm">
+                                                                                ₹{h.pricePerNight.toLocaleString()} <span className="text-[10px] font-normal text-gray-500">/ night</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.stopPropagation();
+                                                                            setSelectedHomestayId(null);
+                                                                        }}
+                                                                        className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full shadow-md border border-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 z-50 transition-colors"
+                                                                    >
+                                                                        <X className="w-4 h-4" />
+                                                                    </button>
+                                                                </Link>
+                                                            );
+                                                        })()}
+                                                    </motion.div>
+                                                </div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
 
                                     {/* Right: Desktop Listings Rail (Native window scrollable) */}
@@ -510,7 +548,7 @@ function SearchResults() {
                                                     onMouseEnter={() => setActiveHomestayId(homestay.id)}
                                                     onMouseLeave={() => setActiveHomestayId(null)}
                                                 >
-                                                    <HomestayCard homestay={homestay} />
+                                                    <HomestayCard homestay={homestay} isHighlighted={activeHomestayId === homestay.id} />
                                                 </div>
                                             ))}
                                         </div>
@@ -655,7 +693,12 @@ function SearchResults() {
                                             onMouseEnter={() => setActiveHomestayId(h.id)}
                                             onMouseLeave={() => setActiveHomestayId(null)}
                                         >
-                                            <HomestayCard homestay={h} index={i} featured={isFeatured} />
+                                            <HomestayCard
+                                                homestay={h}
+                                                index={i}
+                                                featured={isFeatured}
+                                                isHighlighted={activeHomestayId === h.id}
+                                            />
                                         </div>
                                     );
                                 })}

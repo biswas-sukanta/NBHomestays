@@ -33,16 +33,19 @@ interface HomestayMapViewProps {
     homestays: HomestaySummary[];
     onMapChange?: (bounds: L.LatLngBounds) => void;
     hoveredHomestayId?: string | null;
+    selectedHomestayId?: string | null;
+    setSelectedHomestayId?: (id: string | null) => void;
     onMarkerHover?: (id: string) => void;
     onMarkerLeave?: () => void;
     onCloseMap?: () => void;
 }
 
-function MapHoverPan({ homestays, hoveredHomestayId }: { homestays: HomestaySummary[], hoveredHomestayId?: string | null }) {
+function MapHoverPan({ homestays, hoveredHomestayId, selectedHomestayId }: { homestays: HomestaySummary[], hoveredHomestayId?: string | null, selectedHomestayId?: string | null }) {
     const map = useMap();
     useEffect(() => {
-        if (hoveredHomestayId) {
-            const h = homestays.find(x => x.id === hoveredHomestayId);
+        const targetId = selectedHomestayId || hoveredHomestayId;
+        if (targetId) {
+            const h = homestays.find(x => x.id === targetId);
             if (h && h.latitude && h.longitude) {
                 const targetZoom = Math.max(map.getZoom(), 13);
 
@@ -88,8 +91,8 @@ function MapMobileControls({ onCloseMap }: { onCloseMap?: () => void }) {
                     <X className="w-5 h-5" />
                 </button>
             )}
-            <div className="absolute bottom-[120px] right-4 z-[500] flex flex-col gap-3 lg:hidden">
-                <div className="flex flex-col bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="absolute bottom-8 right-4 z-[800] flex flex-col gap-3">
+                <div className="flex flex-col bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 overflow-hidden">
                     <button
                         onClick={handleLocateMe}
                         className="p-3 hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100"
@@ -113,29 +116,18 @@ function MapMobileControls({ onCloseMap }: { onCloseMap?: () => void }) {
                     </button>
                     <button
                         onClick={() => map.setZoom(10)}
-                        className="p-3 hover:bg-gray-50 active:bg-gray-100 transition-colors border-t border-gray-100"
+                        className="p-3 hover:bg-gray-50 active:bg-gray-100 transition-colors"
                         aria-label="Recenter Map"
                     >
                         <Crosshair className="w-5 h-5 text-gray-700" />
                     </button>
                 </div>
             </div>
-
-            {/* Desktop Locate Me (optional but good practice) */}
-            <div className="absolute bottom-[120px] right-4 z-[500] hidden lg:block">
-                <button
-                    onClick={handleLocateMe}
-                    className="p-3 bg-white hover:bg-gray-50 rounded-xl shadow-lg border border-gray-100 transition-colors"
-                    aria-label="Locate me"
-                >
-                    <Navigation className="w-5 h-5 text-blue-600" />
-                </button>
-            </div>
         </>
     );
 }
 
-function ClusteredMarkers({ homestays, hoveredHomestayId, onMarkerHover, onMarkerLeave, totalRenders }: any) {
+function ClusteredMarkers({ homestays, hoveredHomestayId, selectedHomestayId, setSelectedHomestayId, onMarkerHover, onMarkerLeave, totalRenders }: any) {
     const map = useMap();
     const [bounds, setBounds] = useState<[number, number, number, number] | null>(null);
     const [zoom, setZoom] = useState(10);
@@ -228,17 +220,21 @@ function ClusteredMarkers({ homestays, hoveredHomestayId, onMarkerHover, onMarke
                 }
 
                 const h = cluster.properties.homestay;
-                const isActive = hoveredHomestayId === h.id;
+                const homestayId = h.id;
 
                 return (
                     <MemoizedHomestayMarker
-                        key={h.id}
+                        key={`homestay-${homestayId}`}
                         h={h}
                         latitude={latitude}
                         longitude={longitude}
-                        isActive={isActive}
+                        isActive={homestayId === hoveredHomestayId || homestayId === selectedHomestayId}
+                        isSelected={homestayId === selectedHomestayId}
                         onMarkerHover={onMarkerHover}
                         onMarkerLeave={onMarkerLeave}
+                        onMarkerClick={() => {
+                            if (setSelectedHomestayId) setSelectedHomestayId(homestayId);
+                        }}
                         totalRenders={totalRenders}
                     />
                 );
@@ -314,7 +310,7 @@ function MapUpdater({ homestays, onMapChange, searchAsIMove, onManualMove }: { h
 // MAP PERFORMANCE MONITORING GUIDE (Development Only)
 // ═══════════════════════════════════════════════════════════════════════
 // This component outputs precise runtime benchmarks securely stripped from built bundles.
-// 
+//
 // 1. Rendering Optimization:
 //    - Open React DevTools -> Profiler -> Record.
 //    - Hover right-hand homestay cards rapidly.
@@ -322,14 +318,14 @@ function MapUpdater({ homestays, onMapChange, searchAsIMove, onManualMove }: { h
 //    - Watch console: `[MAP_PERF] Marker Rendered:` increments exactly 2 times per hover swap.
 //
 // 2. Network Drag Limits:
-//    - Drag map continuously. 
+//    - Drag map continuously.
 //    - Verify: `[MAP_PERF] Map Drag Event Detected` fires frequently.
 //    - Verify: `[MAP_PERF] Firing API Payload` triggers exactly ONCE per drag gap (500ms delay).
-// 
+//
 // 3. Leaflet Hydration bounds: tracked via `performance.now()`.
 // ═══════════════════════════════════════════════════════════════════════
 
-export default function HomestayMapView({ homestays, onMapChange, hoveredHomestayId, onMarkerHover, onMarkerLeave, onCloseMap }: HomestayMapViewProps) {
+export default function HomestayMapView({ homestays, onMapChange, hoveredHomestayId, selectedHomestayId, setSelectedHomestayId, onMarkerHover, onMarkerLeave, onCloseMap }: HomestayMapViewProps) {
     const [searchAsIMove, setSearchAsIMove] = useState(false);
     const [pendingBounds, setPendingBounds] = useState<L.LatLngBounds | null>(null);
     const defaultCenter: L.LatLngExpression = [26.7271, 88.3953];
@@ -358,7 +354,7 @@ export default function HomestayMapView({ homestays, onMapChange, hoveredHomesta
             <MapContainer
                 center={defaultCenter}
                 zoom={10}
-                className="h-full w-full z-0"
+                className="h-full w-full z-[100]"
                 zoomControl={false}
             >
                 <TileLayer
@@ -369,12 +365,14 @@ export default function HomestayMapView({ homestays, onMapChange, hoveredHomesta
                 <ClusteredMarkers
                     homestays={homestays}
                     hoveredHomestayId={hoveredHomestayId}
+                    selectedHomestayId={selectedHomestayId}
+                    setSelectedHomestayId={setSelectedHomestayId}
                     onMarkerHover={onMarkerHover}
                     onMarkerLeave={onMarkerLeave}
                     totalRenders={totalRenders}
                 />
 
-                <MapHoverPan homestays={homestays} hoveredHomestayId={hoveredHomestayId} />
+                <MapHoverPan homestays={homestays} hoveredHomestayId={hoveredHomestayId} selectedHomestayId={selectedHomestayId} />
                 <MapUpdater
                     homestays={homestays}
                     onMapChange={onMapChange}

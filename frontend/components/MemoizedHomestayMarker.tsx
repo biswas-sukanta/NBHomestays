@@ -5,11 +5,11 @@ import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import Link from 'next/link';
 
-const createPriceMarker = (h: any, isActive: boolean = false) => {
+const createPriceMarker = (h: any, isSelected: boolean = false, isActive: boolean = false) => {
     return L.divIcon({
         className: 'custom-price-marker',
         html: `
-            <div class="flex items-center justify-center ${isActive ? 'bg-gray-900 text-white scale-110 shadow-2xl z-[1000]' : 'bg-white text-gray-900 shadow-md'} rounded-full px-3 py-1.5 transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-[1.08] relative group">
+            <div class="flex items-center justify-center ${isSelected ? 'bg-gray-900 text-white scale-110 shadow-2xl z-[1000]' : isActive ? 'bg-white text-gray-900 ring-2 ring-gray-900 scale-105 shadow-xl' : 'bg-white text-gray-900 shadow-md'} rounded-full px-3 py-1.5 transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-[1.08] relative group">
                 <span class="text-xs font-black tracking-tight">₹${h.pricePerNight.toLocaleString()}</span>
                 
                 <!-- Pure CSS Hover Preview Card -->
@@ -26,8 +26,6 @@ const createPriceMarker = (h: any, isActive: boolean = false) => {
                         </div>
                         <div class="text-gray-900 font-black text-xs mt-0.5">₹${h.pricePerNight.toLocaleString()} <span class="text-[10px] font-normal text-gray-500">/ night</span></div>
                     </div>
-                    <!-- Triangle notch -->
-                    <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-r border-b border-gray-100 shadow-sm hidden"></div>
                 </div>
             </div>
         `,
@@ -41,12 +39,14 @@ interface MemoizedHomestayMarkerProps {
     latitude: number;
     longitude: number;
     isActive: boolean;
+    isSelected?: boolean;
     onMarkerHover?: (id: string) => void;
     onMarkerLeave?: () => void;
+    onMarkerClick?: () => void;
     totalRenders?: React.MutableRefObject<number>;
 }
 
-const HomestayMarker = ({ h, latitude, longitude, isActive, onMarkerHover, onMarkerLeave, totalRenders }: MemoizedHomestayMarkerProps) => {
+const HomestayMarker = ({ h, latitude, longitude, isActive, isSelected = false, onMarkerHover, onMarkerLeave, onMarkerClick, totalRenders }: MemoizedHomestayMarkerProps) => {
 
     // Performance Tracking: Marker Renders
     if (process.env.NODE_ENV === 'development') {
@@ -61,27 +61,17 @@ const HomestayMarker = ({ h, latitude, longitude, isActive, onMarkerHover, onMar
     return (
         <Marker
             position={[latitude, longitude]}
-            icon={createPriceMarker(h, isActive)}
-            zIndexOffset={isActive ? 1000 : 0}
+            icon={createPriceMarker(h, isSelected, isActive)}
+            zIndexOffset={isSelected ? 2000 : isActive ? 1000 : 0}
             eventHandlers={{
                 mouseover: () => {
                     if (onMarkerHover) onMarkerHover(h.id);
-                    const cardElement = document.getElementById(`homestay-card-${h.id}`);
-                    if (cardElement) cardElement.classList.add('ring-2', 'ring-gray-900', 'rounded-2xl');
                 },
                 mouseout: () => {
                     if (onMarkerLeave) onMarkerLeave();
-                    const cardElement = document.getElementById(`homestay-card-${h.id}`);
-                    if (cardElement) cardElement.classList.remove('ring-2', 'ring-gray-900', 'rounded-2xl');
                 },
                 click: () => {
-                    if (onMarkerHover) onMarkerHover(h.id);
-                    const cardElement = document.getElementById(`homestay-card-${h.id}`);
-                    if (cardElement) {
-                        cardElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-                        cardElement.classList.add('ring-2', 'ring-gray-900', 'rounded-2xl');
-                        setTimeout(() => cardElement.classList.remove('ring-2', 'ring-gray-900', 'rounded-2xl'), 2000);
-                    }
+                    if (onMarkerClick) onMarkerClick();
                 }
             }}
         >
