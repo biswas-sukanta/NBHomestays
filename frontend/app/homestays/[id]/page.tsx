@@ -42,14 +42,24 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     const { id } = await params;
 
     const isDev = process.env.NODE_ENV === 'development';
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
     const fetchUrl = `${backendUrl}/api/homestays/${id}`;
+
+    console.log("[HOMESTAY PAGE] Fetching URL:", fetchUrl);
 
     let homestay: Homestay;
     try {
         const res = await fetch(fetchUrl, { cache: 'no-store' });
-        if (!res.ok) return notFound();
-        homestay = await res.json();
+        if (!res.ok) {
+            console.error(`[HOMESTAY PAGE] Fetch failed with status: ${res.status}`);
+            return notFound();
+        }
+
+        // Ensure we handle responses that might be wrapped under `{ data: ... }` if that occurs
+        const responseData = await res.json();
+        homestay = responseData.data ? responseData.data : responseData;
+
+        console.log("[HOMESTAY PAGE] Fetched homestay:", homestay.id, homestay.name);
         if (!homestay?.id && !homestay?.name) return notFound();
     } catch {
         return notFound();
