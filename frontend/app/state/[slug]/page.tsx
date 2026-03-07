@@ -5,7 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { destinationApi } from '@/lib/api/destinations';
+import { homestayApi } from '@/lib/api/homestays';
 import { motion } from 'framer-motion';
 import { MapPin, Home, ArrowRight, LayoutGrid, Map as MapIcon } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -51,7 +52,7 @@ export default function StatePage() {
 
     const { data: state, isLoading: stateLoading } = useQuery<StateItem>({
         queryKey: ['state', slug],
-        queryFn: () => api.get(`/states/${slug}`).then(res => res.data)
+        queryFn: () => destinationApi.getState(slug as string).then(res => res.data)
     });
 
     const [activeCategory, setActiveCategory] = useState('');
@@ -72,7 +73,7 @@ export default function StatePage() {
                 boundsParam = `&minLat=${mapBounds.getSouth()}&maxLat=${mapBounds.getNorth()}&minLng=${mapBounds.getWest()}&maxLng=${mapBounds.getEast()}`;
             }
             // Fetch homestays from all destinations in this state using the search endpoint
-            const res = await api.get(`/homestays/search?stateSlug=${slug}${tagParam}${boundsParam}&size=60`);
+            const res = await homestayApi.search(`stateSlug=${slug}${tagParam}${boundsParam}&size=60`);
             return res.data.content ? res.data.content : res.data;
         },
         enabled: !!state

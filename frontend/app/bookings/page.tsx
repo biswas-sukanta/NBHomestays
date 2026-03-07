@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { axiosInstance as api } from '@/lib/api-client';
 import { format } from 'date-fns';
 import { Loader2, Calendar, IndianRupee } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { destinationApi } from '@/lib/api/destinations';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -49,7 +49,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
 
     const { data: destinations, isLoading } = useQuery<Destination[]>({
         queryKey: ['destinations', stateSlug],
-        queryFn: () => api.get(stateSlug ? `/states/${stateSlug}/destinations` : '/destinations').then(res => res.data)
+        queryFn: () => (stateSlug ? destinationApi.getStateDestinations(stateSlug) : destinationApi.getDestinations()).then((res: any) => res.data)
     });
 
     if (isLoading) {

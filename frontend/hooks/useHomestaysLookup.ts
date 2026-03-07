@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { homestayApi } from '@/lib/api/homestays';
 
 export interface HomestayLookup {
     id: string;
@@ -11,7 +11,7 @@ export function useHomestaysLookup() {
     return useQuery<HomestayLookup[]>({
         queryKey: ['homestays-lookup'],
         queryFn: async () => {
-            const { data } = await api.get('/homestays/lookup');
+            const { data } = await homestayApi.getLookup();
             return data;
         },
         staleTime: 1000 * 60 * 60, // 1 hour

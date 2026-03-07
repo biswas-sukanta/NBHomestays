@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { destinationApi } from '@/lib/api/destinations';
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapPin, Mountain, ChevronRight, Compass, Flower2, TreePine, Sunrise } from 'lucide-react';
@@ -33,7 +33,7 @@ const fallbackStyle = { gradient: 'from-slate-900/60 via-slate-800/30', accent: 
 export function WanderByRegion() {
     const { data: states, isLoading } = useQuery<StateItem[]>({
         queryKey: ['states'],
-        queryFn: () => api.get('/states').then(res => res.data)
+        queryFn: () => destinationApi.getStates().then(res => res.data)
     });
 
     if (isLoading) {

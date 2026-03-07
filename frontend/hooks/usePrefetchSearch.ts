@@ -2,8 +2,8 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import api from '@/lib/api';
-
+import { destinationApi } from '@/lib/api/destinations';
+import { homestayApi } from '@/lib/api/homestays';
 /**
  * Silent Prefetcher — loads the ENTIRE /search page state into React Query
  * cache in the background, so the Explore page renders instantly.
@@ -25,31 +25,31 @@ export const usePrefetchSearch = () => {
                 // 1. Destination Discovery row
                 queryClient.prefetchQuery({
                     queryKey: ['destinations'],
-                    queryFn: () => api.get('/destinations').then(res => res.data),
+                    queryFn: () => destinationApi.getDestinations().then(res => res.data),
                 }),
 
                 // 2. Trending Now swimlane
                 queryClient.prefetchQuery({
                     queryKey: ['swimlane', 'Trending Now'],
-                    queryFn: () => api.get('/homestays/search?tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6').then(res => res.data.content || []),
+                    queryFn: () => homestayApi.search('tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6').then(res => res.data.content || []),
                 }),
 
                 // 3. Explore Offbeat swimlane
                 queryClient.prefetchQuery({
                     queryKey: ['swimlane', 'Explore Offbeat'],
-                    queryFn: () => api.get('/homestays/search?tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6').then(res => res.data.content || []),
+                    queryFn: () => homestayApi.search('tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6').then(res => res.data.content || []),
                 }),
 
                 // 4. Featured Escapes swimlane
                 queryClient.prefetchQuery({
                     queryKey: ['swimlane', 'featured'],
-                    queryFn: () => api.get('/homestays/search?isFeatured=true&page=0&size=8').then(res => res.data.content || []),
+                    queryFn: () => homestayApi.search('isFeatured=true&page=0&size=8').then(res => res.data.content || []),
                 }),
 
                 // 5. All Homestays first page (seeds infinite scroll)
                 queryClient.prefetchInfiniteQuery({
                     queryKey: ['allHomestays'],
-                    queryFn: () => api.get('/homestays/search?page=0&size=12').then(res => res.data),
+                    queryFn: () => homestayApi.search('page=0&size=12').then(res => res.data),
                     initialPageParam: 0,
                 }),
             ]);

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import { userApi } from '@/lib/api/users';
+import { postApi } from '@/lib/api/posts';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -105,7 +106,7 @@ function MyPostsTab() {
     const { data, isPending, isError } = useQuery({
         queryKey: ['my-posts'],
         queryFn: async () => {
-            const res = await api.get('/posts/my-posts');
+            const res = await postApi.getMyPosts();
             return res.data;
         }
     });
@@ -156,7 +157,7 @@ function SettingsTab() {
                     defaultValue={user?.bio}
                     className="bg-white border-border/50 text-sm italic"
                     onBlur={(e) => {
-                        api.put('/users/profile', { bio: e.target.value })
+                        userApi.updateProfile({ bio: e.target.value })
                             .then(() => toast.success('Bio updated!'))
                             .catch(() => toast.error('Failed to update bio'));
                     }}

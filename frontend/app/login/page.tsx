@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import { authApi } from '@/lib/api/auth';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
@@ -20,7 +20,7 @@ export default function LoginPage() {
         setIsLoading(true);
         setError('');
         try {
-            const res = await api.post('/auth/authenticate', { email, password });
+            const res = await authApi.login({ email, password });
             login(res.data.accessToken, res.data.refreshToken);
             window.location.href = '/';
         } catch (err: any) {

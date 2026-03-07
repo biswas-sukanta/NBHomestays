@@ -9,7 +9,7 @@ import { HomestayControllerApi } from '@/src/lib/api/clients/homestay-controller
 const API_BASE = '/api';
 
 // Axios instance with JWT interceptor
-const axiosInstance = axios.create({ baseURL: API_BASE });
+export const axiosInstance = axios.create({ baseURL: API_BASE });
 axiosInstance.interceptors.request.use((config) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {

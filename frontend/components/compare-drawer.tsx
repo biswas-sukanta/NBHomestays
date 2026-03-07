@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueries } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { homestayApi } from '@/lib/api/homestays';
 import dynamic from 'next/dynamic';
 const ComparisonModal = dynamic(() => import('./comparison-modal').then(m => m.ComparisonModal), { ssr: false });
 
@@ -43,7 +43,7 @@ export function CompareDrawer() {
         queries: selectedIds.map((id) => ({
             queryKey: ['homestay', id],
             queryFn: async () => {
-                const res = await api.get(`/homestays/${id}`);
+                const res = await homestayApi.getById(id);
                 return res.data as HomestaySummary;
             },
             staleTime: 1000 * 60 * 5, // 5 minutes

@@ -20,7 +20,7 @@ import { PostSkeleton } from '@/components/community/PostSkeleton';
 import { CommentsSection } from '@/components/comments-section';
 import { CustomCombobox } from '@/components/ui/combobox';
 import { FilterMatrix } from '@/components/ui/filter-matrix';
-import api from '@/lib/api';
+import { postApi } from '@/lib/api/posts';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -80,7 +80,7 @@ export default function CommunityPage() {
     const fetchPosts = async ({ pageParam = 0 }) => {
         const validPage = Number.isInteger(pageParam) ? pageParam : 0;
         const tagParam = activeTag ? `&tag=${encodeURIComponent(activeTag)}` : '';
-        const { data } = await api.get(`/posts?page=${validPage}&size=12&sort=createdAt,desc${tagParam}`);
+        const { data } = await postApi.getFeed(`page=${validPage}&size=12&sort=createdAt,desc${tagParam}`);
         return data;
     };
 
@@ -136,7 +136,7 @@ export default function CommunityPage() {
     const { data: trendingData } = useQuery({
         queryKey: ['trending-posts'],
         queryFn: async () => {
-            const { data } = await api.get('/posts?page=0&size=3&sort=loveCount,desc');
+            const { data } = await postApi.getFeed('page=0&size=3&sort=loveCount,desc');
             return data; // Return full response to handle .content later
         }
     });
@@ -185,7 +185,7 @@ export default function CommunityPage() {
     const handleDeletePost = async (id: string) => {
         if (!window.confirm("Are you sure you want to delete this story?")) return;
         try {
-            await api.delete(`/posts/${id}`);
+            await postApi.delete(id);
             queryClient.invalidateQueries({ queryKey: ['community-posts'] });
             toast.success('Story deleted');
         } catch (err) {

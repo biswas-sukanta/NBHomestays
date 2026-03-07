@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import api from '@/lib/api';
+import { userApi } from '@/lib/api/users';
 import { SharedPageBanner } from '@/components/shared-page-banner';
 import { HomestayCard } from '@/components/homestay-card';
 import { MapPin, Star, Award, MessageSquare } from 'lucide-react';
@@ -28,7 +28,7 @@ export default function PublicProfilePage() {
 
     useEffect(() => {
         if (!id) return;
-        api.get(`/users/${id}/profile`)
+        userApi.getProfile(id as string)
             .then(res => setProfile(res.data))
             .catch(err => console.error("Failed to load profile", err))
             .finally(() => setLoading(false));

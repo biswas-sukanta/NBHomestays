@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import { authApi } from '@/lib/api/auth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
@@ -43,7 +43,7 @@ export default function RegisterPage() {
         }
 
         try {
-            const res = await api.post('/auth/register', formData);
+            const res = await authApi.register(formData);
             login(res.data.accessToken, res.data.refreshToken);
             router.push('/');
         } catch (err: any) {

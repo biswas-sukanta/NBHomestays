@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Trash2, AlertTriangle, DatabaseZap } from 'lucide-react';
-import api from '@/lib/api';
+import { adminApi } from '@/lib/api/adminApi';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +27,7 @@ export default function AdminDataManagement() {
         }
         setIsDeletingSpecific(true);
         try {
-            const res = await api.delete(`/admin/homestays?limit=${deleteCount}`);
+            const res = await adminApi.deleteHomestaysLimit(deleteCount);
             if (res.status === 200) {
                 toast.success(`Successfully deleted ${res.data.deletedCount} homestays!`);
                 setDeleteCount('');
@@ -43,7 +43,7 @@ export default function AdminDataManagement() {
         setIsDeletingAll(true);
         setShowConfirmModal(false);
         try {
-            const res = await api.delete('/admin/homestays/all');
+            const res = await adminApi.deleteAllHomestays();
             if (res.status === 200) {
                 toast.success('Nuclear wipe executed: All homestays deleted.');
             }
@@ -61,7 +61,7 @@ export default function AdminDataManagement() {
         }
         setIsSeeding(true);
         try {
-            const res = await api.post(`/admin/homestays/seed?count=${seedCount}`, {});
+            const res = await adminApi.seedHomestays(seedCount);
             if (res.status === 200) {
                 toast.success(`Successfully generated ${res.data.insertedCount} hyper-realistic homestays!`);
                 setSeedCount('');

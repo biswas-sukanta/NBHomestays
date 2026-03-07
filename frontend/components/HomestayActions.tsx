@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import api from '@/lib/api';
+import { homestayApi } from '@/lib/api/homestays';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import {
@@ -40,7 +40,7 @@ export default function HomestayActions({ homestayId, ownerEmail }: HomestayActi
     const handleDelete = async () => {
         setLoading(true);
         try {
-            await api.delete(`/homestays/${homestayId}`);
+            await homestayApi.delete(homestayId);
             toast.success("Homestay deleted successfully");
             router.push('/'); // Or dashboard
         } catch (error) {

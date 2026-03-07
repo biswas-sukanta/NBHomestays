@@ -14,7 +14,7 @@ import dynamic from 'next/dynamic';
 const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox').then(m => m.ImageLightbox), { ssr: false });
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CommentsSection } from '@/components/comments-section';
-import api from '@/lib/api';
+import { postApi } from '@/lib/api/posts';
 import { useAuth } from '@/context/AuthContext';
 import { LoginPromptModal } from './LoginPromptModal';
 
@@ -69,7 +69,7 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
 
     const mutation = useMutation({
         mutationFn: async () => {
-            const res = await api.post(`/posts/${postId}/like`);
+            const res = await postApi.like(postId);
             return res.data;
         },
         onMutate: async () => {
@@ -196,7 +196,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
             if (typeof navigator !== 'undefined' && navigator.share) {
                 await navigator.share({ title: 'North Bengal Homestays Story', text: post.caption, url });
                 setShareCount(prev => prev + 1);
-                await api.post(`/posts/${post.id}/share`);
+                await postApi.share(post.id);
             } else {
                 await navigator.clipboard.writeText(url);
                 toast.success('Link copied to clipboard!');

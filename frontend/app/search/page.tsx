@@ -16,7 +16,7 @@ import { SharedPageBanner } from '@/components/shared-page-banner';
 import dynamic from 'next/dynamic';
 import { LayoutGrid, Map as MapIcon, Search, Star, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import api from '@/lib/api';
+import { homestayApi } from '@/lib/api/homestays';
 import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
@@ -192,21 +192,21 @@ function SearchResults() {
     // Swimlane: Trending Now
     const { data: trendingStays = [] } = useQuery<HomestaySummary[]>({
         queryKey: ['swimlane', 'Trending Now'],
-        queryFn: () => api.get('/homestays/search?tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6').then(res => res.data.content || []),
+        queryFn: () => homestayApi.search('tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6').then(res => res.data.content || []),
         enabled: isStorefront,
     });
 
     // Swimlane: Explore Offbeat
     const { data: offbeatStays = [] } = useQuery<HomestaySummary[]>({
         queryKey: ['swimlane', 'Explore Offbeat'],
-        queryFn: () => api.get('/homestays/search?tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6').then(res => res.data.content || []),
+        queryFn: () => homestayApi.search('tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6').then(res => res.data.content || []),
         enabled: isStorefront,
     });
 
     // Swimlane: Featured Escapes
     const { data: featuredStays = [] } = useQuery<HomestaySummary[]>({
         queryKey: ['swimlane', 'featured'],
-        queryFn: () => api.get('/homestays/search?isFeatured=true&page=0&size=8').then(res => res.data.content || []),
+        queryFn: () => homestayApi.search('isFeatured=true&page=0&size=8').then(res => res.data.content || []),
         enabled: isStorefront,
     });
 
@@ -220,7 +220,7 @@ function SearchResults() {
     } = useInfiniteQuery({
         queryKey: ['allHomestays'],
         queryFn: async ({ pageParam = 0 }) => {
-            const res = await api.get(`/homestays/search?page=${pageParam}&size=12`);
+            const res = await homestayApi.search(`page=${pageParam}&size=12`);
             return res.data;
         },
         initialPageParam: 0,
@@ -271,9 +271,9 @@ function SearchResults() {
             setSearchLoading(true);
             try {
                 const endpoint = query
-                    ? `/homestays/search?q=${encodeURIComponent(query)}&page=0&size=50`
-                    : `/homestays/search?tag=${encodeURIComponent(tag)}&page=0&size=50`;
-                const res = await api.get(endpoint);
+                    ? `q=${encodeURIComponent(query)}&page=0&size=50`
+                    : `tag=${encodeURIComponent(tag)}&page=0&size=50`;
+                const res = await homestayApi.search(endpoint);
                 setSearchGrid(res.data.content || []);
             } catch (err) {
                 console.error("Failed to fetch search results", err);
@@ -299,7 +299,7 @@ function SearchResults() {
         try {
             const queryPart = query ? `&q=${encodeURIComponent(query)}` : '';
             const tagPart = tag ? `&tag=${encodeURIComponent(tag)}` : '';
-            const res = await api.get(`/homestays/search?minLat=${newBounds.minLat}&maxLat=${newBounds.maxLat}&minLng=${newBounds.minLng}&maxLng=${newBounds.maxLng}${queryPart}${tagPart}&size=100`);
+            const res = await homestayApi.search(`minLat=${newBounds.minLat}&maxLat=${newBounds.maxLat}&minLng=${newBounds.minLng}&maxLng=${newBounds.maxLng}${queryPart}${tagPart}&size=100`);
 
             const homestaysInArea = res.data.content || [];
             if (query || tag) {

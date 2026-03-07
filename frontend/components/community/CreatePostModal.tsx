@@ -9,7 +9,8 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
-import api from '@/lib/api';
+import { postApi } from '@/lib/api/posts';
+import { axiosInstance as api } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CustomCombobox } from '@/components/ui/combobox';
@@ -126,10 +127,9 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             formData.append('request', new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
             toast.info(postData ? "Updating story..." : "Sharing story...");
-            const endpoint = postData ? `/posts/${postData.id}` : '/posts';
             const res = postData
-                ? await api.put(endpoint, formData)
-                : await api.post(endpoint, formData);
+                ? await postApi.update(postData.id, formData)
+                : await postApi.create(formData);
 
             // Optimistic update
             if (!postData) {

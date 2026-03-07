@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import api from '@/lib/api';
+
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 

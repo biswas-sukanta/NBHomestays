@@ -6,7 +6,8 @@ import { motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { Repeat2, X, Send, Image as ImageIcon, MapPin, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { postApi } from '@/lib/api/posts';
+import { axiosInstance as api } from '@/lib/api-client';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CustomCombobox } from '@/components/ui/combobox';
 import { useHomestaySearch } from '@/hooks/useHomestaySearch';
@@ -63,7 +64,7 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
             const formData = new FormData();
             formData.append('request', new Blob([JSON.stringify(payload)], { type: "application/json" }));
 
-            const res = await api.post('/posts', formData);
+            const res = await postApi.create(formData);
             toast.success('Reposted!');
 
             // Optimistic update

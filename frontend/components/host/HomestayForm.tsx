@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
-import api from '@/lib/api';
+import { destinationApi } from '@/lib/api/destinations';
+import { homestayApi } from '@/lib/api/homestays';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -161,7 +162,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
 
     const { data: destinations } = useQuery({
         queryKey: ['destinations-form'],
-        queryFn: () => api.get('/destinations').then(res => res.data)
+        queryFn: () => destinationApi.getDestinations().then(res => res.data)
     });
 
     // Host Details
@@ -190,7 +191,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
     useEffect(() => {
         if (isEditMode && id) {
             setIsFetching(true);
-            api.get(`/homestays/${id}`).then(res => {
+            homestayApi.getById(id!).then(res => {
                 const data = res.data;
                 console.log("[EDIT FLOW] API Success. Data received:", data);
                 // ... rest of mapping
@@ -405,11 +406,11 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
             toast.info(isEditMode ? "Updating homestay..." : "Creating homestay...");
 
             if (isEditMode) {
-                await api.put(`/homestays/${id}`, formData);
+                await homestayApi.update(id!, formData);
                 toast.success("Homestay updated successfully!");
                 queryClient.invalidateQueries({ queryKey: ['homestay', id] });
             } else {
-                await api.post('/homestays', formData);
+                await homestayApi.create(formData);
                 toast.success("Homestay created successfully!");
             }
             // Invalidate both lists to ensure the new thumbnail propagates everywhere
@@ -721,8 +722,8 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                                             key={p.code}
                                             onClick={() => { setMealPlan(p.code); setMealsPerDay(p.meals); }}
                                             className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all cursor-pointer ${mealPlan === p.code
-                                                    ? 'bg-[#004d00] text-white border-[#004d00]'
-                                                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#004d00] hover:bg-[#004d00]/5'
+                                                ? 'bg-[#004d00] text-white border-[#004d00]'
+                                                : 'bg-white text-gray-700 border-gray-200 hover:border-[#004d00] hover:bg-[#004d00]/5'
                                                 }`}
                                         >
                                             {p.label}
@@ -754,8 +755,8 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                                             key={dt}
                                             onClick={() => setDietTypes(prev => prev.includes(dt) ? prev.filter(d => d !== dt) : [...prev, dt])}
                                             className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all cursor-pointer ${dietTypes.includes(dt)
-                                                    ? 'bg-emerald-700 text-white border-emerald-700'
-                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400 hover:bg-emerald-50'
+                                                ? 'bg-emerald-700 text-white border-emerald-700'
+                                                : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400 hover:bg-emerald-50'
                                                 }`}
                                         >
                                             {DIET_LABELS[dt]}
