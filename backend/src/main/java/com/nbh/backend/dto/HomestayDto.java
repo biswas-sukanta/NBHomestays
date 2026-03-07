@@ -47,6 +47,7 @@ public class HomestayDto {
         private java.util.List<String> tags;
         private java.util.Map<String, Object> hostDetails;
         private java.util.Map<String, Object> mealConfig;
+        private java.util.Map<String, Object> meta;
         private java.util.List<MediaDto> media;
 
         @NotBlank(message = "Destination is mandatory")
@@ -84,6 +85,11 @@ public class HomestayDto {
         private Boolean featured;
         private DestinationDto destination;
         private java.util.Map<String, Object> mealConfig;
+
+        // Editorial & Premium UX Fields
+        private String editorialLead;
+        private java.util.List<String> nearbyHighlights;
+        private Integer bookingHeatScore;
     }
 
     @Data

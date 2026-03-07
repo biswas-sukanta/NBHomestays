@@ -117,6 +117,11 @@ public class Homestay {
     @Builder.Default
     private java.util.Map<String, Object> mealConfig = new java.util.HashMap<>();
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    @Builder.Default
+    private java.util.Map<String, Object> meta = new java.util.HashMap<>();
+
     @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destination_id")

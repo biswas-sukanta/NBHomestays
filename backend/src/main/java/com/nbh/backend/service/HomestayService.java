@@ -58,6 +58,8 @@ public class HomestayService {
                                 .hostDetails(request.getHostDetails())
                                 .mealConfig(request.getMealConfig() != null ? request.getMealConfig()
                                                 : new java.util.HashMap<>())
+                                .meta(request.getMeta() != null ? request.getMeta()
+                                                : new java.util.HashMap<>())
                                 .status(status)
                                 .vibeScore(0.0)
                                 .latitude(request.getLatitude())
@@ -195,6 +197,8 @@ public class HomestayService {
                         homestay.setHostDetails(request.getHostDetails());
                 if (request.getMealConfig() != null)
                         homestay.setMealConfig(request.getMealConfig());
+                if (request.getMeta() != null)
+                        homestay.setMeta(request.getMeta());
                 if (request.getLocationName() != null)
                         homestay.setAddress(request.getLocationName());
 
@@ -342,6 +346,20 @@ public class HomestayService {
                                 ? new java.util.ArrayList<>(homestay.getTags())
                                 : new java.util.ArrayList<>();
 
+                java.util.Map<String, Object> meta = homestay.getMeta() != null
+                                ? new java.util.HashMap<>(homestay.getMeta())
+                                : new java.util.HashMap<>();
+
+                String editorialLead = meta.get("editorialLead") != null ? (String) meta.get("editorialLead") : null;
+                Integer bookingHeatScore = meta.get("bookingHeatScore") != null
+                                ? ((Number) meta.get("bookingHeatScore")).intValue()
+                                : null;
+
+                @SuppressWarnings("unchecked")
+                java.util.List<String> nearbyHighlights = meta.get("nearbyHighlights") != null
+                                ? new java.util.ArrayList<>((java.util.List<String>) meta.get("nearbyHighlights"))
+                                : null;
+
                 return HomestayDto.Response.builder()
                                 .id(homestay.getId())
                                 .name(homestay.getName())
@@ -386,6 +404,9 @@ public class HomestayService {
                                 .featured(homestay.getFeatured())
                                 .destination(destinationService.mapToDto(homestay.getDestination()))
                                 .mealConfig(mealConfig)
+                                .editorialLead(editorialLead)
+                                .nearbyHighlights(nearbyHighlights)
+                                .bookingHeatScore(bookingHeatScore)
                                 .build();
         }
 }
