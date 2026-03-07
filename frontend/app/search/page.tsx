@@ -25,8 +25,23 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 
 const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
     ssr: false,
-    loading: () => <div className="h-[600px] w-full bg-secondary/10 animate-pulse rounded-2xl flex items-center justify-center text-muted-foreground">Loading Discovery Map...</div>
+    loading: () => (
+        <div className="h-full min-h-[500px] w-full bg-secondary/10 flex items-center justify-center overflow-hidden lg:rounded-2xl border border-stone-200 relative">
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4 text-muted-foreground/60 drop-shadow-sm">
+                <MapIcon className="w-10 h-10 animate-pulse" />
+                <span className="font-bold tracking-tight text-sm uppercase">Loading Map...</span>
+            </div>
+            {/* Fake Controls Skeleton */}
+            <div className="absolute top-1/2 -translate-y-1/2 right-4 flex flex-col gap-0 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden lg:hidden opacity-50">
+                <div className="w-11 h-11 border-b border-gray-100 bg-gray-50"></div>
+                <div className="w-11 h-11 border-b border-gray-100 bg-gray-50"></div>
+                <div className="w-11 h-11 bg-gray-50"></div>
+            </div>
+        </div>
+    )
 });
+
 
 const VIBE_CARDS = [
     { label: 'Mountain View', tag: 'Mountain View', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=600' },
@@ -133,6 +148,36 @@ const DestinationCard = React.memo(({ dest, isActive }: { dest: { name: string; 
 
 DestinationCard.displayName = 'DestinationCard';
 
+function MobileIntersectionObserver({ setActiveHomestayId }: { setActiveHomestayId: (id: string | null) => void }) {
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('data-id');
+                    if (id) {
+                        setActiveHomestayId(id);
+                    }
+                }
+            });
+        }, {
+            root: null,
+            threshold: 0.6
+        });
+
+        const timeout = setTimeout(() => {
+            const cards = document.querySelectorAll('.observer-card');
+            cards.forEach(card => observer.observe(card));
+        }, 500);
+
+        return () => {
+            clearTimeout(timeout);
+            observer.disconnect();
+        };
+    }, [setActiveHomestayId]);
+
+    return null;
+}
+
 function SearchResults() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -148,6 +193,7 @@ function SearchResults() {
 
     const [viewType, setViewType] = useState<'grid' | 'map'>('grid');
     const [mapBounds, setMapBounds] = useState<{ minLat: number, maxLat: number, minLng: number, maxLng: number } | null>(null);
+    const [activeHomestayId, setActiveHomestayId] = useState<string | null>(null);
 
     const isStorefront = !query && !tag;
 
@@ -426,18 +472,27 @@ function SearchResults() {
                             </div>
 
                             {viewType === 'map' ? (
-                                <div className="flex flex-col lg:grid lg:grid-cols-[1fr_420px] gap-0 lg:h-[calc(100vh-72px)] lg:-mx-8 lg:mb-12">
-                                    {/* Left: Map (Fullscreen on mobile, relative split on desktop) */}
-                                    <div className="fixed inset-0 z-[40] lg:relative lg:z-auto w-full lg:h-full overflow-hidden border-r border-stone-200">
+                                <div className="flex flex-col lg:grid lg:grid-cols-[1fr_420px] gap-8 lg:mb-12 relative w-full items-start">
+                                    {/* Left: Map (Fullscreen on mobile, Sticky split on desktop) */}
+                                    <div className="fixed inset-0 z-[40] lg:sticky lg:top-[140px] lg:z-auto w-full lg:h-[calc(100vh-160px)] overflow-hidden lg:rounded-2xl border border-stone-200">
                                         <ErrorBoundary name="Discovery Map" fallback={<div className="h-full w-full bg-red-50 flex items-center justify-center text-red-600 font-medium italic">Map failed to initialize. Please refresh or try again later.</div>}>
-                                            <HomestayMapView homestays={allStays} onMapChange={handleMapChange} />
+                                            <HomestayMapView
+                                                homestays={allStays}
+                                                onMapChange={handleMapChange}
+                                                hoveredHomestayId={activeHomestayId}
+                                            />
                                         </ErrorBoundary>
 
                                         {/* Mobile Bottom Sheet Overlay for Cards */}
                                         <div className="absolute lg:hidden bottom-0 inset-x-0 z-[50] pb-[80px] pt-12 bg-gradient-to-t from-black/60 to-transparent pointer-events-none flex flex-col justify-end">
                                             <div className="pointer-events-auto w-full overflow-x-auto snap-x snap-mandatory flex gap-4 px-4 pb-4 hide-scrollbar">
                                                 {allStays.slice(0, 10).map((homestay: any) => (
-                                                    <div key={homestay.id} className="w-[85vw] max-w-[320px] shrink-0 snap-center">
+                                                    <div
+                                                        key={homestay.id}
+                                                        id={`homestay-card-${homestay.id}`}
+                                                        className="w-[85vw] max-w-[320px] shrink-0 snap-center transition-all duration-300 transform-gpu observer-card"
+                                                        data-id={homestay.id}
+                                                    >
                                                         <HomestayCard homestay={homestay} />
                                                     </div>
                                                 ))}
@@ -445,11 +500,16 @@ function SearchResults() {
                                         </div>
                                     </div>
 
-                                    {/* Right: Desktop Listings Rail (Hidden on mobile map) */}
-                                    <div className="hidden lg:flex w-full h-full flex-col bg-white overflow-hidden">
-                                        <div className="flex-1 overflow-y-auto px-4 py-6 hide-scrollbar flex flex-col gap-6">
+                                    {/* Right: Desktop Listings Rail (Native window scrollable) */}
+                                    <div className="hidden lg:flex w-full flex-col bg-transparent">
+                                        <div className="flex-1 flex flex-col gap-6 pb-20">
                                             {allStays.map((homestay: any) => (
-                                                <div key={homestay.id} className="w-full transition-all duration-300">
+                                                <div
+                                                    key={homestay.id}
+                                                    className="w-full transition-all duration-300"
+                                                    onMouseEnter={() => setActiveHomestayId(homestay.id)}
+                                                    onMouseLeave={() => setActiveHomestayId(null)}
+                                                >
                                                     <HomestayCard homestay={homestay} />
                                                 </div>
                                             ))}
@@ -575,9 +635,13 @@ function SearchResults() {
                         </div>
 
                         {viewType === 'map' ? (
-                            <div className="h-[600px] w-full mb-12">
+                            <div className="h-[calc(100vh-160px)] w-full mb-12 rounded-2xl overflow-hidden border border-stone-200">
                                 <ErrorBoundary name="Search Results Map">
-                                    <HomestayMapView homestays={searchGrid} onMapChange={handleMapChange} />
+                                    <HomestayMapView
+                                        homestays={searchGrid}
+                                        onMapChange={handleMapChange}
+                                        hoveredHomestayId={activeHomestayId}
+                                    />
                                 </ErrorBoundary>
                             </div>
                         ) : searchGrid.length > 0 ? (
@@ -585,7 +649,12 @@ function SearchResults() {
                                 {searchGrid.map((h, i) => {
                                     const isFeatured = i % 12 === 0;
                                     return (
-                                        <div key={h.id} className={cn(isFeatured ? 'md:col-span-2' : '')}>
+                                        <div
+                                            key={h.id}
+                                            className={cn(isFeatured ? 'md:col-span-2' : '')}
+                                            onMouseEnter={() => setActiveHomestayId(h.id)}
+                                            onMouseLeave={() => setActiveHomestayId(null)}
+                                        >
                                             <HomestayCard homestay={h} index={i} featured={isFeatured} />
                                         </div>
                                     );
