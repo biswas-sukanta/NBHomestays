@@ -56,6 +56,8 @@ public class HomestayService {
                                 .quickFacts(request.getQuickFacts())
                                 .tags(request.getTags())
                                 .hostDetails(request.getHostDetails())
+                                .mealConfig(request.getMealConfig() != null ? request.getMealConfig()
+                                                : new java.util.HashMap<>())
                                 .status(status)
                                 .vibeScore(0.0)
                                 .latitude(request.getLatitude())
@@ -191,6 +193,8 @@ public class HomestayService {
                         homestay.setTags(request.getTags());
                 if (request.getHostDetails() != null)
                         homestay.setHostDetails(request.getHostDetails());
+                if (request.getMealConfig() != null)
+                        homestay.setMealConfig(request.getMealConfig());
                 if (request.getLocationName() != null)
                         homestay.setAddress(request.getLocationName());
 
@@ -330,6 +334,10 @@ public class HomestayService {
                                 ? new java.util.HashMap<>(homestay.getHostDetails())
                                 : new java.util.HashMap<>();
 
+                java.util.Map<String, Object> mealConfig = homestay.getMealConfig() != null
+                                ? new java.util.HashMap<>(homestay.getMealConfig())
+                                : new java.util.HashMap<>();
+
                 java.util.List<String> tags = homestay.getTags() != null
                                 ? new java.util.ArrayList<>(homestay.getTags())
                                 : new java.util.ArrayList<>();
@@ -377,6 +385,7 @@ public class HomestayService {
                                 .ownerId(homestay.getOwner().getId())
                                 .featured(homestay.getFeatured())
                                 .destination(destinationService.mapToDto(homestay.getDestination()))
+                                .mealConfig(mealConfig)
                                 .build();
         }
 }
