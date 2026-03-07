@@ -44,7 +44,22 @@ function MapHoverPan({ homestays, hoveredHomestayId }: { homestays: HomestaySumm
         if (hoveredHomestayId) {
             const h = homestays.find(x => x.id === hoveredHomestayId);
             if (h && h.latitude && h.longitude) {
-                map.panTo([h.latitude, h.longitude], { animate: true, duration: 0.5 });
+                const targetZoom = Math.max(map.getZoom(), 13);
+
+                if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                    const mapSize = map.getSize();
+                    // push center upward so marker sits above bottom card overlay
+                    const verticalOffset = mapSize.y * 0.18;
+
+                    const paddedPoint = map.project([h.latitude, h.longitude], targetZoom)
+                        .subtract([0, verticalOffset]);
+
+                    const paddedLatLng = map.unproject(paddedPoint, targetZoom);
+
+                    map.flyTo(paddedLatLng, targetZoom, { animate: true, duration: 0.8 });
+                } else {
+                    map.flyTo([h.latitude, h.longitude], targetZoom, { animate: true, duration: 1.5 });
+                }
             }
         }
     }, [hoveredHomestayId, homestays, map]);
@@ -73,7 +88,7 @@ function MapMobileControls({ onCloseMap }: { onCloseMap?: () => void }) {
                     <X className="w-5 h-5" />
                 </button>
             )}
-            <div className="absolute top-1/2 -translate-y-1/2 right-4 z-[400] flex flex-col gap-3 lg:hidden">
+            <div className="absolute bottom-[120px] right-4 z-[500] flex flex-col gap-3 lg:hidden">
                 <div className="flex flex-col bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
                     <button
                         onClick={handleLocateMe}
@@ -107,7 +122,7 @@ function MapMobileControls({ onCloseMap }: { onCloseMap?: () => void }) {
             </div>
 
             {/* Desktop Locate Me (optional but good practice) */}
-            <div className="absolute bottom-8 right-4 z-[400] hidden lg:block">
+            <div className="absolute bottom-[120px] right-4 z-[500] hidden lg:block">
                 <button
                     onClick={handleLocateMe}
                     className="p-3 bg-white hover:bg-gray-50 rounded-xl shadow-lg border border-gray-100 transition-colors"
@@ -204,8 +219,8 @@ function ClusteredMarkers({ homestays, hoveredHomestayId, onMarkerHover, onMarke
                             })}
                             eventHandlers={{
                                 click: () => {
-                                    const expansionZoom = Math.min(supercluster.getClusterExpansionZoom(cluster.id), 20);
-                                    map.setView([latitude, longitude], expansionZoom, { animate: true });
+                                    const expansionZoom = Math.min(supercluster.getClusterExpansionZoom(cluster.id), 17);
+                                    map.flyTo([latitude, longitude], expansionZoom, { duration: 0.6 });
                                 }
                             }}
                         />

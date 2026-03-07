@@ -474,7 +474,7 @@ function SearchResults() {
                             {viewType === 'map' ? (
                                 <div className="flex flex-col lg:grid lg:grid-cols-[1fr_420px] gap-8 lg:mb-12 relative w-full items-start">
                                     {/* Left: Map (Fullscreen on mobile, Sticky split on desktop) */}
-                                    <div className="fixed inset-0 z-[40] lg:sticky lg:top-[140px] lg:z-auto w-full lg:h-[calc(100vh-160px)] overflow-hidden lg:rounded-2xl border border-stone-200">
+                                    <div className="fixed inset-0 z-[40] lg:sticky lg:top-[80px] lg:z-auto w-full lg:h-[calc(100vh-80px)] overflow-hidden lg:rounded-2xl border border-stone-200">
                                         <ErrorBoundary name="Discovery Map" fallback={<div className="h-full w-full bg-red-50 flex items-center justify-center text-red-600 font-medium italic">Map failed to initialize. Please refresh or try again later.</div>}>
                                             <HomestayMapView
                                                 homestays={allStays}
@@ -484,8 +484,8 @@ function SearchResults() {
                                         </ErrorBoundary>
 
                                         {/* Mobile Bottom Sheet Overlay for Cards */}
-                                        <div className="absolute lg:hidden bottom-0 inset-x-0 z-[50] pb-[80px] pt-12 bg-gradient-to-t from-black/60 to-transparent pointer-events-none flex flex-col justify-end">
-                                            <div className="pointer-events-auto w-full overflow-x-auto snap-x snap-mandatory flex gap-4 px-4 pb-4 hide-scrollbar">
+                                        <div className="absolute lg:hidden bottom-0 inset-x-0 z-[50] h-[30vh] max-h-[280px] bg-gradient-to-t from-black/60 to-transparent pointer-events-none flex flex-col justify-end pb-6">
+                                            <div className="pointer-events-auto w-full overflow-x-auto snap-x snap-mandatory flex gap-4 px-4 hide-scrollbar">
                                                 {allStays.slice(0, 10).map((homestay: any) => (
                                                     <div
                                                         key={homestay.id}
@@ -635,7 +635,7 @@ function SearchResults() {
                         </div>
 
                         {viewType === 'map' ? (
-                            <div className="h-[calc(100vh-160px)] w-full mb-12 rounded-2xl overflow-hidden border border-stone-200">
+                            <div className="h-[calc(100vh-80px)] w-full mb-12 rounded-2xl overflow-hidden border border-stone-200">
                                 <ErrorBoundary name="Search Results Map">
                                     <HomestayMapView
                                         homestays={searchGrid}

@@ -9,17 +9,22 @@ const createPriceMarker = (h: any, isActive: boolean = false) => {
     return L.divIcon({
         className: 'custom-price-marker',
         html: `
-            <div class="flex items-center justify-center ${isActive ? 'bg-gray-900 text-white scale-110 shadow-xl z-[1000]' : 'bg-white text-gray-900 shadow-md'} rounded-full px-3 py-1.5 transition-all duration-300 hover:scale-[1.08] relative group">
+            <div class="flex items-center justify-center ${isActive ? 'bg-gray-900 text-white scale-110 shadow-2xl z-[1000]' : 'bg-white text-gray-900 shadow-md'} rounded-full px-3 py-1.5 transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-[1.08] relative group">
                 <span class="text-xs font-black tracking-tight">₹${h.pricePerNight.toLocaleString()}</span>
                 
                 <!-- Pure CSS Hover Preview Card -->
-                <div class="pointer-events-none absolute top-[-135px] left-1/2 -translate-x-1/2 w-44 bg-white rounded-xl shadow-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300 origin-bottom scale-90 group-hover:scale-100 z-[2000]">
+                <div class="pointer-events-none absolute top-[-135px] left-1/2 -translate-x-1/2 w-44 bg-white rounded-xl shadow-2xl overflow-hidden hidden lg:block opacity-0 group-hover:opacity-100 transition-all duration-300 origin-bottom scale-90 group-hover:scale-100 z-[2000]">
                     <div class="w-full h-24 relative bg-gray-100 overflow-hidden">
                         <img src="${h.media?.[0]?.url || '/placeholder-home.jpg'}" class="w-full h-full object-cover" />
                     </div>
                     <div class="px-2.5 py-2 bg-white">
-                        <h4 class="font-bold text-[11px] text-gray-900 line-clamp-1 tracking-tight">${h.name}</h4>
-                        <div class="text-gray-900 font-black text-xs mt-0.5">₹${h.pricePerNight.toLocaleString()}</div>
+                        <div class="flex justify-between items-start gap-1">
+                            <h4 class="font-bold text-[11px] text-gray-900 line-clamp-1 tracking-tight">${h.name}</h4>
+                            <div class="flex items-center gap-0.5 shrink-0 text-[10px] font-bold">
+                                <span>★</span> ${h.vibeScore ? h.vibeScore.toFixed(1) : 'New'}
+                            </div>
+                        </div>
+                        <div class="text-gray-900 font-black text-xs mt-0.5">₹${h.pricePerNight.toLocaleString()} <span class="text-[10px] font-normal text-gray-500">/ night</span></div>
                     </div>
                     <!-- Triangle notch -->
                     <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-r border-b border-gray-100 shadow-sm hidden"></div>
