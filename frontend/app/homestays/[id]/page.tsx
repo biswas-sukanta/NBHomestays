@@ -42,7 +42,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     const { id } = await params;
 
     const isDev = process.env.NODE_ENV === 'development';
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || '';
     const fetchUrl = `${backendUrl}/api/homestays/${id}`;
 
     console.log("[HOMESTAY PAGE] Fetching URL:", fetchUrl);

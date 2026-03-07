@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 
 const api = axios.create({
     baseURL: `${API_BASE}/api`,
@@ -63,7 +63,7 @@ api.interceptors.response.use(
                     throw new Error("No refresh token");
                 }
 
-                const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
                 // Use a clean axios instance to avert interceptor loops
                 const res = await axios.post(`${API_BASE}/api/auth/refresh`, { refreshToken });
                 const newAccessToken = res.data.accessToken;
