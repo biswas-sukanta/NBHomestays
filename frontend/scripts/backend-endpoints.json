@@ -1,0 +1,194 @@
+[
+    {
+        "method": "GET",
+        "path": "/api/homestays",
+        "controller": "HomestayController",
+        "dtoReturned": "List<HomestayDto.Response>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/homestays/search",
+        "controller": "HomestayController",
+        "dtoReturned": "Page<HomestayDto.Response>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/homestays/lookup",
+        "controller": "HomestayController",
+        "dtoReturned": "List<HomestayDto.LookupResponse>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/homestays/{id}",
+        "controller": "HomestayController",
+        "dtoReturned": "HomestayDto.Response"
+    },
+    {
+        "method": "GET",
+        "path": "/api/homestays/my-listings",
+        "controller": "HomestayController",
+        "dtoReturned": "Page<HomestayDto.Response>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/homestays/all",
+        "controller": "HomestayController",
+        "dtoReturned": "List<HomestayDto.Response>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/homestays/pending",
+        "controller": "HomestayController",
+        "dtoReturned": "Page<HomestayDto.Response>"
+    },
+    {
+        "method": "POST",
+        "path": "/api/homestays",
+        "controller": "HomestayController",
+        "dtoReturned": "HomestayDto.Response"
+    },
+    {
+        "method": "PUT",
+        "path": "/api/homestays/{id}",
+        "controller": "HomestayController",
+        "dtoReturned": "HomestayDto.Response"
+    },
+    {
+        "method": "DELETE",
+        "path": "/api/homestays/{id}",
+        "controller": "HomestayController",
+        "dtoReturned": "void"
+    },
+    {
+        "method": "PUT",
+        "path": "/api/homestays/{id}/approve",
+        "controller": "HomestayController",
+        "dtoReturned": "void"
+    },
+    {
+        "method": "PUT",
+        "path": "/api/homestays/{id}/reject",
+        "controller": "HomestayController",
+        "dtoReturned": "void"
+    },
+    {
+        "method": "GET",
+        "path": "/api/states",
+        "controller": "StateController",
+        "dtoReturned": "List<DestinationDto.StateResponse>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/states/{slug}",
+        "controller": "StateController",
+        "dtoReturned": "DestinationDto.StateResponse"
+    },
+    {
+        "method": "GET",
+        "path": "/api/states/{slug}/destinations",
+        "controller": "StateController",
+        "dtoReturned": "List<DestinationDto.Response>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/destinations",
+        "controller": "DestinationController",
+        "dtoReturned": "List<DestinationDto.Response>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/destinations/{slug}",
+        "controller": "DestinationController",
+        "dtoReturned": "DestinationDto.Response"
+    },
+    {
+        "method": "GET",
+        "path": "/api/destinations/{slug}/homestays",
+        "controller": "DestinationController",
+        "dtoReturned": "Page<HomestayDto.Response>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/posts",
+        "controller": "PostController",
+        "dtoReturned": "Page<PostDto.Response>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/posts/search",
+        "controller": "PostController",
+        "dtoReturned": "Page<PostDto.Response>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/posts/{id}",
+        "controller": "PostController",
+        "dtoReturned": "PostDto.Response"
+    },
+    {
+        "method": "GET",
+        "path": "/api/posts/my-posts",
+        "controller": "PostController",
+        "dtoReturned": "Page<PostDto.Response>"
+    },
+    {
+        "method": "GET",
+        "path": "/api/users/{id}/profile",
+        "controller": "UserController",
+        "dtoReturned": "AuthorDto"
+    },
+    {
+        "method": "GET",
+        "path": "/api/admin/stats",
+        "controller": "AdminController",
+        "dtoReturned": "DashboardStatsDto"
+    },
+    {
+        "method": "GET",
+        "path": "/api/users/{id}/profile",
+        "controller": "UserController",
+        "dtoReturned": "AuthorDto"
+    },
+    {
+        "method": "GET",
+        "path": "/api/homestays/{id}/questions",
+        "controller": "HomestayQuestionController",
+        "dtoReturned": "List<HomestayQuestionDto.Response>"
+    },
+    {
+        "method": "POST",
+        "path": "/api/homestays/{id}/questions",
+        "controller": "HomestayQuestionController",
+        "dtoReturned": "HomestayQuestionDto.Response"
+    },
+    {
+        "method": "PUT",
+        "path": "/api/questions/{id}",
+        "controller": "HomestayQuestionController",
+        "dtoReturned": "HomestayQuestionDto.Response"
+    },
+    {
+        "method": "DELETE",
+        "path": "/api/questions/{id}",
+        "controller": "HomestayQuestionController",
+        "dtoReturned": "void"
+    },
+    {
+        "method": "POST",
+        "path": "/api/questions/{id}/answers",
+        "controller": "HomestayQuestionController",
+        "dtoReturned": "HomestayQuestionDto.AnswerResponse"
+    },
+    {
+        "method": "PUT",
+        "path": "/api/answers/{id}",
+        "controller": "HomestayQuestionController",
+        "dtoReturned": "HomestayQuestionDto.AnswerResponse"
+    },
+    {
+        "method": "DELETE",
+        "path": "/api/answers/{id}",
+        "controller": "HomestayQuestionController",
+        "dtoReturned": "void"
+    }
+]

@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@ActiveProfiles({"test", "h2-test"})
+@ActiveProfiles({ "test", "h2-test" })
 public class HomestayIntegrationTest {
 
         @Autowired
@@ -50,6 +50,10 @@ public class HomestayIntegrationTest {
                 String email = "host-" + java.util.UUID.randomUUID() + "@example.com";
                 String token = registerUser(email, User.Role.ROLE_HOST);
 
+                java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                meta.put("editorialLead", "Stunning views from the balcony.");
+                meta.put("bookingHeatScore", 95);
+
                 HomestayDto.Request request = HomestayDto.Request.builder()
                                 .name("Cozy Cabin")
                                 .description("A nice cabin in the woods")
@@ -57,6 +61,7 @@ public class HomestayIntegrationTest {
                                 .latitude(27.0)
                                 .longitude(88.0)
                                 .locationName("Darjeeling")
+                                .meta(meta)
                                 .build();
 
                 mockMvc.perform(post("/api/homestays")
@@ -67,7 +72,9 @@ public class HomestayIntegrationTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.id").exists())
                                 .andExpect(jsonPath("$.name").value("Cozy Cabin"))
-                                .andExpect(jsonPath("$.status").value("PENDING"));
+                                .andExpect(jsonPath("$.status").value("PENDING"))
+                                .andExpect(jsonPath("$.editorialLead").value("Stunning views from the balcony."))
+                                .andExpect(jsonPath("$.bookingHeatScore").value(95));
         }
 
         @Test
