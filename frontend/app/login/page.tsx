@@ -42,7 +42,7 @@ export default function LoginPage() {
                 >
                     <img
                         src="/_static/images/login-hero.png"
-                        alt="Himalayan Sunup"
+                        alt="Eastern Himalayan Sunup"
                         className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/30 md:bg-black/20" />
@@ -73,7 +73,7 @@ export default function LoginPage() {
                         transition={{ delay: 0.7, duration: 0.8 }}
                         className="text-white/80 font-sans text-lg leading-relaxed"
                     >
-                        Join our community of explorers discovering the hidden magic of the Himalayas.
+                        Join our community of travelers discovering the hidden magic of the Eastern Himalayas.
                     </motion.p>
                 </div>
             </div>
@@ -146,7 +146,7 @@ export default function LoginPage() {
 
                         <div className="text-center pt-8">
                             <p className="text-zinc-500 font-medium">
-                                New to the Himalayas?{' '}
+                                New to the Eastern Himalayas?{' '}
                                 <Link href="/register" className="text-zinc-950 font-bold hover:underline underline-offset-4 decoration-zinc-300">
                                     Create an Account
                                 </Link>

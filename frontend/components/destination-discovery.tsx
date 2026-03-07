@@ -72,8 +72,8 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                     icon={<Map className="w-8 h-8 text-muted-foreground" />}
                     title="No destinations found in this region yet"
                     description={stateName
-                        ? `We are constantly exploring new places. Check back soon for curated destinations in ${stateName}.`
-                        : "We are constantly exploring new places. Check back soon for curated destinations in this region."}
+                        ? `We are constantly scouting the road less traveled for new authentic homestays. Check back soon for curated destinations in ${stateName}.`
+                        : "We are constantly scouting the road less traveled for new authentic homestays. Check back soon for curated destinations in this region."}
                 />
             </div>
         );

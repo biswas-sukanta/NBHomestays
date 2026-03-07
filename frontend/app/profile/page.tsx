@@ -29,7 +29,7 @@ const FALLBACK = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?a
 
 const TABS = [
     { key: 'boards', label: 'Trip Boards', icon: Heart },
-    { key: 'posts', label: 'My Posts', icon: FileText },
+    { key: 'posts', label: 'My Stories', icon: FileText },
     { key: 'settings', label: 'Settings', icon: Settings },
 ] as const;
 type TabKey = typeof TABS[number]['key'];
@@ -116,7 +116,7 @@ function MyPostsTab() {
     // Safe extraction
     const posts = data?.pages ? data.pages.flatMap((p: any) => p.content || p.data || []) : (data?.content || data || []);
 
-    if (posts.length === 0) return <p className="text-center py-20 text-muted-foreground font-medium">You haven't posted anything yet. <Link href="/community" className="text-green-600 font-bold hover:underline">Share your experience →</Link></p>;
+    if (posts.length === 0) return <p className="text-center py-20 text-muted-foreground font-medium">You haven't shared any stories yet. <Link href="/community" className="text-green-600 font-bold hover:underline">Share your experience →</Link></p>;
 
     return (
 

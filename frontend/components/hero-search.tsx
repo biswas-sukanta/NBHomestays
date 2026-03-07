@@ -76,7 +76,7 @@ export function HeroSearch() {
                     className="mb-12 max-w-xl text-lg text-white/75 md:text-xl font-medium tracking-wide"
                     style={{ textShadow: '0 1px 8px rgba(0,0,0,0.3)' }}
                 >
-                    Skip the tourist traps. Find stays with actual soul.
+                    Skip the tourist traps. Find authentic homestays with actual soul.
                 </motion.p>
 
                 {/* ── Unified Command Bar (Single Pill) ── */}

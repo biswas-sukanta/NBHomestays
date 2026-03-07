@@ -156,7 +156,7 @@ test.describe('NB-HOMESTAY AUTOMATION SUITE', () => {
         await approveRes;
     });
 
-    test('Flow 4: Explorer Flow - Search -> View -> Select (No 404)', async ({ page, context }) => {
+    test('Flow 4: Traveler Flow - Search -> View -> Select (No 404)', async ({ page, context }) => {
         // 1. Smart Logout
         await ensureLoggedOut(page);
 

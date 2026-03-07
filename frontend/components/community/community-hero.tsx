@@ -28,13 +28,13 @@ export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
                 <img
                     src="/_static/community/community_hero_desktop.webp?tr=w-1920,q-70,f-webp"
                     className="w-full h-full object-cover hidden md:block"
-                    alt="Community journeys in the Himalayas"
+                    alt="Community journeys in the Eastern Himalayas"
                     loading="eager"
                 />
                 <img
                     src="/_static/community/community_hero_mobile.webp?tr=w-800,q-70,f-webp"
                     className="w-full h-full object-cover md:hidden"
-                    alt="Community journeys in the Himalayas"
+                    alt="Community journeys in the Eastern Himalayas"
                     loading="eager"
                 />
             </motion.div>
@@ -51,7 +51,7 @@ export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
                         Community
                     </h1>
                     <p className="text-lg sm:text-xl md:text-2xl text-zinc-400 font-bold max-w-2xl mx-auto drop-shadow-md">
-                        Real travelers. Real discoveries across the Himalayas.
+                        Real travelers. Stories from the road across the Eastern Himalayas.
                     </p>
 
                     <motion.div

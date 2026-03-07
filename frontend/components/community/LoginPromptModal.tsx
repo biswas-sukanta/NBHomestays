@@ -46,7 +46,7 @@ export function LoginPromptModal({ isOpen, onClose, action = 'love' }: LoginProm
                                     </div>
                                     <div className="flex items-center gap-2 px-3 py-1 bg-white/5 backdrop-blur-md rounded-full border border-white/5">
                                         <Compass className="w-3 h-3 text-zinc-400 animate-pulse" />
-                                        <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">Hidden Himalayas</span>
+                                        <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">Eastern Himalayas</span>
                                     </div>
                                 </div>
                             </div>
@@ -57,7 +57,7 @@ export function LoginPromptModal({ isOpen, onClose, action = 'love' }: LoginProm
                                         Share your journey
                                     </DialogTitle>
                                     <DialogDescription className="text-zinc-400 text-lg font-sans leading-relaxed max-w-[280px] mx-auto">
-                                        Every trail has a story. Join explorers uncovering the hidden Himalayas.
+                                        Every trail has a story. Join travelers uncovering the Eastern Himalayas.
                                     </DialogDescription>
                                 </DialogHeader>
 
@@ -80,7 +80,7 @@ export function LoginPromptModal({ isOpen, onClose, action = 'love' }: LoginProm
                                 </div>
 
                                 <p className="text-zinc-500 text-sm mt-8 font-serif italic">
-                                    Discover the Himalayas, one story at a time.
+                                    Discover the Eastern Himalayas, one story at a time.
                                 </p>
                             </div>
                         </motion.div>

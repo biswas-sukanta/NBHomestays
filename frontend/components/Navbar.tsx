@@ -121,7 +121,7 @@ export default function Navbar() {
                                     <span className={cn(
                                         "hidden lg:inline text-[10px] font-bold tracking-widest uppercase",
                                         isDark ? "text-white/60" : "text-emerald-600"
-                                    )}>✦ Explorer</span>
+                                    )}>✦ Traveler</span>
                                     <ChevronDown className={cn(
                                         "w-3.5 h-3.5 transition-transform duration-200",
                                         avatarOpen && "rotate-180"

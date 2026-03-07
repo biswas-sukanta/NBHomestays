@@ -55,8 +55,8 @@ export default function Home() {
             }
             titleClassName="font-serif text-3xl md:text-4xl font-medium tracking-tight text-slate-900"
             title={
-              <span className="block px-4 leading-tight">
-                Where will you go <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent italic">next?</span>
+              <span className="block px-4 leading-tight text-balance">
+                Discover destinations across the <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent italic">Eastern Himalayas</span>
               </span>
             }
             subtitle={<span className="text-slate-600 block text-base md:text-lg">Unwind in the most sought-after hills, valleys, and hidden hamlets of the East.</span>}
@@ -183,7 +183,7 @@ export default function Home() {
                 <Umbrella className="w-6 h-6 text-blue-500 group-hover:text-white transition-colors" />
               </div>
               <h4 className="text-lg font-bold text-slate-900 mb-2 tracking-tight drop-shadow-sm font-serif">Under One Roof</h4>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed">Forget fragmented FB groups. Experience verified stays and real advice all in one curated hub.</p>
+              <p className="text-slate-500 text-sm font-medium leading-relaxed">Forget fragmented groups. Stories from the road, verified stays, and real advice all in one curated hub.</p>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}

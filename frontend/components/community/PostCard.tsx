@@ -22,7 +22,7 @@ import { LoginPromptModal } from './LoginPromptModal';
 const TAG_ICONS: Record<string, React.ReactNode> = {
     'Hidden Gem': <CheckCircle2 className="w-3 h-3" />,
     'Top Pick': <TrendingUp className="w-3 h-3" />, // Will import TrendingUp
-    'Himalayan Bliss': <MapPin className="w-3 h-3" />,
+    'Mountain Bliss': <MapPin className="w-3 h-3" />,
     'Local Secret': <Send className="w-3 h-3" />,
 };
 import { TrendingUp } from 'lucide-react';

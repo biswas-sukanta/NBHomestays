@@ -94,7 +94,7 @@ export default function PublicProfilePage() {
                                 </div>
                                 <div className="flex justify-between items-center bg-white/60 p-3 rounded-xl border border-white">
                                     <span className="text-xs font-bold text-emerald-800">Vibe Keeper</span>
-                                    <span className="text-xs font-black text-emerald-950">Explorer</span>
+                                    <span className="text-xs font-black text-emerald-950">Traveler</span>
                                 </div>
                             </div>
                         </section>

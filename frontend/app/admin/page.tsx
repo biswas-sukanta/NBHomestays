@@ -227,7 +227,7 @@ export default function AdminPage() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {[
                         { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-500' },
-                        { label: 'Community Posts', value: stats.totalPosts, icon: FileText, color: 'text-green-500' },
+                        { label: 'Community Stories', value: stats.totalPosts, icon: FileText, color: 'text-green-500' },
                         { label: 'Total Homestays', value: stats.totalHomestays, icon: Home, color: 'text-purple-500' },
                         { label: 'Pending Review', value: stats.pendingHomestays, icon: TrendingUp, color: 'text-yellow-500' },
                         { label: 'Approved Stays', value: stats.approvedHomestays, icon: CheckCircle, color: 'text-emerald-500' },
