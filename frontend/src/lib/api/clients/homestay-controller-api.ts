@@ -39,7 +39,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
         approveHomestay: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('approveHomestay', 'id', id)
-            const localVarPath = `/api/homestays/{id}/approve`
+            const localVarPath = `/homestays/{id}/approve`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -48,14 +48,14 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -71,7 +71,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
         createHomestay: async (request: Request, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'request' is not null or undefined
             assertParamExists('createHomestay', 'request', request)
-            const localVarPath = `/api/homestays`;
+            const localVarPath = `/homestays`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -79,7 +79,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -88,7 +88,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
@@ -105,7 +105,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
         deleteHomestay: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('deleteHomestay', 'id', id)
-            const localVarPath = `/api/homestays/{id}`
+            const localVarPath = `/homestays/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -114,14 +114,14 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -137,7 +137,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
         getHomestay: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('getHomestay', 'id', id)
-            const localVarPath = `/api/homestays/{id}`
+            const localVarPath = `/homestays/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -146,7 +146,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -154,7 +154,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -167,7 +167,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
          * @throws {RequiredError}
          */
         getMyListings: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/homestays/my-listings`;
+            const localVarPath = `/homestays/my-listings`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -175,7 +175,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -183,7 +183,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -196,7 +196,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
          * @throws {RequiredError}
          */
         getPendingHomestays: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/homestays/pending`;
+            const localVarPath = `/homestays/pending`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -204,7 +204,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -212,7 +212,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -228,7 +228,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
         rejectHomestay: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('rejectHomestay', 'id', id)
-            const localVarPath = `/api/homestays/{id}/reject`
+            const localVarPath = `/homestays/{id}/reject`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -237,14 +237,14 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -260,7 +260,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
          * @throws {RequiredError}
          */
         search: async (q?: string, minPrice?: number, maxPrice?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/homestays/search`;
+            const localVarPath = `/homestays/search`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -268,7 +268,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -288,7 +288,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -307,7 +307,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
             assertParamExists('updateHomestay', 'id', id)
             // verify required parameter 'request' is not null or undefined
             assertParamExists('updateHomestay', 'request', request)
-            const localVarPath = `/api/homestays/{id}`
+            const localVarPath = `/homestays/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -316,7 +316,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
                 baseOptions = configuration.baseOptions;
             }
 
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -325,7 +325,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
             localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
 
             return {
@@ -339,7 +339,7 @@ export const HomestayControllerApiAxiosParamCreator = function (configuration?: 
 /**
  * HomestayControllerApi - functional programming interface
  */
-export const HomestayControllerApiFp = function(configuration?: Configuration) {
+export const HomestayControllerApiFp = function (configuration?: Configuration) {
     const localVarAxiosParamCreator = HomestayControllerApiAxiosParamCreator(configuration)
     return {
         /**
