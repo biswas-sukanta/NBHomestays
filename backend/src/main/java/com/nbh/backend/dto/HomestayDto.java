@@ -17,6 +17,15 @@ import java.util.Map;
 
 public class HomestayDto {
 
+    public enum TrustSignal {
+        FAST_REPLY,
+        GUEST_FAVORITE,
+        POPULAR_STAY,
+        NEW_LISTING,
+        TRUSTED_HOST,
+        HIGH_DEMAND
+    }
+
     @Data
     @Builder
     @AllArgsConstructor
@@ -95,6 +104,8 @@ public class HomestayDto {
         private String editorialLead;
         private List<String> nearbyHighlights;
         private Integer bookingHeatScore;
+
+        private List<TrustSignal> trustSignals;
     }
 
     @Data

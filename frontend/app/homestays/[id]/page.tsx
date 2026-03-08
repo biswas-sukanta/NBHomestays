@@ -7,6 +7,7 @@ import { BentoGallery } from '@/components/bento-gallery';
 import { StickyMobileBar } from '@/components/sticky-mobile-bar';
 import { InquirySection } from '@/components/inquiry-section';
 import { MapPin, Star, Mountain, Wifi, Flame, CookingPot, TrendingUp, MessageSquare, Sunrise, Leaf } from 'lucide-react';
+import { SIGNAL_LABELS, type TrustSignal } from '@/lib/trustSignals';
 
 // Architecture Components
 import { Highlights } from '@/components/homestay/highlights';
@@ -51,6 +52,7 @@ interface Homestay {
     editorialLead?: string;
     nearbyHighlights?: string[];
     bookingHeatScore?: number;
+    trustSignals?: TrustSignal[];
 }
 
 export default async function HomestayPage({ params }: { params: Promise<{ id: string }> }) {
@@ -74,6 +76,9 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
         const responseData = await res.json();
         homestay = responseData.data ? responseData.data : responseData;
 
+        // Fire-and-forget telemetry: view
+        apiFetch(`/homestays/${id}/view`, { method: 'POST' }).catch(() => {});
+
         console.log("[HOMESTAY PAGE] Fetched homestay:", homestay.id, homestay.name);
         if (!homestay?.id && !homestay?.name) return notFound();
     } catch {
@@ -82,6 +87,10 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
     const vibeScore = homestay.vibeScore || homestay.rating || 4.5;
     const vibeClass = vibeScore >= 4.5 ? 'vibe-high' : vibeScore >= 3.5 ? 'vibe-mid' : 'vibe-low';
+
+    const trustSignals = (homestay.trustSignals || []).slice(0, 2);
+
+    const isPriceUnset = typeof homestay.pricePerNight === 'number' && homestay.pricePerNight <= 1;
 
     // Build trip board item for sticky bar
     const tripBoardItem = {
@@ -194,7 +203,9 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                 {/* Desktop inline price */}
                                 <span className="hidden md:inline text-sm text-gray-500">·</span>
                                 <span className="hidden md:inline text-sm font-semibold text-gray-900">
-                                    ₹{homestay.pricePerNight.toLocaleString()}<span className="text-gray-500 font-medium"> / night</span>
+                                    {isPriceUnset
+                                        ? 'Contact host for price'
+                                        : <>₹{homestay.pricePerNight.toLocaleString()}<span className="text-gray-500 font-medium"> / night</span></>}
                                 </span>
                             </div>
                         </div>
@@ -208,10 +219,16 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {/* Price strip (Mobile Only) */}
                     <div className="flex items-baseline gap-1.5 mb-6 md:hidden">
-                        <span className="text-3xl font-extrabold text-gray-900">
-                            ₹{homestay.pricePerNight.toLocaleString()}
-                        </span>
-                        <span className="text-gray-600 font-medium tracking-wide text-sm">/ night</span>
+                        {isPriceUnset ? (
+                            <span className="text-xl font-extrabold text-gray-900">Contact host for price</span>
+                        ) : (
+                            <>
+                                <span className="text-3xl font-extrabold text-gray-900">
+                                    ₹{homestay.pricePerNight.toLocaleString()}
+                                </span>
+                                <span className="text-gray-600 font-medium tracking-wide text-sm">/ night</span>
+                            </>
+                        )}
                     </div>
 
                     <hr className="border-gray-200 mb-0" />
@@ -350,10 +367,16 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                             <div className="flex items-end justify-between mb-4 relative z-10">
                                 <div className="flex items-baseline gap-1.5 flex-wrap">
-                                    <span className="text-[32px] font-extrabold text-gray-900 leading-tight">
-                                        ₹{homestay.pricePerNight.toLocaleString()}
-                                    </span>
-                                    <span className="text-gray-600 font-medium tracking-wide">/ night</span>
+                                    {isPriceUnset ? (
+                                        <span className="text-lg font-extrabold text-gray-900 leading-tight">Contact host for price</span>
+                                    ) : (
+                                        <>
+                                            <span className="text-[32px] font-extrabold text-gray-900 leading-tight">
+                                                ₹{homestay.pricePerNight.toLocaleString()}
+                                            </span>
+                                            <span className="text-gray-600 font-medium tracking-wide">/ night</span>
+                                        </>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-1 font-bold text-gray-900">
                                     <Star className="w-4 h-4 fill-gray-900" />
@@ -361,27 +384,31 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                 </div>
                             </div>
 
-                            {/* Demand signal */}
-                            <div className="flex items-center gap-2 mb-5 px-3 py-2 bg-rose-50 border border-rose-100 rounded-xl relative z-10">
-                                <TrendingUp className="w-4 h-4 text-rose-600" />
-                                <span className="text-xs font-semibold text-rose-700">High demand this season — book early</span>
-                            </div>
-
-                            {/* Trust signals */}
-                            <div className="mb-5 space-y-2 relative z-10">
-                                <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-emerald-50/70 border border-emerald-100">
-                                    <span className="text-xs font-semibold text-emerald-900">⚡ Usually responds within 1 hour</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Fast reply</span>
+                            {/* Trust signals (dynamic, max 2) */}
+                            {trustSignals.length > 0 && (
+                                <div className="mb-5 space-y-2 relative z-10">
+                                    {trustSignals.map((sig) => (
+                                        <div
+                                            key={sig}
+                                            className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-white/70 border border-gray-200"
+                                        >
+                                            <span className="text-xs font-semibold text-gray-900">{SIGNAL_LABELS[sig]}</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Signal</span>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-amber-50/70 border border-amber-100">
-                                    <span className="text-xs font-semibold text-amber-900">💛 Loved by weekend travelers</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">Popular</span>
-                                </div>
-                            </div>
+                            )}
 
                             <hr className="border-gray-200 mb-6" />
 
-                            <InquirySection homestayName={homestay.name} />
+                            <InquirySection
+                                homestayName={homestay.name}
+                                onInquiry={() => {
+                                    import('@/lib/api-client')
+                                        .then(({ apiFetch }) => apiFetch(`/homestays/${id}/inquiry`, { method: 'POST' }))
+                                        .catch(() => {});
+                                }}
+                            />
                         </div>
                     </div>
                 </div>

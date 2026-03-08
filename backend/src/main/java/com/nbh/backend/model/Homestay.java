@@ -8,9 +8,11 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.Map;
 import java.util.List;
@@ -49,6 +51,18 @@ public class Homestay {
 
     @Column(nullable = false)
     private Integer pricePerNight;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "view_count", nullable = false)
+    @Builder.Default
+    private Long viewCount = 0L;
+
+    @Column(name = "inquiry_count", nullable = false)
+    @Builder.Default
+    private Long inquiryCount = 0L;
 
     @Column(columnDefinition = "DOUBLE PRECISION")
     private Double latitude;

@@ -52,3 +52,8 @@ application:
       expiration: 86400000
       refresh-token:
         expiration: 604800000
+
+homestay:
+  signals:
+    popularInquiryThreshold: 5
+    highDemandViewThreshold: 200

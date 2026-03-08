@@ -32,6 +32,14 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         return url.toLowerCase().contains("jdbc:h2");
     }
 
+    private long popularInquiryThreshold() {
+        return Long.parseLong(environment.getProperty("homestay.signals.popularInquiryThreshold", "5"));
+    }
+
+    private long highDemandViewThreshold() {
+        return Long.parseLong(environment.getProperty("homestay.signals.highDemandViewThreshold", "200"));
+    }
+
     @Override
     public Page<Homestay> search(String searchQuery, Map<String, Boolean> amenities, String tag, String stateSlug,
             Boolean isFeatured,
@@ -114,15 +122,32 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         countSql.append(conditions);
 
         // Ranking
+        long popularThreshold = popularInquiryThreshold();
+        long demandThreshold = highDemandViewThreshold();
         if (searchQuery != null && !searchQuery.isBlank()) {
             if (isH2) {
-                sql.append("ORDER BY COALESCE(h.vibe_score, 0) DESC ");
+                sql.append("ORDER BY ")
+                        .append("COALESCE(h.featured, false) DESC, ")
+                        .append("CASE WHEN COALESCE(h.view_count, 0) >= ").append(demandThreshold).append(" THEN 1 ELSE 0 END DESC, ")
+                        .append("CASE WHEN COALESCE(h.inquiry_count, 0) >= ").append(popularThreshold).append(" THEN 1 ELSE 0 END DESC, ")
+                        .append("COALESCE(h.avg_value_rating, 0) DESC, ")
+                        .append("COALESCE(h.created_at, CURRENT_TIMESTAMP) DESC ");
             } else {
-                sql.append(
-                        "ORDER BY (ts_rank(to_tsvector('english', COALESCE(h.name, '') || ' ' || COALESCE(h.description, '') || ' ' || COALESCE(h.address, '')), plainto_tsquery('english', :query)) * 0.4 + COALESCE(h.vibe_score, 0) * 0.4) DESC ");
+                sql.append("ORDER BY ")
+                        .append("COALESCE(h.featured, false) DESC, ")
+                        .append("CASE WHEN COALESCE(h.view_count, 0) >= ").append(demandThreshold).append(" THEN 1 ELSE 0 END DESC, ")
+                        .append("CASE WHEN COALESCE(h.inquiry_count, 0) >= ").append(popularThreshold).append(" THEN 1 ELSE 0 END DESC, ")
+                        .append("(ts_rank(to_tsvector('english', COALESCE(h.name, '') || ' ' || COALESCE(h.description, '') || ' ' || COALESCE(h.address, '')), plainto_tsquery('english', :query)) * 0.4 + COALESCE(h.vibe_score, 0) * 0.4) DESC, ")
+                        .append("COALESCE(h.avg_value_rating, 0) DESC, ")
+                        .append("COALESCE(h.created_at, NOW()) DESC ");
             }
         } else {
-            sql.append("ORDER BY COALESCE(h.vibe_score, 0) DESC ");
+            sql.append("ORDER BY ")
+                    .append("COALESCE(h.featured, false) DESC, ")
+                    .append("CASE WHEN COALESCE(h.view_count, 0) >= ").append(demandThreshold).append(" THEN 1 ELSE 0 END DESC, ")
+                    .append("CASE WHEN COALESCE(h.inquiry_count, 0) >= ").append(popularThreshold).append(" THEN 1 ELSE 0 END DESC, ")
+                    .append("COALESCE(h.avg_value_rating, 0) DESC, ")
+                    .append("COALESCE(h.created_at, NOW()) DESC ");
         }
 
         // Pagination
@@ -285,15 +310,32 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         sql.append(conditions);
         countSql.append(conditions);
 
+        long popularThreshold2 = popularInquiryThreshold();
+        long demandThreshold2 = highDemandViewThreshold();
         if (searchQuery != null && !searchQuery.isBlank()) {
             if (isH2) {
-                sql.append("ORDER BY COALESCE(h.vibe_score, 0) DESC ");
+                sql.append("ORDER BY ")
+                        .append("COALESCE(h.featured, false) DESC, ")
+                        .append("CASE WHEN COALESCE(h.view_count, 0) >= ").append(demandThreshold2).append(" THEN 1 ELSE 0 END DESC, ")
+                        .append("CASE WHEN COALESCE(h.inquiry_count, 0) >= ").append(popularThreshold2).append(" THEN 1 ELSE 0 END DESC, ")
+                        .append("COALESCE(h.avg_value_rating, 0) DESC, ")
+                        .append("COALESCE(h.created_at, CURRENT_TIMESTAMP) DESC ");
             } else {
-                sql.append(
-                        "ORDER BY (ts_rank(to_tsvector('english', COALESCE(h.name, '') || ' ' || COALESCE(h.description, '') || ' ' || COALESCE(h.address, '')), plainto_tsquery('english', :query)) * 0.4 + COALESCE(h.vibe_score, 0) * 0.4) DESC ");
+                sql.append("ORDER BY ")
+                        .append("COALESCE(h.featured, false) DESC, ")
+                        .append("CASE WHEN COALESCE(h.view_count, 0) >= ").append(demandThreshold2).append(" THEN 1 ELSE 0 END DESC, ")
+                        .append("CASE WHEN COALESCE(h.inquiry_count, 0) >= ").append(popularThreshold2).append(" THEN 1 ELSE 0 END DESC, ")
+                        .append("(ts_rank(to_tsvector('english', COALESCE(h.name, '') || ' ' || COALESCE(h.description, '') || ' ' || COALESCE(h.address, '')), plainto_tsquery('english', :query)) * 0.4 + COALESCE(h.vibe_score, 0) * 0.4) DESC, ")
+                        .append("COALESCE(h.avg_value_rating, 0) DESC, ")
+                        .append("COALESCE(h.created_at, NOW()) DESC ");
             }
         } else {
-            sql.append("ORDER BY COALESCE(h.vibe_score, 0) DESC ");
+            sql.append("ORDER BY ")
+                    .append("COALESCE(h.featured, false) DESC, ")
+                    .append("CASE WHEN COALESCE(h.view_count, 0) >= ").append(demandThreshold2).append(" THEN 1 ELSE 0 END DESC, ")
+                    .append("CASE WHEN COALESCE(h.inquiry_count, 0) >= ").append(popularThreshold2).append(" THEN 1 ELSE 0 END DESC, ")
+                    .append("COALESCE(h.avg_value_rating, 0) DESC, ")
+                    .append("COALESCE(h.created_at, NOW()) DESC ");
         }
         sql.append("LIMIT :limit OFFSET :offset");
 

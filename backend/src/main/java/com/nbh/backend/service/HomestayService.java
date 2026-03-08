@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
@@ -33,6 +34,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.beans.factory.annotation.Value;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +49,14 @@ public class HomestayService {
         private final AsyncJobService asyncJobService;
         private final com.nbh.backend.repository.DestinationRepository destinationRepository;
         private final DestinationService destinationService;
+
+        @Value("${homestay.signals.popularInquiryThreshold:5}")
+        private long popularInquiryThreshold;
+
+        @Value("${homestay.signals.highDemandViewThreshold:200}")
+        private long highDemandViewThreshold;
+
+        private final ConcurrentHashMap<String, LocalDateTime> viewThrottle = new ConcurrentHashMap<>();
 
         @CacheEvict(value = "homestaysSearch", allEntries = true)
         @org.springframework.transaction.annotation.Transactional
@@ -78,6 +90,8 @@ public class HomestayService {
                                 .longitude(request.getLongitude())
                                 .address(request.getLocationName()) // Using locationName from DTO as address
                                 .owner(owner)
+                                .viewCount(0L)
+                                .inquiryCount(0L)
                                 .build();
 
                 if (request.getDestinationId() != null && !request.getDestinationId().isBlank()) {
@@ -118,6 +132,66 @@ public class HomestayService {
                 Homestay saved = repository.save(homestay);
                 asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "homestays/" + saved.getId());
                 return mapToResponse(saved);
+        }
+
+        @CacheEvict(value = "homestay", key = "#id")
+        @org.springframework.transaction.annotation.Transactional
+        public void incrementView(UUID id, HttpServletRequest request) {
+                if (id == null) {
+                        return;
+                }
+
+                String clientKey = buildClientThrottleKey(id, request);
+                if (clientKey != null) {
+                        LocalDateTime now = LocalDateTime.now();
+                        LocalDateTime last = viewThrottle.get(clientKey);
+                        if (last != null && last.isAfter(now.minusHours(1))) {
+                                return;
+                        }
+                        viewThrottle.put(clientKey, now);
+                }
+
+                repository.findById(id).ifPresent(h -> {
+                        long next = (h.getViewCount() == null ? 0L : h.getViewCount()) + 1L;
+                        h.setViewCount(next);
+                        repository.save(h);
+                });
+        }
+
+        @Caching(evict = {
+                        @CacheEvict(value = "homestay", key = "#id"),
+                        @CacheEvict(value = "homestaysSearch", allEntries = true)
+        })
+        @org.springframework.transaction.annotation.Transactional
+        public void incrementInquiry(UUID id) {
+                if (id == null) {
+                        return;
+                }
+                repository.findById(id).ifPresent(h -> {
+                        long next = (h.getInquiryCount() == null ? 0L : h.getInquiryCount()) + 1L;
+                        h.setInquiryCount(next);
+                        repository.save(h);
+                });
+        }
+
+        private String buildClientThrottleKey(UUID homestayId, HttpServletRequest request) {
+                if (request == null) {
+                        return null;
+                }
+                String ip = request.getHeader("X-Forwarded-For");
+                if (ip == null || ip.isBlank()) {
+                        ip = request.getRemoteAddr();
+                } else {
+                        // First IP in X-Forwarded-For is the client
+                        int comma = ip.indexOf(',');
+                        if (comma > -1) {
+                                ip = ip.substring(0, comma).trim();
+                        }
+                }
+                if (ip == null || ip.isBlank()) {
+                        return null;
+                }
+                return homestayId + "|" + ip;
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
@@ -464,6 +538,8 @@ public class HomestayService {
                                 ? new ArrayList<>((List<String>) meta.get("nearbyHighlights"))
                                 : null;
 
+                List<HomestayDto.TrustSignal> trustSignals = computeTrustSignals(homestay);
+
                 return HomestayDto.Response.builder()
                                 .id(homestay.getId())
                                 .name(homestay.getName())
@@ -513,7 +589,62 @@ public class HomestayService {
                                 .editorialLead(editorialLead)
                                 .nearbyHighlights(nearbyHighlights)
                                 .bookingHeatScore(bookingHeatScore)
+                                .trustSignals(trustSignals)
                                 .build();
+        }
+
+        private List<HomestayDto.TrustSignal> computeTrustSignals(Homestay homestay) {
+                if (homestay == null) {
+                        return List.of();
+                }
+
+                final int maxSignals = 2;
+
+                long viewCount = homestay.getViewCount() == null ? 0L : homestay.getViewCount();
+                long inquiryCount = homestay.getInquiryCount() == null ? 0L : homestay.getInquiryCount();
+                LocalDateTime createdAt = homestay.getCreatedAt();
+
+                int totalReviews = homestay.getTotalReviews() == null ? 0 : homestay.getTotalReviews();
+                double avgOverallRating = 0.0;
+                if (homestay.getAvgAtmosphereRating() != null)
+                        avgOverallRating += homestay.getAvgAtmosphereRating();
+                if (homestay.getAvgServiceRating() != null)
+                        avgOverallRating += homestay.getAvgServiceRating();
+                if (homestay.getAvgAccuracyRating() != null)
+                        avgOverallRating += homestay.getAvgAccuracyRating();
+                if (homestay.getAvgValueRating() != null)
+                        avgOverallRating += homestay.getAvgValueRating();
+                avgOverallRating = avgOverallRating / 4.0;
+
+                boolean isTrustedHost = homestay.getOwner() != null && homestay.getOwner().isVerifiedHost();
+                boolean isGuestFavorite = totalReviews >= 10 && avgOverallRating >= 4.7;
+                boolean isNewListing = createdAt != null && createdAt.isAfter(LocalDateTime.now().minusDays(14));
+                boolean isPopularStay = inquiryCount >= popularInquiryThreshold;
+                boolean isHighDemand = viewCount >= highDemandViewThreshold;
+
+                ArrayList<HomestayDto.TrustSignal> signals = new ArrayList<>();
+
+                // Priority order:
+                // 1 GUEST_FAVORITE
+                // 2 HIGH_DEMAND
+                // 3 POPULAR_STAY
+                // 4 TRUSTED_HOST
+                // 5 NEW_LISTING
+                if (isGuestFavorite)
+                        signals.add(HomestayDto.TrustSignal.GUEST_FAVORITE);
+                if (isHighDemand)
+                        signals.add(HomestayDto.TrustSignal.HIGH_DEMAND);
+                if (isPopularStay)
+                        signals.add(HomestayDto.TrustSignal.POPULAR_STAY);
+                if (isTrustedHost)
+                        signals.add(HomestayDto.TrustSignal.TRUSTED_HOST);
+                if (isNewListing)
+                        signals.add(HomestayDto.TrustSignal.NEW_LISTING);
+
+                if (signals.size() <= maxSignals) {
+                        return signals;
+                }
+                return signals.subList(0, maxSignals);
         }
 
         private String resolveMealPlanLabel(String code) {

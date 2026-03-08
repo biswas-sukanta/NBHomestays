@@ -71,6 +71,19 @@ public class HomestayController {
         }
     }
 
+    @PostMapping("/{id}/view")
+    public org.springframework.http.ResponseEntity<Void> recordView(@PathVariable("id") UUID id,
+            jakarta.servlet.http.HttpServletRequest request) {
+        homestayService.incrementView(id, request);
+        return org.springframework.http.ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/inquiry")
+    public org.springframework.http.ResponseEntity<Void> recordInquiry(@PathVariable("id") UUID id) {
+        homestayService.incrementInquiry(id);
+        return org.springframework.http.ResponseEntity.noContent().build();
+    }
+
     @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     public HomestayDto.Response updateHomestay(
             @PathVariable("id") UUID id,
