@@ -1,5 +1,6 @@
 package com.nbh.backend.dto;
 
+import java.util.List;
 import java.util.UUID;
 
 public record DestinationCardDto(
@@ -9,6 +10,7 @@ public record DestinationCardDto(
         Long homestayCount,
         String localImageName,
         String stateName,
-        String stateSlug
+        String stateSlug,
+        List<String> tags
 ) {
 }

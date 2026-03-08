@@ -42,12 +42,13 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
                 COUNT(h),
                 d.localImageName,
                 s.name,
-                s.slug
+                s.slug,
+                d.tags
             )
             FROM Destination d
             LEFT JOIN d.state s
             LEFT JOIN Homestay h ON h.destination = d AND h.isDeleted = false
-            GROUP BY d.id, d.slug, d.name, d.localImageName, s.name, s.slug
+            GROUP BY d.id, d.slug, d.name, d.localImageName, s.name, s.slug, d.tags
             ORDER BY COUNT(h) DESC
             """)
     List<DestinationCardDto> fetchDestinationRankings();
@@ -60,13 +61,14 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
                 COUNT(h),
                 d.localImageName,
                 s.name,
-                s.slug
+                s.slug,
+                d.tags
             )
             FROM Destination d
             LEFT JOIN d.state s
             LEFT JOIN Homestay h ON h.destination = d AND h.isDeleted = false
             WHERE s.slug = :stateSlug
-            GROUP BY d.id, d.slug, d.name, d.localImageName, s.name, s.slug
+            GROUP BY d.id, d.slug, d.name, d.localImageName, s.name, s.slug, d.tags
             ORDER BY COUNT(h) DESC
             """)
     List<DestinationCardDto> fetchDestinationRankingsByStateSlug(@Param("stateSlug") String stateSlug);

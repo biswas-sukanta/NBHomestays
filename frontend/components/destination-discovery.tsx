@@ -20,6 +20,7 @@ interface Destination {
     localImageName: string;
     stateName?: string;
     stateSlug?: string;
+    tags?: string[]; // Backend-provided tags (may include emoji prefixes)
 }
 
 const TAG_ICONS: Record<string, React.ElementType> = {
@@ -59,36 +60,24 @@ const TRAVEL_TAGS: string[] = [
     'Transit'
 ];
 
-// Static destination-to-tag mapping (DestinationCardDto does not contain tags)
-const destinationTagMap: Record<string, string[]> = {
-    darjeeling: ['Hill Station', 'Heritage', 'Tea Garden'],
-    mirik: ['Lakeside', 'Nature'],
-    kalimpong: ['Hill Station', 'Offbeat'],
-    kurseong: ['Hill Station', 'Tea Garden'],
-    phalut: ['Trekking', 'High Altitude'],
-    sandakphu: ['Trekking', 'High Altitude'],
-    tinchuley: ['Offbeat', 'Nature'],
-    chatakpur: ['Offbeat', 'Nature'],
-    lava: ['Hill Station', 'Offbeat'],
-    lolegaon: ['Hill Station', 'Nature'],
-    rishop: ['Hill Station', 'Offbeat'],
-    gorubathan: ['Offbeat', 'Agricultural'],
-    jaldapara: ['Wildlife'],
-    gorumara: ['Wildlife'],
-    lataguri: ['Wildlife', 'Nature'],
-    murti: ['Riverside', 'Nature'],
-    chapramari: ['Wildlife'],
-    samsing: ['Nature', 'Floral'],
-    suntalekhola: ['Nature', 'Riverside'],
-    'rocky-island': ['Riverside', 'Offbeat'],
-    mongpong: ['Offbeat', 'Nature'],
-    sevoke: ['Riverside', 'Cultural'],
-    'coronation-bridge': ['Cultural', 'Transit'],
-    'mahakal-mandir': ['Cultural', 'Heritage'],
-    dooars: ['Wildlife', 'Nature'],
-    sittong: ['Nature'],
-    takdah: ['Heritage', 'Tea Garden'],
-};
+// Normalize backend tags by stripping emoji prefixes
+// Backend tags come as "🏔️ Hill Station" -> filter expects "Hill Station"
+function normalizeTag(tag: string): string {
+    // Remove emoji and extra whitespace, keep only the text part
+    return tag.replace(/[\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D]/gu, '').trim();
+}
+
+// Get normalized tags from a destination, with fallback
+function getNormalizedTags(dest: Destination): string[] {
+    if (!dest.tags || dest.tags.length === 0) {
+        console.warn(`[DestinationDiscovery] No tags for destination: ${dest.slug}, using fallback`);
+        return ['Nature']; // Fallback tag
+    }
+    // Filter out "All" tag and normalize remaining tags
+    return dest.tags
+        .map(normalizeTag)
+        .filter(tag => tag && tag !== 'All');
+}
 
 const CARD_TINTS = [
     'from-emerald-900/40',
@@ -140,12 +129,12 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
         );
     }
 
-    // Filter destinations by active tag using static destinationTagMap
+    // Filter destinations by active tag using backend-provided tags
     const filteredDestinations = activeTag === 'All'
         ? destinations
         : destinations.filter(d => {
-            const tags = destinationTagMap[d.slug] || [];
-            return tags.includes(activeTag);
+            const normalizedTags = getNormalizedTags(d);
+            return normalizedTags.includes(activeTag);
         });
 
     return (
@@ -191,8 +180,8 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                             {filteredDestinations.slice(0, isHome ? 8 : visibleCount).map((dest, idx) => {
                                 const tint = CARD_TINTS[idx % CARD_TINTS.length];
                                 const region = dest.stateName || '';
-                                const tags = (destinationTagMap[dest.slug] || []).slice(0, 2);
-                                const staysLine = dest.homestayCount != null ? `🏡 ${dest.homestayCount} stays` : '';
+                                const tags = getNormalizedTags(dest).slice(0, 2);
+                                const staysLine = dest.homestayCount != null ? `${dest.homestayCount} stays` : '';
                                 return (
                                     <motion.div
                                         key={dest.slug}
