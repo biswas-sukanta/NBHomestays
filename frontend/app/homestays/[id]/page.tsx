@@ -401,14 +401,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                             <hr className="border-gray-200 mb-6" />
 
-                            <InquirySection
-                                homestayName={homestay.name}
-                                onInquiry={() => {
-                                    import('@/lib/api-client')
-                                        .then(({ apiFetch }) => apiFetch(`/homestays/${id}/inquiry`, { method: 'POST' }))
-                                        .catch(() => {});
-                                }}
-                            />
+                            <InquirySection homestayId={homestay.id} homestayName={homestay.name} />
                         </div>
                     </div>
                 </div>

@@ -5,11 +5,14 @@ import { MessageSquare, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface InquirySectionProps {
+    homestayId: string;
     homestayName: string;
-    onInquiry?: () => void;
+    phoneNumber?: string;
 }
 
-export function InquirySection({ homestayName, onInquiry }: InquirySectionProps) {
+export function InquirySection({ homestayId, homestayName, phoneNumber }: InquirySectionProps) {
+    const waNumber = phoneNumber ?? '919046044606';
+
     return (
         <div className="border-t pt-8 space-y-4">
             <div className="p-6 bg-green-50 rounded-2xl border border-green-100">
@@ -21,11 +24,14 @@ export function InquirySection({ homestayName, onInquiry }: InquirySectionProps)
                         size="lg"
                         className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl py-7 text-lg font-bold shadow-md transition-all hover:scale-[1.02]"
                         onClick={() => {
-                            try {
-                                onInquiry?.();
-                            } finally {
-                                window.open(`https://wa.me/919999999999?text=Hi, I found your homestay "${homestayName}" on NBH and I'm interested in visiting!`, '_blank');
-                            }
+                            import('@/lib/api-client')
+                                .then(({ apiFetch }) => apiFetch(`/homestays/${homestayId}/inquiry`, { method: 'POST' }))
+                                .catch(() => {});
+
+                            window.open(
+                                `https://wa.me/${waNumber}?text=Hi, I found your homestay "${homestayName}" on NBH and I'm interested in visiting!`,
+                                '_blank'
+                            );
                         }}
                     >
                         <MessageSquare className="mr-2 h-6 w-6" />
