@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Set;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -106,14 +107,15 @@ public class HomestayService {
                 Pageable pageable = PageRequest.of(page, size);
 
                 try {
-                        Page<Homestay> homestayPage = repository.search(query, new HashMap<String, Boolean>(),
+                        Page<Homestay> homestayPage = repository.search(query, Collections.emptyMap(),
                                         tag, stateSlug,
                                         isFeatured,
                                         minLat, maxLat, minLng, maxLng,
                                         pageable);
                         return homestayPage.map(this::mapToResponse);
                 } catch (Exception e) {
-                        // Fallback: return empty page
+                        log.error("Homestay search failed. query={}, tag={}, stateSlug={}, isFeatured={}, page={}, size={}",
+                                        query, tag, stateSlug, isFeatured, page, size, e);
                         return new PageImpl<>(List.of(), pageable, 0);
                 }
         }
