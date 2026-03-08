@@ -174,7 +174,6 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                 <div className="flex flex-row overflow-x-auto snap-x snap-mandatory no-scrollbar md:flex-wrap md:overflow-visible gap-3 pb-2 w-full">
                     {TRAVEL_TAGS.map(tag => {
                         const isActive = activeTag === tag;
-                        const TagIcon = TAG_ICONS[tag] || Compass;
                         const tagEmoji = TAG_EMOJI[tag];
                         return (
                             <button
@@ -187,7 +186,6 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                         : "bg-white text-slate-600 border-neutral-300 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/30"
                                 )}
                             >
-                                <TagIcon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400")} />
                                 {tagEmoji ? <span className="text-base leading-none">{tagEmoji}</span> : null}
                                 {tag}
                             </button>
