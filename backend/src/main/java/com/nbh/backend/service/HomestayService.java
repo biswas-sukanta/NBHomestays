@@ -12,9 +12,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.io.IOException;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
@@ -38,7 +45,7 @@ public class HomestayService {
         @CacheEvict(value = "homestaysSearch", allEntries = true)
         @org.springframework.transaction.annotation.Transactional
         public HomestayDto.Response createHomestay(HomestayDto.Request request,
-                        java.util.List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
+                        List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
                 User owner = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -57,9 +64,9 @@ public class HomestayService {
                                 .tags(request.getTags())
                                 .hostDetails(request.getHostDetails())
                                 .mealConfig(request.getMealConfig() != null ? request.getMealConfig()
-                                                : new java.util.HashMap<>())
+                                                : new HashMap<>())
                                 .meta(request.getMeta() != null ? request.getMeta()
-                                                : new java.util.HashMap<>())
+                                                : new HashMap<>())
                                 .status(status)
                                 .vibeScore(0.0)
                                 .latitude(request.getLatitude())
@@ -70,20 +77,20 @@ public class HomestayService {
 
                 if (request.getDestinationId() != null && !request.getDestinationId().isBlank()) {
                         homestay.setDestination(destinationRepository
-                                        .findById(java.util.UUID.fromString(request.getDestinationId()))
+                                        .findById(UUID.fromString(request.getDestinationId()))
                                         .orElse(null));
                 }
 
                 if (request.getMedia() != null) {
                         final com.nbh.backend.model.Homestay finalH = homestay;
-                        java.util.List<com.nbh.backend.model.MediaResource> entityMedia = request.getMedia().stream()
+                        List<com.nbh.backend.model.MediaResource> entityMedia = request.getMedia().stream()
                                         .map(dto -> com.nbh.backend.model.MediaResource.builder()
                                                         .id(dto.getId())
                                                         .url(dto.getUrl())
                                                         .fileId(dto.getFileId())
                                                         .homestay(finalH)
                                                         .build())
-                                        .collect(java.util.stream.Collectors.toList());
+                                        .collect(Collectors.toList());
                         homestay.setMediaFiles(entityMedia);
                 }
 
@@ -110,7 +117,7 @@ public class HomestayService {
 
                 // Otherwise perform search
                 try {
-                        Page<Homestay> homestayPage = repository.search(query, new java.util.HashMap<String, Boolean>(),
+                        Page<Homestay> homestayPage = repository.search(query, new HashMap<String, Boolean>(),
                                         tag, stateSlug,
                                         isFeatured,
                                         minLat, maxLat, minLng, maxLng,
@@ -142,7 +149,7 @@ public class HomestayService {
                         @CacheEvict(value = "homestay", key = "#id"),
                         @CacheEvict(value = "homestaysSearch", allEntries = true)
         })
-        public void approveHomestay(java.util.UUID id) {
+        public void approveHomestay(UUID id) {
                 Homestay homestay = repository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Homestay not found"));
@@ -154,7 +161,7 @@ public class HomestayService {
                         @CacheEvict(value = "homestay", key = "#id"),
                         @CacheEvict(value = "homestaysSearch", allEntries = true)
         })
-        public void rejectHomestay(java.util.UUID id) {
+        public void rejectHomestay(UUID id) {
                 Homestay homestay = repository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Homestay not found"));
@@ -165,8 +172,8 @@ public class HomestayService {
         @Caching(put = { @CachePut(value = "homestay", key = "#id") }, evict = {
                         @CacheEvict(value = "homestaysSearch", allEntries = true) })
         @org.springframework.transaction.annotation.Transactional
-        public HomestayDto.Response updateHomestay(java.util.UUID id, HomestayDto.Request request,
-                        java.util.List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
+        public HomestayDto.Response updateHomestay(UUID id, HomestayDto.Request request,
+                        List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
                 Homestay homestay = repository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Homestay not found"));
@@ -207,7 +214,7 @@ public class HomestayService {
                                 homestay.setDestination(null);
                         } else {
                                 homestay.setDestination(destinationRepository
-                                                .findById(java.util.UUID.fromString(request.getDestinationId()))
+                                                .findById(UUID.fromString(request.getDestinationId()))
                                                 .orElse(null));
                         }
                 }
@@ -218,16 +225,16 @@ public class HomestayService {
                         homestay.setLongitude(request.getLongitude());
 
                 // --- CLOUD JANITOR V2 DIFF: Purge orphaned Photos ---
-                java.util.List<com.nbh.backend.model.MediaResource> finalMergedMedia = new java.util.ArrayList<>();
+                List<com.nbh.backend.model.MediaResource> finalMergedMedia = new ArrayList<>();
                 if (request.getMedia() != null) {
-                        java.util.List<com.nbh.backend.model.MediaResource> existingMedia = homestay.getMediaFiles();
-                        java.util.List<MediaDto> retainedMediaDtos = request.getMedia();
+                        List<com.nbh.backend.model.MediaResource> existingMedia = homestay.getMediaFiles();
+                        List<MediaDto> retainedMediaDtos = request.getMedia();
 
                         if (existingMedia != null) {
-                                java.util.Set<String> retainedFileIds = retainedMediaDtos.stream()
+                                Set<String> retainedFileIds = retainedMediaDtos.stream()
                                                 .map(MediaDto::getFileId)
-                                                .filter(java.util.Objects::nonNull)
-                                                .collect(java.util.stream.Collectors.toSet());
+                                                .filter(Objects::nonNull)
+                                                .collect(Collectors.toSet());
 
                                 for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
                                         if (oldResource.getFileId() != null
@@ -246,19 +253,19 @@ public class HomestayService {
                 final com.nbh.backend.model.Homestay finalH = homestay;
                 if (files != null && !files.isEmpty()) {
                         try {
-                                java.util.List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
+                                List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
                                                 .uploadFiles(files);
                                 for (com.nbh.backend.model.MediaResource res : uploadedResources) {
                                         res.setHomestay(finalH);
                                         finalMergedMedia.add(res);
                                 }
-                        } catch (java.io.IOException e) {
+                        } catch (IOException e) {
                                 throw new RuntimeException("Failed to upload new homestay media files", e);
                         }
                 }
 
                 if (homestay.getMediaFiles() == null) {
-                        homestay.setMediaFiles(new java.util.ArrayList<>());
+                        homestay.setMediaFiles(new ArrayList<>());
                 }
                 homestay.getMediaFiles().clear();
                 homestay.getMediaFiles().addAll(finalMergedMedia);
@@ -272,7 +279,7 @@ public class HomestayService {
                         @CacheEvict(value = "homestaysSearch", allEntries = true)
         })
         @org.springframework.transaction.annotation.Transactional
-        public void deleteHomestay(java.util.UUID id, String userEmail) {
+        public void deleteHomestay(UUID id, String userEmail) {
                 Homestay homestay = repository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Homestay not found"));
@@ -310,7 +317,7 @@ public class HomestayService {
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         @Cacheable(value = "homestay", key = "#id", sync = true)
-        public HomestayDto.Response getHomestay(java.util.UUID id) {
+        public HomestayDto.Response getHomestay(UUID id) {
                 Homestay homestay = repository.findByIdWithDetails(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Homestay not found"));
@@ -325,30 +332,30 @@ public class HomestayService {
         public HomestayDto.Response mapToResponse(Homestay homestay) {
                 // CRITICAL CACHE RULE: Deep copy collections to prevent Hibernate Proxy leaks
                 // AND null crashes
-                java.util.Map<String, Boolean> amenities = homestay.getAmenities() != null
-                                ? new java.util.HashMap<>(homestay.getAmenities())
-                                : new java.util.HashMap<>();
-                java.util.List<String> policies = homestay.getPolicies() != null
-                                ? new java.util.ArrayList<>(homestay.getPolicies())
-                                : new java.util.ArrayList<>();
-                java.util.Map<String, String> quickFacts = homestay.getQuickFacts() != null
-                                ? new java.util.HashMap<>(homestay.getQuickFacts())
-                                : new java.util.HashMap<>();
-                java.util.Map<String, Object> hostDetails = homestay.getHostDetails() != null
-                                ? new java.util.HashMap<>(homestay.getHostDetails())
-                                : new java.util.HashMap<>();
+                Map<String, Boolean> amenities = homestay.getAmenities() != null
+                                ? new HashMap<>(homestay.getAmenities())
+                                : new HashMap<>();
+                List<String> policies = homestay.getPolicies() != null
+                                ? new ArrayList<>(homestay.getPolicies())
+                                : new ArrayList<>();
+                Map<String, String> quickFacts = homestay.getQuickFacts() != null
+                                ? new HashMap<>(homestay.getQuickFacts())
+                                : new HashMap<>();
+                Map<String, Object> hostDetails = homestay.getHostDetails() != null
+                                ? new HashMap<>(homestay.getHostDetails())
+                                : new HashMap<>();
 
-                java.util.Map<String, Object> mealConfig = homestay.getMealConfig() != null
-                                ? new java.util.HashMap<>(homestay.getMealConfig())
-                                : new java.util.HashMap<>();
+                Map<String, Object> mealConfig = homestay.getMealConfig() != null
+                                ? new HashMap<>(homestay.getMealConfig())
+                                : new HashMap<>();
 
-                java.util.List<String> tags = homestay.getTags() != null
-                                ? new java.util.ArrayList<>(homestay.getTags())
-                                : new java.util.ArrayList<>();
+                List<String> tags = homestay.getTags() != null
+                                ? new ArrayList<>(homestay.getTags())
+                                : new ArrayList<>();
 
-                java.util.Map<String, Object> meta = homestay.getMeta() != null
-                                ? new java.util.HashMap<>(homestay.getMeta())
-                                : new java.util.HashMap<>();
+                Map<String, Object> meta = homestay.getMeta() != null
+                                ? new HashMap<>(homestay.getMeta())
+                                : new HashMap<>();
 
                 String editorialLead = meta.get("editorialLead") != null ? (String) meta.get("editorialLead") : null;
                 Integer bookingHeatScore = meta.get("bookingHeatScore") != null
@@ -356,8 +363,8 @@ public class HomestayService {
                                 : null;
 
                 @SuppressWarnings("unchecked")
-                java.util.List<String> nearbyHighlights = meta.get("nearbyHighlights") != null
-                                ? new java.util.ArrayList<>((java.util.List<String>) meta.get("nearbyHighlights"))
+                List<String> nearbyHighlights = meta.get("nearbyHighlights") != null
+                                ? new ArrayList<>((List<String>) meta.get("nearbyHighlights"))
                                 : null;
 
                 return HomestayDto.Response.builder()
@@ -373,8 +380,8 @@ public class HomestayService {
                                 .media(homestay.getMediaFiles() != null ? homestay.getMediaFiles().stream()
                                                 .map(m -> MediaDto.builder().id(m.getId()).url(m.getUrl())
                                                                 .fileId(m.getFileId()).build())
-                                                .collect(java.util.stream.Collectors.toList())
-                                                : new java.util.ArrayList<>())
+                                                .collect(Collectors.toList())
+                                                : new ArrayList<>())
                                 .vibeScore(homestay.getVibeScore())
                                 .avgAtmosphereRating(homestay.getAvgAtmosphereRating())
                                 .avgServiceRating(homestay.getAvgServiceRating())

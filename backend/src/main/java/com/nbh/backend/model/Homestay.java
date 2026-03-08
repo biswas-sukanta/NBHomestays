@@ -12,6 +12,10 @@ import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.Map;
+import java.util.List;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "homestays")
@@ -57,28 +61,28 @@ public class Homestay {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private java.util.Map<String, Boolean> amenities;
+    private Map<String, Boolean> amenities;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private java.util.List<String> policies;
+    private List<String> policies;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private java.util.Map<String, String> quickFacts;
+    private Map<String, String> quickFacts;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private java.util.List<String> tags;
+    private List<String> tags;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private java.util.Map<String, Object> hostDetails;
+    private Map<String, Object> hostDetails;
 
     @OneToMany(mappedBy = "homestay", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
     @Builder.Default
-    private java.util.List<MediaResource> mediaFiles = new java.util.ArrayList<>();
+    private List<MediaResource> mediaFiles = new ArrayList<>();
 
     @Builder.Default
     private Double vibeScore = 0.0;
@@ -93,17 +97,17 @@ public class Homestay {
     @OneToMany(mappedBy = "homestay", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
-    private java.util.List<com.nbh.backend.model.Review> reviews;
+    private List<com.nbh.backend.model.Review> reviews;
 
     @OneToMany(mappedBy = "homestay", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
-    private java.util.List<Post> posts;
+    private List<Post> posts;
 
     @OneToMany(mappedBy = "homestay", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
-    private java.util.List<HomestayQuestion> questions;
+    private List<HomestayQuestion> questions;
 
     @Enumerated(EnumType.STRING)
     private Status status;
@@ -115,12 +119,12 @@ public class Homestay {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     @Builder.Default
-    private java.util.Map<String, Object> mealConfig = new java.util.HashMap<>();
+    private Map<String, Object> mealConfig = new HashMap<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     @Builder.Default
-    private java.util.Map<String, Object> meta = new java.util.HashMap<>();
+    private Map<String, Object> meta = new HashMap<>();
 
     @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

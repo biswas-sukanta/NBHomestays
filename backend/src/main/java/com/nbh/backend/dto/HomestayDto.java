@@ -12,6 +12,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
+import java.util.List;
+import java.util.Map;
 
 public class HomestayDto {
 
@@ -41,14 +43,14 @@ public class HomestayDto {
         @NotBlank(message = "Location name is mandatory")
         private String locationName;
 
-        private java.util.Map<String, Boolean> amenities;
-        private java.util.List<String> policies;
-        private java.util.Map<String, String> quickFacts;
-        private java.util.List<String> tags;
-        private java.util.Map<String, Object> hostDetails;
-        private java.util.Map<String, Object> mealConfig;
-        private java.util.Map<String, Object> meta;
-        private java.util.List<MediaDto> media;
+        private Map<String, Boolean> amenities;
+        private List<String> policies;
+        private Map<String, String> quickFacts;
+        private List<String> tags;
+        private Map<String, Object> hostDetails;
+        private Map<String, Object> mealConfig;
+        private Map<String, Object> meta;
+        private List<MediaDto> media;
 
         @NotBlank(message = "Destination is mandatory")
         private String destinationId;
@@ -67,12 +69,12 @@ public class HomestayDto {
         private Double latitude;
         private Double longitude;
         private String locationName;
-        private java.util.Map<String, Boolean> amenities;
-        private java.util.List<String> policies;
-        private java.util.Map<String, String> quickFacts;
-        private java.util.List<String> tags;
-        private java.util.Map<String, Object> hostDetails;
-        private java.util.List<MediaDto> media;
+        private Map<String, Boolean> amenities;
+        private List<String> policies;
+        private Map<String, String> quickFacts;
+        private List<String> tags;
+        private Map<String, Object> hostDetails;
+        private List<MediaDto> media;
         private Double vibeScore;
         private Double avgAtmosphereRating;
         private Double avgServiceRating;
@@ -84,11 +86,11 @@ public class HomestayDto {
         private UUID ownerId;
         private Boolean featured;
         private DestinationDto destination;
-        private java.util.Map<String, Object> mealConfig;
+        private Map<String, Object> mealConfig;
 
         // Editorial & Premium UX Fields
         private String editorialLead;
-        private java.util.List<String> nearbyHighlights;
+        private List<String> nearbyHighlights;
         private Integer bookingHeatScore;
     }
 
