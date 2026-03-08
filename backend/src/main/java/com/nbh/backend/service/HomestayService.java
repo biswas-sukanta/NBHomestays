@@ -3,6 +3,8 @@ package com.nbh.backend.service;
 import com.nbh.backend.dto.HomestayDto;
 import com.nbh.backend.dto.AuthorDto;
 import com.nbh.backend.dto.MediaDto;
+import com.nbh.backend.dto.DestinationDto;
+import com.nbh.backend.dto.SearchCardDto;
 import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.MediaResource;
 import com.nbh.backend.model.User;
@@ -104,20 +106,91 @@ public class HomestayService {
                         Boolean isFeatured,
                         Double minLat, Double maxLat, Double minLng, Double maxLng,
                         int size, int page) {
-                Pageable pageable = PageRequest.of(page, size);
+                int safeSize = Math.max(1, Math.min(size, 24));
+                int safePage = Math.max(page, 0);
+                Pageable pageable = PageRequest.of(safePage, safeSize);
 
                 try {
-                        Page<Homestay> homestayPage = repository.search(query, Collections.emptyMap(),
+                        Page<SearchCardDto> homestayPage = repository.searchCards(query, Collections.emptyMap(),
                                         tag, stateSlug,
                                         isFeatured,
                                         minLat, maxLat, minLng, maxLng,
                                         pageable);
-                        return homestayPage.map(this::mapToResponse);
+                        return homestayPage.map(this::mapSearchCardToResponse);
                 } catch (Exception e) {
                         log.error("Homestay search failed. query={}, tag={}, stateSlug={}, isFeatured={}, page={}, size={}",
                                         query, tag, stateSlug, isFeatured, page, size, e);
                         return new PageImpl<>(List.of(), pageable, 0);
                 }
+        }
+
+        private HomestayDto.Response mapSearchCardToResponse(SearchCardDto card) {
+                String firstName = card.getHostFirstName() == null ? "" : card.getHostFirstName();
+                String lastName = card.getHostLastName() == null ? "" : card.getHostLastName();
+                String hostName = (firstName + " " + lastName).trim();
+
+                List<MediaDto> media = card.getCoverImageUrl() == null || card.getCoverImageUrl().isBlank()
+                                ? new ArrayList<>()
+                                : List.of(MediaDto.builder().url(card.getCoverImageUrl()).build());
+
+                DestinationDto destination = card.getDestinationId() == null && card.getDestinationSlug() == null
+                                ? null
+                                : DestinationDto.builder()
+                                                .id(card.getDestinationId())
+                                                .slug(card.getDestinationSlug())
+                                                .name(card.getDestinationName())
+                                                .district(card.getDestinationDistrict())
+                                                .heroTitle(card.getDestinationHeroTitle())
+                                                .description(card.getDestinationDescription())
+                                                .localImageName(card.getDestinationLocalImageName())
+                                                .stateName(card.getDestinationStateName())
+                                                .stateSlug(card.getDestinationStateSlug())
+                                                .build();
+
+                Homestay.Status status = Homestay.Status.APPROVED;
+                if (card.getStatus() != null && !card.getStatus().isBlank()) {
+                        try {
+                                status = Homestay.Status.valueOf(card.getStatus());
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                }
+
+                return HomestayDto.Response.builder()
+                                .id(card.getId())
+                                .name(card.getName())
+                                .description(card.getDescription())
+                                .pricePerNight(card.getPricePerNight())
+                                .latitude(card.getLatitude())
+                                .longitude(card.getLongitude())
+                                .locationName(card.getLocationName())
+                                .amenities(new HashMap<>())
+                                .policies(new ArrayList<>())
+                                .quickFacts(new HashMap<>())
+                                .tags(new ArrayList<>())
+                                .hostDetails(new HashMap<>())
+                                .media(media)
+                                .vibeScore(card.getVibeScore())
+                                .avgAtmosphereRating(card.getAvgAtmosphereRating())
+                                .avgServiceRating(card.getAvgServiceRating())
+                                .avgAccuracyRating(card.getAvgAccuracyRating())
+                                .avgValueRating(card.getAvgValueRating())
+                                .totalReviews(card.getTotalReviews())
+                                .status(status)
+                                .host(AuthorDto.builder()
+                                                .id(card.getHostId())
+                                                .name(hostName)
+                                                .role(card.getHostRole() == null ? "ROLE_USER" : card.getHostRole())
+                                                .avatarUrl(card.getHostAvatarUrl())
+                                                .isVerifiedHost(Boolean.TRUE.equals(card.getHostVerified()))
+                                                .build())
+                                .ownerId(card.getOwnerId())
+                                .featured(Boolean.TRUE.equals(card.getFeatured()))
+                                .destination(destination)
+                                .mealConfig(new HashMap<>())
+                                .editorialLead(null)
+                                .nearbyHighlights(null)
+                                .bookingHeatScore(null)
+                                .build();
         }
 
         public List<HomestayDto.Response> getAllHomestays() {
