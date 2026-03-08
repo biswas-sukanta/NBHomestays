@@ -81,11 +81,12 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
         );
     }
 
+    // Static taxonomy for capsule filter pills (DestinationCardDto does not contain tags)
     const allTags: string[] = ['🌟 All', 'Hill Station', 'Heritage', 'Tea Garden', 'Nature', 'Lakeside', 'Trekking', 'Offbeat'];
 
-    const filteredDestinations = activeTag === '🌟 All'
-        ? destinations
-        : destinations.filter((d) => (d as any)?.tags?.includes?.(activeTag) || (d as any)?.tags?.includes?.(activeTag.replace('🌟 ', '')));
+    // DestinationCardDto does not have tags, so capsule filters are display-only for destinations
+    // Tag filtering applies to homestay search, not destination cards
+    const filteredDestinations = destinations;
 
     return (
         <div className="space-y-10">
@@ -131,8 +132,10 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                         <AnimatePresence mode='popLayout'>
                             {filteredDestinations.slice(0, isHome ? 8 : visibleCount).map((dest, idx) => {
                                 const tint = CARD_TINTS[idx % CARD_TINTS.length];
-                                const stateLabel = dest.stateName ? ` (${dest.stateName})` : '';
-                                const staysLabel = dest.homestayCount != null ? ` · ${dest.homestayCount} stays` : '';
+                                const subtitleParts: string[] = [];
+                                if (dest.stateName) subtitleParts.push(dest.stateName);
+                                if (dest.homestayCount != null) subtitleParts.push(`${dest.homestayCount} stays`);
+                                const subtitle = subtitleParts.length > 0 ? subtitleParts.join(' · ') : 'Coming soon';
                                 return (
                                     <motion.div
                                         key={dest.slug}
@@ -162,7 +165,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                                     {dest.name}
                                                 </h3>
                                                 <p className="text-white/80 text-xs md:text-sm font-medium mt-1 drop-shadow">
-                                                    {dest.name}{stateLabel}{staysLabel}
+                                                    {subtitle}
                                                 </p>
                                             </div>
                                         </div>

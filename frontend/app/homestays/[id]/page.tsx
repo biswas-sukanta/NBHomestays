@@ -32,6 +32,7 @@ interface Homestay {
     pricePerNight: number;
     rating: number;
     vibeScore: number;
+    totalReviews?: number;
     amenities: Record<string, boolean>;
     policies?: string[];
     quickFacts?: Record<string, string>;
@@ -378,9 +379,16 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                         </>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-1 font-bold text-gray-900">
-                                    <Star className="w-4 h-4 fill-gray-900" />
-                                    <span>{vibeScore.toFixed(1)}</span>
+                                <div className="flex flex-col items-end">
+                                    <div className="flex items-center gap-1 font-bold text-gray-900">
+                                        <Star className="w-4 h-4 fill-gray-900" />
+                                        <span>{vibeScore.toFixed(1)}</span>
+                                    </div>
+                                    <div className="text-xs font-semibold text-gray-500">
+                                        {(typeof homestay.totalReviews === 'number' && homestay.totalReviews > 0)
+                                            ? `${homestay.totalReviews} reviews`
+                                            : 'New stay'}
+                                    </div>
                                 </div>
                             </div>
 
@@ -390,8 +398,9 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                     {trustSignals.map((sig) => (
                                         <div
                                             key={sig}
-                                            className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-white/70 border border-gray-200"
+                                            className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/70 border border-gray-200"
                                         >
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
                                             <span className="text-xs font-semibold text-gray-900">{getTrustSignalLabel(sig)}</span>
                                         </div>
                                     ))}
@@ -401,6 +410,21 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                             <hr className="border-gray-200 mb-6" />
 
                             <InquirySection homestayId={homestay.id} homestayName={homestay.name} />
+
+                            <div className="mt-4 grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-800 hover:bg-gray-50 transition-colors"
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    type="button"
+                                    className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-800 hover:bg-gray-50 transition-colors"
+                                >
+                                    Share
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

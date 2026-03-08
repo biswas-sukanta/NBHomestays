@@ -516,14 +516,16 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                                     setDestinationId(val);
                                     // Auto-sync map: find dest name+district and pass to LocationPicker
                                     const dest = destinations?.find((d: any) => d.id === val);
-                                    if (dest) setMapAutoSearch(`${dest.name}, ${dest.district}`);
+                                    if (dest) {
+                                        setMapAutoSearch(dest.stateName ? `${dest.name}, ${dest.stateName}` : dest.name);
+                                    }
                                 }}>
                                     <SelectTrigger error={errors.destinationId}><SelectValue placeholder="Choose a destination..." /></SelectTrigger>
                                     <SelectContent>
                                         <ScrollArea className="h-[300px]">
                                             {destinations?.map((dest: any) => (
                                                 <SelectItem key={dest.id} value={dest.id}>
-                                                    {dest.name} ({dest.district})
+                                                    {dest.name}{dest.stateName ? ` (${dest.stateName})` : ''}
                                                 </SelectItem>
                                             ))}
                                         </ScrollArea>
