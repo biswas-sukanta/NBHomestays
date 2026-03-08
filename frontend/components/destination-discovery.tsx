@@ -60,7 +60,7 @@ const TRAVEL_TAGS: string[] = [
     'Transit'
 ];
 
-const VIBE_EMOJI: Record<string, string> = {
+const TAG_EMOJI: Record<string, string> = {
     'Hill Station': '⛰️',
     'Tea Garden': '🍃',
     'Nature': '🌿',
@@ -83,8 +83,8 @@ const VIBE_EMOJI: Record<string, string> = {
 // - "🥾 Trekking" -> "Trekking"
 function normalizeTag(tag: string): string {
     const stripped = tag
-        // Remove emoji and ZWJ/VS16
-        .replace(/[\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D]/gu, '')
+        // Strip any leading emoji / punctuation prefix (keep first letter/number onwards)
+        .replace(/^[^\p{L}\p{N}]+/u, '')
         // Convert hyphens to spaces
         .replace(/-/g, ' ')
         // Normalize whitespace
@@ -175,7 +175,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                     {TRAVEL_TAGS.map(tag => {
                         const isActive = activeTag === tag;
                         const TagIcon = TAG_ICONS[tag] || Compass;
-                        const tagEmoji = VIBE_EMOJI[tag];
+                        const tagEmoji = TAG_EMOJI[tag];
                         return (
                             <button
                                 key={tag}
@@ -255,7 +255,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                                                 key={tag}
                                                                 className="rounded-full px-3 py-1 text-xs bg-white/90 backdrop-blur text-neutral-900 font-semibold"
                                                             >
-                                                                {VIBE_EMOJI[tag] ? `${VIBE_EMOJI[tag]} ` : ''}{tag}
+                                                                {TAG_EMOJI[tag] ? `${TAG_EMOJI[tag]} ` : ''}{tag}
                                                             </span>
                                                         ))}
                                                     </div>
