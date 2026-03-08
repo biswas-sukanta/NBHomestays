@@ -1,6 +1,7 @@
 package com.nbh.backend.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,6 +44,7 @@ public class Destination {
     private State state;
 
     @ElementCollection
+    @BatchSize(size = 50)
     @CollectionTable(name = "destination_tags", joinColumns = @JoinColumn(name = "destination_id"))
     @Column(name = "tag")
     @Builder.Default

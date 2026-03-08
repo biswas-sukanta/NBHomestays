@@ -188,7 +188,12 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
 
         // N+1 Fix: Fetch entities with JOIN FETCH
         List<Homestay> unsorted = entityManager.createQuery(
-                "SELECT h FROM Homestay h LEFT JOIN FETCH h.owner LEFT JOIN FETCH h.mediaFiles WHERE h.id IN :ids",
+                "SELECT DISTINCT h FROM Homestay h " +
+                        "LEFT JOIN FETCH h.owner " +
+                        "LEFT JOIN FETCH h.mediaFiles " +
+                        "LEFT JOIN FETCH h.destination d " +
+                        "LEFT JOIN FETCH d.state " +
+                        "WHERE h.id IN :ids",
                 Homestay.class).setParameter("ids", ids).getResultList();
 
         // Sort based on the order of the initially ranked native 'ids'

@@ -105,17 +105,6 @@ public class HomestayService {
                         int size, int page) {
                 Pageable pageable = PageRequest.of(page, size);
 
-                // If query is empty and tag is empty and stateSlug is empty and isFeatured is
-                // null, return all
-                // APPROVED homestays
-                if ((query == null || query.trim().isEmpty()) && (tag == null || tag.trim().isEmpty())
-                                && (stateSlug == null || stateSlug.trim().isEmpty())
-                                && isFeatured == null) {
-                        return repository.findByStatus(Homestay.Status.APPROVED, pageable)
-                                        .map(this::mapToResponse);
-                }
-
-                // Otherwise perform search
                 try {
                         Page<Homestay> homestayPage = repository.search(query, new HashMap<String, Boolean>(),
                                         tag, stateSlug,

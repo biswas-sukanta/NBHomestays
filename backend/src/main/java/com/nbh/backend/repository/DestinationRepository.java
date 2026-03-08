@@ -1,6 +1,7 @@
 package com.nbh.backend.repository;
 
 import com.nbh.backend.model.Destination;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,7 +11,13 @@ import java.util.UUID;
 
 @Repository
 public interface DestinationRepository extends JpaRepository<Destination, UUID> {
+    @Override
+    @EntityGraph(attributePaths = { "state", "tags" })
+    List<Destination> findAll();
+
+    @EntityGraph(attributePaths = { "state", "tags" })
     Optional<Destination> findBySlug(String slug);
 
+    @EntityGraph(attributePaths = { "state", "tags" })
     List<Destination> findByStateSlug(String stateSlug);
 }
