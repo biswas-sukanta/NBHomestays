@@ -38,6 +38,7 @@ public class PostService {
     private final HomestayRepository homestayRepository;
     private final PostLikeRepository postLikeRepository;
     private final ImageUploadService imageUploadService;
+    private final AsyncJobService asyncJobService;
 
     @Caching(evict = {
             @CacheEvict(value = "postsList", allEntries = true)
@@ -58,6 +59,7 @@ public class PostService {
         }
 
         Post post = Post.builder()
+                .id(java.util.UUID.randomUUID())
                 .locationName(request.getLocationName())
                 .textContent(request.getTextContent())
                 .tags(request.getTags() != null ? request.getTags() : new java.util.ArrayList<>())
@@ -79,7 +81,24 @@ public class PostService {
             post.getMediaFiles().forEach(m -> m.setPost(finalPost));
         }
 
+        if (files != null && !files.isEmpty()) {
+            try {
+                java.util.List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
+                        .uploadFiles(files, "posts/" + post.getId());
+                for (com.nbh.backend.model.MediaResource res : uploadedResources) {
+                    res.setPost(post);
+                }
+                if (post.getMediaFiles() == null) {
+                    post.setMediaFiles(new java.util.ArrayList<>());
+                }
+                post.getMediaFiles().addAll(uploadedResources);
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("Failed to upload media files", e);
+            }
+        }
+
         Post saved = postRepository.save(post);
+        asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "posts/" + saved.getId());
         return mapToResponse(saved);
     }
 
@@ -153,6 +172,7 @@ public class PostService {
 
         // --- CLOUD JANITOR DIFF: Purge images removed by the user ---
         java.util.List<com.nbh.backend.model.MediaResource> finalMergedMedia = new java.util.ArrayList<>();
+        java.util.List<String> removedFileIds = new java.util.ArrayList<>();
         if (request.getMedia() != null) {
             java.util.List<com.nbh.backend.model.MediaResource> existingMedia = post.getMediaFiles();
             java.util.List<MediaDto> retainedMediaDtos = request.getMedia();
@@ -167,8 +187,7 @@ public class PostService {
                 for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
                     String oldFileId = oldResource.getFileId();
                     if (oldFileId != null && !retainedFileIds.contains(oldFileId)) {
-                        System.out.println("--- CLOUD JANITOR (UPDATE DIFF): Deleting orphaned File ID: " + oldFileId);
-                        imageUploadService.deleteFile(oldFileId);
+                        removedFileIds.add(oldFileId);
                     } else if (oldFileId != null) {
                         // Keep retained valid resources
                         finalMergedMedia.add(oldResource);
@@ -182,7 +201,7 @@ public class PostService {
         if (files != null && !files.isEmpty()) {
             try {
                 java.util.List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
-                        .uploadFiles(files);
+                        .uploadFiles(files, "posts/" + post.getId());
                 for (com.nbh.backend.model.MediaResource res : uploadedResources) {
                     res.setPost(finalPost);
                     finalMergedMedia.add(res);
@@ -199,6 +218,8 @@ public class PostService {
         post.getMediaFiles().addAll(finalMergedMedia);
 
         Post saved = postRepository.save(post);
+        asyncJobService.enqueueDeleteMedia(removedFileIds);
+        asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "posts/" + saved.getId());
         return mapToResponse(saved, userEmail);
     }
 
@@ -220,14 +241,8 @@ public class PostService {
         }
 
         // --- CLOUD JANITOR: Purge ImageKit Media before Database Deletion ---
-        if (post.getMediaFiles() != null && !post.getMediaFiles().isEmpty()) {
-            System.out.println("--- CLOUD JANITOR INITIATED ---");
-            for (com.nbh.backend.model.MediaResource media : post.getMediaFiles()) {
-                System.out.println("Preparing to delete File ID: " + media.getFileId());
-                imageUploadService.deleteFile(media.getFileId());
-                System.out.println("Successfully purged File ID: " + media.getFileId() + " from cloud storage.");
-            }
-        }
+        asyncJobService.enqueueDeleteMedia(post.getMediaFiles() == null ? java.util.List.of()
+                : post.getMediaFiles().stream().map(MediaResource::getFileId).toList());
 
         postRepository.delete(post);
     }
@@ -295,6 +310,7 @@ public class PostService {
         postRepository.save(original);
 
         Post post = Post.builder()
+                .id(java.util.UUID.randomUUID())
                 .locationName(
                         request.getLocationName() != null ? request.getLocationName() : original.getLocationName())
                 .textContent(request.getTextContent() != null ? request.getTextContent() : "")
@@ -314,8 +330,37 @@ public class PostService {
             post.getMediaFiles().forEach(m -> m.setPost(finalPost));
         }
 
+        if (files != null && !files.isEmpty()) {
+            try {
+                java.util.List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
+                        .uploadFiles(files, "posts/" + post.getId());
+                for (com.nbh.backend.model.MediaResource res : uploadedResources) {
+                    res.setPost(post);
+                }
+                if (post.getMediaFiles() == null) {
+                    post.setMediaFiles(new java.util.ArrayList<>());
+                }
+                post.getMediaFiles().addAll(uploadedResources);
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("Failed to upload media files", e);
+            }
+        }
+
         Post saved = postRepository.save(post);
+        asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "posts/" + saved.getId());
         return mapToResponse(saved);
+    }
+
+    private java.util.List<String> extractFileIds(java.util.List<MediaDto> media) {
+        if (media == null || media.isEmpty()) {
+            return java.util.List.of();
+        }
+        return media.stream()
+                .map(MediaDto::getFileId)
+                .filter(java.util.Objects::nonNull)
+                .filter(s -> !s.isBlank())
+                .distinct()
+                .toList();
     }
 
     // ── Mapping Helper ────────────────────────────────────────

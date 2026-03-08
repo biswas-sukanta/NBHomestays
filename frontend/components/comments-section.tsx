@@ -349,27 +349,26 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
     const submitComment = async () => {
         if ((!newComment.trim() && stagedFiles.length === 0) || submitting) return;
         setSubmitting(true);
+        const tempId = 'temp-' + Math.random().toString(36).substring(7);
+        const stagedPreviewMedia = stagedFiles.map(staged => ({ url: staged.previewUrl }));
+        const optimisticComment: Comment = {
+            id: tempId,
+            body: newComment.trim(),
+            author: {
+                id: user?.id || 'anon',
+                name: (user?.firstName || 'User') + (user?.lastName ? ' ' + user?.lastName : ''),
+                role: user?.role || 'USER',
+                avatarUrl: user?.avatarUrl
+            },
+            createdAt: new Date().toISOString(),
+            media: stagedPreviewMedia
+        };
+        const previousText = newComment;
+        const previousStaged = stagedFiles;
+        setComments(prev => [...prev, optimisticComment]);
+        setNewComment('');
+        setStagedFiles([]);
         try {
-            // OPTIMISTIC UPDATE if no files
-            let tempId = '';
-            if (stagedFiles.length === 0) {
-                tempId = 'temp-' + Math.random().toString(36).substring(7);
-                const optimisticComment: Comment = {
-                    id: tempId,
-                    body: newComment.trim(),
-                    author: {
-                        id: user?.id || 'anon',
-                        name: (user?.firstName || 'User') + (user?.lastName ? ' ' + user?.lastName : ''),
-                        role: user?.role || 'USER',
-                        avatarUrl: user?.avatarUrl
-                    },
-                    createdAt: new Date().toISOString(),
-                    media: []
-                };
-                setComments(prev => [...prev, optimisticComment]);
-                setNewComment('');
-            }
-
             // 1. Upload Images to ImageKit if any
             let finalUrls: { url: string, fileId?: string }[] = [];
             if (stagedFiles.length > 0) {
@@ -395,19 +394,18 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
             });
             if (res.ok) {
                 const c: Comment = await res.json();
-                if (tempId) {
-                    setComments(prev => prev.map(comm => comm.id === tempId ? c : comm));
-                } else {
-                    setComments(prev => [...prev, c]);
-                    setNewComment('');
-                    setStagedFiles([]);
-                }
+                setComments(prev => prev.map(comm => comm.id === tempId ? c : comm));
                 onCommentCountChange?.(comments.length + 1);
             } else {
-                if (tempId) setComments(prev => prev.filter(comm => comm.id !== tempId));
+                setComments(prev => prev.filter(comm => comm.id !== tempId));
+                setNewComment(previousText);
+                setStagedFiles(previousStaged);
                 toast.error('Failed to post comment');
             }
         } catch (e: any) {
+            setComments(prev => prev.filter(comm => comm.id !== tempId));
+            setNewComment(previousText);
+            setStagedFiles(previousStaged);
             toast.error(e.message || 'An error occurred');
         } finally { setSubmitting(false); }
     };

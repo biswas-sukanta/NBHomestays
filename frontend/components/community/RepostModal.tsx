@@ -63,6 +63,38 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
     const handleSubmit = async () => {
         if (submitting) return;
         setSubmitting(true);
+        const previousFeed = queryClient.getQueryData(['community-posts']);
+        const tempId = `temp-repost-${Date.now()}`;
+        const previewMedia = stagedFiles.map(staged => ({ url: staged.previewUrl }));
+        const optimisticPost = {
+            id: tempId,
+            locationName: location || 'North Bengal',
+            textContent: text,
+            media: previewMedia,
+            tags: [],
+            loveCount: 0,
+            shareCount: 0,
+            commentCount: 0,
+            isLikedByCurrentUser: false,
+            createdAt: new Date().toISOString(),
+            originalPost: {
+                id: quote.id,
+                textContent: quote.textContent,
+                locationName: location || 'North Bengal',
+                media: []
+            }
+        };
+
+        await queryClient.cancelQueries({ queryKey: ['community-posts'] });
+        queryClient.setQueryData(['community-posts'], (old: any) => {
+            if (!old || !old.pages) return old;
+            const newPages = [...old.pages];
+            if (newPages.length > 0) {
+                newPages[0] = { ...newPages[0], content: [optimisticPost, ...(newPages[0].content || [])] };
+            }
+            return { ...old, pages: newPages };
+        });
+
         try {
             let finalMedia: { url: string; fileId?: string }[] = [];
             if (stagedFiles.length > 0) {
@@ -85,14 +117,15 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
             const res = await postApi.create(formData);
             toast.success('Reposted!');
 
-            // Optimistic update
             queryClient.setQueryData(['community-posts'], (old: any) => {
                 if (!old || !old.pages) return old;
-                const newPages = [...old.pages];
-                if (newPages.length > 0) {
-                    newPages[0] = { ...newPages[0], content: [res.data, ...(newPages[0].content || [])] };
-                }
-                return { ...old, pages: newPages };
+                return {
+                    ...old,
+                    pages: old.pages.map((page: any) => ({
+                        ...page,
+                        content: (page.content || []).map((p: any) => p.id === tempId ? res.data : p)
+                    }))
+                };
             });
 
             queryClient.invalidateQueries({ queryKey: ['community-posts'] });
@@ -100,6 +133,7 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
             onSuccess(res.data);
         } catch (err) {
             console.error('Repost failed', err);
+            queryClient.setQueryData(['community-posts'], previousFeed);
             toast.error('Repost failed');
         } finally {
             setSubmitting(false);

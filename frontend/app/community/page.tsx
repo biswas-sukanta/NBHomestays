@@ -184,11 +184,23 @@ export default function CommunityPage() {
 
     const handleDeletePost = async (id: string) => {
         if (!window.confirm("Are you sure you want to delete this story?")) return;
+        const previousFeed = queryClient.getQueryData(['community-posts', activeTag]);
+        queryClient.setQueryData(['community-posts', activeTag], (old: any) => {
+            if (!old || !old.pages) return old;
+            return {
+                ...old,
+                pages: old.pages.map((page: any) => ({
+                    ...page,
+                    content: (page.content || []).filter((post: any) => post.id !== id)
+                }))
+            };
+        });
         try {
             await postApi.delete(id);
             queryClient.invalidateQueries({ queryKey: ['community-posts'] });
             toast.success('Story deleted');
         } catch (err) {
+            queryClient.setQueryData(['community-posts', activeTag], previousFeed);
             toast.error('Failed to delete story');
         }
     };

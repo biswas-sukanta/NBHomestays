@@ -48,7 +48,11 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
     const [text, setText] = useState(postData?.caption || '');
     const [location, setLocation] = useState(postData?.location || '');
     const [submitting, setSubmitting] = useState(false);
-    const [existingMedia, setExistingMedia] = useState<{ url: string; fileId?: string }[]>(postData?.imageUrl ? [{ url: postData.imageUrl }] : []);
+    const [existingMedia, setExistingMedia] = useState<{ url: string; fileId?: string }[]>(
+        postData?.images?.length
+            ? postData.images.map(img => ({ url: img.url, fileId: img.fileId }))
+            : (postData?.imageUrl ? [{ url: postData.imageUrl }] : [])
+    );
     const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
     const [cropTarget, setCropTarget] = useState<StagedFile | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
@@ -71,7 +75,11 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
         if (postData) {
             setText(postData.caption || '');
             setLocation(postData.location || '');
-            setExistingMedia(postData.imageUrl ? [{ url: postData.imageUrl }] : []);
+            setExistingMedia(
+                postData.images?.length
+                    ? postData.images.map(img => ({ url: img.url, fileId: img.fileId }))
+                    : (postData.imageUrl ? [{ url: postData.imageUrl }] : [])
+            );
             setSelectedHomestay(postData.homestayId || '');
             setSelectedTags(postData.tags || []);
         }
@@ -122,6 +130,55 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
         }
         setError('');
         setSubmitting(true);
+        const previousFeed = queryClient.getQueryData(['community-posts']);
+        const tempId = `temp-${Date.now()}`;
+        const previewMedia = stagedFiles.map(staged => ({ url: staged.previewUrl }));
+        const optimisticMedia = [...existingMedia, ...previewMedia];
+
+        await queryClient.cancelQueries({ queryKey: ['community-posts'] });
+
+        const optimisticPost = {
+            id: postData?.id ?? tempId,
+            author: {
+                id: user?.id,
+                name: user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : 'You',
+                role: user?.role ?? 'ROLE_USER',
+                avatarUrl: (user as any)?.avatarUrl,
+                isVerifiedHost: (user as any)?.isVerifiedHost ?? false
+            },
+            locationName: location || 'North Bengal',
+            textContent: text,
+            media: optimisticMedia,
+            tags: selectedTags.length > 0 ? selectedTags : [],
+            loveCount: 0,
+            shareCount: 0,
+            commentCount: 0,
+            isLikedByCurrentUser: false,
+            createdAt: new Date().toISOString(),
+            homestayId: selectedHomestay || null
+        };
+
+        queryClient.setQueryData(['community-posts'], (old: any) => {
+            if (!old || !old.pages) return old;
+            const newPages = [...old.pages];
+            if (postData) {
+                return {
+                    ...old,
+                    pages: newPages.map((page: any) => ({
+                        ...page,
+                        content: (page.content || []).map((p: any) => p.id === postData.id ? optimisticPost : p)
+                    }))
+                };
+            }
+            if (newPages.length > 0) {
+                newPages[0] = {
+                    ...newPages[0],
+                    content: [optimisticPost, ...(newPages[0].content || [])]
+                };
+            }
+            return { ...old, pages: newPages };
+        });
+
         try {
             let uploadedMedia: { url: string; fileId?: string }[] = [];
             if (stagedFiles.length > 0) {
@@ -149,29 +206,19 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                 ? await postApi.update(postData.id, formData)
                 : await postApi.create(formData);
 
-            // Optimistic update
-            if (!postData) {
-                queryClient.setQueryData(['community-posts'], (old: any) => {
-                    if (!old || !old.pages) return old;
-                    const newPages = [...old.pages];
-                    if (newPages.length > 0) {
-                        newPages[0] = {
-                            ...newPages[0],
-                            content: [res.data, ...(newPages[0].content || [])]
-                        };
-                    }
-                    return { ...old, pages: newPages };
-                });
-            } else {
-                queryClient.setQueryData(['community-posts'], (old: any) => {
-                    if (!old || !old.pages) return old;
-                    const newPages = old.pages.map((page: any) => ({
+            queryClient.setQueryData(['community-posts'], (old: any) => {
+                if (!old || !old.pages) return old;
+                return {
+                    ...old,
+                    pages: old.pages.map((page: any) => ({
                         ...page,
-                        content: (page.content || []).map((p: any) => p.id === postData.id ? res.data : p)
-                    }));
-                    return { ...old, pages: newPages };
-                });
-            }
+                        content: (page.content || []).map((p: any) => {
+                            const targetId = postData?.id ?? tempId;
+                            return p.id === targetId ? res.data : p;
+                        })
+                    }))
+                };
+            });
 
             queryClient.invalidateQueries({ queryKey: ['community-posts'] });
             if (postData) {
@@ -182,6 +229,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
         } catch (err: any) {
             console.error('Post failed', err);
+            queryClient.setQueryData(['community-posts'], previousFeed);
             toast.error(err.response?.data?.message || "Failed to share story.");
         } finally {
             setSubmitting(false);

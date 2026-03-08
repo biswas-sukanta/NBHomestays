@@ -21,6 +21,7 @@ import com.nbh.backend.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -28,180 +29,217 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CommentService {
 
-        private final CommentRepository commentRepository;
-        private final PostRepository postRepository;
-        private final UserRepository userRepository;
-        private final ImageUploadService imageUploadService;
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
+    private final AsyncJobService asyncJobService;
 
-        // ── Add top-level comment ──────────────────────────────────
-        @Transactional
-        @CacheEvict(value = "postComments", allEntries = true)
-        public CommentDto addComment(UUID postId, CommentDto.Request request, User currentUser) {
-                Post post = postRepository.findById(postId)
-                                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
-                User user = userRepository.findById(currentUser.getId())
-                                .orElseThrow(() -> new IllegalArgumentException(
-                                                "User not found: " + currentUser.getId()));
+    // ── Add top-level comment ──────────────────────────────────
+    @Transactional
+    @CacheEvict(value = "postComments", allEntries = true)
+    public CommentDto addComment(UUID postId, CommentDto.Request request, User currentUser) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found: " + currentUser.getId()));
 
-                Comment comment = Comment.builder()
-                                .post(post)
-                                .user(user)
-                                .body(request.getBody() != null ? request.getBody().trim() : "")
-                                .build();
+        Comment comment = Comment.builder()
+                .post(post)
+                .user(user)
+                .body(request.getBody() != null ? request.getBody().trim() : "")
+                .build();
 
-                if (request.getMedia() != null) {
-                        final Comment finalC = comment;
-                        java.util.List<com.nbh.backend.model.MediaResource> entityMedia = request.getMedia().stream()
-                                        .map(dto -> com.nbh.backend.model.MediaResource.builder()
-                                                        .id(dto.getId())
-                                                        .url(dto.getUrl())
-                                                        .fileId(dto.getFileId())
-                                                        .comment(finalC)
-                                                        .build())
-                                        .collect(java.util.stream.Collectors.toList());
-                        comment.setMediaFiles(entityMedia);
-                }
-
-                return toDto(commentRepository.save(comment), true);
+        if (request.getMedia() != null) {
+            final Comment finalC = comment;
+            java.util.List<com.nbh.backend.model.MediaResource> entityMedia = request.getMedia().stream()
+                    .map(dto -> com.nbh.backend.model.MediaResource.builder()
+                            .id(dto.getId())
+                            .url(dto.getUrl())
+                            .fileId(dto.getFileId())
+                            .comment(finalC)
+                            .build())
+                    .collect(java.util.stream.Collectors.toList());
+            comment.setMediaFiles(entityMedia);
         }
 
-        // ── Add reply ──────────────────────────────────────────────
-        @Transactional
-        @CacheEvict(value = "postComments", allEntries = true)
-        public CommentDto addReply(UUID postId, UUID parentId, CommentDto.Request request, User currentUser) {
-                Post post = postRepository.findById(postId)
-                                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
-                Comment parent = commentRepository.findById(parentId)
-                                .orElseThrow(() -> new IllegalArgumentException(
-                                                "Parent comment not found: " + parentId));
-                User user = userRepository.findById(currentUser.getId())
-                                .orElseThrow(() -> new IllegalArgumentException(
-                                                "User not found: " + currentUser.getId()));
+        Comment saved = commentRepository.save(comment);
+        asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "comments/" + saved.getId());
+        return toDto(saved, true);
+    }
 
-                Comment reply = Comment.builder()
-                                .post(post)
-                                .user(user)
-                                .parent(parent)
-                                .body(request.getBody() != null ? request.getBody().trim() : "")
-                                .build();
+    // ── Add reply ──────────────────────────────────────────────
+    @Transactional
+    @CacheEvict(value = "postComments", allEntries = true)
+    public CommentDto addReply(UUID postId, UUID parentId, CommentDto.Request request, User currentUser) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
+        Comment parent = commentRepository.findById(parentId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Parent comment not found: " + parentId));
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found: " + currentUser.getId()));
 
-                if (request.getMedia() != null) {
-                        final Comment finalReply = reply;
-                        java.util.List<com.nbh.backend.model.MediaResource> entityMedia = request.getMedia().stream()
-                                        .map(dto -> com.nbh.backend.model.MediaResource.builder()
-                                                        .id(dto.getId())
-                                                        .url(dto.getUrl())
-                                                        .fileId(dto.getFileId())
-                                                        .comment(finalReply)
-                                                        .build())
-                                        .collect(java.util.stream.Collectors.toList());
-                        reply.setMediaFiles(entityMedia);
-                }
+        Comment reply = Comment.builder()
+                .post(post)
+                .user(user)
+                .parent(parent)
+                .body(request.getBody() != null ? request.getBody().trim() : "")
+                .build();
 
-                return toDto(commentRepository.save(reply), false);
+        if (request.getMedia() != null) {
+            final Comment finalReply = reply;
+            java.util.List<com.nbh.backend.model.MediaResource> entityMedia = request.getMedia().stream()
+                    .map(dto -> com.nbh.backend.model.MediaResource.builder()
+                            .id(dto.getId())
+                            .url(dto.getUrl())
+                            .fileId(dto.getFileId())
+                            .comment(finalReply)
+                            .build())
+                    .collect(java.util.stream.Collectors.toList());
+            reply.setMediaFiles(entityMedia);
         }
 
-        // ── Get paginated top-level comments (with embedded replies) ──
-        @Transactional(readOnly = true)
-        @Cacheable(value = "postComments", key = "#postId + '-' + #page", sync = true)
-        public Page<CommentDto> getComments(UUID postId, int page, int size) {
-                return commentRepository
-                                .findTopLevelByPostId(postId, PageRequest.of(page, size))
-                                .map(c -> toDto(c, true));
+        Comment saved = commentRepository.save(reply);
+        asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "comments/" + saved.getId());
+        return toDto(saved, false);
+    }
+
+    // ── Get paginated top-level comments (with embedded replies) ──
+    @Transactional(readOnly = true)
+    @Cacheable(value = "postComments", key = "#postId + '-' + #page", sync = true)
+    public Page<CommentDto> getComments(UUID postId, int page, int size) {
+        return commentRepository
+                .findTopLevelByPostId(postId, PageRequest.of(page, size))
+                .map(c -> toDto(c, true));
+    }
+
+    // ── Update comment ─────────────────────────────────────────
+    @Transactional
+    @CacheEvict(value = "postComments", allEntries = true)
+    public CommentDto updateComment(UUID commentId, CommentDto.Request request, User currentUser) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
+
+        // ONLY the owner of a comment can edit it. Admins cannot edit user text.
+        boolean isOwner = comment.getUser().getId().equals(currentUser.getId());
+        if (!isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot edit this comment");
         }
 
-        // ── Update comment ─────────────────────────────────────────
-        @Transactional
-        @CacheEvict(value = "postComments", allEntries = true)
-        public CommentDto updateComment(UUID commentId, CommentDto.Request request, User currentUser) {
-                Comment comment = commentRepository.findById(commentId)
-                                .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
-
-                // ONLY the owner of a comment can edit it. Admins cannot edit user text.
-                boolean isOwner = comment.getUser().getId().equals(currentUser.getId());
-                if (!isOwner) {
-                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot edit this comment");
-                }
-
-                if (request.getBody() != null) {
-                        comment.setBody(request.getBody().trim());
-                }
-
-                return toDto(commentRepository.save(comment), false);
+        if (request.getBody() != null) {
+            comment.setBody(request.getBody().trim());
         }
 
-        // ── Delete (owner or admin) ────────────────────────────────
-        @Transactional
-        @CacheEvict(value = "postComments", allEntries = true)
-        public void deleteComment(UUID commentId, User currentUser) {
-                Comment comment = commentRepository.findById(commentId)
-                                .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
+        if (request.getMedia() != null) {
+            List<com.nbh.backend.model.MediaResource> finalMergedMedia = new ArrayList<>();
+            List<com.nbh.backend.model.MediaResource> existingMedia = comment.getMediaFiles();
+            List<String> removedFileIds = new ArrayList<>();
+            Set<String> retainedFileIds = request.getMedia().stream()
+                    .map(MediaDto::getFileId)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(Collectors.toSet());
 
-                boolean isOwner = comment.getUser().getId().equals(currentUser.getId());
-                boolean isAdmin = currentUser.getRole().name().equals("ROLE_ADMIN");
-
-                if (!isOwner && !isAdmin) {
-                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot delete this comment");
+            if (existingMedia != null) {
+                for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
+                    String oldFileId = oldResource.getFileId();
+                    if (oldFileId != null && !retainedFileIds.contains(oldFileId)) {
+                        removedFileIds.add(oldFileId);
+                    } else if (oldFileId != null) {
+                        finalMergedMedia.add(oldResource);
+                    }
                 }
+            }
 
-                // --- CLOUD JANITOR: Purge ImageKit Media before Database Deletion ---
-                if (comment.getMediaFiles() != null && !comment.getMediaFiles().isEmpty()) {
-                        System.out.println("--- CLOUD JANITOR INITIATED ---");
-                        for (com.nbh.backend.model.MediaResource media : comment.getMediaFiles()) {
-                                System.out.println("Preparing to delete File ID: " + media.getFileId());
-                                imageUploadService.deleteFile(media.getFileId());
-                                System.out.println("Successfully purged File ID: " + media.getFileId()
-                                                + " from cloud storage.");
-                        }
-                }
+            if (comment.getMediaFiles() == null) {
+                comment.setMediaFiles(new ArrayList<>());
+            }
+            comment.getMediaFiles().clear();
+            comment.getMediaFiles().addAll(finalMergedMedia);
 
-                commentRepository.delete(comment);
+            asyncJobService.enqueueDeleteMedia(removedFileIds);
         }
 
-        // ── Mapping ────────────────────────────────────────────────
-        private CommentDto toDto(Comment c, boolean includeReplies) {
-                List<CommentDto> replies = List.of();
-                if (includeReplies && c.getReplies() != null) {
-                        replies = c.getReplies().stream()
-                                        .map(r -> toDto(r, false))
-                                        .collect(Collectors.toList());
-                }
+        return toDto(commentRepository.save(comment), false);
+    }
 
-                User author = c.getUser();
-                String authorName = (author.getFirstName() != null ? author.getFirstName() : "")
-                                + (author.getLastName() != null ? " " + author.getLastName() : "");
+    // ── Delete (owner or admin) ────────────────────────────────
+    @Transactional
+    @CacheEvict(value = "postComments", allEntries = true)
+    public void deleteComment(UUID commentId, User currentUser) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
 
-                List<com.nbh.backend.model.MediaResource> combinedMedia = new ArrayList<>();
-                if (c.getMediaFiles() != null) {
-                        combinedMedia.addAll(c.getMediaFiles());
-                }
-                // Fallback for Legacy Images
-                if (c.getLegacyImageUrls() != null && !c.getLegacyImageUrls().isEmpty() && combinedMedia.isEmpty()) {
-                        for (String url : c.getLegacyImageUrls()) {
-                                combinedMedia.add(com.nbh.backend.model.MediaResource.builder().url(url).build());
-                        }
-                }
+        boolean isOwner = comment.getUser().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole().name().equals("ROLE_ADMIN");
 
-                List<MediaDto> dtoMedia = combinedMedia.stream()
-                                .map(m -> MediaDto.builder().id(m.getId()).url(m.getUrl()).fileId(m.getFileId())
-                                                .build())
-                                .collect(Collectors.toList());
-
-                return CommentDto.builder()
-                                .id(c.getId())
-                                .postId(c.getPost().getId())
-                                .parentId(c.getParent() != null ? c.getParent().getId() : null)
-                                .author(AuthorDto.builder()
-                                                .id(author.getId())
-                                                .name(authorName.isBlank() ? "Anonymous" : authorName.trim())
-                                                .role(author.getRole().name())
-                                                .avatarUrl(author.getAvatarUrl())
-                                                .build())
-                                .body(c.getBody())
-                                .media(dtoMedia)
-                                .createdAt(c.getCreatedAt())
-                                .replies(replies)
-                                .replyCount(replies.size())
-                                .build();
+        if (!isOwner && !isAdmin) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot delete this comment");
         }
+
+        asyncJobService.enqueueDeleteMedia(comment.getMediaFiles() == null ? List.of()
+                : comment.getMediaFiles().stream().map(com.nbh.backend.model.MediaResource::getFileId).toList());
+
+        commentRepository.delete(comment);
+    }
+
+    // ── Mapping ────────────────────────────────────────────────
+    private CommentDto toDto(Comment c, boolean includeReplies) {
+        List<CommentDto> replies = List.of();
+        if (includeReplies && c.getReplies() != null) {
+            replies = c.getReplies().stream()
+                    .map(r -> toDto(r, false))
+                    .collect(Collectors.toList());
+        }
+
+        User author = c.getUser();
+        String authorName = (author.getFirstName() != null ? author.getFirstName() : "")
+                + (author.getLastName() != null ? " " + author.getLastName() : "");
+
+        List<com.nbh.backend.model.MediaResource> combinedMedia = new ArrayList<>();
+        if (c.getMediaFiles() != null) {
+            combinedMedia.addAll(c.getMediaFiles());
+        }
+        // Fallback for Legacy Images
+        if (c.getLegacyImageUrls() != null && !c.getLegacyImageUrls().isEmpty() && combinedMedia.isEmpty()) {
+            for (String url : c.getLegacyImageUrls()) {
+                combinedMedia.add(com.nbh.backend.model.MediaResource.builder().url(url).build());
+            }
+        }
+
+        List<MediaDto> dtoMedia = combinedMedia.stream()
+                .map(m -> MediaDto.builder().id(m.getId()).url(m.getUrl()).fileId(m.getFileId())
+                        .build())
+                .collect(Collectors.toList());
+
+        return CommentDto.builder()
+                .id(c.getId())
+                .postId(c.getPost().getId())
+                .parentId(c.getParent() != null ? c.getParent().getId() : null)
+                .author(AuthorDto.builder()
+                        .id(author.getId())
+                        .name(authorName.isBlank() ? "Anonymous" : authorName.trim())
+                        .role(author.getRole().name())
+                        .avatarUrl(author.getAvatarUrl())
+                        .build())
+                .body(c.getBody())
+                .media(dtoMedia)
+                .createdAt(c.getCreatedAt())
+                .replies(replies)
+                .replyCount(replies.size())
+                .build();
+    }
+
+    private List<String> extractFileIds(List<MediaDto> media) {
+        if (media == null || media.isEmpty()) {
+            return List.of();
+        }
+        return media.stream()
+                .map(MediaDto::getFileId)
+                .filter(java.util.Objects::nonNull)
+                .filter(s -> !s.isBlank())
+                .distinct()
+                .toList();
+    }
 }

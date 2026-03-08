@@ -42,6 +42,7 @@ public class HomestayService {
         private final HomestayRepository repository;
         private final UserRepository userRepository;
         private final ImageUploadService imageUploadService;
+        private final AsyncJobService asyncJobService;
         private final com.nbh.backend.repository.DestinationRepository destinationRepository;
         private final DestinationService destinationService;
 
@@ -58,6 +59,7 @@ public class HomestayService {
                                 : Homestay.Status.PENDING;
 
                 Homestay homestay = Homestay.builder()
+                                .id(UUID.randomUUID())
                                 .name(request.getName())
                                 .description(request.getDescription())
                                 .pricePerNight(request.getPricePerNight())
@@ -97,7 +99,25 @@ public class HomestayService {
                         homestay.setMediaFiles(entityMedia);
                 }
 
-                return mapToResponse(repository.save(homestay));
+                if (files != null && !files.isEmpty()) {
+                        try {
+                                List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
+                                                .uploadFiles(files, "homestays/" + homestay.getId());
+                                for (com.nbh.backend.model.MediaResource res : uploadedResources) {
+                                        res.setHomestay(homestay);
+                                }
+                                if (homestay.getMediaFiles() == null) {
+                                        homestay.setMediaFiles(new ArrayList<>());
+                                }
+                                homestay.getMediaFiles().addAll(uploadedResources);
+                        } catch (IOException e) {
+                                throw new RuntimeException("Failed to upload homestay media files", e);
+                        }
+                }
+
+                Homestay saved = repository.save(homestay);
+                asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "homestays/" + saved.getId());
+                return mapToResponse(saved);
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
@@ -290,6 +310,7 @@ public class HomestayService {
 
                 // --- CLOUD JANITOR V2 DIFF: Purge orphaned Photos ---
                 List<com.nbh.backend.model.MediaResource> finalMergedMedia = new ArrayList<>();
+                List<String> removedFileIds = new ArrayList<>();
                 if (request.getMedia() != null) {
                         List<com.nbh.backend.model.MediaResource> existingMedia = homestay.getMediaFiles();
                         List<MediaDto> retainedMediaDtos = request.getMedia();
@@ -303,9 +324,7 @@ public class HomestayService {
                                 for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
                                         if (oldResource.getFileId() != null
                                                         && !retainedFileIds.contains(oldResource.getFileId())) {
-                                                log.info("CLOUD JANITOR (HOMESTAY): Deleting File ID: {}",
-                                                                oldResource.getFileId());
-                                                imageUploadService.deleteFile(oldResource.getFileId());
+                                                removedFileIds.add(oldResource.getFileId());
                                         } else if (oldResource.getFileId() != null) {
                                                 finalMergedMedia.add(oldResource);
                                         }
@@ -318,7 +337,7 @@ public class HomestayService {
                 if (files != null && !files.isEmpty()) {
                         try {
                                 List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
-                                                .uploadFiles(files);
+                                                .uploadFiles(files, "homestays/" + homestay.getId());
                                 for (com.nbh.backend.model.MediaResource res : uploadedResources) {
                                         res.setHomestay(finalH);
                                         finalMergedMedia.add(res);
@@ -335,6 +354,8 @@ public class HomestayService {
                 homestay.getMediaFiles().addAll(finalMergedMedia);
 
                 Homestay saved = repository.save(homestay);
+                asyncJobService.enqueueDeleteMedia(removedFileIds);
+                asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "homestays/" + saved.getId());
                 return mapToResponse(saved);
         }
 
@@ -356,13 +377,8 @@ public class HomestayService {
                 }
 
                 // --- CLOUD JANITOR: Purge Photos before deletion ---
-                if (homestay.getMediaFiles() != null) {
-                        for (MediaResource media : homestay.getMediaFiles()) {
-                                if (media.getFileId() != null) {
-                                        imageUploadService.deleteFile(media.getFileId());
-                                }
-                        }
-                }
+                asyncJobService.enqueueDeleteMedia(homestay.getMediaFiles() == null ? List.of()
+                                : homestay.getMediaFiles().stream().map(MediaResource::getFileId).toList());
                 repository.delete(homestay);
         }
 
@@ -479,5 +495,17 @@ public class HomestayService {
                                 .nearbyHighlights(nearbyHighlights)
                                 .bookingHeatScore(bookingHeatScore)
                                 .build();
+        }
+
+        private List<String> extractFileIds(List<MediaDto> media) {
+                if (media == null || media.isEmpty()) {
+                        return List.of();
+                }
+                return media.stream()
+                                .map(MediaDto::getFileId)
+                                .filter(Objects::nonNull)
+                                .filter(s -> !s.isBlank())
+                                .distinct()
+                                .toList();
         }
 }

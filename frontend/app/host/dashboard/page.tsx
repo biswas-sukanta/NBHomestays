@@ -68,12 +68,14 @@ export default function HostDashboard() {
 
     const handleDelete = async () => {
         if (!homestayToDelete) return;
+        const previousListings = listings;
+        setListings(prev => prev.filter(h => h.id !== homestayToDelete));
+        setIsDeleteOpen(false);
         try {
             await homestayApi.deleteHomestay(homestayToDelete);
             toast.success("Homestay deleted");
-            setIsDeleteOpen(false);
-            setListings(prev => prev.filter(h => h.id !== homestayToDelete));
         } catch (error) {
+            setListings(previousListings);
             console.error(error);
             toast.error("Failed to delete homestay");
         }
