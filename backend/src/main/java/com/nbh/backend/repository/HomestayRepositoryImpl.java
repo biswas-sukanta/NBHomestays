@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -240,6 +241,7 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
             Pageable pageable) {
         StringBuilder sql = new StringBuilder(
                 "SELECT h.id, h.name, h.description, h.price_per_night, h.latitude, h.longitude, h.address, " +
+                        "h.created_at, h.view_count, h.inquiry_count, " +
                         "h.vibe_score, h.avg_atmosphere_rating, h.avg_service_rating, h.avg_accuracy_rating, h.avg_value_rating, h.total_reviews, " +
                         "h.status, h.owner_id, h.featured, " +
                         "d.id AS destination_id, d.slug AS destination_slug, d.name AS destination_name, d.district, d.hero_title, d.description AS destination_description, d.local_image_name, " +
@@ -411,6 +413,9 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         Double latitude = toDouble(row[i++]);
         Double longitude = toDouble(row[i++]);
         String locationName = (String) row[i++];
+        LocalDateTime createdAt = toLocalDateTime(row[i++]);
+        Long viewCount = toLong(row[i++]);
+        Long inquiryCount = toLong(row[i++]);
         Double vibeScore = toDouble(row[i++]);
         Double avgAtmosphereRating = toDouble(row[i++]);
         Double avgServiceRating = toDouble(row[i++]);
@@ -439,6 +444,17 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
         Boolean hostVerified = toBoolean(row[i++]);
         String coverImageUrl = (String) row[i];
 
+        List<com.nbh.backend.dto.HomestayDto.TrustSignal> trustSignals = computeTrustSignals(
+                createdAt,
+                viewCount,
+                inquiryCount,
+                avgAtmosphereRating,
+                avgServiceRating,
+                avgAccuracyRating,
+                avgValueRating,
+                totalReviews,
+                Boolean.TRUE.equals(hostVerified));
+
         return SearchCardDto.builder()
                 .id(id)
                 .name(name)
@@ -453,6 +469,7 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
                 .avgAccuracyRating(avgAccuracyRating)
                 .avgValueRating(avgValueRating)
                 .totalReviews(totalReviews)
+                .trustSignals(trustSignals)
                 .status(status)
                 .ownerId(ownerId)
                 .featured(featured)
@@ -473,6 +490,75 @@ public class HomestayRepositoryImpl implements HomestayRepositoryCustom {
                 .hostVerified(hostVerified)
                 .coverImageUrl(coverImageUrl)
                 .build();
+    }
+
+    private List<com.nbh.backend.dto.HomestayDto.TrustSignal> computeTrustSignals(
+            LocalDateTime createdAt,
+            Long viewCount,
+            Long inquiryCount,
+            Double avgAtmosphereRating,
+            Double avgServiceRating,
+            Double avgAccuracyRating,
+            Double avgValueRating,
+            Integer totalReviews,
+            boolean isVerifiedHost) {
+        final int maxSignals = 2;
+
+        long views = viewCount == null ? 0L : viewCount;
+        long inquiries = inquiryCount == null ? 0L : inquiryCount;
+        int reviews = totalReviews == null ? 0 : totalReviews;
+
+        double avgOverall = 0.0;
+        avgOverall += (avgAtmosphereRating == null ? 0.0 : avgAtmosphereRating);
+        avgOverall += (avgServiceRating == null ? 0.0 : avgServiceRating);
+        avgOverall += (avgAccuracyRating == null ? 0.0 : avgAccuracyRating);
+        avgOverall += (avgValueRating == null ? 0.0 : avgValueRating);
+        avgOverall = avgOverall / 4.0;
+
+        boolean isGuestFavorite = reviews >= 10 && avgOverall >= 4.7;
+        boolean isHighDemand = views >= highDemandViewThreshold();
+        boolean isPopularStay = inquiries >= popularInquiryThreshold();
+        boolean isNewListing = createdAt != null && createdAt.isAfter(LocalDateTime.now().minusDays(14));
+
+        java.util.ArrayList<com.nbh.backend.dto.HomestayDto.TrustSignal> signals = new java.util.ArrayList<>();
+
+        // Priority order:
+        // 1 GUEST_FAVORITE
+        // 2 HIGH_DEMAND
+        // 3 POPULAR_STAY (excluded if HIGH_DEMAND present)
+        // 4 TRUSTED_HOST
+        // 5 NEW_LISTING
+        if (isGuestFavorite)
+            signals.add(com.nbh.backend.dto.HomestayDto.TrustSignal.GUEST_FAVORITE);
+        if (isHighDemand)
+            signals.add(com.nbh.backend.dto.HomestayDto.TrustSignal.HIGH_DEMAND);
+        if (!isHighDemand && isPopularStay)
+            signals.add(com.nbh.backend.dto.HomestayDto.TrustSignal.POPULAR_STAY);
+        if (isVerifiedHost)
+            signals.add(com.nbh.backend.dto.HomestayDto.TrustSignal.TRUSTED_HOST);
+        if (isNewListing)
+            signals.add(com.nbh.backend.dto.HomestayDto.TrustSignal.NEW_LISTING);
+
+        if (signals.size() <= maxSignals) {
+            return signals;
+        }
+        return signals.subList(0, maxSignals);
+    }
+
+    private Long toLong(Object obj) {
+        if (obj == null)
+            return null;
+        return ((Number) obj).longValue();
+    }
+
+    private LocalDateTime toLocalDateTime(Object obj) {
+        if (obj == null)
+            return null;
+        if (obj instanceof LocalDateTime dt)
+            return dt;
+        if (obj instanceof java.sql.Timestamp ts)
+            return ts.toLocalDateTime();
+        return LocalDateTime.parse(obj.toString());
     }
 
     /**

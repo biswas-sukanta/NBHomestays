@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
+import java.util.List;
 
 @Data
 @Builder
@@ -25,6 +26,7 @@ public class SearchCardDto {
     private Double avgAccuracyRating;
     private Double avgValueRating;
     private Integer totalReviews;
+    private List<HomestayDto.TrustSignal> trustSignals;
     private String status;
     private UUID ownerId;
     private Boolean featured;

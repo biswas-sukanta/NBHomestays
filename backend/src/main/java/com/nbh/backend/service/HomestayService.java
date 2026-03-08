@@ -151,11 +151,7 @@ public class HomestayService {
                         viewThrottle.put(clientKey, now);
                 }
 
-                repository.findById(id).ifPresent(h -> {
-                        long next = (h.getViewCount() == null ? 0L : h.getViewCount()) + 1L;
-                        h.setViewCount(next);
-                        repository.save(h);
-                });
+                repository.incrementViewCount(id);
         }
 
         @Caching(evict = {
@@ -167,11 +163,7 @@ public class HomestayService {
                 if (id == null) {
                         return;
                 }
-                repository.findById(id).ifPresent(h -> {
-                        long next = (h.getInquiryCount() == null ? 0L : h.getInquiryCount()) + 1L;
-                        h.setInquiryCount(next);
-                        repository.save(h);
-                });
+                repository.incrementInquiryCount(id);
         }
 
         private String buildClientThrottleKey(UUID homestayId, HttpServletRequest request) {
@@ -284,6 +276,7 @@ public class HomestayService {
                                 .editorialLead(null)
                                 .nearbyHighlights(null)
                                 .bookingHeatScore(null)
+                                .trustSignals(card.getTrustSignals())
                                 .build();
         }
 
@@ -634,7 +627,7 @@ public class HomestayService {
                         signals.add(HomestayDto.TrustSignal.GUEST_FAVORITE);
                 if (isHighDemand)
                         signals.add(HomestayDto.TrustSignal.HIGH_DEMAND);
-                if (isPopularStay)
+                if (!isHighDemand && isPopularStay)
                         signals.add(HomestayDto.TrustSignal.POPULAR_STAY);
                 if (isTrustedHost)
                         signals.add(HomestayDto.TrustSignal.TRUSTED_HOST);

@@ -4,6 +4,9 @@ import com.nbh.backend.model.Homestay;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.UUID;
 
@@ -31,4 +34,12 @@ public interface HomestayRepository extends JpaRepository<Homestay, UUID>, Homes
         @org.springframework.data.jpa.repository.Query("SELECT h FROM Homestay h LEFT JOIN FETCH h.owner LEFT JOIN FETCH h.mediaFiles WHERE h.id = :id AND h.isDeleted = false")
         java.util.Optional<Homestay> findByIdWithDetails(
                         @org.springframework.data.repository.query.Param("id") UUID id);
+
+        @Modifying
+        @Query(value = "UPDATE homestays SET view_count = COALESCE(view_count, 0) + 1 WHERE id = :id", nativeQuery = true)
+        int incrementViewCount(@Param("id") UUID id);
+
+        @Modifying
+        @Query(value = "UPDATE homestays SET inquiry_count = COALESCE(inquiry_count, 0) + 1 WHERE id = :id", nativeQuery = true)
+        int incrementInquiryCount(@Param("id") UUID id);
 }
