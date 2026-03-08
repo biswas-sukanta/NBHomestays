@@ -1,6 +1,5 @@
 package com.nbh.backend.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +10,6 @@ import java.util.UUID;
 @Data
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class DestinationDto {
     private UUID id;
     private String slug;
@@ -24,4 +22,28 @@ public class DestinationDto {
     private List<String> tags;
     private String stateName;
     private String stateSlug;
+
+    public DestinationDto(UUID id,
+                          String slug,
+                          String name,
+                          Long homestayCount,
+                          String district,
+                          String heroTitle,
+                          String description,
+                          String localImageName,
+                          List<String> tags,
+                          String stateName,
+                          String stateSlug) {
+        this.id = id;
+        this.slug = slug;
+        this.name = name;
+        this.homestayCount = homestayCount;
+        this.district = district;
+        this.heroTitle = heroTitle;
+        this.description = description;
+        this.localImageName = localImageName;
+        this.tags = tags;
+        this.stateName = stateName;
+        this.stateSlug = stateSlug;
+    }
 }
