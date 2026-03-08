@@ -4,7 +4,16 @@ WORKDIR /app
 
 # Copy the POM and source code together
 COPY pom.xml .
+COPY libs ./libs
 COPY src ./src
+
+# Install vendored jar manually into the builder's local repository before resolution
+RUN mvn install:install-file \
+  -Dfile=libs/imagekit-java-2.0.1.jar \
+  -DgroupId=com.github.imagekit-developer \
+  -DartifactId=imagekit-java \
+  -Dversion=2.0.1 \
+  -Dpackaging=jar
 
 # Let Maven download only the strictly required dependencies during the package phase
 RUN mvn clean package -DskipTests
