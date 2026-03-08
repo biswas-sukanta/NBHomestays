@@ -1,6 +1,7 @@
 package com.nbh.backend.repository;
 
 import com.nbh.backend.model.Destination;
+import com.nbh.backend.dto.DestinationCardDto;
 import com.nbh.backend.dto.DestinationDto;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,38 +35,30 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
     List<Destination> findByStateSlug(String stateSlug);
 
     @Query("""
-            SELECT new com.nbh.backend.dto.DestinationDto(
+            SELECT new com.nbh.backend.dto.DestinationCardDto(
                 d.id,
                 d.slug,
                 d.name,
                 COUNT(h),
-                d.district,
-                d.heroTitle,
-                d.description,
                 d.localImageName,
-                d.tags,
                 s.name,
                 s.slug
             )
             FROM Destination d
             LEFT JOIN d.state s
             LEFT JOIN Homestay h ON h.destination = d AND h.isDeleted = false
-            GROUP BY d.id, d.slug, d.name, d.district, d.heroTitle, d.description, d.localImageName, d.tags, s.name, s.slug
+            GROUP BY d.id, d.slug, d.name, d.localImageName, s.name, s.slug
             ORDER BY COUNT(h) DESC
             """)
-    List<DestinationDto> fetchDestinationRankings();
+    List<DestinationCardDto> fetchDestinationRankings();
 
     @Query("""
-            SELECT new com.nbh.backend.dto.DestinationDto(
+            SELECT new com.nbh.backend.dto.DestinationCardDto(
                 d.id,
                 d.slug,
                 d.name,
                 COUNT(h),
-                d.district,
-                d.heroTitle,
-                d.description,
                 d.localImageName,
-                d.tags,
                 s.name,
                 s.slug
             )
@@ -73,8 +66,8 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
             LEFT JOIN d.state s
             LEFT JOIN Homestay h ON h.destination = d AND h.isDeleted = false
             WHERE s.slug = :stateSlug
-            GROUP BY d.id, d.slug, d.name, d.district, d.heroTitle, d.description, d.localImageName, d.tags, s.name, s.slug
+            GROUP BY d.id, d.slug, d.name, d.localImageName, s.name, s.slug
             ORDER BY COUNT(h) DESC
             """)
-    List<DestinationDto> fetchDestinationRankingsByStateSlug(@Param("stateSlug") String stateSlug);
+    List<DestinationCardDto> fetchDestinationRankingsByStateSlug(@Param("stateSlug") String stateSlug);
 }

@@ -1,6 +1,6 @@
 package com.nbh.backend.controller;
 
-import com.nbh.backend.dto.DestinationDto;
+import com.nbh.backend.dto.DestinationCardDto;
 import com.nbh.backend.dto.StateDto;
 import com.nbh.backend.service.DestinationService;
 import com.nbh.backend.service.StateService;
@@ -29,7 +29,7 @@ public class StateController {
     }
 
     @GetMapping("/{slug}/destinations")
-    public ResponseEntity<List<DestinationDto>> getDestinationsByState(@PathVariable String slug) {
+    public ResponseEntity<List<DestinationCardDto>> getDestinationsByState(@PathVariable String slug) {
         return ResponseEntity.ok(destinationService.getDestinationsByStateSlug(slug));
     }
 }

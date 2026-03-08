@@ -1,6 +1,7 @@
 package com.nbh.backend.controller;
 
 import com.nbh.backend.dto.DestinationDto;
+import com.nbh.backend.dto.DestinationCardDto;
 import com.nbh.backend.dto.HomestayDto;
 import com.nbh.backend.service.DestinationService;
 import com.nbh.backend.service.HomestayService;
@@ -21,7 +22,7 @@ public class DestinationController {
     private final HomestayService homestayService;
 
     @GetMapping
-    public ResponseEntity<List<DestinationDto>> getAll() {
+    public ResponseEntity<List<DestinationCardDto>> getAll() {
         return ResponseEntity.ok(destinationService.getAllDestinations());
     }
 

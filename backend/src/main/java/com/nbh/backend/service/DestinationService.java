@@ -1,5 +1,6 @@
 package com.nbh.backend.service;
 
+import com.nbh.backend.dto.DestinationCardDto;
 import com.nbh.backend.dto.DestinationDto;
 import com.nbh.backend.model.Destination;
 import com.nbh.backend.repository.DestinationRepository;
@@ -19,7 +20,7 @@ public class DestinationService {
 
     @Cacheable("destinations")
     @Transactional(readOnly = true)
-    public List<DestinationDto> getAllDestinations() {
+    public List<DestinationCardDto> getAllDestinations() {
         return destinationRepository.fetchDestinationRankings();
     }
 
@@ -33,7 +34,7 @@ public class DestinationService {
 
     @Cacheable(value = "destinations-by-state", key = "#stateSlug")
     @Transactional(readOnly = true)
-    public List<DestinationDto> getDestinationsByStateSlug(String stateSlug) {
+    public List<DestinationCardDto> getDestinationsByStateSlug(String stateSlug) {
         return destinationRepository.fetchDestinationRankingsByStateSlug(stateSlug);
     }
 

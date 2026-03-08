@@ -18,7 +18,8 @@ interface Destination {
     name: string;
     homestayCount?: number | null;
     localImageName: string;
-    tags: string[];
+    stateName?: string;
+    stateSlug?: string;
 }
 
 const TAG_ICONS: Record<string, React.ElementType> = {
@@ -80,37 +81,37 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
         );
     }
 
-    const allTags = Array.from(new Set(destinations?.flatMap(d => d.tags) || []));
-    const filteredDestinations = activeTag === '🌟 All'
-        ? destinations
-        : destinations?.filter(d => d.tags.includes(activeTag));
+    const allTags: string[] = [];
+    const filteredDestinations = destinations;
 
     return (
         <div className="space-y-10">
             {/* ── Vibrant Filter Pills ── */}
-            <div className="bg-white/80 backdrop-blur-md py-4 -mx-4 px-4">
-                <div className="flex flex-row overflow-x-auto snap-x snap-mandatory no-scrollbar md:flex-wrap md:overflow-visible gap-3 pb-2 w-full">
-                    {allTags.map(tag => {
-                        const isActive = activeTag === tag;
-                        const TagIcon = TAG_ICONS[tag] || Compass;
-                        return (
-                            <button
-                                key={tag}
-                                onClick={() => setActiveTag(tag)}
-                                className={cn(
-                                    "whitespace-nowrap flex items-center gap-2 px-4 py-2 text-sm rounded-full transition-all duration-300 ease-out font-medium snap-center",
-                                    isActive
-                                        ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105"
-                                        : "bg-white text-slate-600 border border-slate-200 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/30"
-                                )}
-                            >
-                                <TagIcon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400")} />
-                                {tag}
-                            </button>
-                        );
-                    })}
+            {allTags.length > 0 && (
+                <div className="bg-white/80 backdrop-blur-md py-4 -mx-4 px-4">
+                    <div className="flex flex-row overflow-x-auto snap-x snap-mandatory no-scrollbar md:flex-wrap md:overflow-visible gap-3 pb-2 w-full">
+                        {allTags.map(tag => {
+                            const isActive = activeTag === tag;
+                            const TagIcon = TAG_ICONS[tag] || Compass;
+                            return (
+                                <button
+                                    key={tag}
+                                    onClick={() => setActiveTag(tag)}
+                                    className={cn(
+                                        "whitespace-nowrap flex items-center gap-2 px-4 py-2 text-sm rounded-full transition-all duration-300 ease-out font-medium snap-center",
+                                        isActive
+                                            ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105"
+                                            : "bg-white text-slate-600 border border-slate-200 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/30"
+                                    )}
+                                >
+                                    <TagIcon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400")} />
+                                    {tag}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* ── Curated Destination Cards (max 8) ── */}
             {!filteredDestinations?.length ? (
@@ -160,13 +161,11 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                                         ? `🏡 ${dest.homestayCount} stays`
                                                         : 'Coming soon'}
                                                 </p>
-                                                {dest.tags.length > 0 && (
+                                                {stateName && (
                                                     <div className="flex flex-wrap gap-1.5 mt-2">
-                                                        {dest.tags.slice(0, 2).map(t => (
-                                                            <span key={t} className="text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-sm text-white/90 px-2 py-0.5 rounded-full">
-                                                                {t}
-                                                            </span>
-                                                        ))}
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-sm text-white/90 px-2 py-0.5 rounded-full">
+                                                            {stateName}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
