@@ -25,6 +25,7 @@ public class DiagnosticsController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> runDiagnostics() {
         Map<String, Object> report = new HashMap<>();
+        report.put("database", detailsService.checkDatabase());
         report.put("redis", detailsService.checkRedis());
         report.put("imageKit", detailsService.checkImageKit());
         return ResponseEntity.ok(report);

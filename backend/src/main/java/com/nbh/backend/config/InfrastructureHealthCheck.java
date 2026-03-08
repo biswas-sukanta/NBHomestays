@@ -17,24 +17,36 @@ public class InfrastructureHealthCheck implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        log.info("🚀 Starting Infrastructure Connectivity Check...");
+        log.info("Starting infrastructure connectivity check...");
+
+        // 0. Database
+        Map<String, Object> db = detailsService.checkDatabase();
+        if ("UP".equals(db.get("status"))) {
+            log.info("Database probe: UP - acquireMs={}, select1RoundTripMs={}, estimatedNetworkMs={}, mode={}",
+                    db.get("connectionAcquireMs"),
+                    db.get("select1RoundTripMs"),
+                    db.get("estimatedNetworkMs"),
+                    db.get("connectionMode"));
+        } else {
+            log.error("Database probe: DOWN - {}", db.get("error"));
+        }
 
         // 1. Redis
         Map<String, Object> redis = detailsService.checkRedis();
         if ("UP".equals(redis.get("status"))) {
-            log.info("✅ Redis Integration: UP - {}", redis.get("message"));
+            log.info("Redis integration: UP - {}", redis.get("message"));
         } else {
-            log.error("❌ Redis Integration: DOWN - {}", redis.get("error"));
+            log.error("Redis integration: DOWN - {}", redis.get("error"));
         }
 
         // 2. ImageKit
         Map<String, Object> imageKit = detailsService.checkImageKit();
         if ("UP".equals(imageKit.get("status"))) {
-            log.info("✅ ImageKit Integration: UP - Endpoint: {}", imageKit.get("endpoint"));
+            log.info("ImageKit integration: UP - endpoint={}", imageKit.get("endpoint"));
         } else {
-            log.error("❌ ImageKit Integration: DOWN - {}", imageKit.get("error"));
+            log.error("ImageKit integration: DOWN - {}", imageKit.get("error"));
         }
 
-        log.info("🏁 Infrastructure Connectivity Check Complete.");
+        log.info("Infrastructure connectivity check complete.");
     }
 }
