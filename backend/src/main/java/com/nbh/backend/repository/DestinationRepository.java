@@ -34,19 +34,19 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
     List<Destination> findByStateSlug(String stateSlug);
 
     @Query("""
-            SELECT com.nbh.backend.dto.DestinationDto.builder()
-                .id(d.id)
-                .slug(d.slug)
-                .name(d.name)
-                .homestayCount(COUNT(h))
-                .district(d.district)
-                .heroTitle(d.heroTitle)
-                .description(d.description)
-                .localImageName(d.localImageName)
-                .tags(d.tags)
-                .stateName(s.name)
-                .stateSlug(s.slug)
-                .build()
+            SELECT new com.nbh.backend.dto.DestinationDto(
+                d.id,
+                d.slug,
+                d.name,
+                COUNT(h),
+                d.district,
+                d.heroTitle,
+                d.description,
+                d.localImageName,
+                d.tags,
+                s.name,
+                s.slug
+            )
             FROM Destination d
             LEFT JOIN d.state s
             LEFT JOIN Homestay h ON h.destination = d AND h.isDeleted = false
@@ -56,19 +56,19 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
     List<DestinationDto> fetchDestinationRankings();
 
     @Query("""
-            SELECT com.nbh.backend.dto.DestinationDto.builder()
-                .id(d.id)
-                .slug(d.slug)
-                .name(d.name)
-                .homestayCount(COUNT(h))
-                .district(d.district)
-                .heroTitle(d.heroTitle)
-                .description(d.description)
-                .localImageName(d.localImageName)
-                .tags(d.tags)
-                .stateName(s.name)
-                .stateSlug(s.slug)
-                .build()
+            SELECT new com.nbh.backend.dto.DestinationDto(
+                d.id,
+                d.slug,
+                d.name,
+                COUNT(h),
+                d.district,
+                d.heroTitle,
+                d.description,
+                d.localImageName,
+                d.tags,
+                s.name,
+                s.slug
+            )
             FROM Destination d
             LEFT JOIN d.state s
             LEFT JOIN Homestay h ON h.destination = d AND h.isDeleted = false
