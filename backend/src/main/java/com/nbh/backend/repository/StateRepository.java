@@ -34,7 +34,7 @@ public interface StateRepository extends JpaRepository<State, UUID> {
             LEFT JOIN s.destinations d
             LEFT JOIN Homestay h ON h.destination = d AND h.isDeleted = false
             GROUP BY s.id, s.slug, s.name, s.description, s.heroImageName
-            ORDER BY s.name ASC
+            ORDER BY homestayCount DESC, destinationCount DESC
             """)
     List<StateSummaryProjection> fetchStateSummaries();
 }

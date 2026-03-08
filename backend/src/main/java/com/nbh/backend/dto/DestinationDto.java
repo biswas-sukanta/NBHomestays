@@ -16,6 +16,7 @@ public class DestinationDto {
     private UUID id;
     private String slug;
     private String name;
+    private Long homestayCount;
     private String district;
     private String heroTitle;
     private String description;

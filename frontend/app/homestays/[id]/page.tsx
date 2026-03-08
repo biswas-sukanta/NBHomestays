@@ -6,7 +6,7 @@ export const fetchCache = 'force-no-store';
 import { BentoGallery } from '@/components/bento-gallery';
 import { StickyMobileBar } from '@/components/sticky-mobile-bar';
 import { InquirySection } from '@/components/inquiry-section';
-import { MapPin, Star, Mountain, Wifi, Flame, CookingPot, TrendingUp, MessageSquare } from 'lucide-react';
+import { MapPin, Star, Mountain, Wifi, Flame, CookingPot, TrendingUp, MessageSquare, Sunrise, Leaf } from 'lucide-react';
 
 // Architecture Components
 import { Highlights } from '@/components/homestay/highlights';
@@ -40,11 +40,14 @@ interface Homestay {
     ownerEmail?: string;
     mealConfig?: {
         defaultMealPlan?: string;
+        mealPlanLabel?: string;
         mealsIncludedPerDay?: number;
         mealPricePerGuest?: number | null;
         dietTypes?: string[];
         extras?: { code: string; title: string; price: number; unit: string }[];
     };
+    mealPlanCode?: string;
+    mealPlanLabel?: string;
     editorialLead?: string;
     nearbyHighlights?: string[];
     bookingHeatScore?: number;
@@ -106,13 +109,41 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     }
 
     // Stay Highlights chips (data-driven from amenities)
-    const stayChips: { label: string; icon: React.ReactNode }[] = [];
-    if (homestay.amenities?.['Mountain View']) stayChips.push({ label: 'Mountain View', icon: <Mountain className="w-3.5 h-3.5" /> });
-    if (homestay.amenities?.['Wifi'] || homestay.amenities?.['Free Wi-Fi']) stayChips.push({ label: 'Fast Wi-Fi', icon: <Wifi className="w-3.5 h-3.5" /> });
-    if (homestay.amenities?.['Bonfire (Extra)']) stayChips.push({ label: 'Bonfire Evenings', icon: <Flame className="w-3.5 h-3.5" /> });
-    if (homestay.mealConfig?.mealsIncludedPerDay && homestay.mealConfig.mealsIncludedPerDay > 0) stayChips.push({ label: 'Home-Cooked Meals', icon: <CookingPot className="w-3.5 h-3.5" /> });
-    if (stayChips.length === 0) {
-        stayChips.push({ label: 'Nature Retreat', icon: <Mountain className="w-3.5 h-3.5" /> });
+    const experienceCards: { title: string; subtitle: string; icon: React.ReactNode }[] = [];
+    if (homestay.amenities?.['Mountain View']) {
+        experienceCards.push({
+            title: 'Sunrise balcony view',
+            subtitle: 'Wake up to ridgelines and golden-hour light, right from your room.',
+            icon: <Sunrise className="w-5 h-5 text-amber-600" />
+        });
+    }
+    if (homestay.amenities?.['Bonfire (Extra)']) {
+        experienceCards.push({
+            title: 'Bonfire evenings',
+            subtitle: 'Slow nights, warm conversations, and mountain air under the stars.',
+            icon: <Flame className="w-5 h-5 text-rose-600" />
+        });
+    }
+    if (homestay.mealConfig?.mealsIncludedPerDay && homestay.mealConfig.mealsIncludedPerDay > 0) {
+        experienceCards.push({
+            title: 'Organic village meals',
+            subtitle: 'Home-cooked comfort—simple, seasonal, and deeply local.',
+            icon: <Leaf className="w-5 h-5 text-emerald-700" />
+        });
+    }
+    if (homestay.amenities?.['Wifi'] || homestay.amenities?.['Free Wi-Fi']) {
+        experienceCards.push({
+            title: 'Work-friendly comfort',
+            subtitle: 'A calm corner and reliable Wi‑Fi for unhurried remote days.',
+            icon: <Wifi className="w-5 h-5 text-sky-700" />
+        });
+    }
+    if (experienceCards.length === 0) {
+        experienceCards.push({
+            title: 'Nature retreat',
+            subtitle: 'A quiet base for slow mornings, forest walks, and fresh air.',
+            icon: <Mountain className="w-5 h-5 text-emerald-800" />
+        });
     }
 
     // Extract Owner Name
@@ -203,15 +234,22 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {/* ── Experience Highlights ── */}
                     <section className="py-10 border-b border-gray-200">
                         <h3 className="text-xl font-bold text-gray-900 mb-5 tracking-tight">Experience Highlights</h3>
-                        <div className="flex flex-wrap gap-3">
-                            {stayChips.map((chip) => (
-                                <span
-                                    key={chip.label}
-                                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-full text-sm font-semibold text-gray-800 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md hover:border-primary/30 transition-all cursor-default"
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {experienceCards.slice(0, 4).map((card) => (
+                                <div
+                                    key={card.title}
+                                    className="rounded-2xl border border-gray-200 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_26px_rgba(0,0,0,0.08)] transition-shadow p-5"
                                 >
-                                    {chip.icon}
-                                    {chip.label}
-                                </span>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-none">
+                                            {card.icon}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-base font-bold text-gray-900 tracking-tight">{card.title}</p>
+                                            <p className="text-sm text-gray-600 mt-1 leading-relaxed">{card.subtitle}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     </section>
@@ -265,7 +303,10 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {/* ── Meals & Dining ── */}
                     {homestay.mealConfig && (
-                        <MealsSection mealConfig={homestay.mealConfig} />
+                        <MealsSection mealConfig={{
+                            ...homestay.mealConfig,
+                            mealPlanLabel: homestay.mealPlanLabel || homestay.mealConfig.mealPlanLabel,
+                        }} />
                     )}
 
                     {/* ── Meet Your Host ── */}
@@ -324,6 +365,18 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                             <div className="flex items-center gap-2 mb-5 px-3 py-2 bg-rose-50 border border-rose-100 rounded-xl relative z-10">
                                 <TrendingUp className="w-4 h-4 text-rose-600" />
                                 <span className="text-xs font-semibold text-rose-700">High demand this season — book early</span>
+                            </div>
+
+                            {/* Trust signals */}
+                            <div className="mb-5 space-y-2 relative z-10">
+                                <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-emerald-50/70 border border-emerald-100">
+                                    <span className="text-xs font-semibold text-emerald-900">⚡ Usually responds within 1 hour</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Fast reply</span>
+                                </div>
+                                <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-amber-50/70 border border-amber-100">
+                                    <span className="text-xs font-semibold text-amber-900">💛 Loved by weekend travelers</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">Popular</span>
+                                </div>
                             </div>
 
                             <hr className="border-gray-200 mb-6" />

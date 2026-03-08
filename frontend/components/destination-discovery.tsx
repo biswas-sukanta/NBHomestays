@@ -16,6 +16,7 @@ interface Destination {
     id: string;
     slug: string;
     name: string;
+    homestayCount?: number | null;
     localImageName: string;
     tags: string[];
 }
@@ -154,6 +155,11 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                                 <h3 className="text-white font-bold text-lg md:text-xl tracking-tight drop-shadow-lg leading-tight">
                                                     {dest.name.replace(" All", "")}
                                                 </h3>
+                                                <p className="mt-1 text-[11px] font-bold text-white/80 tracking-wide drop-shadow">
+                                                    {(typeof dest.homestayCount === 'number' && dest.homestayCount > 0)
+                                                        ? `🏡 ${dest.homestayCount} stays`
+                                                        : 'Coming soon'}
+                                                </p>
                                                 {dest.tags.length > 0 && (
                                                     <div className="flex flex-wrap gap-1.5 mt-2">
                                                         {dest.tags.slice(0, 2).map(t => (

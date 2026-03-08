@@ -88,6 +88,9 @@ public class HomestayDto {
         private DestinationDto destination;
         private Map<String, Object> mealConfig;
 
+        private String mealPlanCode;
+        private String mealPlanLabel;
+
         // Editorial & Premium UX Fields
         private String editorialLead;
         private List<String> nearbyHighlights;

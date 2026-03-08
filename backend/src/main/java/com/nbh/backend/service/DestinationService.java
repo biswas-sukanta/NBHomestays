@@ -20,9 +20,7 @@ public class DestinationService {
     @Cacheable("destinations")
     @Transactional(readOnly = true)
     public List<DestinationDto> getAllDestinations() {
-        return destinationRepository.findAll().stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+        return destinationRepository.fetchDestinationRankings();
     }
 
     @Cacheable(value = "destination-by-slug", key = "#slug")
@@ -36,9 +34,7 @@ public class DestinationService {
     @Cacheable(value = "destinations-by-state", key = "#stateSlug")
     @Transactional(readOnly = true)
     public List<DestinationDto> getDestinationsByStateSlug(String stateSlug) {
-        return destinationRepository.findByStateSlug(stateSlug).stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+        return destinationRepository.fetchDestinationRankingsByStateSlug(stateSlug);
     }
 
     public DestinationDto mapToDto(Destination destination) {

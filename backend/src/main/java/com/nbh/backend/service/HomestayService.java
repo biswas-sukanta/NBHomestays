@@ -441,6 +441,11 @@ public class HomestayService {
                                 ? new HashMap<>(homestay.getMealConfig())
                                 : new HashMap<>();
 
+                String mealPlanCode = mealConfig.get("defaultMealPlan") != null
+                                ? String.valueOf(mealConfig.get("defaultMealPlan"))
+                                : null;
+                String mealPlanLabel = resolveMealPlanLabel(mealPlanCode);
+
                 List<String> tags = homestay.getTags() != null
                                 ? new ArrayList<>(homestay.getTags())
                                 : new ArrayList<>();
@@ -503,10 +508,30 @@ public class HomestayService {
                                 .featured(homestay.getFeatured())
                                 .destination(destinationService.mapToDto(homestay.getDestination()))
                                 .mealConfig(mealConfig)
+                                .mealPlanCode(mealPlanCode)
+                                .mealPlanLabel(mealPlanLabel)
                                 .editorialLead(editorialLead)
                                 .nearbyHighlights(nearbyHighlights)
                                 .bookingHeatScore(bookingHeatScore)
                                 .build();
+        }
+
+        private String resolveMealPlanLabel(String code) {
+                if (code == null || code.isBlank() || "none".equalsIgnoreCase(code)) {
+                        return null;
+                }
+
+                return switch (code) {
+                        case "4_all" -> "All meals included";
+                        case "2_half" -> "Breakfast + Dinner";
+                        case "1_breakfast" -> "Breakfast included";
+                        // Legacy/alternate codes already used in UI:
+                        case "1_bd" -> "Breakfast included";
+                        case "2_bd" -> "Breakfast & Dinner";
+                        case "2_ld" -> "Lunch & Dinner";
+                        case "3_all" -> "All meals included";
+                        default -> code;
+                };
         }
 
         private List<String> extractFileIds(List<MediaDto> media) {

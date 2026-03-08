@@ -11,6 +11,7 @@ interface MealExtra {
 
 interface MealConfig {
     defaultMealPlan?: string;
+    mealPlanLabel?: string;
     mealsIncludedPerDay?: number;
     mealPricePerGuest?: number | null;
     dietTypes?: string[];
@@ -36,6 +37,7 @@ const MEAL_PLAN_LABELS: Record<string, string> = {
     '2_bd': 'Breakfast & Dinner',
     '2_ld': 'Lunch & Dinner',
     '3_all': 'All meals included',
+    '4_all': 'All meals included',
 };
 
 const EXTRA_ICONS: Record<string, React.ReactNode> = {
@@ -46,7 +48,7 @@ const EXTRA_ICONS: Record<string, React.ReactNode> = {
 export function MealsSection({ mealConfig }: MealsSectionProps) {
     if (!mealConfig || !mealConfig.defaultMealPlan || mealConfig.defaultMealPlan === 'none') return null;
 
-    const planLabel = MEAL_PLAN_LABELS[mealConfig.defaultMealPlan] || mealConfig.defaultMealPlan;
+    const planLabel = mealConfig.mealPlanLabel || MEAL_PLAN_LABELS[mealConfig.defaultMealPlan] || mealConfig.defaultMealPlan;
     const isIncluded = !mealConfig.mealPricePerGuest;
 
     return (
