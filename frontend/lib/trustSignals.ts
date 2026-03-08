@@ -14,3 +14,7 @@ export const SIGNAL_LABELS: Record<TrustSignal, string> = {
   TRUSTED_HOST: 'Hosted by trusted locals',
   HIGH_DEMAND: 'High demand this season',
 };
+
+export function getTrustSignalLabel(signal: string): string {
+  return (SIGNAL_LABELS as Record<string, string | undefined>)[signal] ?? signal;
+}

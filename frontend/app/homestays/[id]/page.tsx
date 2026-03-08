@@ -7,7 +7,7 @@ import { BentoGallery } from '@/components/bento-gallery';
 import { StickyMobileBar } from '@/components/sticky-mobile-bar';
 import { InquirySection } from '@/components/inquiry-section';
 import { MapPin, Star, Mountain, Wifi, Flame, CookingPot, TrendingUp, MessageSquare, Sunrise, Leaf } from 'lucide-react';
-import { SIGNAL_LABELS, type TrustSignal } from '@/lib/trustSignals';
+import { getTrustSignalLabel, type TrustSignal } from '@/lib/trustSignals';
 
 // Architecture Components
 import { Highlights } from '@/components/homestay/highlights';
@@ -88,7 +88,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     const vibeScore = homestay.vibeScore || homestay.rating || 4.5;
     const vibeClass = vibeScore >= 4.5 ? 'vibe-high' : vibeScore >= 3.5 ? 'vibe-mid' : 'vibe-low';
 
-    const trustSignals = (homestay.trustSignals || []).slice(0, 2);
+    const trustSignals = (homestay.trustSignals ?? []).slice(0, 2);
 
     const isPriceUnset = typeof homestay.pricePerNight === 'number' && homestay.pricePerNight <= 1;
 
@@ -392,7 +392,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                             key={sig}
                                             className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-white/70 border border-gray-200"
                                         >
-                                            <span className="text-xs font-semibold text-gray-900">{SIGNAL_LABELS[sig]}</span>
+                                            <span className="text-xs font-semibold text-gray-900">{getTrustSignalLabel(sig)}</span>
                                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Signal</span>
                                         </div>
                                     ))}

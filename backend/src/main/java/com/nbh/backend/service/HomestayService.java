@@ -276,7 +276,7 @@ public class HomestayService {
                                 .editorialLead(null)
                                 .nearbyHighlights(null)
                                 .bookingHeatScore(null)
-                                .trustSignals(card.getTrustSignals())
+                                .trustSignals(card.getTrustSignals() != null ? card.getTrustSignals() : List.of())
                                 .build();
         }
 
@@ -531,7 +531,9 @@ public class HomestayService {
                                 ? new ArrayList<>((List<String>) meta.get("nearbyHighlights"))
                                 : null;
 
-                List<HomestayDto.TrustSignal> trustSignals = computeTrustSignals(homestay);
+                List<HomestayDto.TrustSignal> trustSignals = java.util.Optional
+                                .ofNullable(computeTrustSignals(homestay))
+                                .orElse(List.of());
 
                 return HomestayDto.Response.builder()
                                 .id(homestay.getId())
