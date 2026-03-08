@@ -44,12 +44,13 @@ const TAG_ICONS: Record<string, React.ElementType> = {
 const TRAVEL_TAGS: string[] = [
     'All',
     'Hill Station',
-    'Nature',
     'Heritage',
+    'Tea Garden',
+    'Nature',
     'Lakeside',
-    'Offbeat',
     'Trekking',
     'High Altitude',
+    'Offbeat',
     'Wildlife',
     'Riverside',
     'Agricultural',
@@ -60,14 +61,33 @@ const TRAVEL_TAGS: string[] = [
 
 // Static destination-to-tag mapping (DestinationCardDto does not contain tags)
 const destinationTagMap: Record<string, string[]> = {
-    darjeeling: ['Hill Station', 'Heritage'],
+    darjeeling: ['Hill Station', 'Heritage', 'Tea Garden'],
     mirik: ['Lakeside', 'Nature'],
     kalimpong: ['Hill Station', 'Offbeat'],
-    sittong: ['Nature'],
+    kurseong: ['Hill Station', 'Tea Garden'],
     phalut: ['Trekking', 'High Altitude'],
-    chatakpur: ['Offbeat'],
-    tinchuley: ['Offbeat'],
-    takdah: ['Heritage'],
+    sandakphu: ['Trekking', 'High Altitude'],
+    tinchuley: ['Offbeat', 'Nature'],
+    chatakpur: ['Offbeat', 'Nature'],
+    lava: ['Hill Station', 'Offbeat'],
+    lolegaon: ['Hill Station', 'Nature'],
+    rishop: ['Hill Station', 'Offbeat'],
+    gorubathan: ['Offbeat', 'Agricultural'],
+    jaldapara: ['Wildlife'],
+    gorumara: ['Wildlife'],
+    lataguri: ['Wildlife', 'Nature'],
+    murti: ['Riverside', 'Nature'],
+    chapramari: ['Wildlife'],
+    samsing: ['Nature', 'Floral'],
+    suntalekhola: ['Nature', 'Riverside'],
+    'rocky-island': ['Riverside', 'Offbeat'],
+    mongpong: ['Offbeat', 'Nature'],
+    sevoke: ['Riverside', 'Cultural'],
+    'coronation-bridge': ['Cultural', 'Transit'],
+    'mahakal-mandir': ['Cultural', 'Heritage'],
+    dooars: ['Wildlife', 'Nature'],
+    sittong: ['Nature'],
+    takdah: ['Heritage', 'Tea Garden'],
 };
 
 const CARD_TINTS = [
@@ -171,8 +191,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                             {filteredDestinations.slice(0, isHome ? 8 : visibleCount).map((dest, idx) => {
                                 const tint = CARD_TINTS[idx % CARD_TINTS.length];
                                 const region = dest.stateName || '';
-                                const tags = destinationTagMap[dest.slug] || [];
-                                const tagLine = tags.length > 0 ? `🏷 ${tags.join(' · ')}` : '';
+                                const tags = (destinationTagMap[dest.slug] || []).slice(0, 2);
                                 const staysLine = dest.homestayCount != null ? `🏡 ${dest.homestayCount} stays` : '';
                                 return (
                                     <motion.div
@@ -185,7 +204,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                         onClick={() => router.push(`/destination/${dest.slug}`)}
                                         className="group cursor-pointer"
                                     >
-                                        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group">
+                                        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 group">
                                             <div className="absolute inset-0 bg-transparent z-20 pointer-events-none" />
                                             <Image
                                                 src={`/destinations/${dest.localImageName}`}
@@ -196,39 +215,28 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                             />
                                             {/* Text-protection gradient */}
                                             <div className={`absolute inset-0 bg-gradient-to-t ${tint} via-transparent to-transparent opacity-60`} />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pointer-events-none" />
 
                                             <div className="absolute inset-0 p-4 flex flex-col justify-end">
                                                 <h3 className="text-white font-bold text-lg md:text-xl leading-tight drop-shadow-lg">
                                                     {dest.name}
                                                 </h3>
-                                                {region && (
-                                                    <div className="text-white/80 text-xs md:text-sm font-semibold mt-1 drop-shadow">
-                                                        {region}
+                                                {(region || staysLine) && (
+                                                    <div className="text-white/85 text-xs md:text-sm font-semibold mt-1 drop-shadow">
+                                                        {region}{region && staysLine ? ' · ' : ''}{staysLine.replace('🏡 ', '')}
                                                     </div>
                                                 )}
 
                                                 {tags.length > 0 && (
-                                                    <div className="mt-2 flex flex-wrap gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                    <div className="mt-2 flex flex-wrap gap-2">
                                                         {tags.map((tag) => (
                                                             <span
                                                                 key={tag}
-                                                                className="px-2.5 py-1 text-[10px] font-semibold bg-white/20 backdrop-blur-sm text-white rounded-full border border-white/30"
+                                                                className="rounded-full px-3 py-1 text-xs bg-white/90 backdrop-blur text-neutral-900 font-semibold"
                                                             >
                                                                 {tag}
                                                             </span>
                                                         ))}
-                                                    </div>
-                                                )}
-
-                                                {tagLine && (
-                                                    <div className="text-white/80 text-[11px] md:text-xs font-semibold mt-2 drop-shadow">
-                                                        {tagLine}
-                                                    </div>
-                                                )}
-                                                {staysLine && (
-                                                    <div className="text-white/90 text-[11px] md:text-xs font-bold mt-1 drop-shadow">
-                                                        {staysLine}
                                                     </div>
                                                 )}
                                             </div>
