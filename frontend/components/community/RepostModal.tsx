@@ -12,6 +12,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CustomCombobox } from '@/components/ui/combobox';
 import { useHomestaySearch } from '@/hooks/useHomestaySearch';
 import { QuotePost, CommunityPost } from './types';
+import { IMAGE_UPLOAD_HELPER_TEXT, processImages } from '@/lib/utils/imageUploadPipeline';
 
 interface RepostModalProps {
     quote: QuotePost;
@@ -31,15 +32,32 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
     const [selectedHomestay, setSelectedHomestay] = useState('');
     const fileRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
-        const newStaged = files.map(f => ({
-            id: Math.random().toString(36).slice(2),
-            file: f,
-            previewUrl: URL.createObjectURL(f)
-        }));
-        setStagedFiles(prev => [...prev, ...newStaged].slice(0, 6));
-        if (fileRef.current) fileRef.current.value = '';
+        if (!files.length) return;
+
+        try {
+            const processed = await processImages(files);
+            if (stagedFiles.length + processed.length > 5) {
+                throw new Error('Maximum 5 images allowed.');
+            }
+            const currentSize = stagedFiles.reduce((sum, staged) => sum + staged.file.size, 0);
+            const newSize = processed.reduce((sum, file) => sum + file.size, 0);
+            if (currentSize + newSize > 10 * 1024 * 1024) {
+                throw new Error('Total upload size must be under 10MB.');
+            }
+            const newStaged = processed.map(f => ({
+                id: Math.random().toString(36).slice(2),
+                file: f,
+                previewUrl: URL.createObjectURL(f)
+            }));
+            setStagedFiles(prev => [...prev, ...newStaged]);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Image validation failed.';
+            toast.error(message);
+        } finally {
+            if (fileRef.current) fileRef.current.value = '';
+        }
     };
 
     const handleSubmit = async () => {
@@ -142,7 +160,7 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
                     )}
 
                     <div className="flex flex-col sm:flex-row items-center gap-4">
-                        <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleFileChange} />
                         <button onClick={() => fileRef.current?.click()} disabled={submitting} className="w-full sm:w-auto flex-[0.7] flex justify-center items-center gap-2 border border-white/10 rounded-2xl py-4 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 hover:border-white/20 shadow-2xl transition-all active:scale-95 text-sm font-bold uppercase tracking-wider">
                             <ImageIcon className="w-5 h-5" /> Visuals
                         </button>
@@ -151,6 +169,7 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
                             <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Where did this happen?" className="w-full border border-white/10 bg-zinc-900/50 text-white placeholder-zinc-600 rounded-2xl pl-12 pr-5 py-4 text-sm font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 shadow-2xl transition-all outline-none" />
                         </div>
                     </div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{IMAGE_UPLOAD_HELPER_TEXT}</p>
 
                     <div className="pt-2">
                         <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">

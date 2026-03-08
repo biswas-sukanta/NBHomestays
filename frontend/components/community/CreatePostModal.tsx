@@ -17,6 +17,7 @@ import { CustomCombobox } from '@/components/ui/combobox';
 import { useHomestaySearch } from '@/hooks/useHomestaySearch';
 import { CommunityPost, QuotePost } from './types';
 import { StagedFile } from '@/components/host/ImageDropzone';
+import { IMAGE_UPLOAD_HELPER_TEXT, processImages } from '@/lib/utils/imageUploadPipeline';
 
 const ImageCropModal = dynamic(() => import('@/components/host/ImageCropModal').then(m => m.ImageCropModal), { ssr: false });
 
@@ -76,17 +77,34 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
         }
     }, [postData]);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
 
-        const newStaged = files.map(file => ({
-            id: Math.random().toString(36).substring(7),
-            file,
-            previewUrl: URL.createObjectURL(file)
-        }));
-        setStagedFiles(prev => [...prev, ...newStaged].slice(0, 10));
-        if (fileRef.current) fileRef.current.value = '';
+        try {
+            const processed = await processImages(files);
+            const currentCount = existingMedia.length + stagedFiles.length;
+            if (currentCount + processed.length > 5) {
+                throw new Error('Maximum 5 images allowed.');
+            }
+            const currentSize = stagedFiles.reduce((sum, staged) => sum + staged.file.size, 0);
+            const newSize = processed.reduce((sum, file) => sum + file.size, 0);
+            if (currentSize + newSize > 10 * 1024 * 1024) {
+                throw new Error('Total upload size must be under 10MB.');
+            }
+
+            const newStaged = processed.map(file => ({
+                id: Math.random().toString(36).substring(7),
+                file,
+                previewUrl: URL.createObjectURL(file)
+            }));
+            setStagedFiles(prev => [...prev, ...newStaged]);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Image validation failed.';
+            toast.error(message);
+        } finally {
+            if (fileRef.current) fileRef.current.value = '';
+        }
     };
 
     const removeStaged = (id: string) => {
@@ -247,7 +265,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                         )}
 
                         <div className="flex flex-col sm:flex-row shadow-2xl items-center gap-3">
-                            <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                            <input data-testid="image-upload-input" ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleFileChange} />
                             <button data-testid="add-photo-btn" onClick={() => fileRef.current?.click()} disabled={submitting}
                                 className="w-full sm:w-auto flex-[0.7] flex justify-center items-center gap-2 border border-white/10 rounded-2xl py-3.5 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 hover:border-white/20 transition-all font-bold uppercase tracking-wider text-[11px]" title="Add Photos">
                                 <ImageIcon className="w-4 h-4" />
@@ -263,6 +281,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                                 />
                             </div>
                         </div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{IMAGE_UPLOAD_HELPER_TEXT}</p>
 
                         <div className="border border-white/10 rounded-2xl shadow-2xl overflow-hidden bg-zinc-900/50 isolate z-10">
                             <CustomCombobox

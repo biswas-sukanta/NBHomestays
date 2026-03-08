@@ -18,6 +18,7 @@
     "@sentry/nextjs": "^10.40.0",
     "@tanstack/react-query": "^5.90.21",
     "@types/leaflet.markercluster": "^1.5.6",
+    "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

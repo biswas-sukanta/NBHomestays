@@ -13,6 +13,7 @@ const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox
 import { CommentSkeleton } from '@/components/community/CommentSkeleton';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api-client';
+import { IMAGE_UPLOAD_HELPER_TEXT, processImages } from '@/lib/utils/imageUploadPipeline';
 
 import {
     DropdownMenu,
@@ -302,15 +303,30 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
         return () => stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
     }, [stagedFiles]);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files) return;
-        const newStaged = Array.from(e.target.files).map(f => ({
-            id: Math.random().toString(36).substring(7),
-            file: f,
-            previewUrl: URL.createObjectURL(f)
-        }));
-        setStagedFiles(prev => [...prev, ...newStaged]);
-        if (fileRef.current) fileRef.current.value = '';
+        try {
+            const processed = await processImages(Array.from(e.target.files));
+            if (stagedFiles.length + processed.length > 5) {
+                throw new Error('Maximum 5 images allowed.');
+            }
+            const currentSize = stagedFiles.reduce((sum, staged) => sum + staged.file.size, 0);
+            const newSize = processed.reduce((sum, file) => sum + file.size, 0);
+            if (currentSize + newSize > 10 * 1024 * 1024) {
+                throw new Error('Total upload size must be under 10MB.');
+            }
+            const newStaged = processed.map(f => ({
+                id: Math.random().toString(36).substring(7),
+                file: f,
+                previewUrl: URL.createObjectURL(f)
+            }));
+            setStagedFiles(prev => [...prev, ...newStaged]);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Image validation failed.';
+            toast.error(message);
+        } finally {
+            if (fileRef.current) fileRef.current.value = '';
+        }
     };
 
     const removeStaged = (id: string) => {
@@ -524,7 +540,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                                 {user?.firstName?.[0] || 'U'}
                                             </div>
                                             <div className="flex-1 flex items-center bg-zinc-900/50 rounded-2xl px-5 py-4 border border-white/10 focus-within:border-green-500/50 focus-within:bg-zinc-900 transition-all shadow-2xl relative">
-                                                <input data-testid="comment-image-input" ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                                                <input data-testid="comment-image-input" ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleFileChange} />
                                                 <input
                                                     data-testid="comment-input"
                                                     value={newComment}
@@ -546,6 +562,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                                                 {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-0.5" />}
                                             </button>
                                         </div>
+                                        <p className="px-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">{IMAGE_UPLOAD_HELPER_TEXT}</p>
                                     </div>
                                 ) : (
                                     <p className="text-[13px] text-gray-500 text-center py-2 font-medium">
