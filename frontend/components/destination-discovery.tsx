@@ -60,11 +60,41 @@ const TRAVEL_TAGS: string[] = [
     'Transit'
 ];
 
-// Normalize backend tags by stripping emoji prefixes
-// Backend tags come as "🏔️ Hill Station" -> filter expects "Hill Station"
+const VIBE_EMOJI: Record<string, string> = {
+    'Hill Station': '⛰️',
+    'Tea Garden': '🍃',
+    'Nature': '🌿',
+    'Lakeside': '🌊',
+    'Trekking': '🥾',
+    'High Altitude': '🏔️',
+    'Offbeat': '🧭',
+    'Wildlife': '🦌',
+    'Riverside': '🏞️',
+    'Agricultural': '🌾',
+    'Cultural': '🏛️',
+    'Floral': '🌸',
+    'Transit': '🚉',
+    'Heritage': '🏛️',
+};
+
+// Normalize backend tags to the filter taxonomy.
+// Examples:
+// - "🏔️ High-Altitude" -> "High Altitude"
+// - "🥾 Trekking" -> "Trekking"
 function normalizeTag(tag: string): string {
-    // Remove emoji and extra whitespace, keep only the text part
-    return tag.replace(/[\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D]/gu, '').trim();
+    const stripped = tag
+        // Remove emoji and ZWJ/VS16
+        .replace(/[\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D]/gu, '')
+        // Convert hyphens to spaces
+        .replace(/-/g, ' ')
+        // Normalize whitespace
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    // Canonicalize known backend variants
+    if (stripped === 'High Altitude') return 'High Altitude';
+
+    return stripped;
 }
 
 // Get normalized tags from a destination, with fallback
@@ -145,6 +175,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                     {TRAVEL_TAGS.map(tag => {
                         const isActive = activeTag === tag;
                         const TagIcon = TAG_ICONS[tag] || Compass;
+                        const tagEmoji = VIBE_EMOJI[tag];
                         return (
                             <button
                                 key={tag}
@@ -157,6 +188,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                 )}
                             >
                                 <TagIcon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400")} />
+                                {tagEmoji ? <span className="text-base leading-none">{tagEmoji}</span> : null}
                                 {tag}
                             </button>
                         );
@@ -223,7 +255,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                                                 key={tag}
                                                                 className="rounded-full px-3 py-1 text-xs bg-white/90 backdrop-blur text-neutral-900 font-semibold"
                                                             >
-                                                                {tag}
+                                                                {VIBE_EMOJI[tag] ? `${VIBE_EMOJI[tag]} ` : ''}{tag}
                                                             </span>
                                                         ))}
                                                     </div>
