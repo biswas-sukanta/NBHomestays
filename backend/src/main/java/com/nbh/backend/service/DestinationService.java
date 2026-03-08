@@ -41,10 +41,12 @@ public class DestinationService {
     public DestinationDto mapToDto(Destination destination) {
         if (destination == null)
             return null;
+        Long homestayCount = destinationRepository.countHomestaysByDestinationSlug(destination.getSlug());
         DestinationDto.DestinationDtoBuilder builder = DestinationDto.builder()
                 .id(destination.getId())
                 .slug(destination.getSlug())
                 .name(destination.getName())
+                .homestayCount(homestayCount)
                 .district(destination.getDistrict())
                 .heroTitle(destination.getHeroTitle())
                 .description(destination.getDescription())

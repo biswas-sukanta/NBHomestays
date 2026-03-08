@@ -81,8 +81,11 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
         );
     }
 
-    const allTags: string[] = [];
-    const filteredDestinations = destinations;
+    const allTags: string[] = ['🌟 All', 'Hill Station', 'Heritage', 'Tea Garden', 'Nature', 'Lakeside', 'Trekking', 'Offbeat'];
+
+    const filteredDestinations = activeTag === '🌟 All'
+        ? destinations
+        : destinations.filter((d) => (d as any)?.tags?.includes?.(activeTag) || (d as any)?.tags?.includes?.(activeTag.replace('🌟 ', '')));
 
     return (
         <div className="space-y-10">
@@ -128,6 +131,8 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                         <AnimatePresence mode='popLayout'>
                             {filteredDestinations.slice(0, isHome ? 8 : visibleCount).map((dest, idx) => {
                                 const tint = CARD_TINTS[idx % CARD_TINTS.length];
+                                const stateLabel = dest.stateName ? ` (${dest.stateName})` : '';
+                                const staysLabel = dest.homestayCount != null ? ` · ${dest.homestayCount} stays` : '';
                                 return (
                                     <motion.div
                                         key={dest.slug}
@@ -139,7 +144,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                         onClick={() => router.push(`/destination/${dest.slug}`)}
                                         className="group cursor-pointer"
                                     >
-                                        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 ring-1 ring-black/5 group-hover:ring-amber-400/30 group-hover:shadow-[0_4px_20px_rgba(218,165,32,0.15)]">
+                                        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 group">
                                             <div className="absolute inset-0 bg-transparent z-20 pointer-events-none" />
                                             <Image
                                                 src={`/destinations/${dest.localImageName}`}
@@ -152,22 +157,13 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                             <div className={`absolute inset-0 bg-gradient-to-t ${tint} via-transparent to-transparent opacity-60`} />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
 
-                                            <div className="absolute bottom-0 left-0 p-4 flex flex-col items-start w-full justify-end">
-                                                <h3 className="text-white font-bold text-lg md:text-xl tracking-tight drop-shadow-lg leading-tight">
-                                                    {dest.name.replace(" All", "")}
+                                            <div className="absolute inset-0 p-4 flex flex-col justify-end">
+                                                <h3 className="text-white font-bold text-lg md:text-xl leading-tight drop-shadow-lg">
+                                                    {dest.name}
                                                 </h3>
-                                                <p className="mt-1 text-[11px] font-bold text-white/80 tracking-wide drop-shadow">
-                                                    {(typeof dest.homestayCount === 'number' && dest.homestayCount > 0)
-                                                        ? `🏡 ${dest.homestayCount} stays`
-                                                        : 'Coming soon'}
+                                                <p className="text-white/80 text-xs md:text-sm font-medium mt-1 drop-shadow">
+                                                    {dest.name}{stateLabel}{staysLabel}
                                                 </p>
-                                                {stateName && (
-                                                    <div className="flex flex-wrap gap-1.5 mt-2">
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-sm text-white/90 px-2 py-0.5 rounded-full">
-                                                            {stateName}
-                                                        </span>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     </motion.div>

@@ -393,7 +393,6 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                             className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-white/70 border border-gray-200"
                                         >
                                             <span className="text-xs font-semibold text-gray-900">{getTrustSignalLabel(sig)}</span>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Signal</span>
                                         </div>
                                     ))}
                                 </div>

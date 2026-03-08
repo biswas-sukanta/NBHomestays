@@ -70,4 +70,11 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
             ORDER BY COUNT(h) DESC
             """)
     List<DestinationCardDto> fetchDestinationRankingsByStateSlug(@Param("stateSlug") String stateSlug);
+
+    @Query("""
+            SELECT COUNT(h)
+            FROM Homestay h
+            WHERE h.destination.slug = :slug AND h.isDeleted = false
+            """)
+    Long countHomestaysByDestinationSlug(@Param("slug") String slug);
 }

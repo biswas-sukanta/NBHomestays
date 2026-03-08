@@ -35,7 +35,7 @@ export function LocationMapSection({ latitude, longitude, locationName, nearbyHi
                         </div>
                         <div className="flex-1">
                             <h3 className="font-bold text-gray-900 text-[17px] leading-tight mb-1">{locationName || 'North Bengal'}</h3>
-                            <p className="text-gray-500 text-[13px] font-medium">Exact location provided after booking</p>
+                            <p className="text-gray-500 text-[13px] font-medium">Map centered on {locationName || 'North Bengal'}</p>
                         </div>
                     </div>
                     {/* Get Directions link */}
