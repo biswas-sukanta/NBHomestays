@@ -35,43 +35,31 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
     List<Destination> findByStateSlug(String stateSlug);
 
     @Query("""
-            SELECT new com.nbh.backend.dto.DestinationCardDto(
-                d.id,
-                d.slug,
-                d.name,
-                COUNT(h),
-                d.localImageName,
-                s.name,
-                s.slug,
-                d.tags
-            )
+            SELECT d
             FROM Destination d
-            LEFT JOIN d.state s
-            LEFT JOIN Homestay h ON h.destination = d AND h.isDeleted = false
-            GROUP BY d.id, d.slug, d.name, d.localImageName, s.name, s.slug, d.tags
-            ORDER BY COUNT(h) DESC
+            LEFT JOIN FETCH d.state
+            LEFT JOIN FETCH d.tags
+            ORDER BY (
+                SELECT COUNT(h)
+                FROM Homestay h
+                WHERE h.destination = d AND h.isDeleted = false
+            ) DESC
             """)
-    List<DestinationCardDto> fetchDestinationRankings();
+    List<Destination> fetchDestinationRankings();
 
     @Query("""
-            SELECT new com.nbh.backend.dto.DestinationCardDto(
-                d.id,
-                d.slug,
-                d.name,
-                COUNT(h),
-                d.localImageName,
-                s.name,
-                s.slug,
-                d.tags
-            )
+            SELECT d
             FROM Destination d
-            LEFT JOIN d.state s
-            LEFT JOIN Homestay h ON h.destination = d AND h.isDeleted = false
+            LEFT JOIN FETCH d.state s
+            LEFT JOIN FETCH d.tags
             WHERE s.slug = :stateSlug
-            GROUP BY d.id, d.slug, d.name, d.localImageName, s.name, s.slug, d.tags
-            ORDER BY COUNT(h) DESC
+            ORDER BY (
+                SELECT COUNT(h)
+                FROM Homestay h
+                WHERE h.destination = d AND h.isDeleted = false
+            ) DESC
             """)
-    List<DestinationCardDto> fetchDestinationRankingsByStateSlug(@Param("stateSlug") String stateSlug);
+    List<Destination> fetchDestinationRankingsByStateSlug(@Param("stateSlug") String stateSlug);
 
     @Query("""
             SELECT COUNT(h)

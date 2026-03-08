@@ -21,7 +21,9 @@ public class DestinationService {
     @Cacheable("destinations")
     @Transactional(readOnly = true)
     public List<DestinationCardDto> getAllDestinations() {
-        return destinationRepository.fetchDestinationRankings();
+        return destinationRepository.fetchDestinationRankings().stream()
+                .map(this::mapToCardDto)
+                .collect(Collectors.toList());
     }
 
     @Cacheable(value = "destination-by-slug", key = "#slug")
@@ -35,7 +37,26 @@ public class DestinationService {
     @Cacheable(value = "destinations-by-state", key = "#stateSlug")
     @Transactional(readOnly = true)
     public List<DestinationCardDto> getDestinationsByStateSlug(String stateSlug) {
-        return destinationRepository.fetchDestinationRankingsByStateSlug(stateSlug);
+        return destinationRepository.fetchDestinationRankingsByStateSlug(stateSlug).stream()
+                .map(this::mapToCardDto)
+                .collect(Collectors.toList());
+    }
+
+    private DestinationCardDto mapToCardDto(Destination destination) {
+        Long homestayCount = destinationRepository.countHomestaysByDestinationSlug(destination.getSlug());
+        String stateName = destination.getState() != null ? destination.getState().getName() : null;
+        String stateSlug = destination.getState() != null ? destination.getState().getSlug() : null;
+
+        return new DestinationCardDto(
+                destination.getId(),
+                destination.getSlug(),
+                destination.getName(),
+                homestayCount,
+                destination.getLocalImageName(),
+                stateName,
+                stateSlug,
+                destination.getTags()
+        );
     }
 
     public DestinationDto mapToDto(Destination destination) {
