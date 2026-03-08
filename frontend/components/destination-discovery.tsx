@@ -23,12 +23,69 @@ interface Destination {
 }
 
 const TAG_ICONS: Record<string, React.ElementType> = {
+    'All': Compass,
+    'Hill Station': Mountain,
     'Heritage': Train,
-    'Mountain View': Mountain,
-    'Nature & Eco': Trees,
-    'Riverside': Waves,
+    'Tea Garden': Trees,
+    'Nature': Trees,
+    'Lakeside': Waves,
+    'Trekking': Mountain,
+    'High Altitude': Mountain,
     'Offbeat': Tent,
-    'Trending Now': Sparkles,
+    'Wildlife': Sparkles,
+    'Riverside': Waves,
+    'Agricultural': Trees,
+    'Cultural': Sparkles,
+    'Floral': Sparkles,
+    'Transit': Train,
+};
+
+// Complete static taxonomy for capsule filter pills
+const TRAVEL_TAGS: string[] = [
+    'All',
+    'Hill Station',
+    'Heritage',
+    'Tea Garden',
+    'Nature',
+    'Lakeside',
+    'Trekking',
+    'High Altitude',
+    'Offbeat',
+    'Wildlife',
+    'Riverside',
+    'Agricultural',
+    'Cultural',
+    'Floral',
+    'Transit'
+];
+
+// Static destination-to-tag mapping (DestinationCardDto does not contain tags)
+const destinationTagMap: Record<string, string[]> = {
+    'darjeeling': ['Hill Station', 'Heritage', 'Tea Garden'],
+    'mirik': ['Lakeside', 'Nature'],
+    'kalimpong': ['Hill Station', 'Offbeat'],
+    'kurseong': ['Hill Station', 'Tea Garden'],
+    'phalut': ['Trekking', 'High Altitude'],
+    'sandakphu': ['Trekking', 'High Altitude'],
+    'tinchuley': ['Offbeat', 'Nature'],
+    'chatakpur': ['Offbeat', 'Nature'],
+    'lava': ['Hill Station', 'Offbeat'],
+    'lolegaon': ['Hill Station', 'Nature'],
+    'rishop': ['Hill Station', 'Offbeat'],
+    'gorubathan': ['Offbeat', 'Agricultural'],
+    'jaldapara': ['Wildlife'],
+    'gorumara': ['Wildlife'],
+    'lataguri': ['Wildlife', 'Nature'],
+    'murti': ['Riverside', 'Nature'],
+    'chapramari': ['Wildlife'],
+    'samsing': ['Nature', 'Floral'],
+    'suntalekhola': ['Nature', 'Riverside'],
+    'rocky-island': ['Riverside', 'Offbeat'],
+    'mongpong': ['Offbeat', 'Nature'],
+    'sevoke': ['Riverside', 'Cultural'],
+    'coronation-bridge': ['Cultural', 'Transit'],
+    'mahakal-mandir': ['Cultural', 'Heritage'],
+    'dooars': ['Wildlife', 'Nature'],
 };
 
 const CARD_TINTS = [
@@ -81,41 +138,40 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
         );
     }
 
-    // Static taxonomy for capsule filter pills (DestinationCardDto does not contain tags)
-    const allTags: string[] = ['🌟 All', 'Hill Station', 'Heritage', 'Tea Garden', 'Nature', 'Lakeside', 'Trekking', 'Offbeat'];
-
-    // DestinationCardDto does not have tags, so capsule filters are display-only for destinations
-    // Tag filtering applies to homestay search, not destination cards
-    const filteredDestinations = destinations;
+    // Filter destinations by active tag using static destinationTagMap
+    const filteredDestinations = activeTag === 'All'
+        ? destinations
+        : destinations.filter(d => {
+            const tags = destinationTagMap[d.slug] || [];
+            return tags.includes(activeTag);
+        });
 
     return (
         <div className="space-y-10">
             {/* ── Vibrant Filter Pills ── */}
-            {allTags.length > 0 && (
-                <div className="bg-white/80 backdrop-blur-md py-4 -mx-4 px-4">
-                    <div className="flex flex-row overflow-x-auto snap-x snap-mandatory no-scrollbar md:flex-wrap md:overflow-visible gap-3 pb-2 w-full">
-                        {allTags.map(tag => {
-                            const isActive = activeTag === tag;
-                            const TagIcon = TAG_ICONS[tag] || Compass;
-                            return (
-                                <button
-                                    key={tag}
-                                    onClick={() => setActiveTag(tag)}
-                                    className={cn(
-                                        "whitespace-nowrap flex items-center gap-2 px-4 py-2 text-sm rounded-full transition-all duration-300 ease-out font-medium snap-center",
-                                        isActive
-                                            ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105"
-                                            : "bg-white text-slate-600 border border-slate-200 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/30"
-                                    )}
-                                >
-                                    <TagIcon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400")} />
-                                    {tag}
-                                </button>
-                            );
-                        })}
-                    </div>
+            <div className="bg-white/80 backdrop-blur-md py-4 -mx-4 px-4">
+                <div className="flex flex-row overflow-x-auto snap-x snap-mandatory no-scrollbar md:flex-wrap md:overflow-visible gap-3 pb-2 w-full">
+                    {TRAVEL_TAGS.map(tag => {
+                        const isActive = activeTag === tag;
+                        const TagIcon = TAG_ICONS[tag] || Compass;
+                        return (
+                            <button
+                                key={tag}
+                                onClick={() => setActiveTag(tag)}
+                                className={cn(
+                                    "whitespace-nowrap flex items-center gap-2 px-4 py-2 text-sm rounded-full transition-all duration-300 ease-out font-medium snap-center shrink-0",
+                                    isActive
+                                        ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105"
+                                        : "bg-white text-slate-600 border border-slate-200 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/30"
+                                )}
+                            >
+                                <TagIcon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400")} />
+                                {tag}
+                            </button>
+                        );
+                    })}
                 </div>
-            )}
+            </div>
 
             {/* ── Curated Destination Cards (max 8) ── */}
             {!filteredDestinations?.length ? (
@@ -147,7 +203,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                         onClick={() => router.push(`/destination/${dest.slug}`)}
                                         className="group cursor-pointer"
                                     >
-                                        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 group">
+                                        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group">
                                             <div className="absolute inset-0 bg-transparent z-20 pointer-events-none" />
                                             <Image
                                                 src={`/destinations/${dest.localImageName}`}
@@ -167,6 +223,15 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                                 <p className="text-white/80 text-xs md:text-sm font-medium mt-1 drop-shadow">
                                                     {subtitle}
                                                 </p>
+                                                {/* Capsule tags on card */}
+                                                {(destinationTagMap[dest.slug] || []).slice(0, 2).map(tag => (
+                                                    <span
+                                                        key={tag}
+                                                        className="inline-block mt-2 mr-1.5 px-2 py-0.5 text-[10px] font-semibold bg-white/20 backdrop-blur-sm text-white rounded-full border border-white/30"
+                                                    >
+                                                        {tag}
+                                                    </span>
+                                                ))}
                                             </div>
                                         </div>
                                     </motion.div>
