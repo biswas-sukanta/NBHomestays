@@ -3,14 +3,19 @@ package com.nbh.backend.service;
 import com.nbh.backend.model.MediaResource;
 
 import io.imagekit.sdk.ImageKit;
+import io.imagekit.sdk.models.GetFileListRequest;
 import io.imagekit.sdk.models.FileCreateRequest;
 import io.imagekit.sdk.models.MoveFileRequest;
 import io.imagekit.sdk.models.results.Result;
+import io.imagekit.sdk.models.results.ResultList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +25,45 @@ public class ImageUploadService {
 
     public List<MediaResource> uploadFiles(List<MultipartFile> files) throws IOException {
         return uploadFiles(files, "/uploads");
+    }
+
+    public List<String> listFileIdsOlderThan(String folder, OffsetDateTime cutoff) {
+        if (folder == null || folder.isBlank() || cutoff == null) {
+            return List.of();
+        }
+
+        String normalizedFolder = folder.startsWith("/") ? folder : "/" + folder;
+        String cutoffUtc = cutoff.withOffsetSameInstant(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+        try {
+            GetFileListRequest request = new GetFileListRequest();
+            request.setSearchQuery("path = '" + normalizedFolder + "' AND createdAt < '" + cutoffUtc + "'");
+            request.setLimit("100");
+            request.setSkip("0");
+
+            ResultList resultList = ImageKit.getInstance().getFileList(request);
+            if (resultList == null || resultList.getResults() == null) {
+                return List.of();
+            }
+            return resultList.getResults().stream()
+                    .map(r -> {
+                        try {
+                            // SDK returns BaseFile (not a Map). Prefer getter.
+                            java.lang.reflect.Method m = r.getClass().getMethod("getFileId");
+                            Object val = m.invoke(r);
+                            return val == null ? null : val.toString();
+                        } catch (Exception ignored) {
+                            return null;
+                        }
+                    })
+                    .filter(id -> id != null && !id.isBlank())
+                    .distinct()
+                    .toList();
+        } catch (Exception e) {
+            log.error("[IMAGEKIT LIST] Failed to list files for folder={} cutoff={}", normalizedFolder, cutoffUtc, e);
+            return List.of();
+        }
     }
 
     public List<MediaResource> uploadFiles(List<MultipartFile> files, String folder) throws IOException {

@@ -30,13 +30,15 @@ public class AsyncJobWorker {
             return;
         }
 
+        log.info("[ASYNC_MEDIA] Claimed {} job(s)", jobs.size());
+
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<CompletableFuture<Void>> futures = jobs.stream()
                     .map(job -> CompletableFuture.runAsync(() -> asyncJobService.processJob(job.getId()), executor))
                     .toList();
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         } catch (Exception e) {
-            log.error("Async job worker batch execution failed", e);
+            log.error("[ASYNC_MEDIA] Async job worker batch execution failed", e);
         }
     }
 }
