@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { postApi } from '@/lib/api/posts';
-import { axiosInstance as api } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CustomCombobox } from '@/components/ui/combobox';
@@ -54,6 +53,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             : (postData?.imageUrl ? [{ url: postData.imageUrl }] : [])
     );
     const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
+    const [uploadState, setUploadState] = useState<Record<string, { status: 'queued' | 'uploading' | 'done' | 'error'; progress: number; fileId?: string; url?: string }>>({});
     const [cropTarget, setCropTarget] = useState<StagedFile | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
@@ -121,6 +121,72 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             if (f) URL.revokeObjectURL(f.previewUrl);
             return prev.filter(item => item.id !== id);
         });
+        setUploadState(prev => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
+    };
+
+    const uploadToImageKit = async (staged: StagedFile): Promise<{ fileId: string; url: string }> => {
+        const publicKey = process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY;
+        const endpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
+        const uploadUrl = process.env.NEXT_PUBLIC_IMAGEKIT_UPLOAD_URL || 'https://upload.imagekit.io/api/v1/files/upload';
+
+        if (!publicKey || !endpoint) {
+            throw new Error('Image upload is not configured (missing NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY or NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT).');
+        }
+
+        setUploadState(prev => ({
+            ...prev,
+            [staged.id]: { status: 'uploading', progress: 0 }
+        }));
+
+        const form = new FormData();
+        form.append('file', staged.file);
+        form.append('fileName', staged.file.name || `upload_${Date.now()}`);
+        form.append('folder', '/uploads/staging');
+        form.append('useUniqueFileName', 'true');
+
+        const xhr = new XMLHttpRequest();
+        const auth = typeof window !== 'undefined'
+            ? btoa(`${publicKey}:`)
+            : '';
+
+        const promise = new Promise<{ fileId: string; url: string }>((resolve, reject) => {
+            xhr.upload.onprogress = (evt) => {
+                if (!evt.lengthComputable) return;
+                const pct = Math.round((evt.loaded / evt.total) * 100);
+                setUploadState(prev => ({
+                    ...prev,
+                    [staged.id]: { ...(prev[staged.id] || { status: 'uploading' as const }), status: 'uploading', progress: pct }
+                }));
+            };
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState !== 4) return;
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        resolve({ fileId: data.fileId, url: data.url });
+                    } catch (e) {
+                        reject(e);
+                    }
+                } else {
+                    reject(new Error(xhr.responseText || 'Image upload failed'));
+                }
+            };
+            xhr.onerror = () => reject(new Error('Image upload failed'));
+            xhr.open('POST', uploadUrl);
+            xhr.setRequestHeader('Authorization', `Basic ${auth}`);
+            xhr.send(form);
+        });
+
+        const uploaded = await promise;
+        setUploadState(prev => ({
+            ...prev,
+            [staged.id]: { status: 'done', progress: 100, fileId: uploaded.fileId, url: uploaded.url }
+        }));
+        return uploaded;
     };
 
     const handleSubmit = async () => {
@@ -182,10 +248,20 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
         try {
             let uploadedMedia: { url: string; fileId?: string }[] = [];
             if (stagedFiles.length > 0) {
-                const form = new FormData();
-                stagedFiles.forEach(staged => form.append('files', staged.file));
-                const upres = await api.post('/upload', form);
-                uploadedMedia = upres.data;
+                const results = await Promise.all(
+                    stagedFiles.map(async (staged) => {
+                        try {
+                            return await uploadToImageKit(staged);
+                        } catch (e) {
+                            setUploadState(prev => ({
+                                ...prev,
+                                [staged.id]: { status: 'error', progress: prev[staged.id]?.progress ?? 0 }
+                            }));
+                            throw e;
+                        }
+                    })
+                );
+                uploadedMedia = results.map(r => ({ url: r.url, fileId: r.fileId }));
             }
 
             const payload: any = {
@@ -301,6 +377,19 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                                 {stagedFiles.map((staged, i) => (
                                     <div key={staged.id} className="flex-none snap-start relative w-40 h-40 md:w-48 md:h-48 rounded-[2rem] overflow-hidden group shadow-xl bg-zinc-900 ring-1 ring-green-500/30">
                                         <OptimizedImage src={staged.previewUrl} alt="preview" className="w-full h-full object-cover" width={300} />
+                                        {uploadState[staged.id]?.status === 'uploading' && (
+                                            <div className="absolute inset-x-0 bottom-0 p-3 bg-black/60 backdrop-blur-sm">
+                                                <div className="h-1.5 w-full bg-white/15 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-green-500" style={{ width: `${uploadState[staged.id]?.progress ?? 0}%` }} />
+                                                </div>
+                                                <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-white/80">Uploading {uploadState[staged.id]?.progress ?? 0}%</p>
+                                            </div>
+                                        )}
+                                        {uploadState[staged.id]?.status === 'error' && (
+                                            <div className="absolute inset-x-0 bottom-0 p-3 bg-rose-600/70 backdrop-blur-sm">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-white">Upload failed</p>
+                                            </div>
+                                        )}
                                         <div className="absolute top-3 right-3 flex flex-col gap-2">
                                             <button onClick={() => removeStaged(staged.id)} className="p-2 bg-black/60 hover:bg-rose-500 backdrop-blur-md rounded-full transition-all text-white shadow-lg"><X className="w-4 h-4" /></button>
                                         </div>

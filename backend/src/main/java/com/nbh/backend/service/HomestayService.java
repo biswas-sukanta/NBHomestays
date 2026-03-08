@@ -315,20 +315,32 @@ public class HomestayService {
                         List<com.nbh.backend.model.MediaResource> existingMedia = homestay.getMediaFiles();
                         List<MediaDto> retainedMediaDtos = request.getMedia();
 
-                        if (existingMedia != null) {
-                                Set<String> retainedFileIds = retainedMediaDtos.stream()
-                                                .map(MediaDto::getFileId)
-                                                .filter(Objects::nonNull)
-                                                .collect(Collectors.toSet());
+                        Set<String> retainedFileIds = retainedMediaDtos.stream()
+                                        .map(MediaDto::getFileId)
+                                        .filter(Objects::nonNull)
+                                        .filter(s -> !s.isBlank())
+                                        .collect(Collectors.toSet());
 
-                                for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
-                                        if (oldResource.getFileId() != null
-                                                        && !retainedFileIds.contains(oldResource.getFileId())) {
-                                                removedFileIds.add(oldResource.getFileId());
-                                        } else if (oldResource.getFileId() != null) {
-                                                finalMergedMedia.add(oldResource);
+                        if (existingMedia != null) {
+                                java.util.Iterator<com.nbh.backend.model.MediaResource> it = existingMedia.iterator();
+                                while (it.hasNext()) {
+                                        com.nbh.backend.model.MediaResource oldResource = it.next();
+                                        String oldFileId = oldResource.getFileId();
+                                        if (oldFileId != null && !retainedFileIds.contains(oldFileId)) {
+                                                removedFileIds.add(oldFileId);
+                                                it.remove();
                                         }
                                 }
+
+                                for (com.nbh.backend.model.MediaResource kept : existingMedia) {
+                                        if (kept.getFileId() != null) {
+                                                finalMergedMedia.add(kept);
+                                        }
+                                }
+                        }
+                } else {
+                        if (homestay.getMediaFiles() != null) {
+                                finalMergedMedia.addAll(homestay.getMediaFiles());
                         }
                 }
 

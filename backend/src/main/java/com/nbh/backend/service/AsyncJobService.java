@@ -38,6 +38,14 @@ public class AsyncJobService {
         enqueue(AsyncJobType.DELETE_MEDIA, AsyncJobPayload.builder().fileIds(safeFileIds).build());
     }
 
+    public void enqueueCleanupStagingMedia(List<String> fileIds) {
+        List<String> safeFileIds = sanitizeFileIds(fileIds);
+        if (safeFileIds.isEmpty()) {
+            return;
+        }
+        enqueue(AsyncJobType.CLEANUP_STAGING_MEDIA, AsyncJobPayload.builder().fileIds(safeFileIds).build());
+    }
+
     public void enqueueMoveMediaToFolder(List<String> fileIds, String folder) {
         List<String> safeFileIds = sanitizeFileIds(fileIds);
         if (safeFileIds.isEmpty() || folder == null || folder.isBlank()) {
@@ -96,6 +104,7 @@ public class AsyncJobService {
         }
 
         try {
+            log.info("[ASYNC_MEDIA] Processing {} job id={} attempt={}", job.getJobType(), job.getId(), job.getAttempts());
             AsyncJobPayload payload = objectMapper.treeToValue(job.getPayload(), AsyncJobPayload.class);
             runJob(job.getJobType(), payload);
             job.setStatus(AsyncJobStatus.DONE);
@@ -107,7 +116,7 @@ public class AsyncJobService {
             job.setLastError(truncateError(e.getMessage()));
             job.setStatus(nextAttempts >= maxAttempts ? AsyncJobStatus.FAILED : AsyncJobStatus.PENDING);
             asyncJobRepository.save(job);
-            log.error("Async job {} failed on attempt {}/{}", job.getId(), nextAttempts, maxAttempts, e);
+            log.error("[ASYNC_MEDIA] Async job {} failed on attempt {}/{}", job.getId(), nextAttempts, maxAttempts, e);
         }
     }
 
@@ -117,8 +126,19 @@ public class AsyncJobService {
             return;
         }
 
+        // Safety guard: even if upstream sends a bad payload, never crash the worker.
+        // sanitizeFileIds already removed null/blank, but keep this guard defensive.
+        if (fileIds.stream().anyMatch(id -> id == null || id.isBlank())) {
+            log.warn("[ASYNC_MEDIA] Job contains null/blank fileId(s); skipping invalid entries. type={}", jobType);
+            fileIds = fileIds.stream().filter(id -> id != null && !id.isBlank()).toList();
+            if (fileIds.isEmpty()) {
+                return;
+            }
+        }
+
         switch (jobType) {
             case DELETE_MEDIA -> fileIds.forEach(imageUploadService::deleteFileById);
+            case CLEANUP_STAGING_MEDIA -> fileIds.forEach(imageUploadService::deleteFileById);
             case MOVE_MEDIA_TO_FOLDER, POST_PROCESS_MEDIA -> {
                 if (payload.getTargetFolder() == null || payload.getTargetFolder().isBlank()) {
                     return;

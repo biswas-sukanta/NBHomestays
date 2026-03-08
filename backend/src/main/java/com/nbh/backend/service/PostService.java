@@ -177,22 +177,36 @@ public class PostService {
             java.util.List<com.nbh.backend.model.MediaResource> existingMedia = post.getMediaFiles();
             java.util.List<MediaDto> retainedMediaDtos = request.getMedia();
 
-            if (existingMedia != null) {
-                // Find fileIds that were in existingMedia but are NOT in retainedMediaDtos
-                java.util.Set<String> retainedFileIds = retainedMediaDtos.stream()
-                        .map(MediaDto::getFileId)
-                        .filter(java.util.Objects::nonNull)
-                        .collect(java.util.stream.Collectors.toSet());
+            // Find fileIds that were in existingMedia but are NOT in retainedMediaDtos
+            java.util.Set<String> retainedFileIds = retainedMediaDtos.stream()
+                    .map(MediaDto::getFileId)
+                    .filter(java.util.Objects::nonNull)
+                    .filter(s -> !s.isBlank())
+                    .collect(java.util.stream.Collectors.toSet());
 
-                for (com.nbh.backend.model.MediaResource oldResource : existingMedia) {
+            if (existingMedia != null) {
+                // Mutate the persistent collection so orphanRemoval deletes DB rows deterministically
+                java.util.Iterator<com.nbh.backend.model.MediaResource> it = existingMedia.iterator();
+                while (it.hasNext()) {
+                    com.nbh.backend.model.MediaResource oldResource = it.next();
                     String oldFileId = oldResource.getFileId();
                     if (oldFileId != null && !retainedFileIds.contains(oldFileId)) {
                         removedFileIds.add(oldFileId);
-                    } else if (oldFileId != null) {
-                        // Keep retained valid resources
-                        finalMergedMedia.add(oldResource);
+                        it.remove();
                     }
                 }
+
+                // Build the final list to be returned/persisted
+                for (com.nbh.backend.model.MediaResource kept : existingMedia) {
+                    if (kept.getFileId() != null) {
+                        finalMergedMedia.add(kept);
+                    }
+                }
+            }
+        } else {
+            // If media not provided, keep existing state.
+            if (post.getMediaFiles() != null) {
+                finalMergedMedia.addAll(post.getMediaFiles());
             }
         }
 
