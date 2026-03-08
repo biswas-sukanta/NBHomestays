@@ -44,13 +44,12 @@ const TAG_ICONS: Record<string, React.ElementType> = {
 const TRAVEL_TAGS: string[] = [
     'All',
     'Hill Station',
-    'Heritage',
-    'Tea Garden',
     'Nature',
+    'Heritage',
     'Lakeside',
+    'Offbeat',
     'Trekking',
     'High Altitude',
-    'Offbeat',
     'Wildlife',
     'Riverside',
     'Agricultural',
@@ -61,31 +60,14 @@ const TRAVEL_TAGS: string[] = [
 
 // Static destination-to-tag mapping (DestinationCardDto does not contain tags)
 const destinationTagMap: Record<string, string[]> = {
-    'darjeeling': ['Hill Station', 'Heritage', 'Tea Garden'],
-    'mirik': ['Lakeside', 'Nature'],
-    'kalimpong': ['Hill Station', 'Offbeat'],
-    'kurseong': ['Hill Station', 'Tea Garden'],
-    'phalut': ['Trekking', 'High Altitude'],
-    'sandakphu': ['Trekking', 'High Altitude'],
-    'tinchuley': ['Offbeat', 'Nature'],
-    'chatakpur': ['Offbeat', 'Nature'],
-    'lava': ['Hill Station', 'Offbeat'],
-    'lolegaon': ['Hill Station', 'Nature'],
-    'rishop': ['Hill Station', 'Offbeat'],
-    'gorubathan': ['Offbeat', 'Agricultural'],
-    'jaldapara': ['Wildlife'],
-    'gorumara': ['Wildlife'],
-    'lataguri': ['Wildlife', 'Nature'],
-    'murti': ['Riverside', 'Nature'],
-    'chapramari': ['Wildlife'],
-    'samsing': ['Nature', 'Floral'],
-    'suntalekhola': ['Nature', 'Riverside'],
-    'rocky-island': ['Riverside', 'Offbeat'],
-    'mongpong': ['Offbeat', 'Nature'],
-    'sevoke': ['Riverside', 'Cultural'],
-    'coronation-bridge': ['Cultural', 'Transit'],
-    'mahakal-mandir': ['Cultural', 'Heritage'],
-    'dooars': ['Wildlife', 'Nature'],
+    darjeeling: ['Hill Station', 'Heritage'],
+    mirik: ['Lakeside', 'Nature'],
+    kalimpong: ['Hill Station', 'Offbeat'],
+    sittong: ['Nature'],
+    phalut: ['Trekking', 'High Altitude'],
+    chatakpur: ['Offbeat'],
+    tinchuley: ['Offbeat'],
+    takdah: ['Heritage'],
 };
 
 const CARD_TINTS = [
@@ -103,7 +85,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
     const router = useRouter();
     const pathname = usePathname();
     const isHome = pathname === '/';
-    const [activeTag, setActiveTag] = useState('🌟 All');
+    const [activeTag, setActiveTag] = useState('All');
     const [visibleCount, setVisibleCount] = useState(8);
 
     const { data: destinations, isLoading } = useQuery<Destination[]>({
@@ -159,10 +141,10 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                 key={tag}
                                 onClick={() => setActiveTag(tag)}
                                 className={cn(
-                                    "whitespace-nowrap flex items-center gap-2 px-4 py-2 text-sm rounded-full transition-all duration-300 ease-out font-medium snap-center shrink-0",
+                                    "whitespace-nowrap flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all duration-200 ease-out font-medium snap-center shrink-0",
                                     isActive
-                                        ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105"
-                                        : "bg-white text-slate-600 border border-slate-200 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/30"
+                                        ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                                        : "bg-white text-slate-600 border-neutral-300 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/30"
                                 )}
                             >
                                 <TagIcon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400")} />
@@ -174,7 +156,7 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
             </div>
 
             {/* ── Curated Destination Cards (max 8) ── */}
-            {!filteredDestinations?.length ? (
+            {filteredDestinations.length === 0 && activeTag !== 'All' ? (
                 <div className="w-full max-w-3xl mx-auto mt-6">
                     <EmptyState
                         icon={<Map className="w-8 h-8 text-muted-foreground" />}
@@ -188,10 +170,10 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                         <AnimatePresence mode='popLayout'>
                             {filteredDestinations.slice(0, isHome ? 8 : visibleCount).map((dest, idx) => {
                                 const tint = CARD_TINTS[idx % CARD_TINTS.length];
-                                const subtitleParts: string[] = [];
-                                if (dest.stateName) subtitleParts.push(dest.stateName);
-                                if (dest.homestayCount != null) subtitleParts.push(`${dest.homestayCount} stays`);
-                                const subtitle = subtitleParts.length > 0 ? subtitleParts.join(' · ') : 'Coming soon';
+                                const region = dest.stateName || '';
+                                const tags = destinationTagMap[dest.slug] || [];
+                                const tagLine = tags.length > 0 ? `🏷 ${tags.join(' · ')}` : '';
+                                const staysLine = dest.homestayCount != null ? `🏡 ${dest.homestayCount} stays` : '';
                                 return (
                                     <motion.div
                                         key={dest.slug}
@@ -210,28 +192,45 @@ export function DestinationDiscovery({ stateSlug, stateName }: { stateSlug?: str
                                                 alt={dest.name.replace(" All", "")}
                                                 fill
                                                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-700"
                                             />
                                             {/* Text-protection gradient */}
                                             <div className={`absolute inset-0 bg-gradient-to-t ${tint} via-transparent to-transparent opacity-60`} />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none" />
 
                                             <div className="absolute inset-0 p-4 flex flex-col justify-end">
                                                 <h3 className="text-white font-bold text-lg md:text-xl leading-tight drop-shadow-lg">
                                                     {dest.name}
                                                 </h3>
-                                                <p className="text-white/80 text-xs md:text-sm font-medium mt-1 drop-shadow">
-                                                    {subtitle}
-                                                </p>
-                                                {/* Capsule tags on card */}
-                                                {(destinationTagMap[dest.slug] || []).slice(0, 2).map(tag => (
-                                                    <span
-                                                        key={tag}
-                                                        className="inline-block mt-2 mr-1.5 px-2 py-0.5 text-[10px] font-semibold bg-white/20 backdrop-blur-sm text-white rounded-full border border-white/30"
-                                                    >
-                                                        {tag}
-                                                    </span>
-                                                ))}
+                                                {region && (
+                                                    <div className="text-white/80 text-xs md:text-sm font-semibold mt-1 drop-shadow">
+                                                        {region}
+                                                    </div>
+                                                )}
+
+                                                {tags.length > 0 && (
+                                                    <div className="mt-2 flex flex-wrap gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        {tags.map((tag) => (
+                                                            <span
+                                                                key={tag}
+                                                                className="px-2.5 py-1 text-[10px] font-semibold bg-white/20 backdrop-blur-sm text-white rounded-full border border-white/30"
+                                                            >
+                                                                {tag}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {tagLine && (
+                                                    <div className="text-white/80 text-[11px] md:text-xs font-semibold mt-2 drop-shadow">
+                                                        {tagLine}
+                                                    </div>
+                                                )}
+                                                {staysLine && (
+                                                    <div className="text-white/90 text-[11px] md:text-xs font-bold mt-1 drop-shadow">
+                                                        {staysLine}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </motion.div>
