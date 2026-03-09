@@ -1,8 +1,9 @@
 package com.nbh.backend.repository;
 
+import com.nbh.backend.model.Post;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,10 +12,9 @@ import java.util.UUID;
 /**
  * Optimized repository for community feed queries.
  * Uses native SQL queries with Object[] projections to avoid Hibernate lazy-loading traps.
- * Does not extend JpaRepository since all methods use native queries.
+ * Extends Repository<Post, UUID> for Spring Data proxy creation (no CRUD methods used).
  */
-@Repository
-public interface FeedRepository {
+public interface FeedRepository extends Repository<Post, UUID> {
 
     /**
      * Cursor-based feed query - returns post projections.
