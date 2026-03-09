@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.nbh.backend.dto.PostFeedDto;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeUnit;
  * - Automatic eviction based on size and expiration
  * - Thread-safe by design
  */
+@Primary
 @Service
 @Slf4j
 public class InMemoryFeedCacheService implements FeedCacheService {
