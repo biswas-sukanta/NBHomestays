@@ -1,0 +1,192 @@
+package com.nbh.backend.repository;
+
+import com.nbh.backend.dto.PostFeedDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Optimized repository for community feed queries.
+ * Uses projection-based queries to avoid Hibernate lazy-loading traps.
+ */
+@Repository
+public interface FeedRepository extends JpaRepository<PostFeedDto, UUID> {
+
+    /**
+     * Legacy pageable query - returns post IDs with author info.
+     * Used for backward compatibility with existing Page-based clients.
+     */
+    @Query(value = """
+        SELECT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
+               u.id as authorId, 
+               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.verified_host as authorVerifiedHost,
+               p.love_count as likeCount, p.share_count as shareCount,
+               h.id as homestayId, h.name as homestayName,
+               p.original_post_id as originalPostId
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        LEFT JOIN homestays h ON p.homestay_id = h.id
+        WHERE p.is_deleted = false
+        ORDER BY p.created_at DESC, p.id DESC
+        """, 
+        nativeQuery = true)
+    Page<Object[]> findAllPostIdsWithAuthor(Pageable pageable);
+
+    /**
+     * Cursor-based feed query - returns post projections.
+     * Uses keyset pagination for O(1) performance.
+     */
+    @Query(value = """
+        SELECT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
+               u.id as authorId,
+               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.verified_host as authorVerifiedHost,
+               p.love_count as likeCount, p.share_count as shareCount,
+               h.id as homestayId, h.name as homestayName,
+               p.original_post_id as originalPostId,
+               op.text_content as originalContent,
+               ou.id as originalAuthorId,
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        LEFT JOIN homestays h ON p.homestay_id = h.id
+        LEFT JOIN posts op ON p.original_post_id = op.id
+        LEFT JOIN users ou ON op.user_id = ou.id
+        WHERE p.is_deleted = false
+          AND (:cursorCreatedAt IS NULL 
+               OR (p.created_at < :cursorCreatedAt)
+               OR (p.created_at = :cursorCreatedAt AND p.id < :cursorId))
+        ORDER BY p.created_at DESC, p.id DESC
+        LIMIT :limit
+        """,
+        nativeQuery = true)
+    List<Object[]> findFeedWithCursor(
+            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("cursorId") UUID cursorId,
+            @Param("limit") int limit);
+
+    /**
+     * Cursor-based feed query with tag filter.
+     */
+    @Query(value = """
+        SELECT DISTINCT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
+               u.id as authorId,
+               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.verified_host as authorVerifiedHost,
+               p.love_count as likeCount, p.share_count as shareCount,
+               h.id as homestayId, h.name as homestayName,
+               p.original_post_id as originalPostId,
+               op.text_content as originalContent,
+               ou.id as originalAuthorId,
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        LEFT JOIN homestays h ON p.homestay_id = h.id
+        INNER JOIN post_tags pt ON p.id = pt.post_id
+        LEFT JOIN posts op ON p.original_post_id = op.id
+        LEFT JOIN users ou ON op.user_id = ou.id
+        WHERE p.is_deleted = false
+          AND pt.tag = :tag
+          AND (:cursorCreatedAt IS NULL 
+               OR (p.created_at < :cursorCreatedAt)
+               OR (p.created_at = :cursorCreatedAt AND p.id < :cursorId))
+        ORDER BY p.created_at DESC, p.id DESC
+        LIMIT :limit
+        """,
+        nativeQuery = true)
+    List<Object[]> findFeedByTagWithCursor(
+            @Param("tag") String tag,
+            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("cursorId") UUID cursorId,
+            @Param("limit") int limit);
+
+    /**
+     * Batch load media resources for multiple posts.
+     */
+    @Query(value = """
+        SELECT m.post_id as postId, m.id as mediaId, m.url as url, m.file_id as fileId
+        FROM media_resources m
+        WHERE m.post_id IN :postIds
+        ORDER BY m.post_id, m.id
+        """,
+        nativeQuery = true)
+    List<Object[]> findMediaByPostIds(@Param("postIds") List<UUID> postIds);
+
+    /**
+     * Batch load tags for multiple posts.
+     */
+    @Query(value = """
+        SELECT pt.post_id as postId, pt.tag as tag
+        FROM post_tags pt
+        WHERE pt.post_id IN :postIds
+        ORDER BY pt.post_id, pt.tag
+        """,
+        nativeQuery = true)
+    List<Object[]> findTagsByPostIds(@Param("postIds") List<UUID> postIds);
+
+    /**
+     * Batch load comment counts for multiple posts.
+     */
+    @Query(value = """
+        SELECT c.post_id as postId, COUNT(*) as count
+        FROM comments c
+        WHERE c.post_id IN :postIds
+        GROUP BY c.post_id
+        """,
+        nativeQuery = true)
+    List<Object[]> countCommentsByPostIds(@Param("postIds") List<UUID> postIds);
+
+    /**
+     * Batch load like counts for multiple posts.
+     */
+    @Query(value = """
+        SELECT pl.post_id as postId, COUNT(*) as count
+        FROM post_likes pl
+        WHERE pl.post_id IN :postIds
+        GROUP BY pl.post_id
+        """,
+        nativeQuery = true)
+    List<Object[]> countLikesByPostIds(@Param("postIds") List<UUID> postIds);
+
+    /**
+     * Check which posts are liked by a specific user.
+     */
+    @Query(value = """
+        SELECT pl.post_id as postId
+        FROM post_likes pl
+        WHERE pl.user_id = :userId AND pl.post_id IN :postIds
+        """,
+        nativeQuery = true)
+    List<UUID> findLikedPostIds(@Param("userId") UUID userId, @Param("postIds") List<UUID> postIds);
+
+    /**
+     * Count total posts for tag filter (for hasMore calculation).
+     */
+    @Query(value = """
+        SELECT COUNT(DISTINCT p.id)
+        FROM posts p
+        INNER JOIN post_tags pt ON p.id = pt.post_id
+        WHERE p.is_deleted = false AND pt.tag = :tag
+        """,
+        nativeQuery = true)
+    long countByTag(@Param("tag") String tag);
+
+    /**
+     * Count total posts (for hasMore calculation).
+     */
+    @Query(value = """
+        SELECT COUNT(*)
+        FROM posts p
+        WHERE p.is_deleted = false
+        """,
+        nativeQuery = true)
+    long countAllActive();
+}

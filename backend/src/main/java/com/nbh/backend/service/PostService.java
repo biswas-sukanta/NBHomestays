@@ -39,6 +39,17 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
     private final ImageUploadService imageUploadService;
     private final AsyncJobService asyncJobService;
+    private final FeedCacheService feedCacheService;
+    private final TimelineService timelineService;
+
+    /**
+     * Get user ID by email - used by feed service for like status.
+     */
+    public java.util.UUID getUserIdByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElse(null);
+    }
 
     @Caching(evict = {
             @CacheEvict(value = "postsList", allEntries = true)
@@ -99,6 +110,9 @@ public class PostService {
 
         Post saved = postRepository.save(post);
         asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "posts/" + saved.getId());
+        feedCacheService.invalidateAll();
+        // Fan-out to timeline
+        timelineService.insertPostToTimeline(saved);
         return mapToResponse(saved);
     }
 
@@ -234,6 +248,9 @@ public class PostService {
         Post saved = postRepository.save(post);
         asyncJobService.enqueueDeleteMedia(removedFileIds);
         asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "posts/" + saved.getId());
+        feedCacheService.invalidateAll();
+        // Update timeline
+        timelineService.insertPostToTimeline(saved);
         return mapToResponse(saved, userEmail);
     }
 
@@ -258,6 +275,9 @@ public class PostService {
         asyncJobService.enqueueDeleteMedia(post.getMediaFiles() == null ? java.util.List.of()
                 : post.getMediaFiles().stream().map(MediaResource::getFileId).toList());
 
+        feedCacheService.invalidateAll();
+        // Remove from timeline
+        timelineService.deletePostFromTimeline(post.getId());
         postRepository.delete(post);
     }
 
@@ -291,6 +311,9 @@ public class PostService {
             isLiked = true;
         }
         postRepository.save(post);
+        feedCacheService.invalidateAll();
+        // Update timeline like count
+        timelineService.updateLikeCount(postId, post.getLoveCount());
         return PostDto.LikeResponse.builder().loveCount(post.getLoveCount()).isLiked(isLiked).build();
     }
 
@@ -304,6 +327,9 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("Post not found"));
         post.setShareCount(post.getShareCount() + 1);
         postRepository.save(post);
+        feedCacheService.invalidateAll();
+        // Update timeline share count
+        timelineService.updateShareCount(postId, post.getShareCount());
         return PostDto.LikeResponse.builder().loveCount(post.getLoveCount()).isLiked(false).build();
     }
 
@@ -362,6 +388,7 @@ public class PostService {
 
         Post saved = postRepository.save(post);
         asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "posts/" + saved.getId());
+        feedCacheService.invalidateAll();
         return mapToResponse(saved);
     }
 
