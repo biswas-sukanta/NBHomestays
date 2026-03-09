@@ -5,6 +5,7 @@ import com.nbh.backend.dto.StateDto;
 import com.nbh.backend.service.DestinationService;
 import com.nbh.backend.service.StateService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +21,13 @@ public class StateController {
 
     @GetMapping
     public ResponseEntity<List<StateDto>> getAllStates() {
-        return ResponseEntity.ok(stateService.getAllStates());
+        return ResponseEntity
+                .ok()
+                .cacheControl(CacheControl.empty()
+                        .cachePublic()
+                        .sMaxAge(86400, java.util.concurrent.TimeUnit.SECONDS)
+                        .staleWhileRevalidate(86400, java.util.concurrent.TimeUnit.SECONDS))
+                .body(stateService.getAllStates());
     }
 
     @GetMapping("/{slug}")

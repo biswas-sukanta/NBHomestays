@@ -17,6 +17,7 @@ import { CommentsSection } from '@/components/comments-section';
 import { postApi } from '@/lib/api/posts';
 import { useAuth } from '@/context/AuthContext';
 import { LoginPromptModal } from './LoginPromptModal';
+import { queryKeys } from '@/lib/queryKeys';
 
 // ── Icons for Tags ───────────────────────────────────────────────────────────
 const TAG_ICONS: Record<string, React.ReactNode> = {
@@ -83,13 +84,13 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
             setTimeout(() => setPopping(false), 420);
 
             // Cancel outgoing refetches so they don't overwrite our optimistic update
-            await queryClient.cancelQueries({ queryKey: ['community-posts'] });
-            await queryClient.cancelQueries({ queryKey: ['trending-posts'] });
-            const previousPosts = queryClient.getQueryData(['community-posts']);
-            const previousTrending = queryClient.getQueryData(['trending-posts']);
+            await queryClient.cancelQueries({ queryKey: queryKeys.community.feed() });
+            await queryClient.cancelQueries({ queryKey: queryKeys.community.trending });
+            const previousPosts = queryClient.getQueryData(queryKeys.community.feed());
+            const previousTrending = queryClient.getQueryData(queryKeys.community.trending);
 
             // Optimistically update the main feed cache
-            queryClient.setQueryData(['community-posts'], (old: any) => {
+            queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
                 if (!old || !old.pages) return old;
                 return {
                     ...old,
@@ -109,7 +110,7 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
             });
 
             // Optimistically update the trending posts cache
-            queryClient.setQueryData(['trending-posts'], (old: any) => {
+            queryClient.setQueryData(queryKeys.community.trending, (old: any) => {
                 if (!old || !old.content) return old;
                 return {
                     ...old,
@@ -128,10 +129,10 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
         },
         onError: (err: any, newTodo, context: any) => {
             if (context?.previousPosts) {
-                queryClient.setQueryData(['community-posts'], context.previousPosts);
+                queryClient.setQueryData(queryKeys.community.feed(), context.previousPosts);
             }
             if (context?.previousTrending) {
-                queryClient.setQueryData(['trending-posts'], context.previousTrending);
+                queryClient.setQueryData(queryKeys.community.trending, context.previousTrending);
             }
 
             // Unauthenticated is handled in onMutate, so we only show errors for actual save failures
@@ -142,8 +143,8 @@ function LikeButton({ postId, initialLiked, initialCount, darkMode, onLikeToggle
         },
         onSettled: () => {
             // Background sync against the true server state
-            queryClient.invalidateQueries({ queryKey: ['community-posts'] });
-            queryClient.invalidateQueries({ queryKey: ['trending-posts'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.community.trending });
             queryClient.invalidateQueries({ queryKey: ['post', postId] });
         }
     });

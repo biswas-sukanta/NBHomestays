@@ -13,6 +13,7 @@ import { CustomCombobox } from '@/components/ui/combobox';
 import { useHomestaySearch } from '@/hooks/useHomestaySearch';
 import { QuotePost, CommunityPost } from './types';
 import { IMAGE_UPLOAD_HELPER_TEXT, processImages } from '@/lib/utils/imageUploadPipeline';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface RepostModalProps {
     quote: QuotePost;
@@ -63,7 +64,7 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
     const handleSubmit = async () => {
         if (submitting) return;
         setSubmitting(true);
-        const previousFeed = queryClient.getQueryData(['community-posts']);
+        const previousFeed = queryClient.getQueryData(queryKeys.community.feed());
         const tempId = `temp-repost-${Date.now()}`;
         const previewMedia = stagedFiles.map(staged => ({ url: staged.previewUrl }));
         const optimisticPost = {
@@ -85,8 +86,8 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
             }
         };
 
-        await queryClient.cancelQueries({ queryKey: ['community-posts'] });
-        queryClient.setQueryData(['community-posts'], (old: any) => {
+        await queryClient.cancelQueries({ queryKey: queryKeys.community.feed() });
+        queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
             if (!old || !old.pages) return old;
             const newPages = [...old.pages];
             if (newPages.length > 0) {
@@ -117,7 +118,7 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
             const res = await postApi.create(formData);
             toast.success('Reposted!');
 
-            queryClient.setQueryData(['community-posts'], (old: any) => {
+            queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
                 if (!old || !old.pages) return old;
                 return {
                     ...old,
@@ -128,12 +129,13 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
                 };
             });
 
-            queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.community.trending });
             stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
             onSuccess(res.data);
         } catch (err) {
             console.error('Repost failed', err);
-            queryClient.setQueryData(['community-posts'], previousFeed);
+            queryClient.setQueryData(queryKeys.community.feed(), previousFeed);
             toast.error('Repost failed');
         } finally {
             setSubmitting(false);

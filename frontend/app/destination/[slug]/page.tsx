@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
 import { destinationApi } from '@/lib/api/destinations';
 import { SharedPageBanner } from '@/components/shared-page-banner'; // Assuming this exists for hero
 import { HomestayCard } from '@/components/homestay-card';
@@ -31,7 +32,7 @@ export default function DestinationPage() {
     const { ref, inView } = useInView();
 
     const { data: destination, isLoading: destLoading } = useQuery({
-        queryKey: ['destination', slug],
+        queryKey: queryKeys.destinations.detail(slug as string),
         queryFn: () => destinationApi.getDestination(slug as string).then(res => res.data)
     });
 
@@ -42,7 +43,7 @@ export default function DestinationPage() {
         isFetchingNextPage,
         isLoading: homestaysLoading
     } = useInfiniteQuery({
-        queryKey: ['destination-homestays', slug, activeCategory],
+        queryKey: queryKeys.destinations.homestays(slug as string, activeCategory || undefined),
         queryFn: async ({ pageParam = 0 }) => {
             const tagParam = activeCategory ? `&tag=${encodeURIComponent(activeCategory)}` : '';
             const res = await destinationApi.getDestinationHomestays(slug as string, `page=${pageParam}&size=10${tagParam}`);

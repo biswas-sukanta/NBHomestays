@@ -7,10 +7,8 @@ import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { usePrefetchSearch } from '@/hooks/usePrefetchSearch';
 
 export default function Navbar() {
-    usePrefetchSearch();
     const [isOpen, setIsOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [avatarOpen, setAvatarOpen] = useState(false);

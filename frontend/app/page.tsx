@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 import { HeroSearch } from '@/components/hero-search';
 import {
   ShieldCheck,
@@ -18,8 +19,12 @@ import {
 import { WanderByRegion } from '@/components/wander-by-region';
 import { DestinationDiscovery } from '@/components/destination-discovery';
 import { SectionHeader } from '@/components/ui/section-header';
+import { useStagedPrefetch } from '@/hooks/useStagedPrefetch';
 
 export default function Home() {
+  const queryClient = useQueryClient();
+  useStagedPrefetch(queryClient);
+
   return (
     <div className="relative -mt-[68px]">
       {/* ── Hero ── */}

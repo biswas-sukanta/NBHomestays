@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
 import { destinationApi } from '@/lib/api/destinations';
 import { homestayApi } from '@/lib/api/homestays';
 import { motion } from 'framer-motion';
@@ -51,7 +52,7 @@ export default function StatePage() {
     const { slug } = useParams();
 
     const { data: state, isLoading: stateLoading } = useQuery<StateItem>({
-        queryKey: ['state', slug],
+        queryKey: queryKeys.state(slug as string),
         queryFn: () => destinationApi.getState(slug as string).then(res => res.data)
     });
 
@@ -65,7 +66,7 @@ export default function StatePage() {
     };
 
     const { data: homestaysData, isLoading: homestaysLoading } = useQuery({
-        queryKey: ['state-homestays', slug, activeCategory, mapBounds ? 'bounded' : 'all'],
+        queryKey: queryKeys.homestays.byState(slug as string, activeCategory || undefined, !!mapBounds),
         queryFn: async () => {
             const tagParam = activeCategory ? `&tag=${encodeURIComponent(activeCategory)}` : '';
             let boundsParam = '';

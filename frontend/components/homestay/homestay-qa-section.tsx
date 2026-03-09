@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface HomestayAnswer {
     id: string;
@@ -45,7 +46,7 @@ export function HomestayQASection({ homestayId }: { homestayId: string }) {
     const [editAText, setEditAText] = useState('');
 
     const { data: questions = [], isLoading } = useQuery({
-        queryKey: ['questions', homestayId],
+        queryKey: queryKeys.homestays.search({ scope: 'questions', homestayId }),
         queryFn: async () => {
             const res = await homestayApi.getQuestions(homestayId);
             return res.data as HomestayQuestion[];
@@ -57,33 +58,33 @@ export function HomestayQASection({ homestayId }: { homestayId: string }) {
         onSuccess: () => {
             toast.success('Question posted successfully!');
             setNewQuestion('');
-            queryClient.invalidateQueries({ queryKey: ['questions', homestayId] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.homestays.search({ scope: 'questions', homestayId }) });
         }
     });
 
     const editQMutation = useMutation({
         mutationFn: async ({ id, text }: { id: string, text: string }) => await homestayApi.updateQuestion(id, text),
-        onSuccess: () => { setEditingQ(null); queryClient.invalidateQueries({ queryKey: ['questions', homestayId] }); }
+        onSuccess: () => { setEditingQ(null); queryClient.invalidateQueries({ queryKey: queryKeys.homestays.search({ scope: 'questions', homestayId }) }); }
     });
 
     const deleteQMutation = useMutation({
         mutationFn: async (id: string) => await homestayApi.deleteQuestion(id),
-        onSuccess: () => { toast.success('Question deleted'); queryClient.invalidateQueries({ queryKey: ['questions', homestayId] }); }
+        onSuccess: () => { toast.success('Question deleted'); queryClient.invalidateQueries({ queryKey: queryKeys.homestays.search({ scope: 'questions', homestayId }) }); }
     });
 
     const replyMutation = useMutation({
         mutationFn: async ({ qId, text }: { qId: string, text: string }) => await homestayApi.answerQuestion(qId, text),
-        onSuccess: () => { setReplyingTo(null); setReplyText(''); queryClient.invalidateQueries({ queryKey: ['questions', homestayId] }); }
+        onSuccess: () => { setReplyingTo(null); setReplyText(''); queryClient.invalidateQueries({ queryKey: queryKeys.homestays.search({ scope: 'questions', homestayId }) }); }
     });
 
     const editAMutation = useMutation({
         mutationFn: async ({ id, text }: { id: string, text: string }) => await homestayApi.updateAnswer(id, text),
-        onSuccess: () => { setEditingA(null); queryClient.invalidateQueries({ queryKey: ['questions', homestayId] }); }
+        onSuccess: () => { setEditingA(null); queryClient.invalidateQueries({ queryKey: queryKeys.homestays.search({ scope: 'questions', homestayId }) }); }
     });
 
     const deleteAMutation = useMutation({
         mutationFn: async (id: string) => await homestayApi.deleteAnswer(id),
-        onSuccess: () => { toast.success('Reply deleted'); queryClient.invalidateQueries({ queryKey: ['questions', homestayId] }); }
+        onSuccess: () => { toast.success('Reply deleted'); queryClient.invalidateQueries({ queryKey: queryKeys.homestays.search({ scope: 'questions', homestayId }) }); }
     });
 
     const filteredQuestions = questions.filter(q =>

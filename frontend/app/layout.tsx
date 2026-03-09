@@ -3,7 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
-import QueryProvider from "@/components/query-provider";
+import Providers from "./providers";
 import { CompareDrawer } from "@/components/compare-drawer";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -38,7 +38,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
-          <QueryProvider>
+          <Providers>
             <Navbar />
             <main className="flex-1 w-full">
               <ErrorBoundary name="Global App Context">
@@ -48,7 +48,7 @@ export default function RootLayout({
             <Footer />
             <CompareDrawer />
             <Toaster />
-          </QueryProvider>
+          </Providers>
         </AuthProvider>
       </body>
     </html>

@@ -8,6 +8,7 @@ import com.nbh.backend.service.HomestayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +24,13 @@ public class DestinationController {
 
     @GetMapping
     public ResponseEntity<List<DestinationCardDto>> getAll() {
-        return ResponseEntity.ok(destinationService.getAllDestinations());
+        return ResponseEntity
+                .ok()
+                .cacheControl(CacheControl.empty()
+                        .cachePublic()
+                        .sMaxAge(86400, java.util.concurrent.TimeUnit.SECONDS)
+                        .staleWhileRevalidate(86400, java.util.concurrent.TimeUnit.SECONDS))
+                .body(destinationService.getAllDestinations());
     }
 
     @GetMapping("/{slug}")

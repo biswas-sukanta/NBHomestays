@@ -1,6 +1,8 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { setupQueryPersistence } from '@/lib/reactQueryPersist';
 
 // ── Global Cache Tuning ──────────────────────────────────────
 // staleTime: Data won't automatically refetch if navigated back within 5 minutes
@@ -17,6 +19,10 @@ const queryClient = new QueryClient({
 });
 
 export default function QueryProvider({ children }: { children: React.ReactNode }) {
+    useEffect(() => {
+        setupQueryPersistence(queryClient);
+    }, []);
+
     return (
         <QueryClientProvider client={queryClient}>
             {children}

@@ -17,6 +17,7 @@ import { useHomestaySearch } from '@/hooks/useHomestaySearch';
 import { CommunityPost, QuotePost } from './types';
 import { StagedFile } from '@/components/host/ImageDropzone';
 import { IMAGE_UPLOAD_HELPER_TEXT, processImages } from '@/lib/utils/imageUploadPipeline';
+import { queryKeys } from '@/lib/queryKeys';
 
 const ImageCropModal = dynamic(() => import('@/components/host/ImageCropModal').then(m => m.ImageCropModal), { ssr: false });
 
@@ -196,12 +197,12 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
         }
         setError('');
         setSubmitting(true);
-        const previousFeed = queryClient.getQueryData(['community-posts']);
+        const previousFeed = queryClient.getQueryData(queryKeys.community.feed());
         const tempId = `temp-${Date.now()}`;
         const previewMedia = stagedFiles.map(staged => ({ url: staged.previewUrl }));
         const optimisticMedia = [...existingMedia, ...previewMedia];
 
-        await queryClient.cancelQueries({ queryKey: ['community-posts'] });
+        await queryClient.cancelQueries({ queryKey: queryKeys.community.feed() });
 
         const optimisticPost = {
             id: postData?.id ?? tempId,
@@ -224,7 +225,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             homestayId: selectedHomestay || null
         };
 
-        queryClient.setQueryData(['community-posts'], (old: any) => {
+        queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
             if (!old || !old.pages) return old;
             const newPages = [...old.pages];
             if (postData) {
@@ -282,7 +283,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                 ? await postApi.update(postData.id, formData)
                 : await postApi.create(formData);
 
-            queryClient.setQueryData(['community-posts'], (old: any) => {
+            queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
                 if (!old || !old.pages) return old;
                 return {
                     ...old,
@@ -296,7 +297,8 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                 };
             });
 
-            queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.community.trending });
             if (postData) {
                 queryClient.invalidateQueries({ queryKey: ['post', postData.id] });
             }
@@ -305,7 +307,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
         } catch (err: any) {
             console.error('Post failed', err);
-            queryClient.setQueryData(['community-posts'], previousFeed);
+            queryClient.setQueryData(queryKeys.community.feed(), previousFeed);
             toast.error(err.response?.data?.message || "Failed to share story.");
         } finally {
             setSubmitting(false);

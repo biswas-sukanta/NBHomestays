@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { EmojiCategoryFilter } from '@/components/emoji-category-filter';
 import { HomestaySwimlane } from '@/components/homestay-swimlane';
 import { DestinationDiscovery } from '@/components/destination-discovery';
@@ -22,6 +22,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { CarouselWrapper } from '@/components/ui/carousel-wrapper';
 import { EmptyState } from '@/components/ui/empty-state';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { queryKeys } from '@/lib/queryKeys';
 
 const HomestayMapView = dynamic(() => import('@/components/HomestayMapView'), {
     ssr: false,
@@ -159,10 +160,6 @@ function SearchResults() {
 
     const [searchTerm, setSearchTerm] = useState(query);
 
-    // Dynamic Search/Tag Results (imperative — user-driven)
-    const [searchGrid, setSearchGrid] = useState<HomestaySummary[]>([]);
-    const [searchLoading, setSearchLoading] = useState(false);
-
     const [viewType, setViewType] = useState<'grid' | 'map'>('grid');
     const [mapBounds, setMapBounds] = useState<{ minLat: number, maxLat: number, minLng: number, maxLng: number } | null>(null);
     const [activeHomestayId, setActiveHomestayId] = useState<string | null>(null);
@@ -185,29 +182,70 @@ function SearchResults() {
         setSearchTerm(query);
     }, [query]);
 
+    const searchQuery = useQuery<HomestaySummary[]>({
+        queryKey: queryKeys.homestays.search({
+            query,
+            tag,
+            page: 0,
+            size: 50,
+        }),
+        queryFn: async () => {
+            const endpoint = query
+                ? `q=${encodeURIComponent(query)}&page=0&size=50`
+                : `tag=${encodeURIComponent(tag)}&page=0&size=50`;
+            const res = await homestayApi.search(endpoint);
+            return res.data.content || [];
+        },
+        enabled: !!query || !!tag,
+        placeholderData: keepPreviousData,
+        staleTime: 1000 * 60 * 2,
+    });
+
+    const boundsQuery = useQuery<HomestaySummary[]>({
+        queryKey: queryKeys.homestays.bounds({
+            bounds: mapBounds,
+            query,
+            tag,
+        }),
+        queryFn: async () => {
+            if (!mapBounds) return [];
+            const queryPart = query ? `&q=${encodeURIComponent(query)}` : '';
+            const tagPart = tag ? `&tag=${encodeURIComponent(tag)}` : '';
+            const res = await homestayApi.search(
+                `minLat=${mapBounds.minLat}&maxLat=${mapBounds.maxLat}&minLng=${mapBounds.minLng}&maxLng=${mapBounds.maxLng}${queryPart}${tagPart}&size=100`
+            );
+            return res.data.content || [];
+        },
+        enabled: !!mapBounds,
+        staleTime: 1000 * 30,
+    });
+
     // ══════════════════════════════════════════════════════════
     //  CACHED QUERIES (Storefront Mode) — Stale-While-Revalidate
     // ══════════════════════════════════════════════════════════
 
     // Swimlane: Trending Now
     const { data: trendingStays = [] } = useQuery<HomestaySummary[]>({
-        queryKey: ['swimlane', 'Trending Now'],
+        queryKey: queryKeys.homestays.swimlane('Trending Now'),
         queryFn: () => homestayApi.search('tag=' + encodeURIComponent('Trending Now') + '&page=0&size=6').then(res => res.data.content || []),
         enabled: isStorefront,
+        staleTime: 1000 * 60 * 30,
     });
 
     // Swimlane: Explore Offbeat
     const { data: offbeatStays = [] } = useQuery<HomestaySummary[]>({
-        queryKey: ['swimlane', 'Explore Offbeat'],
+        queryKey: queryKeys.homestays.swimlane('Explore Offbeat'),
         queryFn: () => homestayApi.search('tag=' + encodeURIComponent('Explore Offbeat') + '&page=0&size=6').then(res => res.data.content || []),
         enabled: isStorefront,
+        staleTime: 1000 * 60 * 30,
     });
 
     // Swimlane: Featured Escapes
     const { data: featuredStays = [] } = useQuery<HomestaySummary[]>({
-        queryKey: ['swimlane', 'featured'],
+        queryKey: queryKeys.homestays.featured,
         queryFn: () => homestayApi.search('isFeatured=true&page=0&size=8').then(res => res.data.content || []),
         enabled: isStorefront,
+        staleTime: 1000 * 60 * 30,
     });
 
     // All Homestays: Infinite Scroll with caching
@@ -218,7 +256,7 @@ function SearchResults() {
         isFetchingNextPage: loadingAll,
         isLoading: isAllInitialLoading,
     } = useInfiniteQuery({
-        queryKey: ['allHomestays'],
+        queryKey: queryKeys.homestays.all,
         queryFn: async ({ pageParam = 0 }) => {
             const res = await homestayApi.search(`page=${pageParam}&size=12`);
             return res.data;
@@ -229,6 +267,7 @@ function SearchResults() {
             return allPages.length;
         },
         enabled: isStorefront,
+        staleTime: 1000 * 60 * 30,
     });
 
     // Flatten infinite query pages into a single array
@@ -259,35 +298,8 @@ function SearchResults() {
         };
     }, [fetchNextAllPage, hasMoreAll, loadingAll, isStorefront]);
 
-    // ══════════════════════════════════════════════════════════
-    //  IMPERATIVE FETCHES (Search/Tag/Map Mode)
-    // ══════════════════════════════════════════════════════════
-
-    // Fetch search/tag results
-    useEffect(() => {
-        if (!query && !tag) return;
-
-        const fetchSearchResults = async () => {
-            setSearchLoading(true);
-            try {
-                const endpoint = query
-                    ? `q=${encodeURIComponent(query)}&page=0&size=50`
-                    : `tag=${encodeURIComponent(tag)}&page=0&size=50`;
-                const res = await homestayApi.search(endpoint);
-                setSearchGrid(res.data.content || []);
-            } catch (err) {
-                console.error("Failed to fetch search results", err);
-            } finally {
-                setSearchLoading(false);
-            }
-        };
-
-        fetchSearchResults();
-        setMapBounds(null);
-    }, [query, tag]);
-
     // Handle Map Movement
-    const handleMapChange = useCallback(async (bounds: L.LatLngBounds) => {
+    const handleMapChange = useCallback((bounds: L.LatLngBounds) => {
         const newBounds = {
             minLat: bounds.getSouth(),
             maxLat: bounds.getNorth(),
@@ -295,19 +307,6 @@ function SearchResults() {
             maxLng: bounds.getEast()
         };
         setMapBounds(newBounds);
-
-        try {
-            const queryPart = query ? `&q=${encodeURIComponent(query)}` : '';
-            const tagPart = tag ? `&tag=${encodeURIComponent(tag)}` : '';
-            const res = await homestayApi.search(`minLat=${newBounds.minLat}&maxLat=${newBounds.maxLat}&minLng=${newBounds.minLng}&maxLng=${newBounds.maxLng}${queryPart}${tagPart}&size=100`);
-
-            const homestaysInArea = res.data.content || [];
-            if (query || tag) {
-                setSearchGrid(homestaysInArea);
-            }
-        } catch (err) {
-            console.error("Map search failed", err);
-        }
     }, [query, tag]);
 
     const handleSearch = (e: React.FormEvent) => {
@@ -319,7 +318,11 @@ function SearchResults() {
         }
     };
 
-    const isLoading = isStorefront ? isAllInitialLoading : searchLoading;
+    const effectiveSearchResults = mapBounds ? (boundsQuery.data ?? []) : (searchQuery.data ?? []);
+
+    const isLoading = isStorefront
+        ? isAllInitialLoading
+        : (mapBounds ? boundsQuery.isFetching : searchQuery.isFetching);
 
     return (
         <div className="min-h-screen bg-[#FAF9F6] text-slate-900 pb-20">
@@ -676,15 +679,15 @@ function SearchResults() {
                             <div className="h-[calc(100vh-80px)] w-full mb-12 rounded-2xl overflow-hidden border border-stone-200">
                                 <ErrorBoundary name="Search Results Map">
                                     <HomestayMapView
-                                        homestays={searchGrid}
+                                        homestays={effectiveSearchResults}
                                         onMapChange={handleMapChange}
                                         hoveredHomestayId={activeHomestayId}
                                     />
                                 </ErrorBoundary>
                             </div>
-                        ) : searchGrid.length > 0 ? (
+                        ) : effectiveSearchResults.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                                {searchGrid.map((h, i) => {
+                                {effectiveSearchResults.map((h, i) => {
                                     const isFeatured = i % 12 === 0;
                                     return (
                                         <div
