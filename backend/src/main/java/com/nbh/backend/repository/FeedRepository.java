@@ -1,9 +1,5 @@
 package com.nbh.backend.repository;
 
-import com.nbh.backend.dto.PostFeedDto;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,31 +10,11 @@ import java.util.UUID;
 
 /**
  * Optimized repository for community feed queries.
- * Uses projection-based queries to avoid Hibernate lazy-loading traps.
+ * Uses native SQL queries with Object[] projections to avoid Hibernate lazy-loading traps.
+ * Does not extend JpaRepository since all methods use native queries.
  */
 @Repository
-public interface FeedRepository extends JpaRepository<PostFeedDto, UUID> {
-
-    /**
-     * Legacy pageable query - returns post IDs with author info.
-     * Used for backward compatibility with existing Page-based clients.
-     */
-    @Query(value = """
-        SELECT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
-               u.id as authorId, 
-               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
-               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.verified_host as authorVerifiedHost,
-               p.love_count as likeCount, p.share_count as shareCount,
-               h.id as homestayId, h.name as homestayName,
-               p.original_post_id as originalPostId
-        FROM posts p
-        INNER JOIN users u ON p.user_id = u.id
-        LEFT JOIN homestays h ON p.homestay_id = h.id
-        WHERE p.is_deleted = false
-        ORDER BY p.created_at DESC, p.id DESC
-        """, 
-        nativeQuery = true)
-    Page<Object[]> findAllPostIdsWithAuthor(Pageable pageable);
+public interface FeedRepository {
 
     /**
      * Cursor-based feed query - returns post projections.
