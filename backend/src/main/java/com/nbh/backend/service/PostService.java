@@ -471,7 +471,7 @@ public class PostService {
                 .isLikedByCurrentUser(isLiked)
                 .originalPost(originalPostDto)
                 .createdAt(post.getCreatedAt())
-                .tags(post.getTags() != null ? post.getTags() : java.util.Collections.emptyList())
+                .tags(post.getTags() == null ? java.util.List.of() : new java.util.ArrayList<>(post.getTags()))
                 .build();
     }
 }
