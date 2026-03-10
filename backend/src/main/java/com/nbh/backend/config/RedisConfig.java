@@ -124,7 +124,14 @@ public class RedisConfig {
                     "homestaysSearch",
                     "destination-by-slug",
                     "destinations-by-state",
-                    "state-by-slug");
+                    "state-by-slug",
+                    "postsList",
+                    "postDetail",
+                    "homestay",
+                    "homestayQA",
+                    "postComments",
+                    "homestayReviews",
+                    "adminStats");
 
             caffeineManager.setCaffeine(Caffeine.newBuilder()
                     .maximumSize(10_000)
