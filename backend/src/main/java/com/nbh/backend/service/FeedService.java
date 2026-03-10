@@ -103,13 +103,17 @@ public class FeedService {
         }
         
         // Calculate 30-day boundary for bounded keyset pagination
-        // Only apply window on first page (cursorCreatedAt is null) for ~60% cost reduction
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-        boolean applyWindow = (cursorCreatedAt == null);
         
-        // Query timeline with optional bounded window
-        List<PostTimeline> timelineRows = timelineRepository.findFeedWithCursor(
-                cursorCreatedAt, cursorId, thirtyDaysAgo, applyWindow, PageRequest.of(0, fetchLimit));
+        // Query timeline - use separate queries for first page vs cursor pagination
+        List<PostTimeline> timelineRows;
+        if (cursorCreatedAt == null) {
+            // First page with 30-day window
+            timelineRows = timelineRepository.findFeedFirstPage(thirtyDaysAgo, PageRequest.of(0, fetchLimit));
+        } else {
+            // Cursor pagination without window
+            timelineRows = timelineRepository.findFeedWithCursor(cursorCreatedAt, cursorId, PageRequest.of(0, fetchLimit));
+        }
         
         if (timelineRows.isEmpty()) {
             return PostFeedDto.FeedResponse.builder()
@@ -164,11 +168,22 @@ public class FeedService {
             int fetchLimit, int pageSize, UUID userId, String cacheKey) {
         
         // Fetch posts (1 query)
+        // Use separate queries for first page vs cursor pagination to avoid null parameter type inference issues
         List<Object[]> rows;
+        boolean isFirstPage = (cursorCreatedAt == null);
+        
         if (tag != null && !tag.isBlank()) {
-            rows = feedRepository.findFeedByTagWithCursor(tag, cursorCreatedAt, cursorId, fetchLimit);
+            if (isFirstPage) {
+                rows = feedRepository.findFeedByTagFirstPage(tag, fetchLimit);
+            } else {
+                rows = feedRepository.findFeedByTagWithCursor(tag, cursorCreatedAt, cursorId, fetchLimit);
+            }
         } else {
-            rows = feedRepository.findFeedWithCursor(cursorCreatedAt, cursorId, fetchLimit);
+            if (isFirstPage) {
+                rows = feedRepository.findFeedFirstPage(fetchLimit);
+            } else {
+                rows = feedRepository.findFeedWithCursor(cursorCreatedAt, cursorId, fetchLimit);
+            }
         }
 
         if (rows.isEmpty()) {

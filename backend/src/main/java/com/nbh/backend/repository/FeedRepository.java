@@ -17,7 +17,34 @@ import java.util.UUID;
 public interface FeedRepository extends Repository<Post, UUID> {
 
     /**
-     * Cursor-based feed query - returns post projections.
+     * First page feed query - no cursor, returns post projections.
+     * Separate query to avoid null parameter type inference issues with Supabase/PgBouncer.
+     */
+    @Query(value = """
+        SELECT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
+               u.id as authorId,
+               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.is_verified_host as authorVerifiedHost,
+               p.love_count as likeCount, p.share_count as shareCount,
+               h.id as homestayId, h.name as homestayName,
+               p.original_post_id as originalPostId,
+               op.text_content as originalContent,
+               ou.id as originalAuthorId,
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        LEFT JOIN homestays h ON p.homestay_id = h.id
+        LEFT JOIN posts op ON p.original_post_id = op.id
+        LEFT JOIN users ou ON op.user_id = ou.id
+        WHERE p.is_deleted = false
+        ORDER BY p.created_at DESC, p.id DESC
+        LIMIT :limit
+        """,
+        nativeQuery = true)
+    List<Object[]> findFeedFirstPage(@Param("limit") int limit);
+
+    /**
+     * Cursor-based feed query - for subsequent pages with cursor.
      * Uses keyset pagination for O(1) performance.
      */
     @Query(value = """
@@ -37,9 +64,8 @@ public interface FeedRepository extends Repository<Post, UUID> {
         LEFT JOIN posts op ON p.original_post_id = op.id
         LEFT JOIN users ou ON op.user_id = ou.id
         WHERE p.is_deleted = false
-          AND (CAST(:cursorCreatedAt AS timestamp) IS NULL 
-               OR (p.created_at < CAST(:cursorCreatedAt AS timestamp))
-               OR (p.created_at = CAST(:cursorCreatedAt AS timestamp) AND p.id < :cursorId))
+          AND (p.created_at < :cursorCreatedAt
+               OR (p.created_at = :cursorCreatedAt AND p.id < :cursorId))
         ORDER BY p.created_at DESC, p.id DESC
         LIMIT :limit
         """,
@@ -50,7 +76,8 @@ public interface FeedRepository extends Repository<Post, UUID> {
             @Param("limit") int limit);
 
     /**
-     * Cursor-based feed query with tag filter.
+     * First page feed query with tag filter - no cursor.
+     * Separate query to avoid null parameter type inference issues with Supabase/PgBouncer.
      */
     @Query(value = """
         SELECT DISTINCT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
@@ -71,9 +98,38 @@ public interface FeedRepository extends Repository<Post, UUID> {
         LEFT JOIN users ou ON op.user_id = ou.id
         WHERE p.is_deleted = false
           AND pt.tag = :tag
-          AND (CAST(:cursorCreatedAt AS timestamp) IS NULL 
-               OR (p.created_at < CAST(:cursorCreatedAt AS timestamp))
-               OR (p.created_at = CAST(:cursorCreatedAt AS timestamp) AND p.id < :cursorId))
+        ORDER BY p.created_at DESC, p.id DESC
+        LIMIT :limit
+        """,
+        nativeQuery = true)
+    List<Object[]> findFeedByTagFirstPage(
+            @Param("tag") String tag,
+            @Param("limit") int limit);
+
+    /**
+     * Cursor-based feed query with tag filter - for subsequent pages with cursor.
+     */
+    @Query(value = """
+        SELECT DISTINCT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
+               u.id as authorId,
+               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.is_verified_host as authorVerifiedHost,
+               p.love_count as likeCount, p.share_count as shareCount,
+               h.id as homestayId, h.name as homestayName,
+               p.original_post_id as originalPostId,
+               op.text_content as originalContent,
+               ou.id as originalAuthorId,
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        LEFT JOIN homestays h ON p.homestay_id = h.id
+        INNER JOIN post_tags pt ON p.id = pt.post_id
+        LEFT JOIN posts op ON p.original_post_id = op.id
+        LEFT JOIN users ou ON op.user_id = ou.id
+        WHERE p.is_deleted = false
+          AND pt.tag = :tag
+          AND (p.created_at < :cursorCreatedAt
+               OR (p.created_at = :cursorCreatedAt AND p.id < :cursorId))
         ORDER BY p.created_at DESC, p.id DESC
         LIMIT :limit
         """,

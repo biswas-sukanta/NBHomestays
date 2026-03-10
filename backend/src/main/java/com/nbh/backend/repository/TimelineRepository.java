@@ -20,26 +20,34 @@ import java.util.UUID;
 public interface TimelineRepository extends JpaRepository<PostTimeline, Long> {
 
     /**
-     * Cursor-paginated feed from timeline (index-only scan).
-     * Uses keyset pagination with optional 30-day bounded window.
-     * 
-     * The 30-day window only applies to the first page (cursorCreatedAt is null)
-     * to reduce index scan cost by ~60%. For subsequent pages, the window is removed.
+     * First page feed from timeline (index-only scan).
+     * Uses 30-day bounded window to reduce index scan cost by ~60%.
+     * Separate query to avoid null parameter type inference issues with Supabase/PgBouncer.
      */
     @Query(value = """
         SELECT t FROM PostTimeline t
         WHERE t.isDeleted = false
-          AND (:applyWindow = false OR t.createdAt > :thirtyDaysAgo)
-          AND (:cursorCreatedAt IS NULL 
-               OR (t.createdAt < :cursorCreatedAt)
+          AND t.createdAt > :thirtyDaysAgo
+        ORDER BY t.createdAt DESC, t.postId DESC
+        """)
+    List<PostTimeline> findFeedFirstPage(
+            @Param("thirtyDaysAgo") LocalDateTime thirtyDaysAgo,
+            org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * Cursor-paginated feed from timeline (index-only scan).
+     * Uses keyset pagination for subsequent pages.
+     */
+    @Query(value = """
+        SELECT t FROM PostTimeline t
+        WHERE t.isDeleted = false
+          AND (t.createdAt < :cursorCreatedAt
                OR (t.createdAt = :cursorCreatedAt AND t.postId < :cursorId))
         ORDER BY t.createdAt DESC, t.postId DESC
         """)
     List<PostTimeline> findFeedWithCursor(
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
             @Param("cursorId") UUID cursorId,
-            @Param("thirtyDaysAgo") LocalDateTime thirtyDaysAgo,
-            @Param("applyWindow") boolean applyWindow,
             org.springframework.data.domain.Pageable pageable);
 
     /**
