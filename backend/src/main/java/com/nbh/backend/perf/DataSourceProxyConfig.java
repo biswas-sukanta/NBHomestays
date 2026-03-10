@@ -3,13 +3,14 @@ package com.nbh.backend.perf;
 import net.ttddyy.dsproxy.listener.MethodExecutionContext;
 import net.ttddyy.dsproxy.listener.MethodExecutionListener;
 import net.ttddyy.dsproxy.listener.QueryExecutionListener;
+import net.ttddyy.dsproxy.support.ProxyDataSource;
 import net.ttddyy.dsproxy.support.ProxyDataSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Method;
@@ -24,15 +25,21 @@ public class DataSourceProxyConfig {
     private long slowSqlThresholdMs;
 
     @Bean
-    @Primary
-    public DataSource dataSource(DataSource original) {
-        QueryExecutionListener listener = new SlowQueryListener(slowSqlThresholdMs);
-
-        return ProxyDataSourceBuilder.create(original)
-                .name("nbh-ds")
-                .methodListener(new ConnectionAcquireListener())
-                .listener(listener)
-                .build();
+    public BeanPostProcessor dataSourceProxyBeanPostProcessor() {
+        return new BeanPostProcessor() {
+            @Override
+            public Object postProcessAfterInitialization(Object bean, String beanName) {
+                if (bean instanceof DataSource && !(bean instanceof ProxyDataSource)) {
+                    QueryExecutionListener listener = new SlowQueryListener(slowSqlThresholdMs);
+                    return ProxyDataSourceBuilder.create((DataSource) bean)
+                            .name("nbh-ds")
+                            .methodListener(new ConnectionAcquireListener())
+                            .listener(listener)
+                            .build();
+                }
+                return bean;
+            }
+        };
     }
 
     static final class ConnectionAcquireListener implements MethodExecutionListener {
