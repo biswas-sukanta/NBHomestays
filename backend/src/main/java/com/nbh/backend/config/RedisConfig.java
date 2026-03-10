@@ -5,12 +5,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.support.NoOpCacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.PageImpl;
@@ -33,15 +34,8 @@ import java.util.Map;
  * Redis cache configuration — hardened for production.
  *
  * Kill Switch:
- * Set app.cache.redis.enabled=false (or env APP_CACHE_REDIS_ENABLED=false)
- * to bypass Redis entirely. All @Cacheable annotations become no-ops and
- * every request reads directly from PostgreSQL. The Service layer is
- * completely untouched — routing is handled here at the CacheManager level.
- *
- * Serialization Fixes:
- * - Hibernate6Module for lazy proxy handling.
- * - PageImpl mixin for correct deserialization from Redis.
- * - FAIL_ON_UNKNOWN_PROPERTIES = false for forward-compatibility.
+ * Set app.cache.redis.enabled=false to bypass Redis entirely.
+ * When disabled, Spring caching routes to CaffeineCacheManager (in-memory).
  */
 @Configuration
 @EnableCaching
@@ -117,20 +111,28 @@ public class RedisConfig {
     }
 
     // ══════════════════════════════════════════════════════════
-    // THE KILL SWITCH — Global CacheManager Routing
+    // CacheManager Routing
     // ══════════════════════════════════════════════════════════
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory factory) {
-
-        // ── Kill Switch OFF → bypass Redis entirely ──────────
         if (!cacheEnabled) {
-            log.warn("🛑 Redis caching is DISABLED via kill switch (app.cache.redis.enabled=false). "
-                    + "Routing ALL traffic directly to PostgreSQL. "
-                    + "Every @Cacheable annotation is now a no-op.");
-            return new NoOpCacheManager();
+            log.warn("🛑 Redis caching is DISABLED (app.cache.redis.enabled=false). Routing @Cacheable to Caffeine.");
+
+            CaffeineCacheManager caffeineManager = new CaffeineCacheManager(
+                    "states",
+                    "destinations",
+                    "homestaysSearch",
+                    "destination-by-slug",
+                    "destinations-by-state",
+                    "state-by-slug");
+
+            caffeineManager.setCaffeine(Caffeine.newBuilder()
+                    .maximumSize(10_000)
+                    .expireAfterWrite(Duration.ofMinutes(10)));
+
+            return caffeineManager;
         }
 
-        // ── Kill Switch ON → full Redis caching ──────────────
         log.info("✅ Redis caching is ENABLED. All @Cacheable routes will be served from Redis.");
 
         GenericJackson2JsonRedisSerializer serializer = jsonRedisSerializer();
@@ -143,7 +145,6 @@ public class RedisConfig {
                         RedisSerializationContext.SerializationPair.fromSerializer(serializer))
                 .disableCachingNullValues();
 
-        // Per-cache TTL overrides
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
         cacheConfigs.put("homestay", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigs.put("homestaysSearch", defaultConfig.entryTtl(Duration.ofHours(2)));

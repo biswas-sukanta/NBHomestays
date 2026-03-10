@@ -25,6 +25,9 @@ public class InfrastructureDetailsService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final DataSource dataSource;
 
+    @Value("${app.cache.redis.enabled:true}")
+    private boolean redisEnabled;
+
     @Value("${spring.data.redis.host:localhost}")
     private String redisHost;
 
@@ -50,6 +53,12 @@ public class InfrastructureDetailsService {
         Map<String, Object> stats = new HashMap<>();
         stats.put("host", redisHost);
         stats.put("port", redisPort);
+
+        if (!redisEnabled) {
+            stats.put("status", "DISABLED");
+            stats.put("message", "Redis is disabled via kill switch (app.cache.redis.enabled=false). Diagnostics do not perform Redis operations.");
+            return stats;
+        }
 
         try {
             String testKey = "diag_" + System.currentTimeMillis();
@@ -213,6 +222,9 @@ public class InfrastructureDetailsService {
 
     /** Clear all keys from the current Redis database. */
     public void clearAllCaches() {
+        if (!redisEnabled) {
+            return;
+        }
         var factory = redisTemplate.getConnectionFactory();
         if (factory != null) {
             try (var connection = factory.getConnection()) {
