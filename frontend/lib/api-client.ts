@@ -26,12 +26,17 @@ export const homestayApi = new HomestayControllerApi(configuration, API_BASE, ax
 /** 
  * Safe fetch wrapper that automatically applies the /api prefix.
  * Use this for all native fetch() calls instead of hardcoding API URLs.
+ * Defensive: normalizes paths that accidentally include /api prefix.
  */
 export async function apiFetch(path: string, options: RequestInit = {}) {
-    // Strip leading slash to ensure clean merge
-    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    // Normalize: strip leading slash
+    let clean = path.startsWith('/') ? path.slice(1) : path;
+    // Defensive: strip accidental 'api/' prefix to prevent double /api/api
+    if (clean.startsWith('api/')) {
+        clean = clean.slice(4);
+    }
 
     // In server components, we might need the absolute URL if NEXT_PUBLIC_API_URL is set
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    return fetch(`${baseUrl}/api/${cleanPath}`, options);
+    return fetch(`${baseUrl}/api/${clean}`, options);
 }

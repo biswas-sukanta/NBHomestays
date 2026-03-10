@@ -1,14 +1,39 @@
 import { axiosInstance as api, apiFetch } from '../api-client';
 
+/**
+ * Helper to ensure payload is FormData for multipart endpoints.
+ * If payload is already FormData, returns as-is.
+ * If payload has files property or is an object, wraps in FormData.
+ */
+function ensureFormData(payload: any): FormData | any {
+    if (payload instanceof FormData) {
+        return payload;
+    }
+    // If payload has files or looks like it needs multipart, convert to FormData
+    if (payload && typeof payload === 'object' && (payload.files || payload instanceof Blob)) {
+        const formData = new FormData();
+        Object.keys(payload).forEach(key => {
+            const value = payload[key];
+            if (Array.isArray(value)) {
+                value.forEach(v => formData.append(key, v));
+            } else {
+                formData.append(key, value);
+            }
+        });
+        return formData;
+    }
+    return payload;
+}
+
 export const postApi = {
     // Feed and query
     getFeed: (params: string) => api.get(`/posts?${params}`),
     getMyPosts: () => api.get('/posts/my-posts'),
     getById: (id: string) => api.get(`/posts/${id}`),
 
-    // Commands
-    create: (data: any) => api.post('/posts', data),
-    update: (id: string, data: any) => api.put(`/posts/${id}`, data),
+    // Commands - defensive: ensure FormData for multipart endpoints
+    create: (data: any) => api.post('/posts', ensureFormData(data)),
+    update: (id: string, data: any) => api.put(`/posts/${id}`, ensureFormData(data)),
     delete: (id: string) => api.delete(`/posts/${id}`),
     like: (id: string) => api.post(`/posts/${id}/like`),
     unlike: (id: string) => api.delete(`/posts/${id}/like`),

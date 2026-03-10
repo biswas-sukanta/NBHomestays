@@ -1,6 +1,7 @@
 -- V43: Timeline Hot Window for Instagram-style Feed Optimization
 -- Since no follow system exists, we use a global timeline with hot window.
 -- This reduces feed query cost by ~70% by avoiding large JOINs.
+-- Defensive: handles missing columns gracefully
 
 -- ═══════════════════════════════════════════════════════════════
 -- Global Timeline Table (Hot Feed Window)
@@ -39,20 +40,20 @@ CREATE TABLE IF NOT EXISTS post_timelines_global (
 
 -- Composite index for cursor pagination (keyset pagination)
 -- Covers: ORDER BY created_at DESC, post_id DESC
-CREATE INDEX idx_timeline_global_created_at_post_id 
+CREATE INDEX IF NOT EXISTS idx_timeline_global_created_at_post_id 
     ON post_timelines_global (created_at DESC, post_id DESC)
     WHERE is_deleted = FALSE;
 
 -- Covering index for feed query (index-only scan)
 -- Includes all columns needed for feed DTO
-CREATE INDEX idx_timeline_global_feed_covering 
+CREATE INDEX IF NOT EXISTS idx_timeline_global_feed_covering 
     ON post_timelines_global (created_at DESC, post_id DESC)
     INCLUDE (author_id, author_name, author_avatar_url, author_role, author_verified_host,
              text_content, homestay_id, homestay_name, original_post_id, like_count, share_count)
     WHERE is_deleted = FALSE;
 
 -- Index for post lookup (used during updates/deletes)
-CREATE INDEX idx_timeline_global_post_id 
+CREATE INDEX IF NOT EXISTS idx_timeline_global_post_id 
     ON post_timelines_global (post_id);
 
 -- ═══════════════════════════════════════════════════════════════
@@ -92,23 +93,26 @@ CREATE INDEX IF NOT EXISTS idx_post_likes_user_post
 
 -- ═══════════════════════════════════════════════════════════════
 -- Covering Index for Posts (index-only scan fallback)
+-- Defensive: only include columns that exist
 -- ═══════════════════════════════════════════════════════════════
 
-CREATE INDEX IF NOT EXISTS idx_posts_feed_covering
-    ON posts (created_at DESC, id DESC)
-    INCLUDE (user_id, text_content, homestay_id, original_post_id, love_count, share_count)
-    WHERE is_deleted = FALSE;
-
--- ═══════════════════════════════════════════════════════════════
--- Comments
--- ═══════════════════════════════════════════════════════════════
-
--- Expected query plan for feed:
--- EXPLAIN ANALYZE
--- SELECT * FROM post_timelines_global
--- WHERE is_deleted = FALSE
--- ORDER BY created_at DESC, post_id DESC
--- LIMIT 12;
---
--- Expected: Index Only Scan using idx_timeline_global_feed_covering
--- Cost: < 10 for 12 rows (vs ~100+ for JOIN query)
+-- Check which columns exist and create appropriate index
+DO $$
+BEGIN
+    -- Check if love_count and share_count columns exist
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'posts' AND column_name = 'love_count')
+       AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'posts' AND column_name = 'share_count')
+       AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'posts' AND column_name = 'original_post_id')
+    THEN
+        CREATE INDEX IF NOT EXISTS idx_posts_feed_covering
+            ON posts (created_at DESC, id DESC)
+            INCLUDE (user_id, text_content, homestay_id, original_post_id, love_count, share_count)
+            WHERE is_deleted = FALSE;
+    ELSE
+        -- Fallback index without optional columns
+        CREATE INDEX IF NOT EXISTS idx_posts_feed_covering
+            ON posts (created_at DESC, id DESC)
+            INCLUDE (user_id, text_content, homestay_id)
+            WHERE is_deleted = FALSE;
+    END IF;
+END $$;

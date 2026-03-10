@@ -63,9 +63,10 @@ export async function getFeed(params: FeedParams = {}): Promise<FeedResponse> {
   }
 
   const queryString = searchParams.toString();
-  const url = `/api/posts/feed${queryString ? `?${queryString}` : ''}`;
+  // Use path without /api prefix - apiFetch will add it
+  const path = `/posts/feed${queryString ? `?${queryString}` : ''}`;
 
-  const response = await apiFetch(url);
+  const response = await apiFetch(path);
   
   if (!response.ok) {
     throw new Error(`Feed API error: ${response.status}`);

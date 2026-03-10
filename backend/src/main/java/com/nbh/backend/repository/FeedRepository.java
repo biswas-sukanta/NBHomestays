@@ -24,7 +24,7 @@ public interface FeedRepository extends Repository<Post, UUID> {
         SELECT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
                u.id as authorId,
                CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
-               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.verified_host as authorVerifiedHost,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.is_verified_host as authorVerifiedHost,
                p.love_count as likeCount, p.share_count as shareCount,
                h.id as homestayId, h.name as homestayName,
                p.original_post_id as originalPostId,
@@ -37,9 +37,9 @@ public interface FeedRepository extends Repository<Post, UUID> {
         LEFT JOIN posts op ON p.original_post_id = op.id
         LEFT JOIN users ou ON op.user_id = ou.id
         WHERE p.is_deleted = false
-          AND (:cursorCreatedAt IS NULL 
-               OR (p.created_at < :cursorCreatedAt)
-               OR (p.created_at = :cursorCreatedAt AND p.id < :cursorId))
+          AND (CAST(:cursorCreatedAt AS timestamp) IS NULL 
+               OR (p.created_at < CAST(:cursorCreatedAt AS timestamp))
+               OR (p.created_at = CAST(:cursorCreatedAt AS timestamp) AND p.id < :cursorId))
         ORDER BY p.created_at DESC, p.id DESC
         LIMIT :limit
         """,
@@ -56,7 +56,7 @@ public interface FeedRepository extends Repository<Post, UUID> {
         SELECT DISTINCT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
                u.id as authorId,
                CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
-               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.verified_host as authorVerifiedHost,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.is_verified_host as authorVerifiedHost,
                p.love_count as likeCount, p.share_count as shareCount,
                h.id as homestayId, h.name as homestayName,
                p.original_post_id as originalPostId,
@@ -71,9 +71,9 @@ public interface FeedRepository extends Repository<Post, UUID> {
         LEFT JOIN users ou ON op.user_id = ou.id
         WHERE p.is_deleted = false
           AND pt.tag = :tag
-          AND (:cursorCreatedAt IS NULL 
-               OR (p.created_at < :cursorCreatedAt)
-               OR (p.created_at = :cursorCreatedAt AND p.id < :cursorId))
+          AND (CAST(:cursorCreatedAt AS timestamp) IS NULL 
+               OR (p.created_at < CAST(:cursorCreatedAt AS timestamp))
+               OR (p.created_at = CAST(:cursorCreatedAt AS timestamp) AND p.id < :cursorId))
         ORDER BY p.created_at DESC, p.id DESC
         LIMIT :limit
         """,

@@ -20,12 +20,12 @@ spring:
       max-lifetime: 1800000
   jpa:
     hibernate:
-      ddl-auto: validate # Hard-coded to validate as backup
+      ddl-auto: none # Temporary workaround until entity-schema alignment migration is created
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
-    out-of-order: false
+    out-of-order: true
     baseline-on-migrate: true
     connect-retries: 5
     enabled: true

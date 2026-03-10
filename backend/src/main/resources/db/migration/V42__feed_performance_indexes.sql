@@ -1,5 +1,6 @@
 -- V42: Feed Performance Indexes for Cursor Pagination
 -- Optimizes the community feed query for <300ms latency
+-- Defensive: uses IF NOT EXISTS and checks for column existence
 
 -- Composite index for cursor pagination (keyset pagination)
 -- Covers: ORDER BY created_at DESC, id DESC
@@ -18,9 +19,16 @@ CREATE INDEX IF NOT EXISTS idx_posts_user_created_at
     ON posts (user_id, created_at DESC);
 
 -- Index for original_post_id lookups (repost queries)
-CREATE INDEX IF NOT EXISTS idx_posts_original_post_id 
-    ON posts (original_post_id) 
-    WHERE original_post_id IS NOT NULL;
+-- Only create if column exists (added in later migration)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name = 'posts' AND column_name = 'original_post_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_posts_original_post_id 
+            ON posts (original_post_id) 
+            WHERE original_post_id IS NOT NULL;
+    END IF;
+END $$;
 
 -- Composite index for post_likes count aggregation
 CREATE INDEX IF NOT EXISTS idx_post_likes_post_id_user_id 
@@ -29,18 +37,3 @@ CREATE INDEX IF NOT EXISTS idx_post_likes_post_id_user_id
 -- Composite index for comments count aggregation
 CREATE INDEX IF NOT EXISTS idx_comments_post_id_created_at 
     ON comments (post_id, created_at);
-
--- EXPLAIN ANALYZE output for feed query (run manually to verify):
--- EXPLAIN ANALYZE
--- SELECT p.id, p.text_content, p.created_at, u.id, u.first_name, u.last_name, 
---        u.avatar_url, u.role, u.verified_host, p.love_count, p.share_count,
---        h.id, h.name, p.original_post_id
--- FROM posts p
--- INNER JOIN users u ON p.user_id = u.id
--- LEFT JOIN homestays h ON p.homestay_id = h.id
--- WHERE p.is_deleted = false
--- ORDER BY p.created_at DESC, p.id DESC
--- LIMIT 12;
---
--- Expected: Index Scan using idx_posts_active_created_at_id_desc
--- Cost: < 100 for 12 rows
