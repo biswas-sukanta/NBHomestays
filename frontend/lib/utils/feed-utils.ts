@@ -120,25 +120,32 @@ export function resolveFeedLayout(
 ): LayoutItem[] {
     // If blocks provided, use them
     if (blocks && blocks.length > 0) {
-        // Create post lookup
+        // Create post lookup by postId
         const postMap = new Map(posts.map(p => [p.postId, p]));
         
-        return blocks
+        const items: LayoutItem[] = [];
+        
+        blocks
             .filter(block => block.blockType !== 'PLACEHOLDER')
-            .map((block, idx) => {
+            .forEach((block, idx) => {
                 const postId = block.postIds[0]; // Usually single post per block
                 const post = postMap.get(postId);
-                const imageCount = post?.mediaCount ?? post?.media?.length ?? 0;
                 
-                return {
+                // Skip if post not found in map
+                if (!post) return;
+                
+                const imageCount = post.mediaCount ?? post.media?.length ?? 0;
+                
+                items.push({
                     postId,
                     variant: blockTypeToVariant(block.blockType),
                     blockType: block.blockType,
                     renderHints: block.renderHints,
                     index: idx,
-                };
-            })
-            .filter(item => item.postId); // Filter out missing posts
+                });
+            });
+        
+        return items;
     }
     
     // Fallback: use pattern-based layout

@@ -156,8 +156,6 @@ export default function CommunityPage() {
 
     const { content: trendingContent = [] } = trendingData as any || {};
     const trendingPosts = (Array.isArray(trendingContent) ? trendingContent : []).map(normalizePost);
-    console.log("Community Feed Data:", data);
-    console.log("Trending Data:", trendingData);
 
     const handleNewPost = () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
@@ -200,6 +198,7 @@ export default function CommunityPage() {
     const blocks = data?.pages?.flatMap(page => page.blocks || []) || [];
 
     const normalizedPosts = posts.map(normalizePost);
+    // Use postId as key for lookup (matches layoutItems.postId from resolveFeedLayout)
     const postById = new Map(normalizedPosts.map(p => [p.id, p]));
 
     const filteredPosts = normalizedPosts.filter(p =>
@@ -209,7 +208,7 @@ export default function CommunityPage() {
         (p.authorName || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const layoutItems = !searchQuery ? resolveFeedLayout(posts, blocks) : [];
+    const layoutItems = !searchQuery ? resolveFeedLayout(posts as any, blocks) : [];
     const layoutPosts = layoutItems
         .map(item => postById.get(item.postId))
         .filter(Boolean) as NormalizedPost[];
