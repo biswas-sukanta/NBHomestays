@@ -88,7 +88,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                 INNER JOIN post_tags pt_filter ON p.id = pt_filter.post_id AND pt_filter.tag = :tag
                 WHERE p.is_deleted = false
                 GROUP BY p.id, u.id, h.id
-                LIMIT :limit
                 """,
                 countQuery = "SELECT COUNT(DISTINCT p.id) FROM posts p INNER JOIN post_tags pt ON p.id = pt.post_id WHERE pt.tag = :tag AND p.is_deleted = false",
                 nativeQuery = true)
