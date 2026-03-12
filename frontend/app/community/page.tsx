@@ -126,8 +126,8 @@ export default function CommunityPage() {
     const { data: trendingData } = useQuery({
         queryKey: queryKeys.community.trending,
         queryFn: async () => {
-            const { data } = await postApi.getFeed('page=0&size=3&sort=loveCount,desc');
-            return data; // Return full response to handle .content later
+            const response = await getFeed({ limit: 3 });
+            return response;
         },
         staleTime: 10000, // 10 seconds — trending must be fresh
     });
@@ -154,8 +154,7 @@ export default function CommunityPage() {
         );
     }
 
-    const { content: trendingContent = [] } = trendingData as any || {};
-    const trendingPosts = (Array.isArray(trendingContent) ? trendingContent : []).map(normalizePost);
+    const trendingPosts = (trendingData?.posts || []).slice(0, 3).map(normalizePost);
 
     const handleNewPost = () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
@@ -197,6 +196,11 @@ export default function CommunityPage() {
     const posts = data?.pages?.flatMap(page => page.posts || []) || [];
     const blocks = data?.pages?.flatMap(page => page.blocks || []) || [];
 
+    // Debug: trace feed data flow
+    console.log("Feed response pages:", data?.pages);
+    console.log("Extracted posts:", posts.length, posts.slice(0, 2));
+    console.log("Blocks:", blocks.length, blocks.slice(0, 2));
+
     const normalizedPosts = posts.map(normalizePost);
     // Use postId as key for lookup (matches layoutItems.postId from resolveFeedLayout)
     const postById = new Map(normalizedPosts.map(p => [p.id, p]));
@@ -209,9 +213,12 @@ export default function CommunityPage() {
     );
 
     const layoutItems = !searchQuery ? resolveFeedLayout(posts as any, blocks) : [];
+    console.log("Layout items:", layoutItems.length, layoutItems.slice(0, 2));
+    
     const layoutPosts = layoutItems
         .map(item => postById.get(item.postId))
         .filter(Boolean) as NormalizedPost[];
+    console.log("Layout posts:", layoutPosts.length, layoutPosts.slice(0, 2));
 
     return (
         <div className="min-h-screen bg-white text-neutral-900 selection:bg-green-500/30">
