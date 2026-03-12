@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { OptimizedImage } from '@/components/ui/optimized-image';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
 
@@ -10,60 +10,77 @@ interface CommunityHeroProps {
 
 export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
     return (
-        <section className="relative w-full h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden bg-zinc-950">
+        <section className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[70vh] min-h-[400px] sm:min-h-[500px] flex items-center justify-center overflow-hidden bg-zinc-950">
             {/* Background Image with Parallax & Ken Burns Effect */}
             <motion.div
                 className="absolute inset-0 z-0"
-                initial={{ scale: 1.25 }}
+                initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
                 transition={{
-                    duration: 20,
+                    duration: 25,
                     ease: "linear",
                     repeat: Infinity,
                     repeatType: "reverse"
                 }}
             >
-                <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none" />
-                <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-zinc-950 to-transparent z-10 pointer-events-none" />
-                <img
-                    src="/_static/community/community_hero_desktop.webp?tr=w-1920,q-70,f-webp"
+                {/* Stronger gradient overlays */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 z-10 pointer-events-none" />
+                <div className="absolute inset-x-0 bottom-0 h-64 sm:h-80 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent z-10 pointer-events-none" />
+                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-zinc-950/50 to-transparent z-10 pointer-events-none" />
+                
+                <Image
+                    src="/_static/community/community_hero_desktop.webp"
+                    fill
+                    sizes="100vw"
                     className="w-full h-full object-cover hidden md:block"
                     alt="Community journeys in the Eastern Himalayas"
-                    loading="eager"
+                    priority
                 />
-                <img
-                    src="/_static/community/community_hero_mobile.webp?tr=w-800,q-70,f-webp"
+                <Image
+                    src="/_static/community/community_hero_mobile.webp"
+                    fill
+                    sizes="100vw"
                     className="w-full h-full object-cover md:hidden"
                     alt="Community journeys in the Eastern Himalayas"
-                    loading="eager"
+                    priority
                 />
             </motion.div>
 
             {/* Content Payload */}
-            <div className="container relative z-20 px-4 md:px-6 mx-auto text-center flex flex-col items-center justify-center translate-y-6">
+            <div className="container relative z-20 px-4 sm:px-6 lg:px-8 mx-auto text-center flex flex-col items-center justify-center">
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                    className="max-w-3xl mx-auto space-y-4 md:space-y-6 flex flex-col items-center"
+                    transition={{ duration: 0.7, delay: 0.15 }}
+                    className="max-w-3xl mx-auto space-y-3 sm:space-y-5 lg:space-y-6 flex flex-col items-center"
                 >
-                    <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold text-white tracking-tight font-serif drop-shadow-lg [text-shadow:_0_4px_24px_rgb(0_0_0_/_60%)]">
+                    <motion.h1
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.3 }}
+                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white tracking-tight font-serif drop-shadow-lg [text-shadow:_0_4px_32px_rgb(0_0_0_/_70%)]"
+                    >
                         Community
-                    </h1>
-                    <p className="text-lg sm:text-xl md:text-2xl text-zinc-400 font-bold max-w-2xl mx-auto drop-shadow-md">
+                    </motion.h1>
+                    <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.45 }}
+                        className="text-base sm:text-lg md:text-xl lg:text-2xl text-zinc-300 font-medium max-w-2xl mx-auto drop-shadow-md leading-relaxed"
+                    >
                         Real travelers. Stories from the road across the Eastern Himalayas.
-                    </p>
+                    </motion.p>
 
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="pt-6 sm:pt-8"
+                        transition={{ duration: 0.6, delay: 0.6 }}
+                        className="pt-4 sm:pt-6 lg:pt-8"
                     >
                         <Button
                             onClick={onOpenComposer}
                             size="lg"
-                            className="bg-white text-black hover:bg-gray-100 font-semibold px-8 py-6 sm:px-10 sm:py-7 text-sm sm:text-base rounded-full shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] transition-all hover:scale-105 active:scale-95"
+                            className="bg-white text-black hover:bg-zinc-100 font-semibold px-6 py-5 sm:px-8 sm:py-6 lg:px-10 lg:py-7 text-sm sm:text-base rounded-full shadow-[0_0_48px_-12px_rgba(255,255,255,0.4)] transition-all hover:scale-105 active:scale-95"
                         >
                             <Pencil className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                             Share your journey

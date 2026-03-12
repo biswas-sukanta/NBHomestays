@@ -1,44 +1,50 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
-import { Heart, MessageCircle, MapPin, Pencil, MoreHorizontal, Trash2, Share2, Loader2, Repeat2, X, Send, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
+import { Heart, MessageCircle, MapPin, Share2, Repeat2, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { toast } from 'sonner';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { ImageCollage } from '@/components/community/ImageCollage';
 import dynamic from 'next/dynamic';
 const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox').then(m => m.ImageLightbox), { ssr: false });
-import { OptimizedImage } from '@/components/ui/optimized-image';
-import { CommentsSection } from '@/components/comments-section';
 import { postApi } from '@/lib/api/posts';
 import { useAuth } from '@/context/AuthContext';
 import { LoginPromptModal } from './LoginPromptModal';
 import { queryKeys } from '@/lib/queryKeys';
-
-// ── Icons for Tags ───────────────────────────────────────────────────────────
-const TAG_ICONS: Record<string, React.ReactNode> = {
-    'Hidden Gem': <CheckCircle2 className="w-3 h-3" />,
-    'Top Pick': <TrendingUp className="w-3 h-3" />, // Will import TrendingUp
-    'Mountain Bliss': <MapPin className="w-3 h-3" />,
-    'Local Secret': <Send className="w-3 h-3" />,
-};
 import { TrendingUp } from 'lucide-react';
 
-// ── Types ────────────────────────────────────────────────────────────────────
+const TAG_ICONS: Record<string, React.ReactNode> = {
+    'Hidden Gem': <CheckCircle2 className="w-3 h-3" />,
+    'Top Pick': <TrendingUp className="w-3 h-3" />,
+    'Mountain Bliss': <MapPin className="w-3 h-3" />,
+};
+
 import { CommunityPost, QuotePost } from './types';
 import { RepostModal } from './RepostModal';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-export function formatRelative(isoDate: string) {
+function formatRelative(isoDate: string) {
     if (!isoDate) return '';
     const diff = (Date.now() - new Date(isoDate).getTime()) / 1000;
     if (diff < 60) return 'just now';
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 86400)}d ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function extractTitleAndExcerpt(text: string): { title: string; excerpt: string } {
+    if (!text) return { title: '', excerpt: '' };
+    // Remove leading emojis and hashtags
+    let cleaned = text.replace(/^[\s#\u{1F300}-\u{1F9FF}]+/iu, '').trim();
+    // Get first 8-12 words for title
+    const words = cleaned.split(/\s+/);
+    const titleWordCount = Math.min(12, Math.max(8, Math.ceil(words.length * 0.3)));
+    const title = words.slice(0, titleWordCount).join(' ');
+    // Rest becomes excerpt
+    const excerpt = words.slice(titleWordCount).join(' ').trim();
+    return { title, excerpt: excerpt.slice(0, 200) };
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -234,129 +240,174 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
     };
 
     const articleClassName = cn(
-        'relative bg-zinc-950 rounded-2xl overflow-hidden transition-all duration-300 isolate',
-        isQuoted ? "mt-3 hover:bg-zinc-900 ring-1 ring-white/10" : "mb-6 shadow-xl hover:shadow-2xl ring-1 ring-white/5",
+        'relative bg-zinc-950 overflow-hidden transition-all duration-300 isolate',
+        isQuoted ? "mt-3 rounded-2xl ring-1 ring-white/10" : "rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.16)] ring-1 ring-white/5",
+        !isQuoted && 'hover:-translate-y-1'
     );
 
-    const hasImage = !!post.imageUrl;
-    const isMultiImage = post.images && post.images.length > 1;
-    const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const hasImage = !!post.imageUrl || (post.images && post.images.length > 0);
+    const imageCount = post.images?.length || (post.imageUrl ? 1 : 0);
+    const isMultiImage = imageCount > 1;
+
+    const { title, excerpt } = useMemo(() => extractTitleAndExcerpt(post.caption), [post.caption]);
 
     return (
         <>
             <motion.article
                 data-testid={isQuoted ? "quoted-post-card" : "post-card"}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                {...(!isQuoted ? { whileHover: { y: -2 }, transition: { type: 'spring', stiffness: 400, damping: 30 } } : {})}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                {...(!isQuoted ? { whileHover: { y: -2 } } : {})}
                 className={articleClassName}
             >
-                {/* Image Block */}
-                {hasImage ? (
+                {/* Image Block - Always First */}
+                {hasImage && (
                     <div className="relative z-10 w-full overflow-hidden group">
-                        {isMultiImage ? (
-                            <div className="relative aspect-square md:aspect-video lg:min-h-[500px]">
-                                <motion.div
-                                    drag="x"
-                                    dragConstraints={{ left: 0, right: 0 }}
-                                    onDragEnd={(_, info) => {
-                                        if (info.offset.x < -50 && activeImageIndex < post.images.length - 1) {
-                                            setActiveImageIndex(prev => prev + 1);
-                                        } else if (info.offset.x > 50 && activeImageIndex > 0) {
-                                            setActiveImageIndex(prev => prev - 1);
-                                        }
-                                    }}
-                                    animate={{ x: `-${activeImageIndex * 100}%` }}
-                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    className="absolute inset-0 flex h-full"
-                                >
-                                    {post.images.map((img, idx) => (
-                                        <div key={idx} className="relative min-w-full h-full cursor-pointer" onClick={() => setLightboxIndex(idx)}>
-                                            <img
-                                                src={`${img.url}?tr=w-1200,q-70,f-webp`}
-                                                alt={`${post.location} - ${idx + 1}`}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                    ))}
-                                </motion.div>
-                                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
-                                    {post.images.map((_, idx) => (
-                                        <div key={idx} className={cn("w-1.5 h-1.5 rounded-full transition-all", idx === activeImageIndex ? "bg-white w-4" : "bg-white/40")} />
-                                    ))}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="relative aspect-square md:aspect-video lg:min-h-[400px] cursor-pointer" onClick={() => setLightboxIndex(0)}>
-                                <img src={`${post.imageUrl}?tr=w-1200,q-70,f-webp`} alt={post.location} className="w-full h-full object-cover" />
-                            </div>
-                        )}
-                        <div className="absolute inset-x-0 top-0 pt-6 px-6 flex justify-between items-start pointer-events-none z-20 bg-gradient-to-b from-black/60 to-transparent pb-10">
-                            <div className="flex flex-wrap gap-2 pointer-events-auto">
-                                <span className="inline-flex items-center bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-white/20">
-                                    {isQuoted ? 'Repost' : 'Story'}
-                                </span>
-                                {(post.tags ?? []).map(tag => (
-                                    <span key={tag} className="inline-flex items-center gap-1.5 bg-green-500/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-green-500">
-                                        {TAG_ICONS[tag] || null}
-                                        {tag}
-                                    </span>
+                        {isMultiImage && post.images && post.images.length === 2 ? (
+                            <div className="grid grid-cols-2 gap-1 aspect-[4/5]">
+                                {post.images.map((img, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="relative w-full h-full cursor-pointer overflow-hidden"
+                                        onClick={() => setLightboxIndex(idx)}
+                                    >
+                                        <Image
+                                            src={img.url}
+                                            alt={`${post.location} - ${idx + 1}`}
+                                            fill
+                                            sizes="(min-width: 768px) 50vw, 50vw"
+                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    </div>
                                 ))}
                             </div>
-                            {canModify && onDelete && (
-                                <div className="flex items-center gap-2 pointer-events-auto bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 ring-1 ring-white/20">
-                                    <button onClick={() => onEdit?.(post)} className="text-xs font-semibold text-gray-200 hover:text-white transition-colors">Edit</button>
-                                    <span className="text-gray-500">•</span>
-                                    <button onClick={() => onDelete(post.id)} className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors">Delete</button>
+                        ) : isMultiImage && post.images && post.images.length >= 3 ? (
+                            <div className="grid grid-cols-2 grid-rows-2 gap-1 aspect-[4/5]">
+                                <div
+                                    className="relative col-span-2 row-span-1 cursor-pointer overflow-hidden"
+                                    onClick={() => setLightboxIndex(0)}
+                                >
+                                    <Image
+                                        src={post.images[0].url}
+                                        alt={`${post.location} - 1`}
+                                        fill
+                                        sizes="(min-width: 768px) 100vw, 100vw"
+                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="relative z-10 w-full p-8 bg-gradient-to-br from-zinc-900 to-zinc-950 border-b border-white/10">
-                        <div className="flex items-center justify-between mb-8">
-                            <span className="bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1 ring-1 ring-white/20">Editorial</span>
-                            <div className="flex items-center gap-2 text-rose-400 text-sm font-bold uppercase tracking-wider"><MapPin className="w-4 h-4" /> {post.location}</div>
-                        </div>
-                        <p className="text-xl text-white leading-relaxed font-serif italic mb-6">&quot;{post.caption}&quot;</p>
-                        {canModify && onDelete && (
-                            <div className="flex items-center gap-3">
-                                <button onClick={() => onEdit?.(post)} className="text-xs font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors">Edit Story</button>
-                                <button onClick={() => onDelete(post.id)} className="text-xs font-bold text-red-500/70 hover:text-red-400 uppercase tracking-widest transition-colors">Delete</button>
+                                {post.images.slice(1, 3).map((img, idx) => (
+                                    <div
+                                        key={idx + 1}
+                                        className="relative cursor-pointer overflow-hidden"
+                                        onClick={() => setLightboxIndex(idx + 1)}
+                                    >
+                                        <Image
+                                            src={img.url}
+                                            alt={`${post.location} - ${idx + 2}`}
+                                            fill
+                                            sizes="(min-width: 768px) 50vw, 50vw"
+                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                        {idx === 1 && post.images && post.images.length > 3 && (
+                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                                <span className="text-white font-bold text-2xl">+{post.images.length - 3}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div
+                                className="relative aspect-[4/5] cursor-pointer overflow-hidden"
+                                onClick={() => setLightboxIndex(0)}
+                            >
+                                <Image
+                                    src={post.imageUrl || post.images?.[0]?.url || ''}
+                                    alt={post.location}
+                                    fill
+                                    sizes="(min-width: 768px) 600px, 100vw"
+                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
                             </div>
                         )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
                     </div>
                 )}
+                {/* Content Block */}
+                <div className="relative z-20 px-5 sm:px-6 pb-5 pt-5 bg-zinc-950">
+                    {/* Tags Row */}
+                    <div className="flex flex-wrap gap-2 mb-3">
+                        <span className="inline-flex items-center bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1">
+                            {isQuoted ? 'Repost' : 'Story'}
+                        </span>
+                        {(post.tags ?? []).slice(0, 2).map(tag => (
+                            <span key={tag} className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1">
+                                {TAG_ICONS[tag]}{tag}
+                            </span>
+                        ))}
+                    </div>
 
-                {/* Content */}
-                <div className={cn("relative z-20 px-6 pb-6 bg-zinc-950", hasImage ? "pt-6" : "pt-2")}>
-                    {hasImage && <p className="text-base text-gray-200 leading-relaxed font-serif mb-6 whitespace-pre-line">{post.caption}</p>}
-                    {post.originalPost && (
-                        <div className="mb-5 rounded-xl border border-white/20 bg-black/40 backdrop-blur-md overflow-hidden">
-                            <PostCard post={post.originalPost} isQuoted={true} currentUser={currentUser} />
-                        </div>
+                    {/* Headline */}
+                    <h3 className="text-xl sm:text-2xl font-bold font-heading text-white leading-tight tracking-tight mb-2 line-clamp-2">
+                        {title || post.caption.slice(0, 100)}
+                    </h3>
+
+                    {/* Excerpt */}
+                    {(excerpt || post.caption.length > 100) && (
+                        <p className="text-sm sm:text-base text-zinc-400 leading-relaxed mb-4 line-clamp-2">
+                            {excerpt || post.caption.slice(100)}
+                        </p>
                     )}
-                    <div className="flex items-center gap-3 pt-2 border-t border-white/10">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#004d00] to-emerald-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
-                            {authorAvatar ? <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" /> : initials}
+
+                    {/* Meta Row */}
+                    <div className="flex items-center gap-3 pt-3 border-t border-white/10">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white text-xs font-bold overflow-hidden shrink-0">
+                            {authorAvatar ? (
+                                <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" />
+                            ) : initials}
                         </div>
-                        <div className="flex flex-col">
-                            <span className="font-bold text-sm text-gray-100">{authorName}</span>
-                            <span className="text-xs text-gray-400">{formatRelative(post.createdAt)}</span>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-white truncate">{authorName}</p>
+                            <p className="text-xs text-zinc-500">{formatRelative(post.createdAt)}</p>
                         </div>
-                        {post.homestayId && post.homestayName && (
-                            <div className="ml-auto">
-                                <Link href={`/homestays/${post.homestayId}`} className="inline-flex items-center gap-1.5 bg-green-500/20 text-green-100 text-xs py-1.5 px-3 rounded-full font-semibold ring-1 ring-green-500/40">
-                                    <MapPin className="w-3.5 h-3.5" /> <span className="truncate max-w-[120px]">{post.homestayName}</span>
-                                </Link>
+                        {post.location && (
+                            <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                                <MapPin className="w-3.5 h-3.5" />
+                                <span className="truncate max-w-[100px] sm:max-w-[150px]">{post.location}</span>
+                            </div>
+                        )}
+                        {canModify && onDelete && (
+                            <div className="flex items-center gap-2 ml-auto">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onEdit?.(post); }}
+                                    className="text-xs font-semibold text-zinc-400 hover:text-white transition-colors"
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(post.id); }}
+                                    className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors"
+                                >
+                                    Delete
+                                </button>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Actions */}
+                {/* Quoted Repost */}
+                {post.originalPost && (
+                    <div className="px-5 sm:px-6 pb-4 bg-zinc-950">
+                        <div className="rounded-xl border border-white/20 bg-black/40 backdrop-blur-md overflow-hidden">
+                            <PostCard post={post.originalPost} isQuoted={true} currentUser={currentUser} />
+                        </div>
+                    </div>
+                )}
+
+                {/* Actions Bar */}
                 {!isQuoted && (
-                    <div className="relative z-20 flex items-center justify-between px-2 py-2 border-t border-white/10 bg-black/40 backdrop-blur-md">
+                    <div className="relative z-20 flex items-center justify-between px-4 py-3 border-t border-white/10 bg-zinc-900/50">
                         <LikeButton
                             postId={post.id}
                             initialLiked={post.isLikedByCurrentUser || false}
@@ -365,15 +416,25 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                             onLikeToggle={(newCount, newLiked) => onUpdate?.({ ...post, likes: newCount, isLikedByCurrentUser: newLiked })}
                             onUnauthenticated={() => setLoginModal({ open: true, action: 'love' })}
                         />
-                        <button onClick={() => { if (!isAuthenticated) { setLoginModal({ open: true, action: 'comment' }); return; } onOpenComments?.(post.id); }}
-                            className="flex-1 flex justify-center items-center gap-2 min-h-10 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm font-semibold">
-                            <MessageCircle className="w-4 h-4" /> <span>{post.comments || 0}</span>
+                        <button
+                            onClick={() => { if (!isAuthenticated) { setLoginModal({ open: true, action: 'comment' }); return; } onOpenComments?.(post.id); }}
+                            className="flex-1 flex justify-center items-center gap-2 min-h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-semibold transition-colors"
+                        >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>{post.comments || 0}</span>
                         </button>
-                        <button onClick={handleRepost} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm font-semibold">
-                            <Repeat2 className="w-5 h-5" />
+                        <button
+                            onClick={handleRepost}
+                            className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-semibold transition-colors"
+                        >
+                            <Repeat2 className="w-4 h-4" />
                         </button>
-                        <button onClick={handleShare} className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm font-semibold">
-                            <Share2 className="w-4 h-4" /> <span>{shareCount}</span>
+                        <button
+                            onClick={handleShare}
+                            className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-semibold transition-colors"
+                        >
+                            <Share2 className="w-4 h-4" />
+                            <span>{shareCount}</span>
                         </button>
                     </div>
                 )}

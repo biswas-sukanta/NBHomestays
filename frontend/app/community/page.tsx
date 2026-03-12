@@ -29,6 +29,8 @@ import { TrendingStories } from '@/components/community/trending-stories';
 import { CommunitySidebar } from '@/components/community/sidebar';
 import { CommunityPageSkeleton } from '@/components/community/Skeletons';
 import { LoginPromptModal } from '@/components/community/LoginPromptModal';
+import { FeaturedStoryCard } from '@/components/community/FeaturedStoryCard';
+import { PhotoStoryCard } from '@/components/community/PhotoStoryCard';
 import { normalizePost, NormalizedPost } from '@/lib/adapters/normalizePost';
 import { useHomestaysLookup } from '@/hooks/useHomestaysLookup';
 import { queryKeys } from '@/lib/queryKeys';
@@ -237,14 +239,32 @@ export default function CommunityPage() {
                 <TrendingStories stories={trendingPosts} />
             )}
 
-            <div className="container mx-auto px-4 lg:px-6 py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-10 items-start">
 
                     {/* Left: Main Feed */}
-                    <div className="w-full space-y-8">
+                    <div className="w-full space-y-6">
+                        {/* ── Sticky Filter Bar ── */}
+                        <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-zinc-950/95 backdrop-blur-md border-b border-white/5">
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                                <button className="px-4 py-2 rounded-full bg-white text-black text-sm font-bold transition-all hover:scale-105">
+                                    Latest
+                                </button>
+                                <button className="px-4 py-2 rounded-full bg-zinc-800 text-zinc-300 text-sm font-semibold hover:bg-zinc-700 transition-all">
+                                    Trending
+                                </button>
+                                <button className="px-4 py-2 rounded-full bg-zinc-800 text-zinc-300 text-sm font-semibold hover:bg-zinc-700 transition-all">
+                                    Mountains
+                                </button>
+                                <button className="px-4 py-2 rounded-full bg-zinc-800 text-zinc-300 text-sm font-semibold hover:bg-zinc-700 transition-all">
+                                    Culture
+                                </button>
+                            </div>
+                        </div>
+
                         {/* ── Top Bar Controls ── */}
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
-                            <h2 className="text-3xl font-bold font-serif text-white tracking-tight">Community Feed</h2>
+                            <h2 className="text-3xl font-bold font-heading text-white tracking-tight">Community Feed</h2>
 
                             <div className="flex flex-col sm:flex-row gap-3 items-center">
                                 <div className="relative w-full sm:w-64 group">
@@ -273,17 +293,30 @@ export default function CommunityPage() {
 
                         {/* ── Feed Mapping ── */}
                         <AnimatePresence mode="popLayout">
-                            {filteredPosts.map(post => (
-                                <PostCard
-                                    key={post.id}
-                                    post={post}
-                                    currentUser={user}
-                                    onEdit={(p) => { setPostToEdit(p); setComposerOpen(true); }}
-                                    onUpdate={handleUpdatePost}
-                                    onDelete={handleDeletePost}
-                                    onOpenComments={(postId) => setActiveCommentPostId(postId)}
-                                />
-                            ))}
+                            {filteredPosts.map((post, idx) => {
+                                const imageCount = post.images?.length || (post.imageUrl ? 1 : 0);
+                                const isPhotoStory = imageCount > 2;
+                                const isFeatured = idx > 0 && (idx + 1) % 5 === 0;
+                                
+                                return (
+                                    <React.Fragment key={post.id}>
+                                        {isPhotoStory ? (
+                                            <PhotoStoryCard post={post} />
+                                        ) : isFeatured ? (
+                                            <FeaturedStoryCard post={post} />
+                                        ) : (
+                                            <PostCard
+                                                post={post}
+                                                currentUser={user}
+                                                onEdit={(p) => { setPostToEdit(p); setComposerOpen(true); }}
+                                                onUpdate={handleUpdatePost}
+                                                onDelete={handleDeletePost}
+                                                onOpenComments={(postId) => setActiveCommentPostId(postId)}
+                                            />
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
                         </AnimatePresence>
 
                         {filteredPosts.length === 0 && !isFetchingNextPage && (
