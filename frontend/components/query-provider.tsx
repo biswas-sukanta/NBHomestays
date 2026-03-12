@@ -13,7 +13,11 @@ const queryClient = new QueryClient({
             staleTime: 1000 * 60 * 5,      // 5 minutes
             gcTime: 1000 * 60 * 30,         // 30 minutes
             refetchOnWindowFocus: false,     // Don't spam backend on tab switch
-            retry: 1,                        // Single retry on failure
+            // Prevent retry loop on 401 - auth interceptor handles refresh
+            retry: (failureCount, error: any) => {
+                if (error?.response?.status === 401) return false;
+                return failureCount < 2;
+            },
         },
     },
 });

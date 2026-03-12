@@ -13,6 +13,7 @@ const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox
 import { CommentSkeleton } from '@/components/community/CommentSkeleton';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api-client';
+import { getAccessToken } from '@/lib/auth/tokenStore';
 import { IMAGE_UPLOAD_HELPER_TEXT, processImages } from '@/lib/utils/imageUploadPipeline';
 
 import {
@@ -287,8 +288,8 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
 // ── Public API ────────────────────────────────────────────────
 export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalClose, onCommentCountChange, currentUserRole }: CommentsSectionProps) {
     const { isAuthenticated, user } = useAuth() as any;
-    // AuthContext stores under 'token'
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    // Use tokenStore instead of direct localStorage access
+    const token = typeof window !== 'undefined' ? getAccessToken() : null;
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState(true);
     const [newComment, setNewComment] = useState('');

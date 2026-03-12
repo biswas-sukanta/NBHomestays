@@ -4,6 +4,13 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
+import { 
+    setAccessToken, 
+    getAccessToken, 
+    setRefreshToken, 
+    clearTokens,
+    hasTokens 
+} from '@/lib/auth/tokenStore';
 
 interface User {
     id: string;
@@ -37,36 +44,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [token, setToken] = useState<string | null>(null);
+    const [token, setTokenState] = useState<string | null>(null);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
+        // Initialize from tokenStore (memory/sessionStorage)
+        const storedToken = getAccessToken();
+        if (storedToken) {
             try {
-                const decoded = jwtDecode<DecodedToken>(token);
-                // We might not have full user details from token, but we have role
-                // ideally we fetch /me, but for now let's set what we can
+                const decoded = jwtDecode<DecodedToken>(storedToken);
                 setUser({
                     id: decoded.userId || '',
-                    firstName: '', // fetch or decoded?
+                    firstName: '',
                     lastName: '',
                     email: decoded.sub,
                     role: decoded.role
                 });
                 setIsAuthenticated(true);
-                setToken(token);
+                setTokenState(storedToken);
             } catch (e) {
                 console.error("Invalid token", e);
-                localStorage.removeItem('token');
+                clearTokens();
             }
         }
         setIsLoading(false);
     }, []);
 
-    const login = (token: string, refreshToken: string) => {
-        localStorage.setItem('token', token);
-        localStorage.setItem('refreshToken', refreshToken);
-        const decoded = jwtDecode<DecodedToken>(token);
+    const login = (accessToken: string, refreshToken: string) => {
+        // Store tokens using AI-safe storage
+        setAccessToken(accessToken);
+        setRefreshToken(refreshToken);
+        
+        const decoded = jwtDecode<DecodedToken>(accessToken);
         setUser({
             id: decoded.userId || '',
             firstName: '',
@@ -75,15 +83,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: decoded.role
         });
         setIsAuthenticated(true);
-        setToken(token);
+        setTokenState(accessToken);
         router.refresh();
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+        clearTokens();
         setUser(null);
         setIsAuthenticated(false);
+        setTokenState(null);
         router.push('/login');
         router.refresh();
     };
