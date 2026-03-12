@@ -28,4 +28,9 @@
     <logger name="com.nbh.backend" level="INFO" additivity="true">
         <appender-ref ref="LOKI"/>
     </logger>
+    
+    <!-- Hibernate SQL Query Logging for Performance Analysis -->
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+    <logger name="org.hibernate.orm.jdbc.bind" level="TRACE"/>
+    <logger name="org.hibernate.stat" level="DEBUG"/>
 </configuration>

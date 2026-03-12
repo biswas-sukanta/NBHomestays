@@ -263,10 +263,22 @@ public class PostService {
         if (query == null || query.isBlank()) {
             return getAllPosts(null, pageable);
         }
-        Page<Post> postsPage = postRepository.findByLocationNameContainingIgnoreCase(query, pageable);
-        List<PostDto.Response> dtos = postsPage.getContent().stream()
-                .map(p -> mapToResponse(p, null))
+        // Use optimized projection query - single query for posts + batch load media
+        Page<Object[]> postsPage = postRepository.searchPostProjections(query, pageable);
+        
+        // Extract post IDs for batch queries
+        List<UUID> postIds = postsPage.getContent().stream()
+                .map(row -> (UUID) row[0])
                 .collect(Collectors.toList());
+        
+        // Batch load media (1 query)
+        Map<UUID, List<MediaDto>> mediaByPost = loadMediaByPostIds(postIds);
+        
+        // Map to DTOs
+        List<PostDto.Response> dtos = postsPage.getContent().stream()
+                .map(row -> mapProjectionToResponse(row, mediaByPost, null))
+                .collect(Collectors.toList());
+        
         return new PageImpl<>(dtos, pageable, postsPage.getTotalElements());
     }
 
@@ -275,10 +287,23 @@ public class PostService {
     public Page<PostDto.Response> getPostsByUser(String email, Pageable pageable) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Page<Post> postsPage = postRepository.findByUser(user, pageable);
-        List<PostDto.Response> dtos = postsPage.getContent().stream()
-                .map(p -> mapToResponse(p, null))
+        
+        // Use optimized projection query - single query for posts + batch load media
+        Page<Object[]> postsPage = postRepository.findPostProjectionsByUserId(user.getId(), pageable);
+        
+        // Extract post IDs for batch queries
+        List<UUID> postIds = postsPage.getContent().stream()
+                .map(row -> (UUID) row[0])
                 .collect(Collectors.toList());
+        
+        // Batch load media (1 query)
+        Map<UUID, List<MediaDto>> mediaByPost = loadMediaByPostIds(postIds);
+        
+        // Map to DTOs
+        List<PostDto.Response> dtos = postsPage.getContent().stream()
+                .map(row -> mapProjectionToResponse(row, mediaByPost, null))
+                .collect(Collectors.toList());
+        
         return new PageImpl<>(dtos, pageable, postsPage.getTotalElements());
     }
 

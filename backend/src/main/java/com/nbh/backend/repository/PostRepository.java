@@ -113,4 +113,66 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                 """,
                 nativeQuery = true)
         List<UUID> findLikedPostIds(@Param("userId") UUID userId, @Param("postIds") List<UUID> postIds);
+
+        /**
+         * Optimized projection query for posts search by location name.
+         */
+        @Query(value = """
+                SELECT p.id AS id,
+                       p.location_name AS locationName,
+                       p.text_content AS textContent,
+                       p.created_at AS createdAt,
+                       p.love_count AS loveCount,
+                       p.share_count AS shareCount,
+                       u.id AS authorId,
+                       u.first_name AS authorFirstName,
+                       u.last_name AS authorLastName,
+                       u.avatar_url AS authorAvatarUrl,
+                       u.role AS authorRole,
+                       u.is_verified_host AS authorVerifiedHost,
+                       h.id AS homestayId,
+                       h.name AS homestayName,
+                       p.original_post_id AS originalPostId,
+                       (SELECT COUNT(c.id) FROM comments c WHERE c.post_id = p.id) AS commentCount,
+                       (SELECT COALESCE(json_agg(pt.tag), '[]'::json) FROM post_tags pt WHERE pt.post_id = p.id) AS tags
+                FROM posts p
+                INNER JOIN users u ON p.user_id = u.id
+                LEFT JOIN homestays h ON p.homestay_id = h.id
+                WHERE p.is_deleted = false AND LOWER(p.location_name) LIKE LOWER(CONCAT('%', :query, '%'))
+                ORDER BY p.created_at DESC
+                """,
+                countQuery = "SELECT COUNT(*) FROM posts WHERE is_deleted = false AND LOWER(location_name) LIKE LOWER(CONCAT('%', :query, '%'))",
+                nativeQuery = true)
+        Page<Object[]> searchPostProjections(@Param("query") String query, Pageable pageable);
+
+        /**
+         * Optimized projection query for posts by user ID.
+         */
+        @Query(value = """
+                SELECT p.id AS id,
+                       p.location_name AS locationName,
+                       p.text_content AS textContent,
+                       p.created_at AS createdAt,
+                       p.love_count AS loveCount,
+                       p.share_count AS shareCount,
+                       u.id AS authorId,
+                       u.first_name AS authorFirstName,
+                       u.last_name AS authorLastName,
+                       u.avatar_url AS authorAvatarUrl,
+                       u.role AS authorRole,
+                       u.is_verified_host AS authorVerifiedHost,
+                       h.id AS homestayId,
+                       h.name AS homestayName,
+                       p.original_post_id AS originalPostId,
+                       (SELECT COUNT(c.id) FROM comments c WHERE c.post_id = p.id) AS commentCount,
+                       (SELECT COALESCE(json_agg(pt.tag), '[]'::json) FROM post_tags pt WHERE pt.post_id = p.id) AS tags
+                FROM posts p
+                INNER JOIN users u ON p.user_id = u.id
+                LEFT JOIN homestays h ON p.homestay_id = h.id
+                WHERE p.is_deleted = false AND p.user_id = :userId
+                ORDER BY p.created_at DESC
+                """,
+                countQuery = "SELECT COUNT(*) FROM posts WHERE is_deleted = false AND user_id = :userId",
+                nativeQuery = true)
+        Page<Object[]> findPostProjectionsByUserId(@Param("userId") UUID userId, Pageable pageable);
 }
