@@ -137,15 +137,15 @@ export default function CommunityPage() {
 
     if (isError) {
         return (
-            <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 text-center">
-                <div className="w-20 h-20 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center mb-6 shadow-2xl">
-                    <Loader2 className="w-8 h-8 text-zinc-500" />
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8 text-center">
+                <div className="w-20 h-20 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center mb-6 shadow-lg">
+                    <Loader2 className="w-8 h-8 text-neutral-400" />
                 </div>
-                <h2 className="text-3xl font-serif font-bold text-white mb-2 tracking-tight">Connection hiccup</h2>
-                <p className="text-zinc-500 mb-8 max-w-sm font-medium leading-relaxed">We couldn&apos;t reach the travelers&apos; network. Please check your connection and try again.</p>
+                <h2 className="text-3xl font-heading font-bold text-neutral-900 mb-2 tracking-tight">Connection hiccup</h2>
+                <p className="text-neutral-500 mb-8 max-w-sm font-medium leading-relaxed">We couldn&apos;t reach the travelers&apos; network. Please check your connection and try again.</p>
                 <Button
                     onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() })}
-                    className="bg-white text-black hover:bg-zinc-100 rounded-full px-10 py-6 font-bold shadow-xl transition-all active:scale-95"
+                    className="bg-neutral-900 text-white hover:bg-neutral-800 rounded-full px-10 py-6 font-bold shadow-lg transition-all active:scale-95"
                 >
                     Refresh Discovery
                 </Button>
@@ -299,11 +299,10 @@ export default function CommunityPage() {
                         </AnimatePresence>
 
                         {filteredPosts.length === 0 && !isFetchingNextPage && (
-                            <div className="text-center py-24 bg-zinc-900/50 rounded-3xl border border-dashed border-white/10 shadow-2xl text-zinc-500 overflow-hidden relative isolate">
-                                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent -z-10" />
+                            <div className="text-center py-24 bg-neutral-50 rounded-2xl border border-dashed border-neutral-200 text-neutral-500 overflow-hidden relative">
                                 <div className="text-6xl mb-6 opacity-30 animate-pulse">🍃</div>
-                                <p className="font-bold text-2xl text-white mb-2 font-serif">Deep silence here...</p>
-                                <p className="text-sm text-zinc-400 max-w-xs mx-auto">No stories found. Be the first to share a journey or try a different filter.</p>
+                                <p className="font-bold text-2xl text-neutral-900 mb-2 font-heading">Deep silence here...</p>
+                                <p className="text-sm text-neutral-500 max-w-xs mx-auto">No stories found. Be the first to share a journey or try a different filter.</p>
                             </div>
                         )}
 
@@ -321,7 +320,7 @@ export default function CommunityPage() {
                                 <Button
                                     onClick={() => fetchNextPage()}
                                     size="lg"
-                                    className="bg-zinc-900 text-white border border-white/10 hover:bg-zinc-800 hover:border-white/20 font-bold px-12 py-7 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95"
+                                    className="bg-neutral-900 text-white hover:bg-neutral-800 font-bold px-10 py-5 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
                                 >
                                     Load More Stories
                                 </Button>
@@ -330,8 +329,8 @@ export default function CommunityPage() {
 
                         {/* End of Feed Sentinel */}
                         {!hasNextPage && filteredPosts.length > 0 && !searchQuery && (
-                            <div className="py-16 border-t border-white/10 text-center opacity-50">
-                                <p className="text-zinc-500 text-[10px] font-black tracking-[0.2em] uppercase">
+                            <div className="py-16 border-t border-neutral-200 text-center">
+                                <p className="text-neutral-400 text-[10px] font-black tracking-[0.2em] uppercase">
                                     End of Discovery
                                 </p>
                             </div>

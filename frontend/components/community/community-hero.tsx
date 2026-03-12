@@ -10,7 +10,7 @@ interface CommunityHeroProps {
 
 export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
     return (
-        <section className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[70vh] min-h-[400px] sm:min-h-[500px] flex items-center justify-center overflow-hidden bg-zinc-950">
+        <section className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[70vh] min-h-[400px] sm:min-h-[500px] flex items-center justify-center overflow-hidden bg-neutral-100">
             {/* Background Image with Parallax & Ken Burns Effect */}
             <motion.div
                 className="absolute inset-0 z-0"
@@ -23,10 +23,10 @@ export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
                     repeatType: "reverse"
                 }}
             >
-                {/* Stronger gradient overlays */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 z-10 pointer-events-none" />
-                <div className="absolute inset-x-0 bottom-0 h-64 sm:h-80 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent z-10 pointer-events-none" />
-                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-zinc-950/50 to-transparent z-10 pointer-events-none" />
+                {/* Light gradient overlays for editorial feel */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50 z-10 pointer-events-none" />
+                <div className="absolute inset-x-0 bottom-0 h-64 sm:h-80 bg-gradient-to-t from-white via-white/60 to-transparent z-10 pointer-events-none" />
+                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/30 to-transparent z-10 pointer-events-none" />
                 
                 <Image
                     src="/_static/community/community_hero_desktop.webp"
@@ -66,7 +66,7 @@ export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.45 }}
-                        className="text-base sm:text-lg md:text-xl lg:text-2xl text-zinc-300 font-medium max-w-2xl mx-auto drop-shadow-md leading-relaxed"
+                        className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 font-medium max-w-2xl mx-auto drop-shadow-md leading-relaxed"
                     >
                         Real travelers. Stories from the road across the Eastern Himalayas.
                     </motion.p>
@@ -80,7 +80,7 @@ export function CommunityHero({ onOpenComposer }: CommunityHeroProps) {
                         <Button
                             onClick={onOpenComposer}
                             size="lg"
-                            className="bg-white text-black hover:bg-zinc-100 font-semibold px-6 py-5 sm:px-8 sm:py-6 lg:px-10 lg:py-7 text-sm sm:text-base rounded-full shadow-[0_0_48px_-12px_rgba(255,255,255,0.4)] transition-all hover:scale-105 active:scale-95"
+                            className="bg-neutral-900 text-white hover:bg-neutral-800 font-semibold px-6 py-5 sm:px-8 sm:py-6 lg:px-10 lg:py-7 text-sm sm:text-base rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
                         >
                             <Pencil className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                             Share your journey

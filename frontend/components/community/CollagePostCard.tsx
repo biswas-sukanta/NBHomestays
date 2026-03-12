@@ -3,10 +3,10 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, MessageCircle, Share2, Heart } from 'lucide-react';
-import Image from 'next/image';
 import { CommunityPost } from './types';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox').then(m => m.ImageLightbox), { ssr: false });
 
 function extractTitleAndExcerpt(text: string): { title: string; excerpt: string } {
@@ -39,7 +39,7 @@ export function CollagePostCard({ post, onOpenComments }: CollagePostCardProps) 
         if (imageCount === 1) {
             return (
                 <div className="relative w-full aspect-[4/5] max-h-[420px] overflow-hidden rounded-xl cursor-pointer" onClick={() => setLightboxIndex(0)}>
-                    <Image src={images[0].url} alt={post.location || 'Post image'} fill sizes="(min-width: 768px) 720px, 100vw" className="object-cover" loading="lazy" />
+                    <OptimizedImage src={images[0].url} alt={post.location || 'Post image'} width={900} className="w-full h-full" />
                 </div>
             );
         }
@@ -50,7 +50,7 @@ export function CollagePostCard({ post, onOpenComments }: CollagePostCardProps) 
                 <div className="grid grid-cols-2 gap-2 max-h-[300px]">
                     {images.slice(0, 2).map((img, idx) => (
                         <div key={idx} className="relative aspect-square overflow-hidden rounded-xl cursor-pointer" onClick={() => setLightboxIndex(idx)}>
-                            <Image src={img.url} alt={`${post.location} - ${idx + 1}`} fill sizes="50vw" className="object-cover" loading="lazy" />
+                            <OptimizedImage src={img.url} alt={`${post.location} - ${idx + 1}`} width={450} className="w-full h-full" />
                         </div>
                     ))}
                 </div>
@@ -62,13 +62,13 @@ export function CollagePostCard({ post, onOpenComments }: CollagePostCardProps) 
             return (
                 <div className="grid grid-cols-2 gap-2 max-h-[420px]">
                     <div className="relative row-span-2 aspect-[4/5] overflow-hidden rounded-xl cursor-pointer" onClick={() => setLightboxIndex(0)}>
-                        <Image src={images[0].url} alt={`${post.location} - 1`} fill sizes="50vw" className="object-cover" loading="lazy" />
+                        <OptimizedImage src={images[0].url} alt={`${post.location} - 1`} width={450} className="w-full h-full" />
                     </div>
                     <div className="relative aspect-square overflow-hidden rounded-xl cursor-pointer" onClick={() => setLightboxIndex(1)}>
-                        <Image src={images[1].url} alt={`${post.location} - 2`} fill sizes="50vw" className="object-cover" loading="lazy" />
+                        <OptimizedImage src={images[1].url} alt={`${post.location} - 2`} width={450} className="w-full h-full" />
                     </div>
                     <div className="relative aspect-square overflow-hidden rounded-xl cursor-pointer" onClick={() => setLightboxIndex(2)}>
-                        <Image src={images[2].url} alt={`${post.location} - 3`} fill sizes="50vw" className="object-cover" loading="lazy" />
+                        <OptimizedImage src={images[2].url} alt={`${post.location} - 3`} width={450} className="w-full h-full" />
                     </div>
                 </div>
             );
@@ -79,7 +79,7 @@ export function CollagePostCard({ post, onOpenComments }: CollagePostCardProps) 
             <div className="grid grid-cols-2 grid-rows-2 gap-2 max-h-[420px]">
                 {images.slice(0, 4).map((img, idx) => (
                     <div key={idx} className="relative aspect-square overflow-hidden rounded-xl cursor-pointer" onClick={() => setLightboxIndex(idx)}>
-                        <Image src={img.url} alt={`${post.location} - ${idx + 1}`} fill sizes="50vw" className="object-cover" loading="lazy" />
+                        <OptimizedImage src={img.url} alt={`${post.location} - ${idx + 1}`} width={450} className="w-full h-full" />
                         {idx === 3 && imageCount > 4 && (
                             <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
                                 <span className="text-white font-bold text-xl">+{imageCount - 4}</span>
