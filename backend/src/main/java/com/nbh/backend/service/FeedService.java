@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -661,7 +662,8 @@ public class FeedService {
 
         UUID postId = (UUID) row[0];
         String textContent = (String) row[1];
-        LocalDateTime createdAt = (LocalDateTime) row[2];
+        Timestamp createdAtTs = (Timestamp) row[2];
+        LocalDateTime createdAt = createdAtTs != null ? createdAtTs.toLocalDateTime() : null;
         
         UUID authorId = (UUID) row[3];
         String authorName = (String) row[4];
