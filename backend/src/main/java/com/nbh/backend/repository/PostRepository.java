@@ -63,7 +63,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
          * Optimized projection query for posts by tag - single query.
          */
         @Query(value = """
-                SELECT DISTINCT p.id AS id,
+                SELECT p.id AS id,
                        p.location_name AS locationName,
                        p.text_content AS textContent,
                        p.created_at AS createdAt,
@@ -78,14 +78,17 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                        h.id AS homestayId,
                        h.name AS homestayName,
                        p.original_post_id AS originalPostId,
-                       (SELECT COUNT(c.id) FROM comments c WHERE c.post_id = p.id) AS commentCount,
-                       (SELECT COALESCE(json_agg(pt.tag), '[]'::json) FROM post_tags pt WHERE pt.post_id = p.id) AS tags
+                       COUNT(DISTINCT c.id) AS commentCount,
+                       COALESCE(json_agg(DISTINCT pt.tag) FILTER (WHERE pt.tag IS NOT NULL), '[]'::json) AS tags
                 FROM posts p
                 INNER JOIN users u ON p.user_id = u.id
                 LEFT JOIN homestays h ON p.homestay_id = h.id
+                LEFT JOIN comments c ON p.id = c.post_id
+                LEFT JOIN post_tags pt ON p.id = pt.post_id
                 INNER JOIN post_tags pt_filter ON p.id = pt_filter.post_id AND pt_filter.tag = :tag
                 WHERE p.is_deleted = false
-                ORDER BY p.created_at DESC
+                GROUP BY p.id, u.id, h.id
+                LIMIT :limit
                 """,
                 countQuery = "SELECT COUNT(DISTINCT p.id) FROM posts p INNER JOIN post_tags pt ON p.id = pt.post_id WHERE pt.tag = :tag AND p.is_deleted = false",
                 nativeQuery = true)
