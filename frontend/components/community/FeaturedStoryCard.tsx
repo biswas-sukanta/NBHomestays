@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, MessageCircle, Share2, Heart } from 'lucide-react';
@@ -21,68 +21,76 @@ export function FeaturedStoryCard({ post }: { post: CommunityPost }) {
     const { title, excerpt } = useMemo(() => extractTitleAndExcerpt(post.caption), [post.caption]);
     const hasImage = !!post.imageUrl || (post.images && post.images.length > 0);
     const mainImage = post.imageUrl || post.images?.[0]?.url;
+    const [expanded, setExpanded] = useState(false);
+    const hasLongContent = (post.caption?.length || 0) > 200;
 
     return (
         <Link href={`/community#post-${post.id}`} className="block">
             <article className={cn(
-                'relative overflow-hidden rounded-3xl ring-1 ring-white/10 bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)]',
-                'transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_48px_rgba(0,0,0,0.16)]'
+                'relative overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]',
+                'transition-transform duration-180 hover:-translate-y-[2px]'
             )}>
-                <div className="relative aspect-[16/9] overflow-hidden group">
+                {/* Hero Image with Overlay */}
+                <div className="relative aspect-[16/9] max-h-[460px] overflow-hidden group">
                     {hasImage && mainImage ? (
                         <Image
                             src={mainImage}
-                            alt={post.location}
+                            alt={post.location || 'Featured story'}
                             fill
-                            sizes="(min-width: 1024px) 900px, 100vw"
+                            sizes="(min-width: 1024px) 720px, 100vw"
                             className="object-cover transition-transform duration-700 group-hover:scale-105"
-                            priority
+                            loading="lazy"
                         />
                     ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/30 to-zinc-900 border border-white/10 flex items-center justify-center p-10">
-                            <p className="text-zinc-300 font-serif italic text-center text-xl">&quot;{title}&quot;</p>
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 to-neutral-100 flex items-center justify-center p-10">
+                            <p className="text-neutral-600 font-heading italic text-center text-xl">&quot;{title}&quot;</p>
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none" />
-                </div>
+                    {/* Gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent pointer-events-none" />
+                    
+                    {/* Text overlay at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest mb-3">
+                            <span className="px-3 py-1 rounded-full bg-emerald-500/90 text-white">Featured Story</span>
+                            {post.location && (
+                                <span className="inline-flex items-center gap-1.5 text-white/80">
+                                    <MapPin className="w-3.5 h-3.5" />
+                                    <span className="truncate max-w-[60ch]">{post.location}</span>
+                                </span>
+                            )}
+                        </div>
 
-                <div className="p-6 sm:p-8">
-                    <div className="flex items-center gap-2 text-white/90 text-xs font-semibold uppercase tracking-widest mb-3">
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30">Featured Story</span>
-                        {post.location && (
-                            <span className="inline-flex items-center gap-1.5 text-zinc-400">
-                                <MapPin className="w-3.5 h-3.5" />
-                                <span className="truncate max-w-[60ch]">{post.location}</span>
-                            </span>
+                        <h3 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight leading-tight mb-2 line-clamp-2">
+                            {title || 'Untitled story'}
+                        </h3>
+
+                        {excerpt && (
+                            <p className="text-sm text-white/80 leading-relaxed line-clamp-2">
+                                {excerpt}
+                            </p>
                         )}
                     </div>
+                </div>
 
-                    <h3 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-white leading-tight mb-3 line-clamp-2">
-                        {title || 'Untitled story'}
-                    </h3>
-
-                    {excerpt && (
-                        <p className="text-sm sm:text-base text-zinc-400 leading-relaxed mb-5 line-clamp-2">
-                            {excerpt}
-                        </p>
-                    )}
-
+                {/* Meta Row below image */}
+                <div className="p-4 bg-white">
                     <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full bg-zinc-800 ring-1 ring-white/10 overflow-hidden shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 overflow-hidden shrink-0">
                             {post.authorAvatar ? (
-                                <img src={post.authorAvatar} alt={post.authorName} className="w-full h-full object-cover rounded-full" />
+                                <img src={post.authorAvatar} alt={post.authorName} className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-white font-bold text-xs">
                                     {(post.authorName || 'NB').slice(0, 2).toUpperCase()}
                                 </div>
                             )}
                         </div>
-                        <div className="min-w-0">
-                            <p className="text-sm font-bold text-white truncate">{post.authorName || 'Explorer'}</p>
-                            <div className="flex items-center gap-4 text-xs text-zinc-400 font-semibold mt-1">
-                                <span className="inline-flex items-center gap-1.5"><Heart className="w-4 h-4" /> {post.likes || 0}</span>
-                                <span className="inline-flex items-center gap-1.5"><MessageCircle className="w-4 h-4" /> {post.comments || 0}</span>
-                                <span className="inline-flex items-center gap-1.5"><Share2 className="w-4 h-4" /> {post.shareCount || 0}</span>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-neutral-900 truncate">{post.authorName || 'Explorer'}</p>
+                            <div className="flex items-center gap-4 text-xs text-neutral-500 font-semibold mt-1">
+                                <span className="inline-flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> {post.likes || 0}</span>
+                                <span className="inline-flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {post.comments || 0}</span>
+                                <span className="inline-flex items-center gap-1"><Share2 className="w-3.5 h-3.5" /> {post.shareCount || 0}</span>
                             </div>
                         </div>
                     </div>

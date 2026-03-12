@@ -30,6 +30,7 @@ import { CommunitySidebar } from '@/components/community/sidebar';
 import { CommunityPageSkeleton } from '@/components/community/Skeletons';
 import { LoginPromptModal } from '@/components/community/LoginPromptModal';
 import { FeaturedStoryCard } from '@/components/community/FeaturedStoryCard';
+import { CollagePostCard } from '@/components/community/CollagePostCard';
 import { PhotoStoryCard } from '@/components/community/PhotoStoryCard';
 import { normalizePost, NormalizedPost } from '@/lib/adapters/normalizePost';
 import { useHomestaysLookup } from '@/hooks/useHomestaysLookup';
@@ -244,9 +245,9 @@ export default function CommunityPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-10 items-start">
 
                     {/* Left: Main Feed */}
-                    <div className="w-full space-y-8">
+                    <div className="w-full max-w-[720px] mx-auto px-6 space-y-7">
                         {/* ── Sticky Filter Bar ── */}
-                        <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-white/95 backdrop-blur-md border-b border-neutral-200">
+                        <div className="sticky top-16 z-30 -mx-6 px-6 py-3 bg-white/95 backdrop-blur-md border-b border-neutral-200">
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
                                 <button className="px-4 py-2 rounded-full bg-neutral-900 text-white text-sm font-bold transition-all hover:scale-105">
                                     Latest
@@ -292,22 +293,19 @@ export default function CommunityPage() {
                             />
                         </div>
 
-                        {/* ── Feed Mapping ── */}
+                        {/* ── Feed Mapping with Editorial Composition ── */}
                         <AnimatePresence mode="popLayout">
                             {filteredPosts.map((post, idx) => {
                                 const imageCount = post.images?.length || (post.imageUrl ? 1 : 0);
-                                const isFeatured = idx > 0 && (idx + 1) % 5 === 0;
-
-                                const isPhotoStorySlot = idx > 0 && (idx + 1) % 6 === 0;
-                                const canBePhotoStory = imageCount > 1;
-                                const showPhotoStory = isPhotoStorySlot && canBePhotoStory;
+                                const isFeatured = (idx + 1) % 5 === 0;
+                                const isCollage = (idx + 1) % 3 === 0 && imageCount > 1;
 
                                 return (
                                     <React.Fragment key={post.id}>
-                                        {showPhotoStory ? (
-                                            <PhotoStoryCard post={post} />
-                                        ) : isFeatured ? (
+                                        {isFeatured ? (
                                             <FeaturedStoryCard post={post} />
+                                        ) : isCollage ? (
+                                            <CollagePostCard post={post} onOpenComments={(postId) => setActiveCommentPostId(postId)} />
                                         ) : (
                                             <PostCard
                                                 post={post}

@@ -243,8 +243,8 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
     const hasLongContent = (post.caption?.length || 0) > 200;
 
     const articleClassName = cn(
-        'relative bg-white overflow-hidden transition-all duration-300 isolate',
-        isQuoted ? "mt-3 rounded-xl ring-1 ring-neutral-200" : "rounded-xl shadow-sm hover:shadow-md border border-neutral-200",
+        'relative bg-white overflow-hidden transition-transform duration-180 isolate',
+        isQuoted ? "mt-3 rounded-2xl ring-1 ring-neutral-200" : "rounded-2xl border border-neutral-200 shadow-[0_1px_2px_rgba(0,0,0,0.04)]",
         !isQuoted && 'hover:-translate-y-[2px]'
     );
 
@@ -267,41 +267,41 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 {/* Image Block */}
                 {hasImage && (
                     <div className="relative z-10 w-full overflow-hidden">
-                        <div className="relative w-full aspect-[4/5] max-h-[360px] sm:max-h-[420px] lg:max-h-[520px] overflow-hidden bg-neutral-100">
+                        <div className="relative w-full aspect-[4/5] max-h-[420px] overflow-hidden bg-neutral-100 rounded-xl">
                             {imageCount === 1 && (
-                                <div className="relative w-full h-full cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(0)}>
-                                    <Image src={post.imageUrl || post.images?.[0]?.url || ''} alt={post.location || 'Post image'} fill sizes="(min-width: 768px) 600px, 100vw" className="object-cover" />
+                                <div className="relative w-full h-full cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(0)}>
+                                    <Image src={post.imageUrl || post.images?.[0]?.url || ''} alt={post.location || 'Post image'} fill sizes="(min-width: 768px) 720px, 100vw" className="object-cover" loading="lazy" />
                                 </div>
                             )}
                             {imageCount === 2 && (
-                                <div className="grid grid-cols-2 w-full h-full">
+                                <div className="grid grid-cols-2 gap-2 w-full h-full">
                                     {post.images?.map((img, idx) => (
-                                        <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(idx)}>
-                                            <Image src={img.url} alt={`${post.location} - ${idx + 1}`} fill sizes="50vw" className="object-cover" />
+                                        <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(idx)}>
+                                            <Image src={img.url} alt={`${post.location} - ${idx + 1}`} fill sizes="50vw" className="object-cover" loading="lazy" />
                                         </div>
                                     ))}
                                 </div>
                             )}
                             {imageCount === 3 && (
-                                <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
-                                    <div className="col-span-2 row-span-1 cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(0)}>
-                                        <Image src={post.images?.[0]?.url} alt={`${post.location} - 1`} fill sizes="100vw" className="object-cover" />
+                                <div className="grid grid-cols-2 grid-rows-2 gap-2 w-full h-full">
+                                    <div className="col-span-2 row-span-1 cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(0)}>
+                                        <Image src={post.images?.[0]?.url} alt={`${post.location} - 1`} fill sizes="100vw" className="object-cover" loading="lazy" />
                                     </div>
-                                    <div className="cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(1)}>
-                                        <Image src={post.images?.[1]?.url} alt={`${post.location} - 2`} fill sizes="50vw" className="object-cover" />
+                                    <div className="cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(1)}>
+                                        <Image src={post.images?.[1]?.url} alt={`${post.location} - 2`} fill sizes="50vw" className="object-cover" loading="lazy" />
                                     </div>
-                                    <div className="cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(2)}>
-                                        <Image src={post.images?.[2]?.url} alt={`${post.location} - 3`} fill sizes="50vw" className="object-cover" />
+                                    <div className="cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(2)}>
+                                        <Image src={post.images?.[2]?.url} alt={`${post.location} - 3`} fill sizes="50vw" className="object-cover" loading="lazy" />
                                     </div>
                                 </div>
                             )}
                             {imageCount >= 4 && (
-                                <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
+                                <div className="grid grid-cols-2 grid-rows-2 gap-2 w-full h-full">
                                     {post.images?.slice(0, 4).map((img, idx) => (
-                                        <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(idx)}>
-                                            <Image src={img.url} alt={`${post.location} - ${idx + 1}`} fill sizes="50vw" className="object-cover" />
+                                        <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(idx)}>
+                                            <Image src={img.url} alt={`${post.location} - ${idx + 1}`} fill sizes="50vw" className="object-cover" loading="lazy" />
                                             {idx === 3 && imageCount > 4 && (
-                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
                                                     <span className="text-white font-bold text-xl">+{imageCount - 4}</span>
                                                 </div>
                                             )}
