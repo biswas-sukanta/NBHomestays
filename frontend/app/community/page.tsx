@@ -196,11 +196,6 @@ export default function CommunityPage() {
     const posts = data?.pages?.flatMap(page => page.posts || []) || [];
     const blocks = data?.pages?.flatMap(page => page.blocks || []) || [];
 
-    // Debug: trace feed data flow
-    console.log("Feed response pages:", data?.pages);
-    console.log("Extracted posts:", posts.length, posts.slice(0, 2));
-    console.log("Blocks:", blocks.length, blocks.slice(0, 2));
-
     const normalizedPosts = posts.map(normalizePost);
     // Use postId as key for lookup (matches layoutItems.postId from resolveFeedLayout)
     const postById = new Map(normalizedPosts.map(p => [p.id, p]));
@@ -213,12 +208,13 @@ export default function CommunityPage() {
     );
 
     const layoutItems = !searchQuery ? resolveFeedLayout(posts as any, blocks) : [];
-    console.log("Layout items:", layoutItems.length, layoutItems.slice(0, 2));
     
     const layoutPosts = layoutItems
         .map(item => postById.get(item.postId))
         .filter(Boolean) as NormalizedPost[];
-    console.log("Layout posts:", layoutPosts.length, layoutPosts.slice(0, 2));
+    
+    // Posts currently being displayed (depends on search mode)
+    const displayPosts = searchQuery ? filteredPosts : layoutPosts;
 
     return (
         <div className="min-h-screen bg-white text-neutral-900 selection:bg-green-500/30">
@@ -314,7 +310,7 @@ export default function CommunityPage() {
                             })}
                         </AnimatePresence>
 
-                        {filteredPosts.length === 0 && !isFetchingNextPage && (
+                        {displayPosts.length === 0 && !isFetchingNextPage && !isPending && (
                             <div className="text-center py-24 bg-neutral-50 rounded-2xl border border-dashed border-neutral-200 text-neutral-500 overflow-hidden relative">
                                 <div className="text-6xl mb-6 opacity-30 animate-pulse">🍃</div>
                                 <p className="font-bold text-2xl text-neutral-900 mb-2 font-heading">Deep silence here...</p>
@@ -344,7 +340,7 @@ export default function CommunityPage() {
                         )}
 
                         {/* End of Feed Sentinel */}
-                        {!hasNextPage && filteredPosts.length > 0 && !searchQuery && (
+                        {!hasNextPage && layoutPosts.length > 0 && !searchQuery && (
                             <div className="py-16 border-t border-neutral-200 text-center">
                                 <p className="text-neutral-400 text-[10px] font-black tracking-[0.2em] uppercase">
                                     End of Discovery
