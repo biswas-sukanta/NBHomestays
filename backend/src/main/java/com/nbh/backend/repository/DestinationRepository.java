@@ -38,6 +38,7 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
     /**
      * Optimized projection query for destination cards with homestay count.
      * Single query avoids N+1 lazy loading issues.
+     * Uses subquery for tags to avoid implicit join creating duplicate rows.
      */
     @Query("""
             SELECT d.id AS id,
@@ -47,7 +48,7 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
                    (SELECT COUNT(h) FROM Homestay h WHERE h.destination = d AND h.isDeleted = false) AS homestayCount,
                    s.name AS stateName,
                    s.slug AS stateSlug,
-                   d.tags AS tags
+                   (SELECT dt.tag FROM DestinationTag dt WHERE dt.destination.id = d.id) AS tags
             FROM Destination d
             LEFT JOIN d.state s
             ORDER BY homestayCount DESC
@@ -57,6 +58,7 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
     /**
      * Optimized projection query for destination cards by state slug.
      * Single query avoids N+1 lazy loading issues.
+     * Uses subquery for tags to avoid implicit join creating duplicate rows.
      */
     @Query("""
             SELECT d.id AS id,
@@ -66,7 +68,7 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
                    (SELECT COUNT(h) FROM Homestay h WHERE h.destination = d AND h.isDeleted = false) AS homestayCount,
                    s.name AS stateName,
                    s.slug AS stateSlug,
-                   d.tags AS tags
+                   (SELECT dt.tag FROM DestinationTag dt WHERE dt.destination.id = d.id) AS tags
             FROM Destination d
             LEFT JOIN d.state s
             WHERE s.slug = :stateSlug
