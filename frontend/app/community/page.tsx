@@ -239,11 +239,12 @@ export default function CommunityPage() {
                 <TrendingStories stories={trendingPosts} />
             )}
 
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+            <div className="border-t border-white/5">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-10 items-start">
 
                     {/* Left: Main Feed */}
-                    <div className="w-full space-y-6">
+                    <div className="w-full space-y-8">
                         {/* ── Sticky Filter Bar ── */}
                         <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-zinc-950/95 backdrop-blur-md border-b border-white/5">
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
@@ -295,12 +296,15 @@ export default function CommunityPage() {
                         <AnimatePresence mode="popLayout">
                             {filteredPosts.map((post, idx) => {
                                 const imageCount = post.images?.length || (post.imageUrl ? 1 : 0);
-                                const isPhotoStory = imageCount > 2;
                                 const isFeatured = idx > 0 && (idx + 1) % 5 === 0;
-                                
+
+                                const isPhotoStorySlot = idx > 0 && (idx + 1) % 6 === 0;
+                                const canBePhotoStory = imageCount > 1;
+                                const showPhotoStory = isPhotoStorySlot && canBePhotoStory;
+
                                 return (
                                     <React.Fragment key={post.id}>
-                                        {isPhotoStory ? (
+                                        {showPhotoStory ? (
                                             <PhotoStoryCard post={post} />
                                         ) : isFeatured ? (
                                             <FeaturedStoryCard post={post} />
@@ -363,6 +367,7 @@ export default function CommunityPage() {
                     <div className="relative">
                         <CommunitySidebar posts={normalizedPosts} />
                     </div>
+                </div>
                 </div>
             </div>
 

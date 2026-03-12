@@ -241,8 +241,8 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
     const articleClassName = cn(
         'relative bg-zinc-950 overflow-hidden transition-all duration-300 isolate',
-        isQuoted ? "mt-3 rounded-2xl ring-1 ring-white/10" : "rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.16)] ring-1 ring-white/5",
-        !isQuoted && 'hover:-translate-y-1'
+        isQuoted ? "mt-3 rounded-[20px] ring-1 ring-white/10" : "rounded-[20px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.16)] ring-1 ring-white/10",
+        !isQuoted && 'hover:-translate-y-[2px]'
     );
 
     const hasImage = !!post.imageUrl || (post.images && post.images.length > 0);
@@ -264,8 +264,9 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 {/* Image Block - Always First */}
                 {hasImage && (
                     <div className="relative z-10 w-full overflow-hidden group">
+                        <div className="relative w-full aspect-[4/5] max-h-[340px] sm:max-h-[420px] lg:max-h-[520px] overflow-hidden">
                         {isMultiImage && post.images && post.images.length === 2 ? (
-                            <div className="grid grid-cols-2 gap-1 aspect-[4/5]">
+                            <div className="grid grid-cols-2 gap-[2px] w-full h-full">
                                 {post.images.map((img, idx) => (
                                     <div
                                         key={idx}
@@ -283,7 +284,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                                 ))}
                             </div>
                         ) : isMultiImage && post.images && post.images.length >= 3 ? (
-                            <div className="grid grid-cols-2 grid-rows-2 gap-1 aspect-[4/5]">
+                            <div className="grid grid-cols-2 grid-rows-2 gap-[2px] w-full h-full">
                                 <div
                                     className="relative col-span-2 row-span-1 cursor-pointer overflow-hidden"
                                     onClick={() => setLightboxIndex(0)}
@@ -319,7 +320,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                             </div>
                         ) : (
                             <div
-                                className="relative aspect-[4/5] cursor-pointer overflow-hidden"
+                                className="relative w-full h-full cursor-pointer overflow-hidden"
                                 onClick={() => setLightboxIndex(0)}
                             >
                                 <Image
@@ -331,11 +332,12 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                                 />
                             </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                        </div>
                     </div>
                 )}
                 {/* Content Block */}
-                <div className="relative z-20 px-5 sm:px-6 pb-5 pt-5 bg-zinc-950">
+                <div className="relative z-20 p-4 lg:p-5 bg-zinc-950">
                     {/* Tags Row */}
                     <div className="flex flex-wrap gap-2 mb-3">
                         <span className="inline-flex items-center bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1">
@@ -355,7 +357,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
                     {/* Excerpt */}
                     {(excerpt || post.caption.length > 100) && (
-                        <p className="text-sm sm:text-base text-zinc-400 leading-relaxed mb-4 line-clamp-2">
+                        <p className="text-sm sm:text-base text-zinc-400 leading-relaxed mb-4 line-clamp-3">
                             {excerpt || post.caption.slice(100)}
                         </p>
                     )}
@@ -398,7 +400,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
                 {/* Quoted Repost */}
                 {post.originalPost && (
-                    <div className="px-5 sm:px-6 pb-4 bg-zinc-950">
+                    <div className="px-4 lg:px-5 pb-4 bg-zinc-950">
                         <div className="rounded-xl border border-white/20 bg-black/40 backdrop-blur-md overflow-hidden">
                             <PostCard post={post.originalPost} isQuoted={true} currentUser={currentUser} />
                         </div>
