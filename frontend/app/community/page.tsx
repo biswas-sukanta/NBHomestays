@@ -289,7 +289,7 @@ export default function CommunityPage() {
 
                         {/* ── Feed Mapping with Editorial Pattern ── */}
                         <AnimatePresence mode="popLayout">
-                            {(searchQuery ? filteredPosts : layoutPosts).map((post, idx) => {
+                            {displayPosts.map((post, idx) => {
                                 const imageCount = post.images?.length || (post.imageUrl ? 1 : 0);
                                 const variant = searchQuery
                                     ? getFeedVariant(idx, imageCount)
@@ -340,7 +340,7 @@ export default function CommunityPage() {
                         )}
 
                         {/* End of Feed Sentinel */}
-                        {!hasNextPage && layoutPosts.length > 0 && !searchQuery && (
+                        {!hasNextPage && displayPosts.length > 0 && (
                             <div className="py-16 border-t border-neutral-200 text-center">
                                 <p className="text-neutral-400 text-[10px] font-black tracking-[0.2em] uppercase">
                                     End of Discovery
