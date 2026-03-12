@@ -240,7 +240,7 @@ export default function CommunityPage() {
                         {/* ── Sticky Filter Bar ── */}
                         <div className="sticky top-16 z-30 -mx-6 px-6 py-3 bg-white/95 backdrop-blur-md border-b border-neutral-200">
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                                <button className="px-4 py-2 rounded-full bg-neutral-900 text-white text-sm font-bold transition-all hover:scale-105">
+                                <button className="px-4 py-2 rounded-full bg-black text-white text-sm font-semibold transition-all">
                                     Latest
                                 </button>
                                 <button className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-600 text-sm font-semibold hover:bg-neutral-200 transition-all">

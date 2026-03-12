@@ -160,8 +160,8 @@ export function PostInteractionBar({
 
     const isOverlay = variant === 'overlay';
     const baseClasses = cn(
-        'flex items-center justify-around',
-        isOverlay ? 'text-white' : 'text-neutral-600',
+        'flex items-center gap-6 py-3',
+        isOverlay ? 'text-white' : 'text-neutral-500',
         className
     );
 
@@ -171,53 +171,53 @@ export function PostInteractionBar({
                 onClick={handleLike}
                 disabled={mutation.isPending}
                 className={cn(
-                    'flex items-center gap-2 font-semibold transition-all duration-200',
-                    isOverlay ? 'text-white/90 hover:text-white' : 'text-neutral-600 hover:text-red-500',
+                    'flex items-center gap-1.5 font-medium transition-all duration-200',
+                    isOverlay ? 'text-white/80 hover:text-white' : 'text-neutral-500 hover:text-red-500',
                     mutation.isPending && 'opacity-50 cursor-not-allowed'
                 )}
             >
                 <Heart 
                     className={cn(
-                        'w-5 h-5 transition-all duration-200',
+                        'w-[18px] h-[18px] transition-all duration-200',
                         popping && 'scale-125 bounce-pop',
                         isLiked ? 'fill-current' : '',
                         isOverlay && isLiked ? 'text-white' : isLiked ? 'text-red-500' : ''
                     )} 
                 />
-                <span className="text-sm">{likes}</span>
+                <span className="text-xs">{likes}</span>
             </button>
 
             <button
                 onClick={onOpenComments}
                 className={cn(
-                    'flex items-center gap-2 font-semibold transition-all duration-200',
-                    isOverlay ? 'text-white/90 hover:text-white' : 'text-neutral-600 hover:text-emerald-500'
+                    'flex items-center gap-1.5 font-medium transition-all duration-200',
+                    isOverlay ? 'text-white/80 hover:text-white' : 'text-neutral-500 hover:text-emerald-500'
                 )}
             >
-                <MessageCircle className="w-5 h-5" />
-                <span className="text-sm">{comments}</span>
+                <MessageCircle className="w-[18px] h-[18px]" />
+                <span className="text-xs">{comments}</span>
             </button>
 
             <button
                 onClick={onRepost}
                 className={cn(
-                    'flex items-center gap-2 font-semibold transition-all duration-200',
-                    isOverlay ? 'text-white/90 hover:text-white' : 'text-neutral-600 hover:text-blue-500'
+                    'flex items-center gap-1.5 font-medium transition-all duration-200',
+                    isOverlay ? 'text-white/80 hover:text-white' : 'text-neutral-500 hover:text-blue-500'
                 )}
             >
-                <Repeat2 className="w-5 h-5" />
-                <span className="text-sm">Repost</span>
+                <Repeat2 className="w-[18px] h-[18px]" />
+                <span className="text-xs">Repost</span>
             </button>
 
             <button
                 onClick={handleShare}
                 className={cn(
-                    'flex items-center gap-2 font-semibold transition-all duration-200',
-                    isOverlay ? 'text-white/90 hover:text-white' : 'text-neutral-600 hover:text-purple-500'
+                    'flex items-center gap-1.5 font-medium transition-all duration-200',
+                    isOverlay ? 'text-white/80 hover:text-white' : 'text-neutral-500 hover:text-purple-500'
                 )}
             >
-                <Share2 className="w-5 h-5" />
-                <span className="text-sm">{shareCount}</span>
+                <Share2 className="w-[18px] h-[18px]" />
+                <span className="text-xs">{shareCount}</span>
             </button>
         </div>
     );

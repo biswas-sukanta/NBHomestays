@@ -7,8 +7,9 @@ import type { FeedBlock, PostFeedItem, BlockType } from '@/lib/api/feed';
 
 /**
  * Extracts title and excerpt from post text content.
- * Title: First 8-12 words (or 30% of content)
- * Excerpt: Remaining text, truncated to 200 chars
+ * Title: First sentence (up to first period, exclamation, or question mark)
+ * Excerpt: Remaining text only, truncated to 200 chars
+ * No duplication between title and excerpt.
  */
 export function extractTitleAndExcerpt(text: string): { title: string; excerpt: string } {
     if (!text) return { title: '', excerpt: '' };
@@ -16,12 +17,21 @@ export function extractTitleAndExcerpt(text: string): { title: string; excerpt: 
     // Remove leading emojis and hashtags
     let cleaned = text.replace(/^[\s#\u{1F300}-\u{1F9FF}]+/iu, '').trim();
     
-    // Get first 8-12 words for title
+    // Find first sentence end (period, exclamation, question mark followed by space or end)
+    const sentenceEndMatch = cleaned.match(/^[^.!?]+[.!?](?:\s|$)/);
+    
+    if (sentenceEndMatch) {
+        // First sentence is title
+        const title = sentenceEndMatch[0].trim();
+        // Rest is excerpt (no duplication)
+        const excerpt = cleaned.slice(title.length).trim();
+        return { title, excerpt: excerpt.slice(0, 200) };
+    }
+    
+    // No sentence end found - use first 8-12 words as title
     const words = cleaned.split(/\s+/);
     const titleWordCount = Math.min(12, Math.max(8, Math.ceil(words.length * 0.3)));
     const title = words.slice(0, titleWordCount).join(' ');
-    
-    // Rest becomes excerpt
     const excerpt = words.slice(titleWordCount).join(' ').trim();
     
     return { title, excerpt: excerpt.slice(0, 200) };
@@ -50,6 +60,7 @@ export function truncateText(text: string, maxLength: number = 280): string {
 /**
  * Editorial feed layout pattern.
  * Applied cyclically to create visual rhythm.
+ * Only 3 variants: featured, standard, collage
  */
 export const FEED_PATTERN = [
     'featured',
@@ -57,11 +68,10 @@ export const FEED_PATTERN = [
     'standard',
     'collage',
     'standard',
-    'photo',
     'standard',
 ] as const;
 
-export type FeedLayoutVariant = typeof FEED_PATTERN[number];
+export type FeedLayoutVariant = 'featured' | 'standard' | 'collage';
 
 /**
  * Gets the layout variant for a given index in the feed.
@@ -80,19 +90,17 @@ export function getFeedVariant(index: number, imageCount: number = 0): FeedLayou
 
 /**
  * Maps BlockType from backend to frontend FeedLayoutVariant.
+ * Only 3 variants used: featured, standard, collage
  */
 export function blockTypeToVariant(blockType: BlockType): FeedLayoutVariant {
     switch (blockType) {
         case 'FEATURED':
+        case 'HERO':
             return 'featured';
         case 'COLLAGE':
             return 'collage';
         case 'PHOTO':
-            return 'photo';
-        case 'HERO':
-            return 'featured'; // HERO renders like featured
         case 'PLACEHOLDER':
-            return 'standard';
         case 'STANDARD':
         default:
             return 'standard';
@@ -168,7 +176,6 @@ export function canUseVariant(post: { images?: { url: string }[]; imageUrl?: str
     switch (variant) {
         case 'collage':
             return imageCount > 1; // Requires multiple images
-        case 'photo':
         case 'featured':
         case 'standard':
         default:
@@ -177,17 +184,15 @@ export function canUseVariant(post: { images?: { url: string }[]; imageUrl?: str
 }
 
 /**
- * Gets the appropriate aspect ratio class based on variant and image count.
+ * Gets the appropriate aspect ratio class based on variant.
+ * FIXED aspect ratios - no dynamic modification.
+ * FEATURED → 16:9, STANDARD → 4:5, COLLAGE → 4:5 container
  */
 export function getAspectClass(variant: FeedLayoutVariant, imageCount: number): string {
     switch (variant) {
         case 'featured':
             return 'aspect-[16/9] max-h-[460px]';
-        case 'photo':
-            return 'aspect-[4/5]';
         case 'collage':
-            if (imageCount === 1) return 'aspect-[4/5] max-h-[420px]';
-            if (imageCount === 2) return 'aspect-square max-h-[300px]';
             return 'aspect-[4/5] max-h-[420px]';
         case 'standard':
         default:
@@ -197,14 +202,15 @@ export function getAspectClass(variant: FeedLayoutVariant, imageCount: number): 
 
 /**
  * Gets aspect ratio class from render hints (backend-driven) or fallback.
+ * FIXED aspect ratios - uses backend hints only for consistency.
  */
 export function getAspectClassFromHints(
     variant: FeedLayoutVariant, 
     imageCount: number,
     renderHints?: FeedBlock['renderHints']
 ): string {
+    // Use backend-provided aspect ratio if available
     if (renderHints?.aspectRatio) {
-        // Convert "16/9" format to Tailwind class
         const ratio = renderHints.aspectRatio.replace('/', '/');
         const maxHeight = renderHints.maxImageHeight ? `max-h-[${renderHints.maxImageHeight}px]` : '';
         return `aspect-[${ratio}] ${maxHeight}`.trim();

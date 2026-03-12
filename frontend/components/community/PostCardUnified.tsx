@@ -57,9 +57,9 @@ function ImageCollage({
     if (imageCount === 0) return null;
 
     return (
-        <div className={cn("relative w-full overflow-hidden bg-neutral-100 rounded-xl", aspectClass)}>
+        <div className={cn("relative w-full overflow-hidden bg-neutral-100 rounded-lg", aspectClass)}>
             {imageCount === 1 && (
-                <div className="relative w-full h-full cursor-pointer overflow-hidden rounded-xl" onClick={() => onImageClick(0)}>
+                <div className="relative w-full h-full cursor-pointer overflow-hidden rounded-lg group" onClick={() => onImageClick(0)}>
                     <OptimizedImage 
                         src={images[0]?.url || ''} 
                         alt="Post image" 
@@ -67,14 +67,14 @@ function ImageCollage({
                         small={images[0]?.small}
                         medium={images[0]?.medium}
                         large={images[0]?.large}
-                        className="w-full h-full" 
+                        className="w-full h-full transition-transform duration-300 group-hover:scale-105" 
                     />
                 </div>
             )}
             {imageCount === 2 && (
-                <div className="grid grid-cols-2 gap-2 w-full h-full">
+                <div className="grid grid-cols-2 gap-0.5 w-full h-full">
                     {images.slice(0, 2).map((img, idx) => (
-                        <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden rounded-xl aspect-square" onClick={() => onImageClick(idx)}>
+                        <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden group" onClick={() => onImageClick(idx)}>
                             <OptimizedImage 
                                 src={img.url} 
                                 alt={`Post image ${idx + 1}`} 
@@ -82,15 +82,15 @@ function ImageCollage({
                                 small={img.small}
                                 medium={img.medium}
                                 large={img.large}
-                                className="w-full h-full" 
+                                className="w-full h-full transition-transform duration-300 group-hover:scale-105" 
                             />
                         </div>
                     ))}
                 </div>
             )}
             {imageCount === 3 && (
-                <div className="grid grid-cols-2 grid-rows-2 gap-2 w-full h-full">
-                    <div className="col-span-2 row-span-1 cursor-pointer overflow-hidden rounded-xl" onClick={() => onImageClick(0)}>
+                <div className="grid grid-cols-2 grid-rows-2 gap-0.5 w-full h-full">
+                    <div className="col-span-2 row-span-1 cursor-pointer overflow-hidden group" onClick={() => onImageClick(0)}>
                         <OptimizedImage 
                             src={images[0]?.url} 
                             alt="Post image 1" 
@@ -98,10 +98,10 @@ function ImageCollage({
                             small={images[0]?.small}
                             medium={images[0]?.medium}
                             large={images[0]?.large}
-                            className="w-full h-full" 
+                            className="w-full h-full transition-transform duration-300 group-hover:scale-105" 
                         />
                     </div>
-                    <div className="cursor-pointer overflow-hidden rounded-xl aspect-square" onClick={() => onImageClick(1)}>
+                    <div className="cursor-pointer overflow-hidden group" onClick={() => onImageClick(1)}>
                         <OptimizedImage 
                             src={images[1]?.url} 
                             alt="Post image 2" 
@@ -109,10 +109,10 @@ function ImageCollage({
                             small={images[1]?.small}
                             medium={images[1]?.medium}
                             large={images[1]?.large}
-                            className="w-full h-full" 
+                            className="w-full h-full transition-transform duration-300 group-hover:scale-105" 
                         />
                     </div>
-                    <div className="cursor-pointer overflow-hidden rounded-xl aspect-square" onClick={() => onImageClick(2)}>
+                    <div className="cursor-pointer overflow-hidden group" onClick={() => onImageClick(2)}>
                         <OptimizedImage 
                             src={images[2]?.url} 
                             alt="Post image 3" 
@@ -120,15 +120,15 @@ function ImageCollage({
                             small={images[2]?.small}
                             medium={images[2]?.medium}
                             large={images[2]?.large}
-                            className="w-full h-full" 
+                            className="w-full h-full transition-transform duration-300 group-hover:scale-105" 
                         />
                     </div>
                 </div>
             )}
             {imageCount >= 4 && (
-                <div className="grid grid-cols-2 grid-rows-2 gap-2 w-full h-full">
+                <div className="grid grid-cols-2 grid-rows-2 gap-0.5 w-full h-full">
                     {images.slice(0, 4).map((img, idx) => (
-                        <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden rounded-xl aspect-square" onClick={() => onImageClick(idx)}>
+                        <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden group" onClick={() => onImageClick(idx)}>
                             <OptimizedImage 
                                 src={img.url} 
                                 alt={`Post image ${idx + 1}`} 
@@ -136,11 +136,11 @@ function ImageCollage({
                                 small={img.small}
                                 medium={img.medium}
                                 large={img.large}
-                                className="w-full h-full" 
+                                className="w-full h-full transition-transform duration-300 group-hover:scale-105" 
                             />
                             {idx === 3 && imageCount > 4 && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
-                                    <span className="text-white font-bold text-xl">+{imageCount - 4}</span>
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <span className="text-white font-bold text-lg">+{imageCount - 4}</span>
                                 </div>
                             )}
                         </div>
@@ -202,13 +202,12 @@ export function PostCardUnified({
 
     // Variant-specific rendering
     const isFeatured = variant === 'featured';
-    const isPhoto = variant === 'photo';
     const isCollage = variant === 'collage';
-    const isOverlay = isFeatured || isPhoto;
+    const isOverlay = isFeatured; // Only featured uses overlay
 
     const articleClassName = cn(
-        'relative bg-white overflow-hidden transition-transform duration-180 isolate',
-        isQuoted ? "mt-3 rounded-2xl ring-1 ring-neutral-200" : "rounded-2xl border border-neutral-200 shadow-[0_1px_2px_rgba(0,0,0,0.04)]",
+        'relative bg-white overflow-hidden transition-all duration-200 isolate',
+        isQuoted ? "mt-3 rounded-xl ring-1 ring-neutral-200" : "rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]",
         !isQuoted && 'hover:-translate-y-[2px]'
     );
 
@@ -222,11 +221,11 @@ export function PostCardUnified({
                 {...(!isQuoted ? { whileHover: { y: -2 } } : {})}
                 className={articleClassName}
             >
-                {/* Image Block with Overlay for Featured/Photo variants */}
+                {/* Image Block with Overlay for Featured variant */}
                 {imageCount > 0 && (
                     <div className="relative z-10 w-full overflow-hidden">
                         {isOverlay ? (
-                            <div className="relative w-full aspect-[4/5] cursor-pointer group overflow-hidden" onClick={() => setLightboxIndex(0)}>
+                            <div className={cn("relative w-full cursor-pointer group overflow-hidden", aspectClass)} onClick={() => setLightboxIndex(0)}>
                                 <OptimizedImage 
                                     src={images[0]?.url || ''} 
                                     alt={post.location || 'Post image'} 
@@ -234,33 +233,32 @@ export function PostCardUnified({
                                     small={images[0]?.small}
                                     medium={images[0]?.medium}
                                     large={images[0]?.large}
-                                    className="w-full h-full transition-transform duration-700 group-hover:scale-105" 
+                                    className="w-full h-full transition-transform duration-500 group-hover:scale-105" 
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
                                 
-                                {/* Overlay Content */}
-                                <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest">
-                                            {isFeatured ? 'Featured Story' : 'Photo Story'}
-                                        </span>
-                                        {imageCount > 1 && (
-                                            <span className="text-white/70 text-xs font-medium">{imageCount} photos</span>
-                                        )}
-                                    </div>
-                                    <h3 className="text-2xl sm:text-3xl font-bold font-heading leading-tight tracking-tight mb-2 line-clamp-2">
-                                        {title}
-                                    </h3>
+                                {/* Small Feature Badge - top corner */}
+                                <div className="absolute top-4 left-4">
+                                    <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-neutral-900">
+                                        Featured
+                                    </span>
+                                </div>
+                                
+                                {/* Overlay Content - bottom */}
+                                <div className="absolute inset-x-0 bottom-0 p-5 text-white">
                                     {post.location && (
-                                        <div className="flex items-center gap-1.5 text-white/70 text-sm">
-                                            <MapPin className="w-4 h-4" />
+                                        <div className="flex items-center gap-1.5 text-white/80 text-xs mb-2">
+                                            <MapPin className="w-3.5 h-3.5" />
                                             <span>{post.location}</span>
                                         </div>
                                     )}
+                                    <h3 className="text-xl sm:text-2xl font-bold font-heading leading-tight tracking-tight line-clamp-2">
+                                        {title}
+                                    </h3>
                                 </div>
                             </div>
                         ) : (
-                            <div className="p-4">
+                            <div className="p-3">
                                 <ImageCollage 
                                     images={images} 
                                     imageCount={isCollage ? imageCount : 1} 
@@ -272,66 +270,65 @@ export function PostCardUnified({
                     </div>
                 )}
 
-                {/* Content Block - Not shown for overlay variants */}
+                {/* Content Block - Standard hierarchy: TAGS → TITLE → EXCERPT → AUTHOR META */}
                 {!isOverlay && (
-                    <div className="relative z-20 p-4 lg:p-5 bg-white">
+                    <div className="relative z-20 p-4 bg-white">
                         {/* Tags Row */}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                            <span className="inline-flex items-center bg-neutral-100 text-neutral-600 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1">
-                                {isQuoted ? 'Repost' : isCollage ? 'Collage' : 'Story'}
-                            </span>
-                            {(post.tags ?? []).slice(0, 2).map(tag => (
-                                <span key={tag} className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1">
+                        <div className="flex flex-wrap gap-1.5 mb-2.5">
+                            {(post.tags ?? []).slice(0, 3).map(tag => (
+                                <span key={tag} className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-600 text-[10px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-0.5">
                                     {TAG_ICONS[tag]}{tag}
                                 </span>
                             ))}
                         </div>
 
-                        {/* Headline */}
-                        <h3 className="text-xl sm:text-2xl font-bold font-heading text-neutral-900 leading-tight tracking-tight mb-2 line-clamp-2">
-                            {title || post.caption?.slice(0, 100)}
+                        {/* Title */}
+                        <h3 className="text-lg sm:text-xl font-bold font-heading text-neutral-900 leading-snug tracking-tight mb-1.5 line-clamp-2">
+                            {title || post.caption?.slice(0, 80)}
                         </h3>
 
-                        {/* Excerpt with Read more */}
-                        <div className="text-sm sm:text-base text-neutral-600 leading-relaxed mb-3">
-                            <span className={expanded ? '' : 'line-clamp-3'}>
-                                {excerpt || post.caption}
-                            </span>
-                            {hasLongContent && (
-                                <button onClick={() => setExpanded(!expanded)} className="ml-1 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
-                                    {expanded ? 'Show less' : 'Read more'}
-                                </button>
-                            )}
-                        </div>
+                        {/* Excerpt */}
+                        {(excerpt || post.caption) && (
+                            <div className="text-sm text-neutral-500 leading-relaxed mb-3">
+                                <span className={expanded ? '' : 'line-clamp-2'}>
+                                    {excerpt || post.caption}
+                                </span>
+                                {hasLongContent && (
+                                    <button onClick={() => setExpanded(!expanded)} className="ml-1 text-xs font-semibold text-neutral-700 hover:text-neutral-900 transition-colors">
+                                        {expanded ? 'Show less' : 'Read more'}
+                                    </button>
+                                )}
+                            </div>
+                        )}
 
-                        {/* Meta Row */}
-                        <div className="flex items-center gap-3 pt-3 border-t border-neutral-100">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden shrink-0">
+                        {/* Author Meta Row */}
+                        <div className="flex items-center gap-2.5 pt-2.5 border-t border-neutral-100">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-[10px] font-bold overflow-hidden shrink-0">
                                 {authorAvatar ? (
                                     <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" />
                                 ) : initials}
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-bold text-neutral-900 truncate">{authorName}</p>
-                                <p className="text-xs text-neutral-500">{formatRelative(post.createdAt)}</p>
+                                <p className="text-sm font-semibold text-neutral-900 truncate">{authorName}</p>
+                                <p className="text-[11px] text-neutral-400">{formatRelative(post.createdAt)}</p>
                             </div>
                             {post.location && (
-                                <div className="flex items-center gap-1 text-neutral-500 text-xs">
-                                    <MapPin className="w-3.5 h-3.5" />
-                                    <span className="truncate max-w-[100px] sm:max-w-[150px]">{post.location}</span>
+                                <div className="flex items-center gap-1 text-neutral-400 text-[11px]">
+                                    <MapPin className="w-3 h-3" />
+                                    <span className="truncate max-w-[80px] sm:max-w-[120px]">{post.location}</span>
                                 </div>
                             )}
                             {canModify && onDelete && (
-                                <div className="flex items-center gap-2 ml-auto">
+                                <div className="flex items-center gap-1.5 ml-auto">
                                     <button
                                         onClick={(e) => { e.stopPropagation(); onEdit?.(post); }}
-                                        className="text-xs font-semibold text-neutral-500 hover:text-neutral-700 transition-colors"
+                                        className="text-[11px] font-medium text-neutral-400 hover:text-neutral-600 transition-colors"
                                     >
                                         Edit
                                     </button>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); onDelete(post.id); }}
-                                        className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
+                                        className="text-[11px] font-medium text-red-400 hover:text-red-500 transition-colors"
                                     >
                                         Delete
                                     </button>
@@ -343,8 +340,8 @@ export function PostCardUnified({
 
                 {/* Quoted Repost */}
                 {post.originalPost && !isOverlay && (
-                    <div className="px-4 lg:px-5 pb-4 bg-white">
-                        <div className="rounded-xl border border-neutral-200 bg-neutral-50 overflow-hidden">
+                    <div className="px-4 pb-4 bg-white">
+                        <div className="rounded-lg border border-neutral-200 bg-neutral-50 overflow-hidden">
                             <PostCardUnified post={post.originalPost} isQuoted={true} currentUser={currentUser} />
                         </div>
                     </div>
