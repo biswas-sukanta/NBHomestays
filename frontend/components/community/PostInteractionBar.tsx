@@ -1,0 +1,224 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Heart, MessageCircle, Repeat2, Share2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { postApi } from '@/lib/api/posts';
+import { queryKeys } from '@/lib/queryKeys';
+import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
+
+interface PostInteractionBarProps {
+    postId: string;
+    likes: number;
+    comments: number;
+    shareCount: number;
+    isLiked: boolean;
+    onOpenComments: () => void;
+    onRepost: () => void;
+    onLikeToggle: (newCount: number, newLiked: boolean) => void;
+    variant?: 'default' | 'overlay';
+    className?: string;
+}
+
+export function PostInteractionBar({
+    postId,
+    likes,
+    comments,
+    shareCount,
+    isLiked,
+    onOpenComments,
+    onRepost,
+    onLikeToggle,
+    variant = 'default',
+    className
+}: PostInteractionBarProps) {
+    const { isAuthenticated } = useAuth() as any;
+    const [popping, setPopping] = useState(false);
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: async () => {
+            const res = await postApi.like(postId);
+            return res.data;
+        },
+        onMutate: async () => {
+            if (!isAuthenticated) {
+                toast.error('Please log in to like posts');
+                throw new Error('Unauthenticated');
+            }
+            setPopping(true);
+            setTimeout(() => setPopping(false), 420);
+
+            await queryClient.cancelQueries({ queryKey: queryKeys.community.feed() });
+            await queryClient.cancelQueries({ queryKey: queryKeys.community.trending });
+            const previousPosts = queryClient.getQueryData(queryKeys.community.feed());
+            const previousTrending = queryClient.getQueryData(queryKeys.community.trending);
+
+            queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
+                if (!old || !old.pages) return old;
+                return {
+                    ...old,
+                    pages: old.pages.map((page: any) => ({
+                        ...page,
+                        posts: (page.posts || []).map((post: any) => {
+                            if (post.postId === postId || post.id === postId) {
+                                const newIsLiked = !post.isLikedByCurrentUser;
+                                const newCount = newIsLiked ? post.likeCount + 1 : Math.max(0, post.likeCount - 1);
+                                if (onLikeToggle) onLikeToggle(newCount, newIsLiked);
+                                return { ...post, isLikedByCurrentUser: newIsLiked, likeCount: newCount };
+                            }
+                            return post;
+                        })
+                    }))
+                };
+            });
+
+            queryClient.setQueryData(queryKeys.community.trending, (old: any) => {
+                if (!old || !old.posts) return old;
+                return {
+                    ...old,
+                    posts: (old.posts || []).map((post: any) => {
+                        if (post.postId === postId || post.id === postId) {
+                            const newIsLiked = !post.isLikedByCurrentUser;
+                            const newCount = newIsLiked ? post.likeCount + 1 : Math.max(0, post.likeCount - 1);
+                            return { ...post, isLikedByCurrentUser: newIsLiked, likeCount: newCount };
+                        }
+                        return post;
+                    })
+                };
+            });
+
+            return { previousPosts, previousTrending };
+        },
+        onError: (err: any, _, context: any) => {
+            if (context?.previousPosts) {
+                queryClient.setQueryData(queryKeys.community.feed(), context.previousPosts);
+            }
+            if (context?.previousTrending) {
+                queryClient.setQueryData(queryKeys.community.trending, context.previousTrending);
+            }
+            if (err.message !== 'Unauthenticated') {
+                const isNetworkError = !err.response || err.code === 'ERR_NETWORK';
+                toast.error(isNetworkError ? "Connection hiccup — try again" : "Couldn't save your love. Try again.");
+            }
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.community.trending });
+        }
+    });
+
+    const handleLike = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isAuthenticated) {
+            toast.error('Please log in to like posts');
+            return;
+        }
+        mutation.mutate();
+    };
+
+    const handleShare = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        try {
+            await postApi.share(postId);
+            toast.success('Link copied to clipboard!');
+            
+            // Update share count optimistically
+            queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
+                if (!old || !old.pages) return old;
+                return {
+                    ...old,
+                    pages: old.pages.map((page: any) => ({
+                        ...page,
+                        posts: (page.posts || []).map((post: any) => {
+                            if (post.postId === postId || post.id === postId) {
+                                return { ...post, shareCount: (post.shareCount || 0) + 1 };
+                            }
+                            return post;
+                        })
+                    }))
+                };
+            });
+        } catch (error) {
+            // Fallback to native share
+            if (navigator.share) {
+                await navigator.share({
+                    title: 'Check out this post on North Bengal Homestays',
+                    url: window.location.href
+                });
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                toast.success('Link copied to clipboard!');
+            }
+        }
+    };
+
+    const isOverlay = variant === 'overlay';
+    const baseClasses = cn(
+        'flex items-center justify-around',
+        isOverlay ? 'text-white' : 'text-neutral-600',
+        className
+    );
+
+    return (
+        <div className={baseClasses}>
+            <button
+                onClick={handleLike}
+                disabled={mutation.isPending}
+                className={cn(
+                    'flex items-center gap-2 font-semibold transition-all duration-200',
+                    isOverlay ? 'text-white/90 hover:text-white' : 'text-neutral-600 hover:text-red-500',
+                    mutation.isPending && 'opacity-50 cursor-not-allowed'
+                )}
+            >
+                <Heart 
+                    className={cn(
+                        'w-5 h-5 transition-all duration-200',
+                        popping && 'scale-125 bounce-pop',
+                        isLiked ? 'fill-current' : '',
+                        isOverlay && isLiked ? 'text-white' : isLiked ? 'text-red-500' : ''
+                    )} 
+                />
+                <span className="text-sm">{likes}</span>
+            </button>
+
+            <button
+                onClick={onOpenComments}
+                className={cn(
+                    'flex items-center gap-2 font-semibold transition-all duration-200',
+                    isOverlay ? 'text-white/90 hover:text-white' : 'text-neutral-600 hover:text-emerald-500'
+                )}
+            >
+                <MessageCircle className="w-5 h-5" />
+                <span className="text-sm">{comments}</span>
+            </button>
+
+            <button
+                onClick={onRepost}
+                className={cn(
+                    'flex items-center gap-2 font-semibold transition-all duration-200',
+                    isOverlay ? 'text-white/90 hover:text-white' : 'text-neutral-600 hover:text-blue-500'
+                )}
+            >
+                <Repeat2 className="w-5 h-5" />
+                <span className="text-sm">Repost</span>
+            </button>
+
+            <button
+                onClick={handleShare}
+                className={cn(
+                    'flex items-center gap-2 font-semibold transition-all duration-200',
+                    isOverlay ? 'text-white/90 hover:text-white' : 'text-neutral-600 hover:text-purple-500'
+                )}
+            >
+                <Share2 className="w-5 h-5" />
+                <span className="text-sm">{shareCount}</span>
+            </button>
+        </div>
+    );
+}

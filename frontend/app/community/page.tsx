@@ -14,7 +14,7 @@ import { SharedPageBanner } from '@/components/shared-page-banner';
 import dynamic from 'next/dynamic';
 const ImageCropModal = dynamic(() => import('@/components/host/ImageCropModal').then(m => m.ImageCropModal), { ssr: false });
 import { StagedFile } from '@/components/host/ImageDropzone';
-import { PostCard } from '@/components/community/PostCard';
+import { PostCardUnified as PostCard } from '@/components/community/PostCardUnified';
 import { CommunityPost } from '@/components/community/types';
 import { PostSkeleton } from '@/components/community/PostSkeleton';
 import { CommentsSection } from '@/components/comments-section';
@@ -29,12 +29,10 @@ import { TrendingStories } from '@/components/community/trending-stories';
 import { CommunitySidebar } from '@/components/community/sidebar';
 import { CommunityPageSkeleton } from '@/components/community/Skeletons';
 import { LoginPromptModal } from '@/components/community/LoginPromptModal';
-import { FeaturedStoryCard } from '@/components/community/FeaturedStoryCard';
-import { CollagePostCard } from '@/components/community/CollagePostCard';
-import { PhotoStoryCard } from '@/components/community/PhotoStoryCard';
 import { normalizePost, NormalizedPost } from '@/lib/adapters/normalizePost';
 import { useHomestaysLookup } from '@/hooks/useHomestaysLookup';
 import { queryKeys } from '@/lib/queryKeys';
+import { getFeedVariant } from '@/lib/utils/feed-utils';
 
 type Post = NormalizedPost;
 
@@ -81,11 +79,14 @@ export default function CommunityPage() {
 
     const { ref, inView } = useInView({ threshold: 0.1 });
 
-    const fetchPosts = async ({ pageParam = 0 }) => {
-        const validPage = Number.isInteger(pageParam) ? pageParam : 0;
-        const tagParam = activeTag ? `&tag=${encodeURIComponent(activeTag)}` : '';
-        const { data } = await postApi.getFeed(`page=${validPage}&size=12&sort=createdAt,desc${tagParam}`);
-        return data;
+    // Cursor-based pagination using FeedService API
+    const fetchPosts = async ({ pageParam = null as string | null }) => {
+        const response = await getFeed({ 
+            cursor: pageParam || undefined, 
+            tag: activeTag || undefined,
+            limit: 12 
+        });
+        return response;
     };
 
     const {
@@ -98,27 +99,10 @@ export default function CommunityPage() {
     } = useInfiniteQuery({
         queryKey: queryKeys.community.feed(activeTag || undefined),
         queryFn: fetchPosts,
-        initialPageParam: 0,
-        getNextPageParam: (lastPage) => {
-            // 1. Guard against empty/malformed responses
-            if (!lastPage || !lastPage.page) return undefined;
-
-            const currentPage = lastPage.page.number;
-            const totalPages = lastPage.page.totalPages;
-
-            // 2. Strict type check to prevent NaN propagation
-            if (typeof currentPage !== 'number' || typeof totalPages !== 'number') {
-                console.error("Pagination data is not a number", lastPage.page);
-                return undefined;
-            }
-
-            // 3. Check if we reached the end
-            if (currentPage + 1 >= totalPages) {
-                return undefined; // Stops React Query from fetching more
-            }
-
-            // 4. Safely return the next integer
-            return currentPage + 1;
+        initialPageParam: null as string | null,
+        getNextPageParam: (lastPage: FeedResponse) => {
+            if (!lastPage || !lastPage.hasMore) return undefined;
+            return lastPage.nextCursor;
         },
         staleTime: 10000, // 10 seconds — community data must be fresh
     });
@@ -211,7 +195,7 @@ export default function CommunityPage() {
         }
     };
 
-    const posts = data?.pages?.flatMap(page => page.content || page.data || []) || [];
+    const posts = data?.pages?.flatMap(page => page.posts || []) || [];
 
     const normalizedPosts = posts.map(normalizePost);
 
@@ -293,30 +277,23 @@ export default function CommunityPage() {
                             />
                         </div>
 
-                        {/* ── Feed Mapping with Editorial Composition ── */}
+                        {/* ── Feed Mapping with Editorial Pattern ── */}
                         <AnimatePresence mode="popLayout">
                             {filteredPosts.map((post, idx) => {
                                 const imageCount = post.images?.length || (post.imageUrl ? 1 : 0);
-                                const isFeatured = (idx + 1) % 5 === 0;
-                                const isCollage = (idx + 1) % 3 === 0 && imageCount > 1;
+                                const variant = getFeedVariant(idx, imageCount);
 
                                 return (
-                                    <React.Fragment key={post.id}>
-                                        {isFeatured ? (
-                                            <FeaturedStoryCard post={post} />
-                                        ) : isCollage ? (
-                                            <CollagePostCard post={post} onOpenComments={(postId) => setActiveCommentPostId(postId)} />
-                                        ) : (
-                                            <PostCard
-                                                post={post}
-                                                currentUser={user}
-                                                onEdit={(p) => { setPostToEdit(p); setComposerOpen(true); }}
-                                                onUpdate={handleUpdatePost}
-                                                onDelete={handleDeletePost}
-                                                onOpenComments={(postId) => setActiveCommentPostId(postId)}
-                                            />
-                                        )}
-                                    </React.Fragment>
+                                    <PostCard
+                                        key={post.id}
+                                        post={post}
+                                        variant={variant}
+                                        currentUser={user}
+                                        onEdit={(p) => { setPostToEdit(p); setComposerOpen(true); }}
+                                        onUpdate={handleUpdatePost}
+                                        onDelete={handleDeletePost}
+                                        onOpenComments={(postId) => setActiveCommentPostId(postId)}
+                                    />
                                 );
                             })}
                         </AnimatePresence>
