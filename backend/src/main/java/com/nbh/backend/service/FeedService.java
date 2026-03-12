@@ -39,6 +39,7 @@ public class FeedService {
     private final TimelineRepository timelineRepository;
     private final FeedCacheService cacheService;
     private final ObjectMapper objectMapper;
+    private final FeedLayoutEngine layoutEngine;
 
     private static final int DEFAULT_LIMIT = 12;
     private static final int EXTRA_FOR_HAS_MORE = 1;
@@ -55,6 +56,22 @@ public class FeedService {
      */
     @Transactional(readOnly = true)
     public PostFeedDto.FeedResponse getFeed(String tag, String cursor, Integer limit, UUID userId) {
+        return getFeed(tag, cursor, limit, userId, true);
+    }
+    
+    /**
+     * Get cursor-paginated feed with optional tag filter and layout generation.
+     * Priority: Timeline > Direct query
+     * 
+     * @param tag Optional tag filter
+     * @param cursor Base64-encoded cursor (null for first page)
+     * @param limit Page size (defaults to 12)
+     * @param userId Optional user ID for like status
+     * @param layout Whether to generate layout blocks (default true)
+     * @return Feed response with posts, nextCursor, hasMore, and optional blocks
+     */
+    @Transactional(readOnly = true)
+    public PostFeedDto.FeedResponse getFeed(String tag, String cursor, Integer limit, UUID userId, boolean layout) {
         int pageSize = limit != null && limit > 0 ? limit : DEFAULT_LIMIT;
         int fetchLimit = pageSize + EXTRA_FOR_HAS_MORE;
 
@@ -70,6 +87,8 @@ public class FeedService {
         PostFeedDto.Cursor cursorData = decodeCursor(cursor);
         LocalDateTime cursorCreatedAt = cursorData != null ? cursorData.getCreatedAt() : null;
         UUID cursorId = cursorData != null ? cursorData.getId() : null;
+        String previousBlockType = cursorData != null ? cursorData.getPreviousBlockType() : null;
+        Integer previousBlockTypeRun = cursorData != null ? cursorData.getPreviousBlockTypeRun() : null;
 
         // Try timeline first (if no tag filter - timeline is global)
         List<PostFeedDto> posts;
@@ -79,14 +98,63 @@ public class FeedService {
             PostFeedDto.FeedResponse timelineResponse = getFeedFromTimeline(cursorCreatedAt, cursorId, fetchLimit, pageSize, userId);
             if (timelineResponse != null) {
                 log.debug("Feed served from timeline");
-                cacheService.put(cacheKey, timelineResponse);
-                return timelineResponse;
+                PostFeedDto.FeedResponse response = timelineResponse;
+
+                if (layout && response.getPosts() != null && !response.getPosts().isEmpty()) {
+                    List<PostFeedDto.FeedBlockDto> blocks = layoutEngine.generateLayout(
+                            response.getPosts(),
+                            pageSize,
+                            previousBlockType,
+                            previousBlockTypeRun);
+
+                    String nextCursor = response.getNextCursor();
+                    if (response.isHasMore() && nextCursor != null) {
+                        PostFeedDto lastPost = response.getPosts().get(response.getPosts().size() - 1);
+                        TailBlockRun tail = computeTailBlockRun(blocks);
+                        nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId(), tail.blockType, tail.runLength);
+                    }
+
+                    response = PostFeedDto.FeedResponse.builder()
+                            .posts(response.getPosts())
+                            .nextCursor(nextCursor)
+                            .hasMore(response.isHasMore())
+                            .blocks(blocks)
+                            .build();
+                }
+
+                cacheService.put(cacheKey, response);
+                return response;
             }
             log.debug("Timeline empty, falling back to direct query");
         }
 
         // Fallback: direct query from posts table
-        return getFeedFromDirectQuery(tag, cursorCreatedAt, cursorId, fetchLimit, pageSize, userId, cacheKey);
+        PostFeedDto.FeedResponse response = getFeedFromDirectQuery(tag, cursorCreatedAt, cursorId, fetchLimit, pageSize, userId, cacheKey);
+
+        // Generate layout blocks if requested
+        if (layout && response.getPosts() != null && !response.getPosts().isEmpty()) {
+            List<PostFeedDto.FeedBlockDto> blocks = layoutEngine.generateLayout(
+                    response.getPosts(),
+                    pageSize,
+                    previousBlockType,
+                    previousBlockTypeRun);
+
+            String nextCursor = response.getNextCursor();
+            if (response.isHasMore() && nextCursor != null) {
+                PostFeedDto lastPost = response.getPosts().get(response.getPosts().size() - 1);
+                TailBlockRun tail = computeTailBlockRun(blocks);
+                nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId(), tail.blockType, tail.runLength);
+            }
+
+            response = PostFeedDto.FeedResponse.builder()
+                    .posts(response.getPosts())
+                    .nextCursor(nextCursor)
+                    .hasMore(response.isHasMore())
+                    .blocks(blocks)
+                    .build();
+        }
+
+        return response;
     }
     
     /**
@@ -138,12 +206,13 @@ public class FeedService {
         Map<UUID, List<PostFeedDto.MediaVariantDto>> mediaByPost = loadMedia(postIds);
         Map<UUID, List<String>> tagsByPost = loadTags(postIds);
         Map<UUID, Integer> commentCounts = loadCommentCounts(postIds);
+        Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost = loadMediaDimensions(postIds);
         // Use precomputed like counts from timeline, but still batch load liked status
         Set<UUID> likedPostIds = userId != null ? loadLikedStatus(userId, postIds) : Collections.emptySet();
         
         // Map to DTOs
         List<PostFeedDto> posts = timelineRows.stream()
-                .map(t -> mapTimelineToDto(t, mediaByPost, tagsByPost, commentCounts, likedPostIds))
+                .map(t -> mapTimelineToDto(t, mediaByPost, tagsByPost, commentCounts, likedPostIds, dimensionsByPost))
                 .collect(Collectors.toList());
         
         // Generate next cursor
@@ -210,11 +279,12 @@ public class FeedService {
         Map<UUID, List<String>> tagsByPost = loadTags(postIds);
         Map<UUID, Integer> commentCounts = loadCommentCounts(postIds);
         Map<UUID, Integer> likeCounts = loadLikeCounts(postIds);
+        Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost = loadMediaDimensions(postIds);
         Set<UUID> likedPostIds = userId != null ? loadLikedStatus(userId, postIds) : Collections.emptySet();
 
         // Map to DTOs
         List<PostFeedDto> posts = rows.stream()
-                .map(row -> mapToDto(row, mediaByPost, tagsByPost, commentCounts, likeCounts, likedPostIds))
+                .map(row -> mapToDto(row, mediaByPost, tagsByPost, commentCounts, likeCounts, likedPostIds, dimensionsByPost))
                 .collect(Collectors.toList());
 
         // Generate next cursor
@@ -257,10 +327,16 @@ public class FeedService {
      * Encode cursor to Base64 string.
      */
     private String encodeCursor(LocalDateTime createdAt, UUID id) {
+        return encodeCursor(createdAt, id, null, null);
+    }
+
+    private String encodeCursor(LocalDateTime createdAt, UUID id, String previousBlockType, Integer previousBlockTypeRun) {
         try {
             PostFeedDto.Cursor cursor = PostFeedDto.Cursor.builder()
                     .createdAt(createdAt)
                     .id(id)
+                    .previousBlockType(previousBlockType)
+                    .previousBlockTypeRun(previousBlockTypeRun)
                     .build();
             String json = objectMapper.writeValueAsString(cursor);
             return Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
@@ -270,8 +346,53 @@ public class FeedService {
         }
     }
 
+    private TailBlockRun computeTailBlockRun(List<PostFeedDto.FeedBlockDto> blocks) {
+        if (blocks == null || blocks.isEmpty()) {
+            return new TailBlockRun(null, null);
+        }
+
+        PostFeedDto.FeedBlockDto.BlockType lastType = null;
+        for (int i = blocks.size() - 1; i >= 0; i--) {
+            PostFeedDto.FeedBlockDto b = blocks.get(i);
+            if (b != null && b.getBlockType() != null) {
+                lastType = b.getBlockType();
+                break;
+            }
+        }
+
+        if (lastType == null) {
+            return new TailBlockRun(null, null);
+        }
+
+        int run = 0;
+        for (int i = blocks.size() - 1; i >= 0; i--) {
+            PostFeedDto.FeedBlockDto b = blocks.get(i);
+            if (b == null || b.getBlockType() == null) {
+                continue;
+            }
+            if (b.getBlockType() == lastType) {
+                run++;
+            } else {
+                break;
+            }
+        }
+
+        return new TailBlockRun(lastType.name(), run);
+    }
+
+    private static class TailBlockRun {
+        private final String blockType;
+        private final Integer runLength;
+
+        private TailBlockRun(String blockType, Integer runLength) {
+            this.blockType = blockType;
+            this.runLength = runLength;
+        }
+    }
+
     /**
      * Batch load media resources and generate ImageKit variant URLs.
+     * Now includes width/height for layout engine.
      */
     private Map<UUID, List<PostFeedDto.MediaVariantDto>> loadMedia(List<UUID> postIds) {
         if (postIds.isEmpty()) {
@@ -285,9 +406,43 @@ public class FeedService {
             UUID mediaId = (UUID) row[1];
             String url = (String) row[2];
             String fileId = (String) row[3];
+            // Width/height may be null - handle gracefully
+            Integer width = row[4] != null ? ((Number) row[4]).intValue() : null;
+            Integer height = row[5] != null ? ((Number) row[5]).intValue() : null;
 
-            PostFeedDto.MediaVariantDto variant = buildMediaVariant(mediaId, fileId, url);
+            PostFeedDto.MediaVariantDto variant = buildMediaVariant(mediaId, fileId, url, width, height);
             result.computeIfAbsent(postId, k -> new ArrayList<>()).add(variant);
+        }
+
+        return result;
+    }
+    
+    /**
+     * Batch load media dimensions for layout engine.
+     */
+    private Map<UUID, List<PostFeedDto.ImageDimDto>> loadMediaDimensions(List<UUID> postIds) {
+        if (postIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Object[]> rows = feedRepository.findMediaByPostIds(postIds);
+        Map<UUID, List<PostFeedDto.ImageDimDto>> result = new HashMap<>();
+
+        for (Object[] row : rows) {
+            UUID postId = (UUID) row[0];
+            UUID mediaId = (UUID) row[1];
+            Integer width = row[4] != null ? ((Number) row[4]).intValue() : null;
+            Integer height = row[5] != null ? ((Number) row[5]).intValue() : null;
+            
+            if (width != null && height != null && width > 0 && height > 0) {
+                Double aspectRatio = (double) width / height;
+                PostFeedDto.ImageDimDto dim = PostFeedDto.ImageDimDto.builder()
+                        .mediaId(mediaId)
+                        .width(width)
+                        .height(height)
+                        .aspectRatio(aspectRatio)
+                        .build();
+                result.computeIfAbsent(postId, k -> new ArrayList<>()).add(dim);
+            }
         }
 
         return result;
@@ -296,7 +451,7 @@ public class FeedService {
     /**
      * Build media variant with ImageKit transformation URLs.
      */
-    private PostFeedDto.MediaVariantDto buildMediaVariant(UUID mediaId, String fileId, String originalUrl) {
+    private PostFeedDto.MediaVariantDto buildMediaVariant(UUID mediaId, String fileId, String originalUrl, Integer width, Integer height) {
         String baseUrl = extractBaseUrl(originalUrl);
         String path = extractPath(originalUrl);
 
@@ -446,7 +601,8 @@ public class FeedService {
             Map<UUID, List<PostFeedDto.MediaVariantDto>> mediaByPost,
             Map<UUID, List<String>> tagsByPost,
             Map<UUID, Integer> commentCounts,
-            Set<UUID> likedPostIds) {
+            Set<UUID> likedPostIds,
+            Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost) {
 
         // Build repost metadata
         boolean isRepost = timeline.getOriginalPostId() != null;
@@ -457,6 +613,12 @@ public class FeedService {
                     ? content.substring(0, 150) + "..." 
                     : content;
         }
+        
+        // Layout metadata
+        List<PostFeedDto.MediaVariantDto> media = mediaByPost.getOrDefault(timeline.getPostId(), Collections.emptyList());
+        int mediaCount = media.size();
+        int textLength = timeline.getTextContent() != null ? timeline.getTextContent().length() : 0;
+        List<PostFeedDto.ImageDimDto> imageDims = dimensionsByPost.getOrDefault(timeline.getPostId(), Collections.emptyList());
 
         return PostFeedDto.builder()
                 .postId(timeline.getPostId())
@@ -473,11 +635,15 @@ public class FeedService {
                 .homestayId(timeline.getHomestayId())
                 .homestayName(timeline.getHomestayName())
                 .tags(tagsByPost.getOrDefault(timeline.getPostId(), Collections.emptyList()))
-                .media(mediaByPost.getOrDefault(timeline.getPostId(), Collections.emptyList()))
+                .media(media)
                 .isRepost(isRepost)
                 .originalPostId(timeline.getOriginalPostId())
                 .originalContentPreview(originalContentPreview)
                 .isLikedByCurrentUser(likedPostIds.contains(timeline.getPostId()))
+                // Layout metadata
+                .mediaCount(mediaCount)
+                .textLength(textLength)
+                .imageDimensions(imageDims)
                 .build();
     }
 
@@ -490,7 +656,8 @@ public class FeedService {
             Map<UUID, List<String>> tagsByPost,
             Map<UUID, Integer> commentCounts,
             Map<UUID, Integer> likeCounts,
-            Set<UUID> likedPostIds) {
+            Set<UUID> likedPostIds,
+            Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost) {
 
         UUID postId = (UUID) row[0];
         String textContent = (String) row[1];
@@ -530,6 +697,12 @@ public class FeedService {
                     ? originalContent.substring(0, 150) + "..." 
                     : originalContent;
         }
+        
+        // Layout metadata
+        List<PostFeedDto.MediaVariantDto> media = mediaByPost.getOrDefault(postId, Collections.emptyList());
+        int mediaCount = media.size();
+        int textLength = textContent != null ? textContent.length() : 0;
+        List<PostFeedDto.ImageDimDto> imageDims = dimensionsByPost.getOrDefault(postId, Collections.emptyList());
 
         return PostFeedDto.builder()
                 .postId(postId)
@@ -546,12 +719,16 @@ public class FeedService {
                 .homestayId(homestayId)
                 .homestayName(homestayName)
                 .tags(tagsByPost.getOrDefault(postId, Collections.emptyList()))
-                .media(mediaByPost.getOrDefault(postId, Collections.emptyList()))
+                .media(media)
                 .isRepost(isRepost)
                 .originalPostId(originalPostId)
                 .originalAuthorName(originalAuthorName)
                 .originalContentPreview(originalContentPreview)
                 .isLikedByCurrentUser(likedPostIds.contains(postId))
+                // Layout metadata
+                .mediaCount(mediaCount)
+                .textLength(textLength)
+                .imageDimensions(imageDims)
                 .build();
     }
 }

@@ -4,6 +4,7 @@ import com.nbh.backend.service.AsyncJobService;
 import com.nbh.backend.service.ImageUploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(value = "media.staging.cleanup.scheduler-enabled", havingValue = "true", matchIfMissing = true)
 public class StagingMediaCleanupScheduler {
 
     private final ImageUploadService imageUploadService;

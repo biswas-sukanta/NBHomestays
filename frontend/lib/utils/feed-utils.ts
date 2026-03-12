@@ -3,6 +3,8 @@
  * Eliminates duplicate logic across card variants.
  */
 
+import type { FeedBlock, PostFeedItem, BlockType } from '@/lib/api/feed';
+
 /**
  * Extracts title and excerpt from post text content.
  * Title: First 8-12 words (or 30% of content)
@@ -77,6 +79,80 @@ export function getFeedVariant(index: number, imageCount: number = 0): FeedLayou
 }
 
 /**
+ * Maps BlockType from backend to frontend FeedLayoutVariant.
+ */
+export function blockTypeToVariant(blockType: BlockType): FeedLayoutVariant {
+    switch (blockType) {
+        case 'FEATURED':
+            return 'featured';
+        case 'COLLAGE':
+            return 'collage';
+        case 'PHOTO':
+            return 'photo';
+        case 'HERO':
+            return 'featured'; // HERO renders like featured
+        case 'PLACEHOLDER':
+            return 'standard';
+        case 'STANDARD':
+        default:
+            return 'standard';
+    }
+}
+
+/**
+ * Resolves layout for a feed using blocks with fallback to pattern.
+ * 
+ * @param posts - List of posts from API
+ * @param blocks - Optional blocks from FeedLayoutEngine
+ * @returns Layout items with variant and post reference
+ */
+export interface LayoutItem {
+    postId: string;
+    variant: FeedLayoutVariant;
+    blockType?: BlockType;
+    renderHints?: FeedBlock['renderHints'];
+    index: number;
+}
+
+export function resolveFeedLayout(
+    posts: PostFeedItem[], 
+    blocks?: FeedBlock[]
+): LayoutItem[] {
+    // If blocks provided, use them
+    if (blocks && blocks.length > 0) {
+        // Create post lookup
+        const postMap = new Map(posts.map(p => [p.postId, p]));
+        
+        return blocks
+            .filter(block => block.blockType !== 'PLACEHOLDER')
+            .map((block, idx) => {
+                const postId = block.postIds[0]; // Usually single post per block
+                const post = postMap.get(postId);
+                const imageCount = post?.mediaCount ?? post?.media?.length ?? 0;
+                
+                return {
+                    postId,
+                    variant: blockTypeToVariant(block.blockType),
+                    blockType: block.blockType,
+                    renderHints: block.renderHints,
+                    index: idx,
+                };
+            })
+            .filter(item => item.postId); // Filter out missing posts
+    }
+    
+    // Fallback: use pattern-based layout
+    return posts.map((post, idx) => {
+        const imageCount = post.mediaCount ?? post.media?.length ?? 0;
+        return {
+            postId: post.postId,
+            variant: getFeedVariant(idx, imageCount),
+            index: idx,
+        };
+    });
+}
+
+/**
  * Determines if a post can use a specific variant based on its content.
  */
 export function canUseVariant(post: { images?: { url: string }[]; imageUrl?: string | null }, variant: FeedLayoutVariant): boolean {
@@ -110,4 +186,21 @@ export function getAspectClass(variant: FeedLayoutVariant, imageCount: number): 
         default:
             return 'aspect-[4/5] max-h-[420px]';
     }
+}
+
+/**
+ * Gets aspect ratio class from render hints (backend-driven) or fallback.
+ */
+export function getAspectClassFromHints(
+    variant: FeedLayoutVariant, 
+    imageCount: number,
+    renderHints?: FeedBlock['renderHints']
+): string {
+    if (renderHints?.aspectRatio) {
+        // Convert "16/9" format to Tailwind class
+        const ratio = renderHints.aspectRatio.replace('/', '/');
+        const maxHeight = renderHints.maxImageHeight ? `max-h-[${renderHints.maxImageHeight}px]` : '';
+        return `aspect-[${ratio}] ${maxHeight}`.trim();
+    }
+    return getAspectClass(variant, imageCount);
 }

@@ -32,7 +32,8 @@ import { LoginPromptModal } from '@/components/community/LoginPromptModal';
 import { normalizePost, NormalizedPost } from '@/lib/adapters/normalizePost';
 import { useHomestaysLookup } from '@/hooks/useHomestaysLookup';
 import { queryKeys } from '@/lib/queryKeys';
-import { getFeedVariant } from '@/lib/utils/feed-utils';
+import { getFeedVariant, resolveFeedLayout } from '@/lib/utils/feed-utils';
+import { getFeed, type FeedResponse } from '@/lib/api/feed';
 
 type Post = NormalizedPost;
 
@@ -196,8 +197,10 @@ export default function CommunityPage() {
     };
 
     const posts = data?.pages?.flatMap(page => page.posts || []) || [];
+    const blocks = data?.pages?.flatMap(page => page.blocks || []) || [];
 
     const normalizedPosts = posts.map(normalizePost);
+    const postById = new Map(normalizedPosts.map(p => [p.id, p]));
 
     const filteredPosts = normalizedPosts.filter(p =>
         !searchQuery ||
@@ -205,6 +208,11 @@ export default function CommunityPage() {
         p.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.authorName || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const layoutItems = !searchQuery ? resolveFeedLayout(posts, blocks) : [];
+    const layoutPosts = layoutItems
+        .map(item => postById.get(item.postId))
+        .filter(Boolean) as NormalizedPost[];
 
     return (
         <div className="min-h-screen bg-white text-neutral-900 selection:bg-green-500/30">
@@ -279,9 +287,11 @@ export default function CommunityPage() {
 
                         {/* ── Feed Mapping with Editorial Pattern ── */}
                         <AnimatePresence mode="popLayout">
-                            {filteredPosts.map((post, idx) => {
+                            {(searchQuery ? filteredPosts : layoutPosts).map((post, idx) => {
                                 const imageCount = post.images?.length || (post.imageUrl ? 1 : 0);
-                                const variant = getFeedVariant(idx, imageCount);
+                                const variant = searchQuery
+                                    ? getFeedVariant(idx, imageCount)
+                                    : (layoutItems[idx]?.variant ?? getFeedVariant(idx, imageCount));
 
                                 return (
                                     <PostCard

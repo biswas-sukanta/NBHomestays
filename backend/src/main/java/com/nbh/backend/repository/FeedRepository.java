@@ -142,9 +142,12 @@ public interface FeedRepository extends Repository<Post, UUID> {
 
     /**
      * Batch load media resources for multiple posts.
+     * Includes width/height for layout engine aspect ratio decisions.
+     * Note: width/height may be null if not yet populated - layout engine handles gracefully.
      */
     @Query(value = """
-        SELECT m.post_id as postId, m.id as mediaId, m.url as url, m.file_id as fileId
+        SELECT m.post_id as postId, m.id as mediaId, m.url as url, m.file_id as fileId,
+               m.width as width, m.height as height
         FROM media_resources m
         WHERE m.post_id IN :postIds
         ORDER BY m.post_id, m.id

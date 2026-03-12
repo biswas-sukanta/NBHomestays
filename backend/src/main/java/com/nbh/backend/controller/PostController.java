@@ -43,18 +43,20 @@ public class PostController {
 
     /**
      * Optimized cursor-paginated feed endpoint.
-     * Returns {posts, nextCursor, hasMore} format.
+     * Returns {posts, nextCursor, hasMore, blocks} format.
      * Includes HTTP cache headers for client-side caching.
      * 
      * @param tag Optional tag filter
      * @param cursor Base64-encoded cursor (null for first page)
      * @param limit Page size (default 12)
+     * @param layout Whether to generate layout blocks (default true)
      */
     @GetMapping("/feed")
     public ResponseEntity<PostFeedDto.FeedResponse> getFeed(
             @RequestParam(name = "tag", required = false) String tag,
             @RequestParam(name = "cursor", required = false) String cursor,
             @RequestParam(name = "limit", required = false) Integer limit,
+            @RequestParam(name = "layout", required = false, defaultValue = "true") boolean layout,
             Authentication authentication) {
         java.util.UUID userId = null;
         if (authentication != null && authentication.isAuthenticated()) {
@@ -63,7 +65,7 @@ public class PostController {
             userId = postService.getUserIdByEmail(email);
         }
         
-        PostFeedDto.FeedResponse response = feedService.getFeed(tag, cursor, limit, userId);
+        PostFeedDto.FeedResponse response = feedService.getFeed(tag, cursor, limit, userId, layout);
         
         // Generate ETag from response hash
         String etag = generateFeedETag(response);

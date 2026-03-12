@@ -4,6 +4,7 @@ import com.nbh.backend.model.AsyncJob;
 import com.nbh.backend.service.AsyncJobService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import java.util.concurrent.Executors;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(value = "application.jobs.async.enabled", havingValue = "true", matchIfMissing = true)
 public class AsyncJobWorker {
 
     private final AsyncJobService asyncJobService;
