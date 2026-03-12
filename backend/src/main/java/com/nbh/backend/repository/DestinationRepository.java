@@ -3,6 +3,7 @@ package com.nbh.backend.repository;
 import com.nbh.backend.model.Destination;
 import com.nbh.backend.dto.DestinationCardDto;
 import com.nbh.backend.dto.DestinationDto;
+import com.nbh.backend.repository.projection.DestinationCardProjection;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -33,6 +34,45 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
 
     @EntityGraph(attributePaths = { "state", "tags" })
     List<Destination> findByStateSlug(String stateSlug);
+
+    /**
+     * Optimized projection query for destination cards with homestay count.
+     * Single query avoids N+1 lazy loading issues.
+     */
+    @Query("""
+            SELECT d.id AS id,
+                   d.slug AS slug,
+                   d.name AS name,
+                   d.localImageName AS localImageName,
+                   (SELECT COUNT(h) FROM Homestay h WHERE h.destination = d AND h.isDeleted = false) AS homestayCount,
+                   s.name AS stateName,
+                   s.slug AS stateSlug,
+                   d.tags AS tags
+            FROM Destination d
+            LEFT JOIN d.state s
+            ORDER BY homestayCount DESC
+            """)
+    List<DestinationCardProjection> fetchDestinationCardProjections();
+
+    /**
+     * Optimized projection query for destination cards by state slug.
+     * Single query avoids N+1 lazy loading issues.
+     */
+    @Query("""
+            SELECT d.id AS id,
+                   d.slug AS slug,
+                   d.name AS name,
+                   d.localImageName AS localImageName,
+                   (SELECT COUNT(h) FROM Homestay h WHERE h.destination = d AND h.isDeleted = false) AS homestayCount,
+                   s.name AS stateName,
+                   s.slug AS stateSlug,
+                   d.tags AS tags
+            FROM Destination d
+            LEFT JOIN d.state s
+            WHERE s.slug = :stateSlug
+            ORDER BY homestayCount DESC
+            """)
+    List<DestinationCardProjection> fetchDestinationCardProjectionsByStateSlug(@Param("stateSlug") String stateSlug);
 
     @Query("""
             SELECT d

@@ -19,6 +19,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Optional;
 import org.springframework.cache.annotation.Cacheable;
@@ -125,13 +127,134 @@ public class PostService {
     @Transactional(readOnly = true)
     @Cacheable(value = "postsList", key = "(#tag ?: 'all') + '-' + #pageable.pageNumber + '-' + #pageable.pageSize", sync = true)
     public Page<PostDto.Response> getAllPosts(String tag, Pageable pageable) {
-        Page<Post> postsPage = (tag != null && !tag.isBlank())
-                ? postRepository.findByTag(tag, pageable)
-                : postRepository.findAll(pageable);
-        List<PostDto.Response> dtos = postsPage.getContent().stream()
-                .map(p -> mapToResponse(p, null))
+        // Use optimized projection queries - single query for posts + batch load media
+        Page<Object[]> postsPage = (tag != null && !tag.isBlank())
+                ? postRepository.findPostProjectionsByTag(tag, pageable)
+                : postRepository.findAllPostProjections(pageable);
+        
+        // Extract post IDs for batch queries
+        List<UUID> postIds = postsPage.getContent().stream()
+                .map(row -> (UUID) row[0])
                 .collect(Collectors.toList());
+        
+        // Batch load media (1 query)
+        Map<UUID, List<MediaDto>> mediaByPost = loadMediaByPostIds(postIds);
+        
+        // Map to DTOs
+        List<PostDto.Response> dtos = postsPage.getContent().stream()
+                .map(row -> mapProjectionToResponse(row, mediaByPost, null))
+                .collect(Collectors.toList());
+        
         return new PageImpl<>(dtos, pageable, postsPage.getTotalElements());
+    }
+
+    /**
+     * Batch load media for multiple posts - single query.
+     */
+    private Map<UUID, List<MediaDto>> loadMediaByPostIds(List<UUID> postIds) {
+        if (postIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        List<Object[]> rows = postRepository.findMediaByPostIds(postIds);
+        Map<UUID, List<MediaDto>> result = new java.util.HashMap<>();
+        
+        for (Object[] row : rows) {
+            UUID postId = (UUID) row[0];
+            UUID mediaId = (UUID) row[1];
+            String url = (String) row[2];
+            String fileId = (String) row[3];
+            
+            result.computeIfAbsent(postId, k -> new java.util.ArrayList<>())
+                    .add(MediaDto.builder().id(mediaId).url(url).fileId(fileId).build());
+        }
+        
+        return result;
+    }
+
+    /**
+     * Map native query projection row to Response DTO.
+     */
+    private PostDto.Response mapProjectionToResponse(Object[] row, Map<UUID, List<MediaDto>> mediaByPost, String userEmail) {
+        UUID postId = (UUID) row[0];
+        String locationName = (String) row[1];
+        String textContent = (String) row[2];
+        java.time.LocalDateTime createdAt = row[3] instanceof java.time.LocalDateTime 
+                ? (java.time.LocalDateTime) row[3] 
+                : ((java.sql.Timestamp) row[3]).toLocalDateTime();
+        int loveCount = ((Number) row[4]).intValue();
+        int shareCount = ((Number) row[5]).intValue();
+        
+        UUID authorId = (UUID) row[6];
+        String authorFirstName = (String) row[7];
+        String authorLastName = (String) row[8];
+        String authorAvatarUrl = (String) row[9];
+        String authorRole = (String) row[10];
+        boolean authorVerifiedHost = row[11] instanceof Boolean 
+                ? (Boolean) row[11] 
+                : ((Number) row[11]).intValue() == 1;
+        
+        UUID homestayId = (UUID) row[12];
+        String homestayName = (String) row[13];
+        UUID originalPostId = (UUID) row[14];
+        int commentCount = ((Number) row[15]).intValue();
+        
+        // Parse tags from JSON array
+        List<String> tags = parseTagsFromJson(row[16]);
+        
+        AuthorDto author = AuthorDto.builder()
+                .id(authorId)
+                .name((authorFirstName != null ? authorFirstName : "") 
+                        + (authorLastName != null ? " " + authorLastName : ""))
+                .role(authorRole)
+                .avatarUrl(authorAvatarUrl)
+                .isVerifiedHost(authorVerifiedHost)
+                .build();
+        
+        return PostDto.Response.builder()
+                .id(postId)
+                .author(author)
+                .locationName(locationName)
+                .textContent(textContent)
+                .media(mediaByPost.getOrDefault(postId, java.util.Collections.emptyList()))
+                .homestayId(homestayId)
+                .homestayName(homestayName)
+                .loveCount(loveCount)
+                .shareCount(shareCount)
+                .commentCount(commentCount)
+                .isLikedByCurrentUser(false) // Set by authenticated context if needed
+                .originalPost(null) // Not loaded in list view for performance
+                .createdAt(createdAt)
+                .tags(tags)
+                .build();
+    }
+    
+    /**
+     * Parse tags from PostgreSQL JSON array string.
+     */
+    private List<String> parseTagsFromJson(Object tagsObj) {
+        if (tagsObj == null) {
+            return java.util.Collections.emptyList();
+        }
+        String tagsStr = tagsObj.toString();
+        if (tagsStr == null || tagsStr.isBlank() || "[]".equals(tagsStr) || "null".equals(tagsStr)) {
+            return java.util.Collections.emptyList();
+        }
+        // Handle PostgreSQL json_agg output: ["tag1","tag2"]
+        try {
+            if (tagsStr.startsWith("[") && tagsStr.endsWith("]")) {
+                String inner = tagsStr.substring(1, tagsStr.length() - 1);
+                if (inner.isBlank()) {
+                    return java.util.Collections.emptyList();
+                }
+                return java.util.Arrays.stream(inner.split(","))
+                        .map(s -> s.replace("\"", "").trim())
+                        .filter(s -> !s.isBlank())
+                        .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            // Fall through
+        }
+        return java.util.Collections.emptyList();
     }
 
     @Transactional(readOnly = true)

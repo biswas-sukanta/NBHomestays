@@ -4,6 +4,7 @@ import com.nbh.backend.dto.DestinationCardDto;
 import com.nbh.backend.dto.DestinationDto;
 import com.nbh.backend.model.Destination;
 import com.nbh.backend.repository.DestinationRepository;
+import com.nbh.backend.repository.projection.DestinationCardProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,9 @@ public class DestinationService {
     @Cacheable("destinations")
     @Transactional(readOnly = true)
     public List<DestinationCardDto> getAllDestinations() {
-        return destinationRepository.fetchDestinationRankings().stream()
-                .map(this::mapToCardDto)
+        // Use optimized projection query - single query, no N+1
+        return destinationRepository.fetchDestinationCardProjections().stream()
+                .map(this::mapProjectionToCardDto)
                 .collect(Collectors.toList());
     }
 
@@ -37,9 +39,26 @@ public class DestinationService {
     @Cacheable(value = "destinations-by-state", key = "#stateSlug")
     @Transactional(readOnly = true)
     public List<DestinationCardDto> getDestinationsByStateSlug(String stateSlug) {
-        return destinationRepository.fetchDestinationRankingsByStateSlug(stateSlug).stream()
-                .map(this::mapToCardDto)
+        // Use optimized projection query - single query, no N+1
+        return destinationRepository.fetchDestinationCardProjectionsByStateSlug(stateSlug).stream()
+                .map(this::mapProjectionToCardDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Map projection to card DTO - no additional queries needed.
+     */
+    private DestinationCardDto mapProjectionToCardDto(DestinationCardProjection projection) {
+        return new DestinationCardDto(
+                projection.getId(),
+                projection.getSlug(),
+                projection.getName(),
+                projection.getHomestayCount(),
+                projection.getLocalImageName(),
+                projection.getStateName(),
+                projection.getStateSlug(),
+                projection.getTags()
+        );
     }
 
     private DestinationCardDto mapToCardDto(Destination destination) {
