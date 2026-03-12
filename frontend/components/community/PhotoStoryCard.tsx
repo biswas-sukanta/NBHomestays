@@ -2,11 +2,11 @@
 
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { MapPin, Heart, MessageCircle } from 'lucide-react';
 import { CommunityPost } from './types';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox').then(m => m.ImageLightbox), { ssr: false });
 
 function extractTitleAndExcerpt(text: string): { title: string; excerpt: string } {
@@ -32,9 +32,9 @@ export function PhotoStoryCard({ post }: { post: CommunityPost }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, ease: 'easeOut' }}
                 className={cn(
-                    'relative overflow-hidden rounded-3xl bg-zinc-950',
-                    'shadow-[0_12px_40px_rgba(0,0,0,0.12)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.16)]',
-                    'ring-1 ring-white/5 transition-all duration-300 hover:-translate-y-1'
+                    'relative overflow-hidden rounded-2xl bg-white',
+                    'shadow-lg hover:shadow-xl',
+                    'border border-neutral-200 transition-all duration-300 hover:-translate-y-1'
                 )}
             >
                 {/* Large Image */}
@@ -43,12 +43,11 @@ export function PhotoStoryCard({ post }: { post: CommunityPost }) {
                     onClick={() => setLightboxIndex(0)}
                 >
                     {mainImage && (
-                        <Image
+                        <OptimizedImage
                             src={mainImage}
                             alt={post.location}
-                            fill
-                            sizes="(min-width: 768px) 800px, 100vw"
-                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                            width={900}
+                            className="w-full h-full transition-transform duration-700 group-hover:scale-105"
                         />
                     )}
                     {/* Gradient Overlay */}
@@ -79,16 +78,16 @@ export function PhotoStoryCard({ post }: { post: CommunityPost }) {
                 </div>
 
                 {/* Minimal Meta Bar */}
-                <div className="flex items-center justify-between px-5 py-3 bg-zinc-900/50 border-t border-white/5">
+                <div className="flex items-center justify-between px-5 py-3 bg-white border-t border-neutral-100">
                     <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white text-[10px] font-bold overflow-hidden">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-[10px] font-bold overflow-hidden">
                             {post.authorAvatar ? (
                                 <img src={post.authorAvatar} alt={post.authorName} className="w-full h-full object-cover" />
                             ) : post.authorName?.slice(0, 2).toUpperCase()}
                         </div>
-                        <span className="text-sm font-medium text-white">{post.authorName}</span>
+                        <span className="text-sm font-medium text-neutral-900">{post.authorName}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-zinc-400 text-sm">
+                    <div className="flex items-center gap-4 text-neutral-500 text-sm">
                         <span className="inline-flex items-center gap-1"><Heart className="w-4 h-4" /> {post.likes || 0}</span>
                         <span className="inline-flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {post.comments || 0}</span>
                     </div>

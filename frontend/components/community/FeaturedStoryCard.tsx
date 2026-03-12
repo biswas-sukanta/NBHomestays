@@ -2,10 +2,10 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { MapPin, MessageCircle, Share2, Heart } from 'lucide-react';
 import { CommunityPost } from './types';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 function extractTitleAndExcerpt(text: string): { title: string; excerpt: string } {
     if (!text) return { title: '', excerpt: '' };
@@ -33,13 +33,11 @@ export function FeaturedStoryCard({ post }: { post: CommunityPost }) {
                 {/* Hero Image with Overlay */}
                 <div className="relative aspect-[16/9] max-h-[460px] overflow-hidden group">
                     {hasImage && mainImage ? (
-                        <Image
+                        <OptimizedImage
                             src={mainImage}
                             alt={post.location || 'Featured story'}
-                            fill
-                            sizes="(min-width: 1024px) 720px, 100vw"
-                            className="object-cover transition-transform duration-700 group-hover:scale-105"
-                            loading="lazy"
+                            width={900}
+                            className="w-full h-full transition-transform duration-700 group-hover:scale-105"
                         />
                     ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 to-neutral-100 flex items-center justify-center p-10">

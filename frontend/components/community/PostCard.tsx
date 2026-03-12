@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { Heart, MessageCircle, MapPin, Share2, Repeat2, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
@@ -15,6 +14,7 @@ import { useAuth } from '@/context/AuthContext';
 import { LoginPromptModal } from './LoginPromptModal';
 import { queryKeys } from '@/lib/queryKeys';
 import { TrendingUp } from 'lucide-react';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 const TAG_ICONS: Record<string, React.ReactNode> = {
     'Hidden Gem': <CheckCircle2 className="w-3 h-3" />,
@@ -270,14 +270,14 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                         <div className="relative w-full aspect-[4/5] max-h-[420px] overflow-hidden bg-neutral-100 rounded-xl">
                             {imageCount === 1 && (
                                 <div className="relative w-full h-full cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(0)}>
-                                    <Image src={post.imageUrl || post.images?.[0]?.url || ''} alt={post.location || 'Post image'} fill sizes="(min-width: 768px) 720px, 100vw" className="object-cover" loading="lazy" />
+                                    <OptimizedImage src={post.imageUrl || post.images?.[0]?.url || ''} alt={post.location || 'Post image'} width={900} className="w-full h-full" />
                                 </div>
                             )}
                             {imageCount === 2 && (
                                 <div className="grid grid-cols-2 gap-2 w-full h-full">
                                     {post.images?.map((img, idx) => (
                                         <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(idx)}>
-                                            <Image src={img.url} alt={`${post.location} - ${idx + 1}`} fill sizes="50vw" className="object-cover" loading="lazy" />
+                                            <OptimizedImage src={img.url} alt={`${post.location} - ${idx + 1}`} width={450} className="w-full h-full" />
                                         </div>
                                     ))}
                                 </div>
@@ -285,13 +285,13 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                             {imageCount === 3 && (
                                 <div className="grid grid-cols-2 grid-rows-2 gap-2 w-full h-full">
                                     <div className="col-span-2 row-span-1 cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(0)}>
-                                        <Image src={post.images?.[0]?.url} alt={`${post.location} - 1`} fill sizes="100vw" className="object-cover" loading="lazy" />
+                                        <OptimizedImage src={post.images?.[0]?.url} alt={`${post.location} - 1`} width={900} className="w-full h-full" />
                                     </div>
                                     <div className="cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(1)}>
-                                        <Image src={post.images?.[1]?.url} alt={`${post.location} - 2`} fill sizes="50vw" className="object-cover" loading="lazy" />
+                                        <OptimizedImage src={post.images?.[1]?.url} alt={`${post.location} - 2`} width={450} className="w-full h-full" />
                                     </div>
                                     <div className="cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(2)}>
-                                        <Image src={post.images?.[2]?.url} alt={`${post.location} - 3`} fill sizes="50vw" className="object-cover" loading="lazy" />
+                                        <OptimizedImage src={post.images?.[2]?.url} alt={`${post.location} - 3`} width={450} className="w-full h-full" />
                                     </div>
                                 </div>
                             )}
@@ -299,7 +299,7 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                                 <div className="grid grid-cols-2 grid-rows-2 gap-2 w-full h-full">
                                     {post.images?.slice(0, 4).map((img, idx) => (
                                         <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden rounded-xl" onClick={() => setLightboxIndex(idx)}>
-                                            <Image src={img.url} alt={`${post.location} - ${idx + 1}`} fill sizes="50vw" className="object-cover" loading="lazy" />
+                                            <OptimizedImage src={img.url} alt={`${post.location} - ${idx + 1}`} width={450} className="w-full h-full" />
                                             {idx === 3 && imageCount > 4 && (
                                                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
                                                     <span className="text-white font-bold text-xl">+{imageCount - 4}</span>
