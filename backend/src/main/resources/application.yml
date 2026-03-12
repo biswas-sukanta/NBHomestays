@@ -24,7 +24,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        generate_statistics: true
+        generate_statistics: false
         format_sql: true
   flyway:
     out-of-order: true
