@@ -177,7 +177,10 @@ export function PostCardUnified({
 
     const images = post.images || (post.imageUrl ? [{ url: post.imageUrl }] : []);
     const imageCount = images.length;
-    const aspectClass = getAspectClass(variant, imageCount);
+    
+    // Fallback: featured/hero without media should use standard variant
+    const effectiveVariant = (variant === 'featured' && imageCount === 0) ? 'standard' : variant;
+    const aspectClass = getAspectClass(effectiveVariant, imageCount);
 
     const { title, excerpt } = useMemo(() => extractTitleAndExcerpt(post.caption || ''), [post.caption]);
     const previewText = truncateText(post.caption || '', 280);
@@ -201,8 +204,8 @@ export function PostCardUnified({
     };
 
     // Variant-specific rendering
-    const isFeatured = variant === 'featured';
-    const isCollage = variant === 'collage';
+    const isFeatured = effectiveVariant === 'featured';
+    const isCollage = effectiveVariant === 'collage';
     const isOverlay = isFeatured; // Only featured uses overlay
 
     const articleClassName = cn(
@@ -214,7 +217,7 @@ export function PostCardUnified({
     return (
         <>
             <motion.article
-                data-testid={isQuoted ? "quoted-post-card" : `post-card-${variant}`}
+                data-testid={isQuoted ? "quoted-post-card" : `post-card-${effectiveVariant}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, ease: 'easeOut' }}

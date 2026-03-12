@@ -408,14 +408,20 @@ public class FeedLayoutEngine {
         List<PostFeedDto.FeedBlockDto> blocks = new ArrayList<>();
         
         if (posts.size() == 1) {
-            // Single post: HERO treatment
+            // Single post: STANDARD if no media, otherwise HERO
+            PostFeedDto post = posts.get(0);
+            int mediaCount = post.getMediaCount() != null ? post.getMediaCount() :
+                    (post.getMedia() != null ? post.getMedia().size() : 0);
+            PostFeedDto.FeedBlockDto.BlockType blockType = mediaCount > 0 
+                    ? PostFeedDto.FeedBlockDto.BlockType.HERO 
+                    : PostFeedDto.FeedBlockDto.BlockType.STANDARD;
             blocks.add(PostFeedDto.FeedBlockDto.builder()
-                    .blockId("block-hero-" + posts.get(0).getPostId())
-                    .blockType(PostFeedDto.FeedBlockDto.BlockType.HERO)
+                    .blockId("block-" + (mediaCount > 0 ? "hero" : "standard") + "-" + post.getPostId())
+                    .blockType(blockType)
                     .blockPosition(0)
-                    .blockPriority(100)
-                    .postIds(List.of(posts.get(0).getPostId()))
-                    .renderHints(createRenderHints(posts.get(0), PostFeedDto.FeedBlockDto.BlockType.HERO))
+                    .blockPriority(mediaCount > 0 ? 100 : 50)
+                    .postIds(List.of(post.getPostId()))
+                    .renderHints(createRenderHints(post, blockType))
                     .build());
         } else if (posts.size() == 2) {
             // Two posts: FEATURED + STANDARD
