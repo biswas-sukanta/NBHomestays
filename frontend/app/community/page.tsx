@@ -222,7 +222,7 @@ export default function CommunityPage() {
     );
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-green-500/30">
+        <div className="min-h-screen bg-white text-neutral-900 selection:bg-green-500/30">
             {/* SEO Guard, Metadata hidden */}
             <CommunityHero onOpenComposer={() => {
                 if (!isAuthenticated) {
@@ -239,25 +239,25 @@ export default function CommunityPage() {
                 <TrendingStories stories={trendingPosts} />
             )}
 
-            <div className="border-t border-white/5">
+            <div className="border-t border-neutral-200">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-10 items-start">
 
                     {/* Left: Main Feed */}
                     <div className="w-full space-y-8">
                         {/* ── Sticky Filter Bar ── */}
-                        <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-zinc-950/95 backdrop-blur-md border-b border-white/5">
+                        <div className="sticky top-16 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-white/95 backdrop-blur-md border-b border-neutral-200">
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                                <button className="px-4 py-2 rounded-full bg-white text-black text-sm font-bold transition-all hover:scale-105">
+                                <button className="px-4 py-2 rounded-full bg-neutral-900 text-white text-sm font-bold transition-all hover:scale-105">
                                     Latest
                                 </button>
-                                <button className="px-4 py-2 rounded-full bg-zinc-800 text-zinc-300 text-sm font-semibold hover:bg-zinc-700 transition-all">
+                                <button className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-600 text-sm font-semibold hover:bg-neutral-200 transition-all">
                                     Trending
                                 </button>
-                                <button className="px-4 py-2 rounded-full bg-zinc-800 text-zinc-300 text-sm font-semibold hover:bg-zinc-700 transition-all">
+                                <button className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-600 text-sm font-semibold hover:bg-neutral-200 transition-all">
                                     Mountains
                                 </button>
-                                <button className="px-4 py-2 rounded-full bg-zinc-800 text-zinc-300 text-sm font-semibold hover:bg-zinc-700 transition-all">
+                                <button className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-600 text-sm font-semibold hover:bg-neutral-200 transition-all">
                                     Culture
                                 </button>
                             </div>
@@ -265,16 +265,16 @@ export default function CommunityPage() {
 
                         {/* ── Top Bar Controls ── */}
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
-                            <h2 className="text-3xl font-bold font-heading text-white tracking-tight">Community Feed</h2>
+                            <h2 className="text-3xl font-bold font-heading text-neutral-900 tracking-tight">Community Feed</h2>
 
                             <div className="flex flex-col sm:flex-row gap-3 items-center">
                                 <div className="relative w-full sm:w-64 group">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-green-500 transition-colors" />
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-green-600 transition-colors" />
                                     <Input
                                         placeholder="Search stories..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="bg-zinc-900 border-none rounded-full h-11 pl-11 shadow-2xl ring-1 ring-white/10 focus-visible:ring-2 focus-visible:ring-green-500/50 text-sm font-medium text-white placeholder:text-zinc-500"
+                                        className="bg-neutral-100 border-none rounded-full h-11 pl-11 shadow-sm ring-1 ring-neutral-200 focus-visible:ring-2 focus-visible:ring-green-500/50 text-sm font-medium text-neutral-900 placeholder:text-neutral-500"
                                     />
                                 </div>
                             </div>

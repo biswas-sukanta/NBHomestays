@@ -239,9 +239,12 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
         }
     };
 
+    const [expanded, setExpanded] = useState(false);
+    const hasLongContent = (post.caption?.length || 0) > 200;
+
     const articleClassName = cn(
-        'relative bg-zinc-950 overflow-hidden transition-all duration-300 isolate',
-        isQuoted ? "mt-3 rounded-[20px] ring-1 ring-white/10" : "rounded-[20px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.16)] ring-1 ring-white/10",
+        'relative bg-white overflow-hidden transition-all duration-300 isolate',
+        isQuoted ? "mt-3 rounded-xl ring-1 ring-neutral-200" : "rounded-xl shadow-sm hover:shadow-md border border-neutral-200",
         !isQuoted && 'hover:-translate-y-[2px]'
     );
 
@@ -261,120 +264,98 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                 {...(!isQuoted ? { whileHover: { y: -2 } } : {})}
                 className={articleClassName}
             >
-                {/* Image Block - Always First */}
+                {/* Image Block */}
                 {hasImage && (
-                    <div className="relative z-10 w-full overflow-hidden group">
-                        <div className="relative w-full aspect-[4/5] max-h-[340px] sm:max-h-[420px] lg:max-h-[520px] overflow-hidden">
-                        {isMultiImage && post.images && post.images.length === 2 ? (
-                            <div className="grid grid-cols-2 gap-[2px] w-full h-full">
-                                {post.images.map((img, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="relative w-full h-full cursor-pointer overflow-hidden"
-                                        onClick={() => setLightboxIndex(idx)}
-                                    >
-                                        <Image
-                                            src={img.url}
-                                            alt={`${post.location} - ${idx + 1}`}
-                                            fill
-                                            sizes="(min-width: 768px) 50vw, 50vw"
-                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        ) : isMultiImage && post.images && post.images.length >= 3 ? (
-                            <div className="grid grid-cols-2 grid-rows-2 gap-[2px] w-full h-full">
-                                <div
-                                    className="relative col-span-2 row-span-1 cursor-pointer overflow-hidden"
-                                    onClick={() => setLightboxIndex(0)}
-                                >
-                                    <Image
-                                        src={post.images[0].url}
-                                        alt={`${post.location} - 1`}
-                                        fill
-                                        sizes="(min-width: 768px) 100vw, 100vw"
-                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                    />
+                    <div className="relative z-10 w-full overflow-hidden">
+                        <div className="relative w-full aspect-[4/5] max-h-[360px] sm:max-h-[420px] lg:max-h-[520px] overflow-hidden bg-neutral-100">
+                            {imageCount === 1 && (
+                                <div className="relative w-full h-full cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(0)}>
+                                    <Image src={post.imageUrl || post.images?.[0]?.url || ''} alt={post.location || 'Post image'} fill sizes="(min-width: 768px) 600px, 100vw" className="object-cover" />
                                 </div>
-                                {post.images.slice(1, 3).map((img, idx) => (
-                                    <div
-                                        key={idx + 1}
-                                        className="relative cursor-pointer overflow-hidden"
-                                        onClick={() => setLightboxIndex(idx + 1)}
-                                    >
-                                        <Image
-                                            src={img.url}
-                                            alt={`${post.location} - ${idx + 2}`}
-                                            fill
-                                            sizes="(min-width: 768px) 50vw, 50vw"
-                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                        />
-                                        {idx === 1 && post.images && post.images.length > 3 && (
-                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                                <span className="text-white font-bold text-2xl">+{post.images.length - 3}</span>
-                                            </div>
-                                        )}
+                            )}
+                            {imageCount === 2 && (
+                                <div className="grid grid-cols-2 w-full h-full">
+                                    {post.images?.map((img, idx) => (
+                                        <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(idx)}>
+                                            <Image src={img.url} alt={`${post.location} - ${idx + 1}`} fill sizes="50vw" className="object-cover" />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {imageCount === 3 && (
+                                <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
+                                    <div className="col-span-2 row-span-1 cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(0)}>
+                                        <Image src={post.images?.[0]?.url} alt={`${post.location} - 1`} fill sizes="100vw" className="object-cover" />
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div
-                                className="relative w-full h-full cursor-pointer overflow-hidden"
-                                onClick={() => setLightboxIndex(0)}
-                            >
-                                <Image
-                                    src={post.imageUrl || post.images?.[0]?.url || ''}
-                                    alt={post.location}
-                                    fill
-                                    sizes="(min-width: 768px) 600px, 100vw"
-                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                />
-                            </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                                    <div className="cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(1)}>
+                                        <Image src={post.images?.[1]?.url} alt={`${post.location} - 2`} fill sizes="50vw" className="object-cover" />
+                                    </div>
+                                    <div className="cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(2)}>
+                                        <Image src={post.images?.[2]?.url} alt={`${post.location} - 3`} fill sizes="50vw" className="object-cover" />
+                                    </div>
+                                </div>
+                            )}
+                            {imageCount >= 4 && (
+                                <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
+                                    {post.images?.slice(0, 4).map((img, idx) => (
+                                        <div key={idx} className="relative w-full h-full cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(idx)}>
+                                            <Image src={img.url} alt={`${post.location} - ${idx + 1}`} fill sizes="50vw" className="object-cover" />
+                                            {idx === 3 && imageCount > 4 && (
+                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                                    <span className="text-white font-bold text-xl">+{imageCount - 4}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
                 {/* Content Block */}
-                <div className="relative z-20 p-4 lg:p-5 bg-zinc-950">
+                <div className="relative z-20 p-4 lg:p-5 bg-white">
                     {/* Tags Row */}
                     <div className="flex flex-wrap gap-2 mb-3">
-                        <span className="inline-flex items-center bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1">
+                        <span className="inline-flex items-center bg-neutral-100 text-neutral-600 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1">
                             {isQuoted ? 'Repost' : 'Story'}
                         </span>
                         {(post.tags ?? []).slice(0, 2).map(tag => (
-                            <span key={tag} className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1">
+                            <span key={tag} className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-widest rounded-full px-3 py-1">
                                 {TAG_ICONS[tag]}{tag}
                             </span>
                         ))}
                     </div>
 
                     {/* Headline */}
-                    <h3 className="text-xl sm:text-2xl font-bold font-heading text-white leading-tight tracking-tight mb-2 line-clamp-2">
+                    <h3 className="text-xl sm:text-2xl font-bold font-heading text-neutral-900 leading-tight tracking-tight mb-2 line-clamp-2">
                         {title || post.caption.slice(0, 100)}
                     </h3>
 
-                    {/* Excerpt */}
-                    {(excerpt || post.caption.length > 100) && (
-                        <p className="text-sm sm:text-base text-zinc-400 leading-relaxed mb-4 line-clamp-3">
-                            {excerpt || post.caption.slice(100)}
-                        </p>
-                    )}
+                    {/* Excerpt with Read more */}
+                    <div className="text-sm sm:text-base text-neutral-600 leading-relaxed mb-3">
+                        <span className={expanded ? '' : 'line-clamp-3'}>
+                            {excerpt || post.caption.slice(100) || post.caption}
+                        </span>
+                        {hasLongContent && (
+                            <button onClick={() => setExpanded(!expanded)} className="ml-1 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+                                {expanded ? 'Show less' : 'Read more'}
+                            </button>
+                        )}
+                    </div>
 
                     {/* Meta Row */}
-                    <div className="flex items-center gap-3 pt-3 border-t border-white/10">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white text-xs font-bold overflow-hidden shrink-0">
+                    <div className="flex items-center gap-3 pt-3 border-t border-neutral-100">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden shrink-0">
                             {authorAvatar ? (
                                 <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" />
                             ) : initials}
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-white truncate">{authorName}</p>
-                            <p className="text-xs text-zinc-500">{formatRelative(post.createdAt)}</p>
+                            <p className="text-sm font-bold text-neutral-900 truncate">{authorName}</p>
+                            <p className="text-xs text-neutral-500">{formatRelative(post.createdAt)}</p>
                         </div>
                         {post.location && (
-                            <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                            <div className="flex items-center gap-1 text-neutral-500 text-xs">
                                 <MapPin className="w-3.5 h-3.5" />
                                 <span className="truncate max-w-[100px] sm:max-w-[150px]">{post.location}</span>
                             </div>
@@ -383,13 +364,13 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
                             <div className="flex items-center gap-2 ml-auto">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onEdit?.(post); }}
-                                    className="text-xs font-semibold text-zinc-400 hover:text-white transition-colors"
+                                    className="text-xs font-semibold text-neutral-500 hover:text-neutral-700 transition-colors"
                                 >
                                     Edit
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onDelete(post.id); }}
-                                    className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors"
+                                    className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
                                 >
                                     Delete
                                 </button>
@@ -400,8 +381,8 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
                 {/* Quoted Repost */}
                 {post.originalPost && (
-                    <div className="px-4 lg:px-5 pb-4 bg-zinc-950">
-                        <div className="rounded-xl border border-white/20 bg-black/40 backdrop-blur-md overflow-hidden">
+                    <div className="px-4 lg:px-5 pb-4 bg-white">
+                        <div className="rounded-xl border border-neutral-200 bg-neutral-50 overflow-hidden">
                             <PostCard post={post.originalPost} isQuoted={true} currentUser={currentUser} />
                         </div>
                     </div>
@@ -409,31 +390,31 @@ export function PostCard({ post, onUpdate, onDelete, onEdit, currentUser, onRepo
 
                 {/* Actions Bar */}
                 {!isQuoted && (
-                    <div className="relative z-20 flex items-center justify-between px-4 py-3 border-t border-white/10 bg-zinc-900/50">
+                    <div className="relative z-20 flex items-center justify-between px-4 py-3 border-t border-neutral-100 bg-white">
                         <LikeButton
                             postId={post.id}
                             initialLiked={post.isLikedByCurrentUser || false}
                             initialCount={post.likes || 0}
-                            darkMode={true}
+                            darkMode={false}
                             onLikeToggle={(newCount, newLiked) => onUpdate?.({ ...post, likes: newCount, isLikedByCurrentUser: newLiked })}
                             onUnauthenticated={() => setLoginModal({ open: true, action: 'love' })}
                         />
                         <button
                             onClick={() => { if (!isAuthenticated) { setLoginModal({ open: true, action: 'comment' }); return; } onOpenComments?.(post.id); }}
-                            className="flex-1 flex justify-center items-center gap-2 min-h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-semibold transition-colors"
+                            className="flex-1 flex justify-center items-center gap-2 min-h-10 rounded-lg text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 text-sm font-semibold transition-colors"
                         >
                             <MessageCircle className="w-4 h-4" />
                             <span>{post.comments || 0}</span>
                         </button>
                         <button
                             onClick={handleRepost}
-                            className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-semibold transition-colors"
+                            className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 text-sm font-semibold transition-colors"
                         >
                             <Repeat2 className="w-4 h-4" />
                         </button>
                         <button
                             onClick={handleShare}
-                            className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-semibold transition-colors"
+                            className="flex-1 flex justify-center items-center gap-1.5 min-h-10 rounded-lg text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 text-sm font-semibold transition-colors"
                         >
                             <Share2 className="w-4 h-4" />
                             <span>{shareCount}</span>
