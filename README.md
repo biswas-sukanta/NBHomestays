@@ -57,6 +57,21 @@ Image uploads are handled server-side:
 
 Browser -> Backend (`/api/images/upload-multiple`) -> ImageKit -> CDN URL
 
+## Community Feed
+
+The community feed features a premium editorial design inspired by Instagram/Airbnb:
+
+- **Image-first layout**: 16:9 aspect ratio hero images
+- **Post cards**: 18px radius, 24px padding, hover elevation
+- **Responsive srcset**: Uses ImageKit transformations (small/medium/large variants)
+- **Relative timestamps**: "Just now", "5 min ago", "2 hr ago", "Yesterday"
+- **Lazy loading**: Images load on scroll with skeleton placeholders
+
+Key components:
+- `frontend/components/community/PostCardUnified.tsx` - Main post card
+- `frontend/components/community/PostInteractionBar.tsx` - Like/comment/repost actions
+- `frontend/lib/utils/feed-utils.ts` - Layout utilities and timestamp formatting
+
 ## AI-focused docs
 
 - `docs/AI_PROJECT_CONTEXT.md` (canonical AI onboarding context)

@@ -43,9 +43,10 @@ export function extractTitleAndExcerpt(text: string): { title: string; excerpt: 
 export function formatRelative(isoDate: string): string {
     if (!isoDate) return '';
     const diff = (Date.now() - new Date(isoDate).getTime()) / 1000;
-    if (diff < 60) return 'just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 86400)}d ago`;
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+    if (diff < 172800) return 'Yesterday';
     return `${Math.floor(diff / 86400)}d ago`;
 }
 
@@ -186,7 +187,7 @@ export function canUseVariant(post: { images?: { url: string }[]; imageUrl?: str
 /**
  * Gets the appropriate aspect ratio class based on variant.
  * FIXED aspect ratios - no dynamic modification.
- * FEATURED → 16:9, STANDARD → 4:5, COLLAGE → 4:5 container
+ * FEATURED → 16:9, STANDARD → 16:9, COLLAGE → 4:5 container
  */
 export function getAspectClass(variant: FeedLayoutVariant, imageCount: number): string {
     switch (variant) {
@@ -196,7 +197,7 @@ export function getAspectClass(variant: FeedLayoutVariant, imageCount: number): 
             return 'aspect-[4/5] max-h-[420px]';
         case 'standard':
         default:
-            return 'aspect-[4/5] max-h-[420px]';
+            return 'aspect-[16/9] max-h-[420px]';
     }
 }
 
