@@ -4,6 +4,7 @@ import com.nbh.backend.model.Post;
 import com.nbh.backend.model.PostTimeline;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.TimelineRepository;
+import com.nbh.backend.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,9 +31,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TimelineService {
 
     private final TimelineRepository timelineRepository;
+    private final PostRepository postRepository;
     
     private static final int HOT_WINDOW_SIZE = 1000;
     private static final int PRUNE_INTERVAL = 100;
+    private static final int BACKFILL_BATCH_SIZE = 100;
     
     // Counter for prune interval
     private final AtomicInteger insertCounter = new AtomicInteger(0);
@@ -167,6 +171,43 @@ public class TimelineService {
     @Transactional(readOnly = true)
     public boolean hasTimelineEntries() {
         return timelineRepository.hasTimelineEntries();
+    }
+
+    /**
+     * Backfill timeline with missing posts.
+     * Called on startup or via admin endpoint to sync existing posts.
+     * 
+     * @return Number of posts backfilled
+     */
+    @Transactional
+    public int backfillTimeline() {
+        log.info("Starting timeline backfill...");
+        int backfilled = 0;
+        
+        try {
+            // Get all posts that don't have timeline entries
+            List<Post> postsWithoutTimeline = postRepository.findPostsNotInTimeline();
+            
+            for (Post post : postsWithoutTimeline) {
+                try {
+                    insertPostToTimeline(post);
+                    backfilled++;
+                    
+                    // Log progress every 100 posts
+                    if (backfilled % BACKFILL_BATCH_SIZE == 0) {
+                        log.info("Backfilled {} posts to timeline", backfilled);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to backfill post {}: {}", post.getId(), e.getMessage());
+                }
+            }
+            
+            log.info("Timeline backfill complete. Backfilled {} posts", backfilled);
+        } catch (Exception e) {
+            log.error("Timeline backfill failed: {}", e.getMessage());
+        }
+        
+        return backfilled;
     }
 
     /**

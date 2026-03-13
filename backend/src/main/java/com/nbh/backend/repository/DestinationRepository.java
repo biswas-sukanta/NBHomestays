@@ -38,42 +38,44 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
     /**
      * Optimized projection query for destination cards with homestay count.
      * Single query avoids N+1 lazy loading issues.
-     * Uses subquery for tags to avoid implicit join creating duplicate rows.
+     * Uses native SQL for tags subquery since tags is an @ElementCollection.
      */
-    @Query("""
+    @Query(value = """
             SELECT d.id AS id,
                    d.slug AS slug,
                    d.name AS name,
-                   d.localImageName AS localImageName,
-                   (SELECT COUNT(h) FROM Homestay h WHERE h.destination = d AND h.isDeleted = false) AS homestayCount,
+                   d.local_image_name AS localImageName,
+                   (SELECT COUNT(*) FROM homestays h WHERE h.destination_id = d.id AND h.is_deleted = false) AS homestayCount,
                    s.name AS stateName,
                    s.slug AS stateSlug,
-                   (SELECT dt.tag FROM DestinationTag dt WHERE dt.destination.id = d.id) AS tags
-            FROM Destination d
-            LEFT JOIN d.state s
+                   (SELECT array_agg(dt.tag) FROM destination_tags dt WHERE dt.destination_id = d.id) AS tags
+            FROM destinations d
+            LEFT JOIN states s ON d.state_id = s.id
             ORDER BY homestayCount DESC
-            """)
+            """,
+            nativeQuery = true)
     List<DestinationCardProjection> fetchDestinationCardProjections();
 
     /**
      * Optimized projection query for destination cards by state slug.
      * Single query avoids N+1 lazy loading issues.
-     * Uses subquery for tags to avoid implicit join creating duplicate rows.
+     * Uses native SQL for tags subquery since tags is an @ElementCollection.
      */
-    @Query("""
+    @Query(value = """
             SELECT d.id AS id,
                    d.slug AS slug,
                    d.name AS name,
-                   d.localImageName AS localImageName,
-                   (SELECT COUNT(h) FROM Homestay h WHERE h.destination = d AND h.isDeleted = false) AS homestayCount,
+                   d.local_image_name AS localImageName,
+                   (SELECT COUNT(*) FROM homestays h WHERE h.destination_id = d.id AND h.is_deleted = false) AS homestayCount,
                    s.name AS stateName,
                    s.slug AS stateSlug,
-                   (SELECT dt.tag FROM DestinationTag dt WHERE dt.destination.id = d.id) AS tags
-            FROM Destination d
-            LEFT JOIN d.state s
+                   (SELECT array_agg(dt.tag) FROM destination_tags dt WHERE dt.destination_id = d.id) AS tags
+            FROM destinations d
+            LEFT JOIN states s ON d.state_id = s.id
             WHERE s.slug = :stateSlug
             ORDER BY homestayCount DESC
-            """)
+            """,
+            nativeQuery = true)
     List<DestinationCardProjection> fetchDestinationCardProjectionsByStateSlug(@Param("stateSlug") String stateSlug);
 
     @Query("""

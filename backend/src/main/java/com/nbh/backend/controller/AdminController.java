@@ -4,6 +4,7 @@ import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.model.Homestay;
+import com.nbh.backend.service.TimelineService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +24,7 @@ public class AdminController {
     private final HomestayRepository homestayRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final TimelineService timelineService;
 
     @GetMapping("/hello")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -79,5 +81,16 @@ public class AdminController {
         homestay.setFeatured(newState);
         homestayRepository.save(homestay);
         return ResponseEntity.ok(Map.of("id", id, "featured", newState));
+    }
+
+    /** Backfill timeline with missing posts */
+    @PostMapping("/timeline/backfill")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Map<String, Object>> backfillTimeline() {
+        int backfilled = timelineService.backfillTimeline();
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "backfilled", backfilled,
+                "message", "Timeline backfilled " + backfilled + " posts"));
     }
 }

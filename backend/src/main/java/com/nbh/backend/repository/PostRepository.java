@@ -177,4 +177,16 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                 countQuery = "SELECT COUNT(*) FROM posts WHERE is_deleted = false AND user_id = :userId",
                 nativeQuery = true)
         Page<Object[]> findPostProjectionsByUserId(@Param("userId") UUID userId, Pageable pageable);
+
+        /**
+         * Find posts that don't have timeline entries.
+         * Used for backfilling the timeline table.
+         */
+        @Query("""
+                SELECT p FROM Post p
+                LEFT JOIN PostTimeline t ON t.postId = p.id
+                WHERE p.isDeleted = false AND t.postId IS NULL
+                ORDER BY p.createdAt DESC
+                """)
+        List<Post> findPostsNotInTimeline();
 }

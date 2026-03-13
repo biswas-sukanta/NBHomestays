@@ -160,7 +160,7 @@ public class FeedService {
     
     /**
      * Get feed from timeline table (index-only scan).
-     * Returns null if timeline is empty.
+     * Returns null if timeline is empty or has insufficient data (fallback protection).
      * Uses 30-day bounded window for 60% cost reduction.
      */
     private PostFeedDto.FeedResponse getFeedFromTimeline(
@@ -190,6 +190,20 @@ public class FeedService {
                     .nextCursor(null)
                     .hasMore(false)
                     .build();
+        }
+        
+        // FALLBACK PROTECTION: If timeline returns fewer rows than requested on first page,
+        // it may indicate timeline is out of sync. Check if direct query has more posts.
+        if (cursorCreatedAt == null && timelineRows.size() < pageSize) {
+            long timelineCount = timelineRepository.countByIsDeletedFalse();
+            long postCount = feedRepository.countAllActive();
+            
+            // If posts significantly exceed timeline entries, fall back to direct query
+            if (postCount > timelineCount + 5) {
+                log.warn("Timeline out of sync: {} timeline entries vs {} posts. Falling back to direct query.", 
+                        timelineCount, postCount);
+                return null;
+            }
         }
         
         // Determine hasMore
