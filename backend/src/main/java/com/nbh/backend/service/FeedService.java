@@ -663,6 +663,17 @@ public class FeedService {
     }
 
     /**
+     * Safely convert database value to boolean.
+     * Handles both Boolean and Number (0/1) types from PostgreSQL.
+     */
+    private boolean toBoolean(Object value) {
+        if (value == null) return false;
+        if (value instanceof Boolean b) return b;
+        if (value instanceof Number n) return n.intValue() == 1;
+        return false;
+    }
+
+    /**
      * Map database row to PostFeedDto.
      */
     private PostFeedDto mapToDto(
@@ -683,7 +694,7 @@ public class FeedService {
         String authorName = (String) row[4];
         String authorAvatarUrl = (String) row[5];
         String authorRole = (String) row[6];
-        boolean authorVerifiedHost = row[7] != null && ((Boolean) row[7] || ((Number) row[7]).intValue() == 1);
+        boolean authorVerifiedHost = toBoolean(row[7]);
         
         Number likeCountDb = (Number) row[8];
         Number shareCountDb = (Number) row[9];
