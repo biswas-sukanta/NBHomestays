@@ -8,14 +8,30 @@ export function PostSkeleton({ isQuoted = false }: { isQuoted?: boolean }) {
             "overflow-hidden relative bg-[#FDFBF7]",
             isQuoted ? "rounded-[20px] mt-3 ring-1 ring-neutral-200" : "rounded-[20px] border-none shadow-[0_12px_40px_-12px_rgba(0,0,0,0.08)]"
         )}>
-            {/* Image Hero Placeholder */}
-            <Skeleton className="w-full aspect-[4/5] bg-neutral-200 animate-pulse" />
+            {/* Curation Pills */}
+            <div className="flex items-center gap-2 px-6 pt-5">
+                <Skeleton className="h-6 w-20 rounded-full bg-neutral-200 animate-pulse" />
+                <Skeleton className="h-6 w-16 rounded-full bg-neutral-200 animate-pulse" />
+            </div>
+
+            {/* Editorial Image Grid Placeholder */}
+            <div className="px-6 pt-3 pb-4">
+                <div className="grid grid-cols-2 gap-1.5 rounded-lg overflow-hidden">
+                    <Skeleton className="aspect-[4/3] bg-neutral-200 animate-pulse col-span-2" />
+                </div>
+            </div>
+
+            {/* Category Tags Placeholder */}
+            <div className="flex gap-2 px-6 pb-3">
+                <Skeleton className="h-7 w-24 rounded-full bg-neutral-200 animate-pulse" />
+                <Skeleton className="h-7 w-20 rounded-full bg-neutral-200 animate-pulse" />
+            </div>
 
             {/* User Metadata Byline */}
-            <div className="px-6 pt-5 pb-3">
+            <div className="px-6 pt-2 pb-3">
                 <div className="flex items-center gap-3">
-                    <Skeleton className="w-10 h-10 rounded-full bg-neutral-200 animate-pulse" />
-                    <div className="flex flex-col gap-1.5">
+                    <Skeleton className="w-9 h-9 rounded-full bg-neutral-200 animate-pulse" />
+                    <div className="flex items-center gap-2">
                         <Skeleton className="h-4 w-24 bg-neutral-200 animate-pulse" />
                         <Skeleton className="h-3 w-16 bg-neutral-200 animate-pulse" />
                     </div>
@@ -24,17 +40,17 @@ export function PostSkeleton({ isQuoted = false }: { isQuoted?: boolean }) {
 
             {/* Editorial Content Teaser */}
             <div className="px-6 pb-4 space-y-2">
-                <Skeleton className="h-5 w-3/4 bg-neutral-200 animate-pulse" />
+                <Skeleton className="h-6 w-3/4 bg-neutral-200 animate-pulse" />
                 <Skeleton className="h-4 w-full bg-neutral-200 animate-pulse" />
                 <Skeleton className="h-4 w-2/3 bg-neutral-200 animate-pulse" />
             </div>
 
-            {/* Whisper-Quiet Interactions Bar */}
+            {/* Social Interaction Bar */}
             {!isQuoted && (
-                <div className="border-t border-gray-100 px-6 py-4 flex items-center gap-6">
-                    <Skeleton className="h-4 w-12 bg-neutral-200 animate-pulse rounded" />
-                    <Skeleton className="h-4 w-12 bg-neutral-200 animate-pulse rounded" />
-                    <Skeleton className="h-4 w-8 bg-neutral-200 animate-pulse rounded ml-auto" />
+                <div className="border-t border-gray-100 px-6 py-4 flex items-center gap-5">
+                    <Skeleton className="h-4 w-16 bg-neutral-200 animate-pulse rounded" />
+                    <Skeleton className="h-4 w-16 bg-neutral-200 animate-pulse rounded" />
+                    <Skeleton className="h-4 w-20 bg-neutral-200 animate-pulse rounded ml-auto" />
                 </div>
             )}
         </div>

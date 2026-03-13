@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, Repeat2, Share2, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox').then(m => m.ImageLightbox), { ssr: false });
@@ -12,6 +12,17 @@ import type { MediaVariant } from '@/lib/adapters/normalizePost';
 import { RepostModal } from './RepostModal';
 import { extractTitleAndExcerpt, formatRelative, truncateText, FeedLayoutVariant, getAspectClass } from '@/lib/utils/feed-utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+// ── Category Tag Configuration ─────────────────────────────────────────────────
+const CATEGORY_CONFIG: Record<string, { icon: string; color: string }> = {
+    'Question': { icon: '❓', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+    'Trip Report': { icon: '📝', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+    'Review': { icon: '⭐', color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+    'Alert': { icon: '⚠️', color: 'bg-red-50 text-red-700 border-red-200' },
+    'Hidden Gem': { icon: '✨', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+    'Offbeat': { icon: '🏔️', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    'Transport': { icon: '🚗', color: 'bg-slate-50 text-slate-700 border-slate-200' },
+};
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface PostCardProps {
@@ -27,109 +38,175 @@ interface PostCardProps {
     onNewPost?: (p: CommunityPost) => void;
 }
 
-// ── Editorial Image Carousel ────────────────────────────────────────────────────
-function EditorialCarousel({ 
+// ── Editorial Image Grid (Structured Layout) ────────────────────────────────────────
+function EditorialImageGrid({ 
     images, 
     onImageClick 
 }: { 
     images: MediaVariant[]; 
     onImageClick: (idx: number) => void;
 }) {
-    const [activeIndex, setActiveIndex] = useState(0);
-    const scrollRef = useRef<HTMLDivElement>(null);
     const imageCount = images.length;
-
-    const scrollTo = (idx: number) => {
-        if (!scrollRef.current) return;
-        const newIndex = Math.max(0, Math.min(idx, imageCount - 1));
-        scrollRef.current.scrollTo({
-            left: newIndex * scrollRef.current.offsetWidth,
-            behavior: 'smooth'
-        });
-        setActiveIndex(newIndex);
-    };
-
-    const handleScroll = () => {
-        if (!scrollRef.current) return;
-        const idx = Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth);
-        setActiveIndex(idx);
-    };
-
-    return (
-        <div className="relative">
-            {/* Horizontal snap carousel */}
+    
+    if (imageCount === 0) return null;
+    
+    // 1 image: Large horizontal
+    if (imageCount === 1) {
+        return (
             <div 
-                ref={scrollRef}
-                onScroll={handleScroll}
-                className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                className="relative w-full aspect-[16/10] cursor-pointer group overflow-hidden rounded-lg"
+                onClick={() => onImageClick(0)}
             >
-                {images.map((img, idx) => (
-                    <div 
+                <OptimizedImage
+                    src={images[0]?.url || ''}
+                    alt="Post image"
+                    width={900}
+                    small={images[0]?.small}
+                    medium={images[0]?.medium}
+                    large={images[0]?.large}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                />
+            </div>
+        );
+    }
+    
+    // 2 images: Side by side
+    if (imageCount === 2) {
+        return (
+            <div className="grid grid-cols-2 gap-1.5 rounded-lg overflow-hidden">
+                {images.slice(0, 2).map((img, idx) => (
+                    <div
                         key={idx}
-                        className="relative w-full flex-shrink-0 snap-start aspect-[4/5] cursor-pointer group"
+                        className="relative aspect-[4/3] cursor-pointer group overflow-hidden"
                         onClick={() => onImageClick(idx)}
                     >
                         <OptimizedImage
                             src={img.url}
                             alt={`Image ${idx + 1}`}
-                            width={800}
+                            width={450}
                             small={img.small}
                             medium={img.medium}
                             large={img.large}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                         />
                     </div>
                 ))}
             </div>
-
-            {/* Navigation arrows for multi-image */}
-            {imageCount > 1 && (
-                <>
-                    {activeIndex > 0 && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); scrollTo(activeIndex - 1); }}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-md hover:bg-white transition-colors"
-                        >
-                            <ChevronLeft className="w-4 h-4 text-neutral-700" strokeWidth={1.5} />
-                        </button>
-                    )}
-                    {activeIndex < imageCount - 1 && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); scrollTo(activeIndex + 1); }}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-md hover:bg-white transition-colors"
-                        >
-                            <ChevronRight className="w-4 h-4 text-neutral-700" strokeWidth={1.5} />
-                        </button>
-                    )}
-
-                    {/* Minimalist dot indicators */}
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                        {images.slice(0, 5).map((_, idx) => (
-                            <div
-                                key={idx}
-                                className={cn(
-                                    "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                                    idx === activeIndex ? "bg-white w-4" : "bg-white/50"
-                                )}
-                            />
-                        ))}
-                        {imageCount > 5 && (
-                            <span className="text-white/70 text-[10px] ml-1">+{imageCount - 5}</span>
-                        )}
+        );
+    }
+    
+    // 3 images: 1 large + 2 small stacked
+    if (imageCount === 3) {
+        return (
+            <div className="grid grid-cols-2 gap-1.5 rounded-lg overflow-hidden h-[280px]">
+                <div
+                    className="col-span-1 row-span-2 cursor-pointer group overflow-hidden"
+                    onClick={() => onImageClick(0)}
+                >
+                    <OptimizedImage
+                        src={images[0]?.url || ''}
+                        alt="Image 1"
+                        width={600}
+                        small={images[0]?.small}
+                        medium={images[0]?.medium}
+                        large={images[0]?.large}
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                    />
+                </div>
+                {images.slice(1, 3).map((img, idx) => (
+                    <div
+                        key={idx + 1}
+                        className="cursor-pointer group overflow-hidden"
+                        onClick={() => onImageClick(idx + 1)}
+                    >
+                        <OptimizedImage
+                            src={img.url}
+                            alt={`Image ${idx + 2}`}
+                            width={300}
+                            small={img.small}
+                            medium={img.medium}
+                            large={img.large}
+                            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                        />
                     </div>
-                </>
-            )}
+                ))}
+            </div>
+        );
+    }
+    
+    // 4+ images: 2x2 grid with +X more overlay
+    return (
+        <div className="grid grid-cols-2 gap-1.5 rounded-lg overflow-hidden">
+            {images.slice(0, 4).map((img, idx) => (
+                <div
+                    key={idx}
+                    className="relative aspect-square cursor-pointer group overflow-hidden"
+                    onClick={() => onImageClick(idx)}
+                >
+                    <OptimizedImage
+                        src={img.url}
+                        alt={`Image ${idx + 1}`}
+                        width={400}
+                        small={img.small}
+                        medium={img.medium}
+                        large={img.large}
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                    />
+                    {/* +X More Images overlay on last image */}
+                    {idx === 3 && imageCount > 4 && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                            <span className="text-white font-semibold text-lg flex items-center gap-1">
+                                <Plus className="w-5 h-5" />
+                                {imageCount - 4} More
+                            </span>
+                        </div>
+                    )}
+                </div>
+            ))}
         </div>
     );
 }
 
-// ── Quote Card Fallback (no images) ────────────────────────────────────────────
-function QuoteCard({ text }: { text: string }) {
+// ── Text-Only Premium Quote Card ────────────────────────────────────────────
+function TextOnlyCard({ 
+    title, 
+    body, 
+    authorName,
+    authorAvatar,
+    initials,
+    timestamp
+}: { 
+    title: string; 
+    body: string;
+    authorName: string;
+    authorAvatar?: string;
+    initials: string;
+    timestamp: string;
+}) {
     return (
-        <div className="relative aspect-[4/3] bg-[#2D5A4A] flex items-center justify-center p-8">
-            <p className="font-serif text-white/90 text-xl sm:text-2xl text-center italic leading-relaxed line-clamp-6">
-                "{text.slice(0, 200)}{text.length > 200 ? '...' : ''}"
+        <div className="relative bg-gradient-to-br from-[#FDFBF7] to-[#F5F3EE] p-8 min-h-[320px] flex flex-col justify-center">
+            {/* User info combined at top */}
+            <div className="flex items-center gap-3 mb-6">
+                <Avatar className="w-9 h-9 ring-2 ring-white/80 shadow-sm">
+                    <AvatarImage src={authorAvatar} alt={authorName} />
+                    <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-xs font-bold">
+                        {initials}
+                    </AvatarFallback>
+                </Avatar>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-[#1A1A1A]">{authorName}</span>
+                    <span className="text-xs text-[#6B7280]">· {timestamp}</span>
+                </div>
+            </div>
+            
+            {/* Title as classic serif quote */}
+            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A] text-center leading-snug mb-4 italic">
+                "{title}"
+            </h3>
+            
+            {/* Body text - editorial feel */}
+            <p className="text-sm text-[#6B7280] text-center leading-relaxed max-w-md mx-auto">
+                {body}
             </p>
         </div>
     );
@@ -207,71 +284,85 @@ export function PostCardUnified({
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 className={articleClassName}
             >
-                {/* STEP 3: Image-First Media Hero (Top of Card) */}
+                {/* STEP 5: Curation Signals - Top Pills */}
+                {!isOverlay && (
+                    <div className="flex items-center gap-2 px-6 pt-5">
+                        {/* FEATURED Pill */}
+                        {isFeatured && (
+                            <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full shadow-sm">
+                                Featured
+                            </span>
+                        )}
+                        {/* EDITORIAL Pill */}
+                        <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-[#2D5A4A] text-[#FDFBF7] rounded-full">
+                            Editorial
+                        </span>
+                    </div>
+                )}
+
+                {/* STEP 3: Multi-Image Editorial Grid OR Text-Only Premium */}
                 {!isOverlay && (
                     <>
                         {imageCount > 0 ? (
-                            <div className="relative w-full">
-                                {/* Topic Badge - Glassmorphism */}
-                                {post.location && (
-                                    <div className="absolute top-4 left-4 z-10">
-                                        <span className="inline-flex items-center gap-1.5 bg-white/30 backdrop-blur-md text-white text-xs font-medium px-3 py-1.5 rounded-full">
-                                            <span>📍</span>
-                                            <span>{post.location}</span>
-                                        </span>
-                                    </div>
-                                )}
-                                
-                                {/* Carousel for multi-image, single for 1 image */}
-                                {imageCount === 1 ? (
-                                    <div 
-                                        className="relative w-full aspect-[4/5] cursor-pointer group"
-                                        onClick={() => setLightboxIndex(0)}
-                                    >
-                                        <OptimizedImage
-                                            src={images[0]?.url || ''}
-                                            alt="Post image"
-                                            width={800}
-                                            small={images[0]?.small}
-                                            medium={images[0]?.medium}
-                                            large={images[0]?.large}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                        />
-                                    </div>
-                                ) : (
-                                    <EditorialCarousel
-                                        images={images}
-                                        onImageClick={(idx) => setLightboxIndex(idx)}
-                                    />
-                                )}
+                            <div className="px-6 pt-3 pb-4">
+                                <EditorialImageGrid
+                                    images={images}
+                                    onImageClick={(idx) => setLightboxIndex(idx)}
+                                />
                             </div>
                         ) : (
-                            /* Quote Card Fallback - no images */
-                            <QuoteCard text={post.caption || ''} />
+                            /* STEP 4: Super-Premium Text-Only Card */
+                            <TextOnlyCard
+                                title={title || post.caption?.slice(0, 50) || 'Untitled'}
+                                body={post.caption || ''}
+                                authorName={authorName}
+                                authorAvatar={authorAvatar}
+                                initials={initials}
+                                timestamp={formatRelative(post.createdAt)}
+                            />
                         )}
                     </>
                 )}
 
-                {/* STEP 4: User Metadata (The Byline) */}
-                {!isOverlay && (
-                    <div className="px-6 pt-5 pb-3">
+                {/* Category Tags - Below title/quote */}
+                {!isOverlay && imageCount > 0 && (post.tags ?? []).length > 0 && (
+                    <div className="flex flex-wrap gap-2 px-6 pb-3">
+                        {(post.tags ?? []).slice(0, 3).map(tag => {
+                            const config = CATEGORY_CONFIG[tag] || { icon: '🏷', color: 'bg-neutral-50 text-neutral-700 border-neutral-200' };
+                            return (
+                                <span
+                                    key={tag}
+                                    className={cn(
+                                        "inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1 border",
+                                        config.color
+                                    )}
+                                >
+                                    <span>{config.icon}</span>
+                                    {tag}
+                                </span>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* User Metadata Byline */}
+                {!isOverlay && imageCount > 0 && (
+                    <div className="px-6 pt-2 pb-3">
                         <div className="flex items-center gap-3">
-                            <Avatar className="w-10 h-10 ring-2 ring-white shadow-sm">
+                            <Avatar className="w-9 h-9 ring-2 ring-white shadow-sm">
                                 <AvatarImage src={authorAvatar} alt={authorName} />
-                                <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-bold">
+                                <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-xs font-bold">
                                     {initials}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="flex flex-col">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-[#1A1A1A]">{authorName}</span>
-                                    {post.isVerifiedHost && (
-                                        <span className="px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 rounded-full">
-                                            Host
-                                        </span>
-                                    )}
-                                </div>
-                                <span className="text-xs text-[#6B7280]">{formatRelative(post.createdAt)}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-[#1A1A1A]">{authorName}</span>
+                                {post.isVerifiedHost && (
+                                    <span className="px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 rounded-full">
+                                        Host
+                                    </span>
+                                )}
+                                <span className="text-xs text-[#6B7280]">· {formatRelative(post.createdAt)}</span>
                             </div>
                             {canModify && onDelete && (
                                 <div className="flex items-center gap-2 ml-auto">
@@ -293,25 +384,24 @@ export function PostCardUnified({
                     </div>
                 )}
 
-                {/* STEP 5: Editorial Content (The Teaser) */}
+                {/* Editorial Content Teaser */}
                 {!isOverlay && imageCount > 0 && post.caption && (
                     <div className="px-6 pb-4">
-                        {/* Post Title - Editorial Serif */}
-                        <h3 className="font-serif text-xl font-bold text-[#1A1A1A] leading-tight mb-2 line-clamp-2">
+                        <h3 className="font-serif text-xl font-bold text-[#1A1A1A] leading-tight mb-2">
                             {title}
                         </h3>
-                        {/* Post Body - Modern Sans */}
-                        <p className="text-sm text-[#6B7280] leading-relaxed line-clamp-2">
+                        <p className="text-sm text-[#6B7280] leading-relaxed line-clamp-3">
                             {excerpt}
-                            {hasLongContent && (
-                                <button 
-                                    onClick={() => setExpanded(!expanded)} 
-                                    className="ml-1 text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline transition-colors"
-                                >
-                                    Read more
-                                </button>
-                            )}
                         </p>
+                        {/* Subtle fading 'read more' effect */}
+                        {hasLongContent && (
+                            <button 
+                                onClick={() => setExpanded(!expanded)}
+                                className="mt-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+                            >
+                                Read more
+                            </button>
+                        )}
                     </div>
                 )}
 
@@ -326,11 +416,11 @@ export function PostCardUnified({
                                 small={images[0]?.small}
                                 medium={images[0]?.medium}
                                 large={images[0]?.large}
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
                             <div className="absolute top-4 left-4">
-                                <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-neutral-900">
+                                <span className="px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
                                     Featured
                                 </span>
                             </div>
@@ -358,56 +448,79 @@ export function PostCardUnified({
                     </div>
                 )}
 
-                {/* STEP 6: Whisper-Quiet Interactions Bar */}
+                {/* STEP 6: Social Interaction Bar - Repost vs Share separated */}
                 {!isQuoted && (
                     <div className={cn(
                         "border-t border-gray-100 px-6 py-4",
                         isOverlay && "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent border-t-0"
                     )}>
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-5">
                             {/* Like Button */}
                             <button
-                                onClick={(e) => { e.stopPropagation(); }}
+                                onClick={(e) => { e.stopPropagation(); onUpdate?.({ ...post, likes: (post.likes || 0) + (post.isLikedByCurrentUser ? -1 : 1), isLikedByCurrentUser: !post.isLikedByCurrentUser }); }}
                                 className={cn(
-                                    "flex items-center gap-1.5 transition-all duration-200",
+                                    "flex items-center gap-1.5 transition-all duration-200 group",
                                     post.isLikedByCurrentUser 
                                         ? "text-emerald-600" 
                                         : isOverlay ? "text-white/80 hover:text-white" : "text-[#6B7280] hover:text-red-500"
                                 )}
                             >
                                 <motion.div
-                                    whileTap={{ scale: 1.2 }}
+                                    whileTap={{ scale: 1.3 }}
                                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                                 >
                                     <Heart 
-                                        className={cn("w-[18px] h-[18px]", post.isLikedByCurrentUser && "fill-current")} 
+                                        className={cn("w-[18px] h-[18px] transition-all duration-200", post.isLikedByCurrentUser && "fill-current scale-110")} 
                                         strokeWidth={1.5} 
                                     />
                                 </motion.div>
-                                <span className="text-xs font-medium">{post.likes || 0}</span>
+                                <span className="text-xs font-medium">Like {post.likes || 0}</span>
                             </button>
 
-                            {/* Comment Button */}
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onOpenComments?.(post.id); }}
-                                className={cn(
-                                    "flex items-center gap-1.5 transition-all duration-200",
-                                    isOverlay ? "text-white/80 hover:text-white" : "text-[#6B7280] hover:text-emerald-600"
-                                )}
-                            >
-                                <MessageCircle className="w-[18px] h-[18px]" strokeWidth={1.5} />
-                                <span className="text-xs font-medium">{post.comments || 0}</span>
-                            </button>
-
-                            {/* Share Button */}
+                            {/* Repost Button - Platform intent */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleRepost(); }}
                                 className={cn(
-                                    "flex items-center gap-1.5 transition-all duration-200 ml-auto",
+                                    "flex items-center gap-1.5 transition-all duration-200 group",
+                                    isOverlay ? "text-white/80 hover:text-white" : "text-[#6B7280] hover:text-emerald-600"
+                                )}
+                            >
+                                <motion.div
+                                    whileHover={{ rotate: 180 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <Repeat2 className="w-[18px] h-[18px]" strokeWidth={1.5} />
+                                </motion.div>
+                                <span className="text-xs font-medium">Repost {post.shareCount || 0}</span>
+                            </button>
+
+                            {/* Share Button - External intent */}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    // External share to other apps
+                                    const shareData = {
+                                        title: title || 'Check out this post',
+                                        url: window.location.href
+                                    };
+                                    if (navigator.share) {
+                                        navigator.share(shareData);
+                                    } else {
+                                        navigator.clipboard.writeText(window.location.href);
+                                    }
+                                }}
+                                className={cn(
+                                    "flex items-center gap-1.5 transition-all duration-200 group ml-auto",
                                     isOverlay ? "text-white/80 hover:text-white" : "text-[#6B7280] hover:text-purple-500"
                                 )}
                             >
-                                <Share2 className="w-[18px] h-[18px]" strokeWidth={1.5} />
+                                <motion.div
+                                    whileHover={{ scale: 1.1 }}
+                                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                >
+                                    <Share2 className="w-[18px] h-[18px]" strokeWidth={1.5} />
+                                </motion.div>
+                                <span className="text-xs font-medium">Share (External)</span>
                             </button>
                         </div>
                     </div>
