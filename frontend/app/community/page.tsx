@@ -239,7 +239,7 @@ export default function CommunityPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-10 items-start">
 
                     {/* Left: Main Feed */}
-                    <div className="w-full max-w-[720px] mx-auto space-y-7">
+                    <div className="w-full max-w-[720px] mx-auto space-y-9">
                         {/* ── Sticky Filter Bar ── */}
                         <div className="sticky top-16 z-30 py-3 bg-white/95 backdrop-blur-md border-b border-neutral-200">
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">

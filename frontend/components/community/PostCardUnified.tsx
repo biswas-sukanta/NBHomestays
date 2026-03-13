@@ -14,10 +14,12 @@ import type { MediaVariant } from '@/lib/adapters/normalizePost';
 import { RepostModal } from './RepostModal';
 import { extractTitleAndExcerpt, formatRelative, truncateText, FeedLayoutVariant, getAspectClass } from '@/lib/utils/feed-utils';
 
-const TAG_ICONS: Record<string, React.ReactNode> = {
-    'Hidden Gem': <CheckCircle2 className="w-3 h-3" />,
-    'Top Pick': <TrendingUp className="w-3 h-3" />,
-    'Mountain Bliss': <MapPin className="w-3 h-3" />,
+const TAG_ICONS: Record<string, string> = {
+    'Hidden Gem': '🏔',
+    'Top Pick': '⭐',
+    'Mountain Bliss': '🏔',
+    'Question': '❓',
+    'Review': '⭐',
 };
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -217,7 +219,7 @@ export function PostCardUnified({
 
     const articleClassName = cn(
         'relative bg-white overflow-hidden transition-all duration-300 isolate',
-        isQuoted ? "mt-3 rounded-[20px] ring-1 ring-neutral-200" : "rounded-[20px] border border-neutral-200/60 hover:border-neutral-300",
+        isQuoted ? "mt-3 rounded-[22px] ring-1 ring-neutral-200" : "rounded-[22px] border border-[#e8e8e8] shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
         !isQuoted && 'hover:-translate-y-0.5'
     );
 
@@ -232,31 +234,19 @@ export function PostCardUnified({
             >
                 {/* Content Block - Text-first balanced layout */}
                 {!isOverlay && (
-                    <div className="relative z-20 p-6 bg-white">
-                        {/* Author Header Row - Avatar + Name + Role Badge + Location + Timestamp */}
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden shrink-0 ring-2 ring-white shadow-sm">
+                    <div className="relative z-20 p-[26px] bg-white">
+                        {/* Author Header Row - Avatar + Name + Role Badge */}
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-sm font-bold overflow-hidden shrink-0 ring-2 ring-white shadow-sm">
                                 {authorAvatar ? (
                                     <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" />
                                 ) : initials}
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                    <p className="text-sm font-semibold text-neutral-900 truncate">{authorName}</p>
+                                    <p className="text-[15px] font-semibold text-neutral-900 truncate">{authorName}</p>
                                     {post.isVerifiedHost && (
-                                        <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 rounded">Host</span>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-neutral-400">
-                                    <span>{formatRelative(post.createdAt)}</span>
-                                    {post.location && (
-                                        <>
-                                            <span className="text-neutral-300">·</span>
-                                            <span className="flex items-center gap-0.5 truncate max-w-[120px]">
-                                                <span>📍</span>
-                                                {post.location}
-                                            </span>
-                                        </>
+                                        <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 rounded-full">Host</span>
                                     )}
                                 </div>
                             </div>
@@ -277,10 +267,21 @@ export function PostCardUnified({
                                 </div>
                             )}
                         </div>
+                        {/* Location + Time Row */}
+                        <div className="flex items-center gap-2 text-xs text-neutral-400 mb-4">
+                            {post.location && (
+                                <span className="flex items-center gap-1 truncate max-w-[180px]">
+                                    <span>📍</span>
+                                    <span className="font-medium text-neutral-600">{post.location}</span>
+                                </span>
+                            )}
+                            {post.location && <span className="text-neutral-300">·</span>}
+                            <span>{formatRelative(post.createdAt)}</span>
+                        </div>
 
                         {/* Post Text - Balanced with images, 4-line clamp */}
                         {post.caption && (
-                            <div className="text-[15px] text-neutral-800 leading-relaxed mb-4">
+                            <div className="text-[15px] text-neutral-800 leading-relaxed">
                                 <span className={expanded ? '' : 'line-clamp-4'}>
                                     {post.caption}
                                 </span>
@@ -294,25 +295,30 @@ export function PostCardUnified({
                     </div>
                 )}
 
-                {/* Image Grid - Dynamic layout based on image count */}
+                {/* Image Grid - Gallery container with subtle background */}
                 {imageCount > 0 && !isOverlay && (
-                    <div className="px-6 pb-4">
-                        <ImageGrid
-                            images={images}
-                            imageCount={imageCount}
-                            onImageClick={(idx) => setLightboxIndex(idx)}
-                        />
+                    <>
+                        {/* Section Divider */}
+                        <div className="h-px bg-[rgba(0,0,0,0.04)] mx-[26px]" />
+                        <div className="p-[6px] mx-[26px] my-4 bg-neutral-50/50 rounded-[18px]">
+                            <ImageGrid
+                                images={images}
+                                imageCount={imageCount}
+                                onImageClick={(idx) => setLightboxIndex(idx)}
+                            />
+                        </div>
                         {/* Tags Row - Below images */}
                         {(post.tags ?? []).length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mt-3">
+                            <div className="flex flex-wrap gap-2 px-[26px] pb-4">
                                 {(post.tags ?? []).slice(0, 3).map(tag => (
-                                    <span key={tag} className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-600 text-[10px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-0.5">
-                                        {TAG_ICONS[tag]}{tag}
+                                    <span key={tag} className="inline-flex items-center gap-1.5 bg-neutral-100/80 text-neutral-700 text-[11px] font-medium rounded-full px-3 py-1">
+                                        <span>{TAG_ICONS[tag] || '🏷'}</span>
+                                        {tag}
                                     </span>
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </>
                 )}
 
                 {/* Featured overlay image */}
@@ -360,17 +366,22 @@ export function PostCardUnified({
 
                 {/* Interaction Bar - Unified for all variants */}
                 {!isQuoted && (
-                    <PostInteractionBar
-                        postId={post.id}
-                        likes={post.likes || 0}
-                        comments={post.comments || 0}
-                        isLiked={post.isLikedByCurrentUser || false}
-                        isSaved={false}
-                        onOpenComments={() => onOpenComments?.(post.id)}
-                        onLikeToggle={(newCount, newLiked) => onUpdate?.({ ...post, likes: newCount, isLikedByCurrentUser: newLiked })}
-                        variant={isOverlay ? 'overlay' : 'default'}
-                        className={isOverlay ? "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent py-4 px-6" : "px-6 pb-4"}
-                    />
+                    <>
+                        {/* Section Divider */}
+                        <div className="h-px bg-[rgba(0,0,0,0.04)] mx-[26px]" />
+                        <PostInteractionBar
+                            postId={post.id}
+                            likes={post.likes || 0}
+                            comments={post.comments || 0}
+                            shareCount={post.shareCount || 0}
+                            isLiked={post.isLikedByCurrentUser || false}
+                            onOpenComments={() => onOpenComments?.(post.id)}
+                            onRepost={handleRepost}
+                            onLikeToggle={(newCount, newLiked) => onUpdate?.({ ...post, likes: newCount, isLikedByCurrentUser: newLiked })}
+                            variant={isOverlay ? 'overlay' : 'default'}
+                            className={isOverlay ? "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent py-4 px-6" : "px-[26px] py-4"}
+                        />
+                    </>
                 )}
             </motion.article>
 
