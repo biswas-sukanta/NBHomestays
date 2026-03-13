@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Repeat2, Share2 } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { postApi } from '@/lib/api/posts';
@@ -13,11 +13,11 @@ interface PostInteractionBarProps {
     postId: string;
     likes: number;
     comments: number;
-    shareCount: number;
     isLiked: boolean;
+    isSaved?: boolean;
     onOpenComments: () => void;
-    onRepost: () => void;
     onLikeToggle: (newCount: number, newLiked: boolean) => void;
+    onSaveToggle?: (saved: boolean) => void;
     variant?: 'default' | 'overlay';
     className?: string;
 }
@@ -26,11 +26,11 @@ export function PostInteractionBar({
     postId,
     likes,
     comments,
-    shareCount,
     isLiked,
+    isSaved = false,
     onOpenComments,
-    onRepost,
     onLikeToggle,
+    onSaveToggle,
     variant = 'default',
     className
 }: PostInteractionBarProps) {
@@ -120,42 +120,15 @@ export function PostInteractionBar({
         mutation.mutate();
     };
 
-    const handleShare = async (e: React.MouseEvent) => {
+    const handleSave = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        
-        try {
-            await postApi.share(postId);
-            toast.success('Link copied to clipboard!');
-            
-            // Update share count optimistically
-            queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
-                if (!old || !old.pages) return old;
-                return {
-                    ...old,
-                    pages: old.pages.map((page: any) => ({
-                        ...page,
-                        posts: (page.posts || []).map((post: any) => {
-                            if (post.postId === postId || post.id === postId) {
-                                return { ...post, shareCount: (post.shareCount || 0) + 1 };
-                            }
-                            return post;
-                        })
-                    }))
-                };
-            });
-        } catch (error) {
-            // Fallback to native share
-            if (navigator.share) {
-                await navigator.share({
-                    title: 'Check out this post on North Bengal Homestays',
-                    url: window.location.href
-                });
-            } else {
-                await navigator.clipboard.writeText(window.location.href);
-                toast.success('Link copied to clipboard!');
-            }
+        if (!isAuthenticated) {
+            toast.error('Please log in to save posts');
+            return;
         }
+        onSaveToggle?.(!isSaved);
+        toast.success(isSaved ? 'Removed from saved' : 'Saved to collection');
     };
 
     const isOverlay = variant === 'overlay';
@@ -199,25 +172,20 @@ export function PostInteractionBar({
             </button>
 
             <button
-                onClick={onRepost}
+                onClick={handleSave}
                 className={cn(
                     'flex items-center gap-1.5 font-medium transition-all duration-200',
-                    isOverlay ? 'text-white/80 hover:text-white' : 'text-neutral-500 hover:text-blue-500'
+                    isOverlay ? 'text-white/80 hover:text-white' : 'text-neutral-500 hover:text-amber-500',
+                    isSaved && (isOverlay ? 'text-white' : 'text-amber-500')
                 )}
             >
-                <Repeat2 className="w-[18px] h-[18px]" />
-                <span className="text-xs">Repost</span>
-            </button>
-
-            <button
-                onClick={handleShare}
-                className={cn(
-                    'flex items-center gap-1.5 font-medium transition-all duration-200',
-                    isOverlay ? 'text-white/80 hover:text-white' : 'text-neutral-500 hover:text-purple-500'
-                )}
-            >
-                <Share2 className="w-[18px] h-[18px]" />
-                <span className="text-xs">{shareCount}</span>
+                <Bookmark 
+                    className={cn(
+                        'w-[18px] h-[18px] transition-all duration-200',
+                        isSaved && 'fill-current'
+                    )} 
+                />
+                <span className="text-xs">Save</span>
             </button>
         </div>
     );

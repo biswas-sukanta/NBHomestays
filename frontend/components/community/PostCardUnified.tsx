@@ -54,10 +54,10 @@ function ImageGrid({
 }) {
     if (imageCount === 0) return null;
 
-    // 1 image → single image with max-height
+    // 1 image → single image with 4:3 aspect ratio
     if (imageCount === 1) {
         return (
-            <div className="relative w-full rounded-[16px] overflow-hidden cursor-pointer group" onClick={() => onImageClick(0)}>
+            <div className="relative w-full rounded-[16px] overflow-hidden cursor-pointer group aspect-[4/3]" onClick={() => onImageClick(0)}>
                 <OptimizedImage 
                     src={images[0]?.url || ''} 
                     alt="Post image" 
@@ -65,16 +65,16 @@ function ImageGrid({
                     small={images[0]?.small}
                     medium={images[0]?.medium}
                     large={images[0]?.large}
-                    className="w-full max-h-[400px] object-cover transition-transform duration-300 group-hover:scale-105" 
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
                 />
             </div>
         );
     }
 
-    // 2 images → 2 column grid
+    // 2 images → 2 column grid, gap-1.5 (6px)
     if (imageCount === 2) {
         return (
-            <div className="grid grid-cols-2 gap-1 rounded-[16px] overflow-hidden">
+            <div className="grid grid-cols-2 gap-1.5 rounded-[16px] overflow-hidden">
                 {images.slice(0, 2).map((img, idx) => (
                     <div key={idx} className="relative aspect-square cursor-pointer overflow-hidden group" onClick={() => onImageClick(idx)}>
                         <OptimizedImage 
@@ -92,10 +92,10 @@ function ImageGrid({
         );
     }
 
-    // 3 images → 1 large + 2 stacked
+    // 3 images → 1 large + 2 stacked, gap-1.5 (6px)
     if (imageCount === 3) {
         return (
-            <div className="grid grid-cols-2 grid-rows-2 gap-1 rounded-[16px] overflow-hidden h-[300px]">
+            <div className="grid grid-cols-2 grid-rows-2 gap-1.5 rounded-[16px] overflow-hidden h-[300px]">
                 <div className="col-span-1 row-span-2 cursor-pointer overflow-hidden group" onClick={() => onImageClick(0)}>
                     <OptimizedImage 
                         src={images[0]?.url} 
@@ -133,9 +133,9 @@ function ImageGrid({
         );
     }
 
-    // 4+ images → 2x2 grid with overlay count for 5+
+    // 4+ images → 2x2 grid with overlay count for 5+, gap-1.5 (6px)
     return (
-        <div className="grid grid-cols-2 gap-1 rounded-[16px] overflow-hidden">
+        <div className="grid grid-cols-2 gap-1.5 rounded-[16px] overflow-hidden">
             {images.slice(0, 4).map((img, idx) => (
                 <div key={idx} className="relative aspect-square cursor-pointer overflow-hidden group" onClick={() => onImageClick(idx)}>
                     <OptimizedImage 
@@ -217,7 +217,7 @@ export function PostCardUnified({
 
     const articleClassName = cn(
         'relative bg-white overflow-hidden transition-all duration-300 isolate',
-        isQuoted ? "mt-3 rounded-[20px] ring-1 ring-neutral-200" : "rounded-[20px] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]",
+        isQuoted ? "mt-3 rounded-[20px] ring-1 ring-neutral-200" : "rounded-[20px] border border-neutral-200/60 hover:border-neutral-300",
         !isQuoted && 'hover:-translate-y-0.5'
     );
 
@@ -233,7 +233,7 @@ export function PostCardUnified({
                 {/* Content Block - Text-first balanced layout */}
                 {!isOverlay && (
                     <div className="relative z-20 p-6 bg-white">
-                        {/* Author Header Row - Avatar + Name + Location + Timestamp */}
+                        {/* Author Header Row - Avatar + Name + Role Badge + Location + Timestamp */}
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden shrink-0 ring-2 ring-white shadow-sm">
                                 {authorAvatar ? (
@@ -241,7 +241,12 @@ export function PostCardUnified({
                                 ) : initials}
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-neutral-900 truncate">{authorName}</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm font-semibold text-neutral-900 truncate">{authorName}</p>
+                                    {post.isVerifiedHost && (
+                                        <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 rounded">Host</span>
+                                    )}
+                                </div>
                                 <div className="flex items-center gap-2 text-xs text-neutral-400">
                                     <span>{formatRelative(post.createdAt)}</span>
                                     {post.location && (
@@ -286,17 +291,6 @@ export function PostCardUnified({
                                 )}
                             </div>
                         )}
-
-                        {/* Tags Row */}
-                        {(post.tags ?? []).length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
-                                {(post.tags ?? []).slice(0, 3).map(tag => (
-                                    <span key={tag} className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-600 text-[10px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-0.5">
-                                        {TAG_ICONS[tag]}{tag}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
                     </div>
                 )}
 
@@ -308,6 +302,16 @@ export function PostCardUnified({
                             imageCount={imageCount}
                             onImageClick={(idx) => setLightboxIndex(idx)}
                         />
+                        {/* Tags Row - Below images */}
+                        {(post.tags ?? []).length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-3">
+                                {(post.tags ?? []).slice(0, 3).map(tag => (
+                                    <span key={tag} className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-600 text-[10px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-0.5">
+                                        {TAG_ICONS[tag]}{tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -360,13 +364,12 @@ export function PostCardUnified({
                         postId={post.id}
                         likes={post.likes || 0}
                         comments={post.comments || 0}
-                        shareCount={post.shareCount || 0}
                         isLiked={post.isLikedByCurrentUser || false}
+                        isSaved={false}
                         onOpenComments={() => onOpenComments?.(post.id)}
-                        onRepost={handleRepost}
                         onLikeToggle={(newCount, newLiked) => onUpdate?.({ ...post, likes: newCount, isLikedByCurrentUser: newLiked })}
                         variant={isOverlay ? 'overlay' : 'default'}
-                        className={isOverlay ? "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent py-4 px-6" : undefined}
+                        className={isOverlay ? "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent py-4 px-6" : "px-6 pb-4"}
                     />
                 )}
             </motion.article>

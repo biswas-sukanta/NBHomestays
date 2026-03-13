@@ -2,7 +2,7 @@
 
 ## Overview
 
-The community feed implements a premium storytelling experience where **text and images have balanced importance**. The design prioritizes readability while showcasing visual content through dynamic image grids.
+The community feed implements a **boutique editorial** experience where text and images have balanced importance. The design prioritizes readability, strong author identity, and polished image grids.
 
 ## Design Specifications
 
@@ -10,20 +10,20 @@ The community feed implements a premium storytelling experience where **text and
 
 ```
 ┌────────────────────────────────────────┐
-│ Avatar │ Username                      │  ← Header row
-│        │ Timestamp · 📍 Location       │
+│ Avatar │ Username [Host]               │  ← Header with role badge
+│        │ 2h ago · 📍 Kalimpong        │
 ├────────────────────────────────────────┤
 │ Post text content...                   │  ← Text first (4-line clamp)
 │ ...line 2...                           │
 │ ...line 3...                           │
 │ ...line 4... Read more                 │
-│ Tags: [Hidden Gem] [Top Pick]          │
 ├────────────────────────────────────────┤
 │                                        │
 │     Dynamic Image Grid (see below)     │  ← Balanced images
 │                                        │
+│ [Hidden Gem] [Top Pick]               │  ← Tags below images
 ├────────────────────────────────────────┤
-│ ❤️ 12   💬 8   🔄 Repost   ↗️ 3        │  ← Interaction bar
+│ ❤️ 12   💬 8   🔖 Save                 │  ← Interaction bar
 └────────────────────────────────────────┘
 ```
 
@@ -34,15 +34,16 @@ The community feed implements a premium storytelling experience where **text and
 | Card radius | 20px (`rounded-[20px]`) |
 | Card padding | 24px (`p-6`) |
 | Card gap | 28px (`space-y-7`) |
+| Card border | Subtle (`border-neutral-200/60`) |
 | Image grid radius | 16px (`rounded-[16px]`) |
+| Image grid gap | 6px (`gap-1.5`) |
 | Text clamp | 4 lines (`line-clamp-4`) |
 | Max feed width | 720px (`max-w-[720px]`) |
-| Shadow | Subtle (`shadow-[0_1px_2px_rgba(0,0,0,0.04)]`) |
-| Hover shadow | (`hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]`) |
 
 ### Typography Scale
 
 - **Username**: 14px semibold (`text-sm font-semibold`)
+- **Role badge**: 9px uppercase (`text-[9px] uppercase`)
 - **Timestamp/Location**: 12px neutral-400 (`text-xs text-neutral-400`)
 - **Post text**: 15px neutral-800 (`text-[15px] text-neutral-800`)
 - **Tags**: 10px uppercase tracking-wide (`text-[10px] uppercase tracking-wide`)
@@ -51,17 +52,17 @@ The community feed implements a premium storytelling experience where **text and
 
 The `ImageGrid` component automatically selects the optimal layout based on image count:
 
-### 1 Image
+### 1 Image (4:3 aspect ratio)
 ```
 ┌────────────────────────────────────┐
 │                                    │
 │         Single Image               │
-│         (max-h: 400px)             │
+│         (aspect-[4/3])             │
 │                                    │
 └────────────────────────────────────┘
 ```
 
-### 2 Images
+### 2 Images (1:1 square, 6px gap)
 ```
 ┌─────────────────┬─────────────────┐
 │                 │                 │
@@ -71,7 +72,7 @@ The `ImageGrid` component automatically selects the optimal layout based on imag
 └─────────────────┴─────────────────┘
 ```
 
-### 3 Images
+### 3 Images (1 large + 2 stacked)
 ```
 ┌─────────────────┬─────────────────┐
 │                 │    Image 2      │
@@ -81,7 +82,7 @@ The `ImageGrid` component automatically selects the optimal layout based on imag
 └─────────────────┴─────────────────┘
 ```
 
-### 4+ Images
+### 4+ Images (2x2 grid with +N overlay)
 ```
 ┌─────────────────┬─────────────────┐
 │    Image 1      │    Image 2      │
@@ -89,6 +90,28 @@ The `ImageGrid` component automatically selects the optimal layout based on imag
 │    Image 3      │ Image 4 (+N)    │
 └─────────────────┴─────────────────┘
 ```
+
+## Author Identity
+
+### Role Badge
+- **Host badge**: Displayed when `isVerifiedHost` is true
+- Style: Emerald background, uppercase, 9px font
+- Position: Next to username in header
+
+### Location
+- Displayed with 📍 emoji
+- Format: `Timestamp · 📍 Location`
+- Truncates at 120px width
+
+## Interaction Bar
+
+Simplified to three actions:
+
+| Action | Icon | Label | Color |
+|--------|------|-------|-------|
+| Like | Heart | Count | Red when liked |
+| Comment | MessageCircle | Count | Emerald on hover |
+| Save | Bookmark | "Save" | Amber when saved |
 
 ## Component Structure
 
@@ -121,18 +144,18 @@ Dynamic grid component with automatic layout selection:
 
 ### PostInteractionBar
 
-Handles like/comment/repost/share actions with optimistic updates:
+Handles like/comment/save actions with optimistic updates:
 
 ```tsx
 <PostInteractionBar
   postId={post.id}
   likes={post.likes}
   comments={post.comments}
-  shareCount={post.shareCount}
   isLiked={post.isLikedByCurrentUser}
+  isSaved={false}
   onOpenComments={() => openComments(post.id)}
-  onRepost={handleRepost}
   onLikeToggle={(count, liked) => updatePost({ likes: count, isLiked: liked })}
+  onSaveToggle={(saved) => handleSave(saved)}
 />
 ```
 
@@ -196,7 +219,7 @@ frontend/
 ├── app/community/page.tsx          # Feed page with infinite scroll
 ├── components/community/
 │   ├── PostCardUnified.tsx         # Main post card component
-│   ├── PostInteractionBar.tsx      # Like/comment/repost actions
+│   ├── PostInteractionBar.tsx      # Like/comment/save actions
 │   ├── PostSkeleton.tsx            # Loading skeleton
 │   ├── ImageLightbox.tsx           # Full-screen image viewer
 │   └── types.ts                    # TypeScript types
@@ -216,7 +239,7 @@ frontend/
 
 ## Interactions
 
-- **Card hover**: Subtle elevation increase
+- **Card hover**: Subtle border darkening
 - **Image hover**: Scale 1.05 zoom effect
 - **Like animation**: Heart pop effect
 - **Read more**: Expand/collapse text smoothly
