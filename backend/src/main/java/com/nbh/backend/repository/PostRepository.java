@@ -5,6 +5,7 @@ import com.nbh.backend.repository.projection.PostListProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -189,4 +190,15 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                 ORDER BY p.createdAt DESC
                 """)
         List<Post> findPostsNotInTimeline();
+
+        @Modifying
+        @Query(value = "UPDATE posts SET love_count = love_count + 1 WHERE id = :postId", nativeQuery = true)
+        int incrementLoveCount(@Param("postId") UUID postId);
+
+        @Modifying
+        @Query(value = "UPDATE posts SET love_count = GREATEST(love_count - 1, 0) WHERE id = :postId", nativeQuery = true)
+        int decrementLoveCount(@Param("postId") UUID postId);
+
+        @Query(value = "SELECT love_count FROM posts WHERE id = :postId", nativeQuery = true)
+        Integer findLoveCountById(@Param("postId") UUID postId);
 }

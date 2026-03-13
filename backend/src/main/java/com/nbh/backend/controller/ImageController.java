@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,6 +30,8 @@ public class ImageController {
             }
             List<MediaResource> urls = imageUploadService.uploadFiles(files);
             return ResponseEntity.ok(urls);
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();
         }

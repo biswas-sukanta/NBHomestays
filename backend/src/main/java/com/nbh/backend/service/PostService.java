@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -436,33 +437,50 @@ public class PostService {
             @CacheEvict(value = "postDetail", key = "#postId")
     })
     public PostDto.LikeResponse toggleLike(java.util.UUID postId, String userEmail) {
-        // 1. Fetch the actual Post entity
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
-        // 2. Fetch the actual User entity explicitly from the DB to attach to Hibernate
-        // session
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        boolean isLiked;
+        int inserted = 0;
+        try {
+            // Idempotent ensure-like: a single Postgres UPSERT. No pre-checks.
+            inserted = postLikeRepository.insertLikeIgnoreConflict(postId, user.getId());
+        } catch (DataIntegrityViolationException e) {
+            // Concurrent inserts (or racing DDL) should not bubble as 500.
+            inserted = 0;
+        }
+
+        if (inserted > 0) {
+            postRepository.incrementLoveCount(postId);
+        }
+
+        Integer loveCount = postRepository.findLoveCountById(postId);
+        int resolvedLoveCount = loveCount == null ? 0 : loveCount;
+
+        feedCacheService.invalidateAll();
+        timelineService.updateLikeCount(postId, resolvedLoveCount);
+        return PostDto.LikeResponse.builder().loveCount(resolvedLoveCount).isLiked(true).build();
+    }
+
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "postsList", allEntries = true),
+            @CacheEvict(value = "postDetail", key = "#postId")
+    })
+    public PostDto.LikeResponse unlike(java.util.UUID postId, String userEmail) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
         if (postLikeRepository.existsByUserIdAndPostId(user.getId(), postId)) {
             postLikeRepository.deleteByUserIdAndPostId(user.getId(), postId);
-            post.setLoveCount(Math.max(0, post.getLoveCount() - 1));
-            isLiked = false;
-        } else {
-            // 3. Perform the Like logic using the explicitly fetched entities
-            PostLike newLike = new PostLike();
-            newLike.setPostId(postId);
-            newLike.setUserId(user.getId());
-            postLikeRepository.save(newLike);
-            post.setLoveCount(post.getLoveCount() + 1);
-            isLiked = true;
+            post.setLoveCount((int) postLikeRepository.countByPostId(postId));
+            postRepository.save(post);
+            feedCacheService.invalidateAll();
+            timelineService.updateLikeCount(postId, post.getLoveCount());
         }
-        postRepository.save(post);
-        feedCacheService.invalidateAll();
-        // Update timeline like count
-        timelineService.updateLikeCount(postId, post.getLoveCount());
-        return PostDto.LikeResponse.builder().loveCount(post.getLoveCount()).isLiked(isLiked).build();
+
+        return PostDto.LikeResponse.builder().loveCount(post.getLoveCount()).isLiked(false).build();
     }
 
     @Transactional
@@ -510,6 +528,7 @@ public class PostService {
                                 .build())
                         .collect(java.util.stream.Collectors.toList()) : new java.util.ArrayList<>())
                 .user(user)
+                .originalPost(original)
                 .createdAt(LocalDateTime.now())
                 .build();
 

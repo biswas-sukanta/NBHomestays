@@ -9,8 +9,11 @@ import io.imagekit.sdk.models.MoveFileRequest;
 import io.imagekit.sdk.models.results.Result;
 import io.imagekit.sdk.models.results.ResultList;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -22,6 +25,15 @@ import java.util.List;
 @Service
 @Slf4j
 public class ImageUploadService {
+
+    @Value("${IMAGEKIT_PUBLIC_KEY:}")
+    private String imageKitPublicKey;
+
+    @Value("${IMAGEKIT_PRIVATE_KEY:}")
+    private String imageKitPrivateKey;
+
+    @Value("${IMAGEKIT_URL_ENDPOINT:}")
+    private String imageKitUrlEndpoint;
 
     public List<MediaResource> uploadFiles(List<MultipartFile> files) throws IOException {
         return uploadFiles(files, "/uploads");
@@ -71,6 +83,12 @@ public class ImageUploadService {
 
         if (files == null || files.isEmpty()) {
             return mediaResources;
+        }
+
+        if (imageKitPublicKey == null || imageKitPublicKey.isBlank()
+                || imageKitPrivateKey == null || imageKitPrivateKey.isBlank()
+                || imageKitUrlEndpoint == null || imageKitUrlEndpoint.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Image upload service not configured");
         }
 
         String resolvedFolder = (folder == null || folder.isBlank()) ? "/uploads" : folder;

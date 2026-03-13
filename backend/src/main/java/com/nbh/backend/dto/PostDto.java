@@ -1,5 +1,6 @@
 package com.nbh.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,8 @@ public class PostDto {
 
         private List<MediaDto> media;
         private UUID homestayId;
+
+        @JsonAlias("repostedFromPostId")
         private UUID originalPostId;
 
         @Size(max = 3, message = "Maximum 3 tags allowed")

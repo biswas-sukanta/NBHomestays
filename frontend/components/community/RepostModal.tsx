@@ -101,7 +101,7 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
             if (stagedFiles.length > 0) {
                 const form = new FormData();
                 stagedFiles.forEach(f => form.append('files', f.file));
-                const up = await api.post('/upload', form);
+                const up = await api.post('/images/upload-multiple', form);
                 finalMedia = up.data;
             }
             const payload: any = {

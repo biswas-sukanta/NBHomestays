@@ -110,6 +110,18 @@ public class PostController {
         }
     }
 
+    @DeleteMapping("/{id}/like")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<PostDto.LikeResponse> unlike(
+            @PathVariable("id") java.util.UUID id,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to unlike this post");
+        }
+        PostDto.LikeResponse resp = postService.unlike(id, authentication.getName());
+        return ResponseEntity.ok(resp);
+    }
+
     @GetMapping("/search")
     public ResponseEntity<Page<PostDto.Response>> searchPosts(
             @RequestParam(name = "q", required = false, defaultValue = "") String query,
@@ -130,7 +142,8 @@ public class PostController {
             @Valid @RequestPart("request") PostDto.Request request,
             @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
             Authentication authentication) {
-        return ResponseEntity.ok(postService.createPost(request, files, authentication.getName()));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(postService.createPost(request, files, authentication.getName()));
     }
 
     @GetMapping("/my-posts")
@@ -164,12 +177,12 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.LikeResponse> toggleLike(
             @PathVariable("id") java.util.UUID id,
-            @AuthenticationPrincipal User currentUser) {
-        if (currentUser == null) {
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to like this post");
         }
         try {
-            PostDto.LikeResponse resp = postService.toggleLike(id, currentUser.getEmail());
+            PostDto.LikeResponse resp = postService.toggleLike(id, authentication.getName());
             return ResponseEntity.ok(resp);
         } catch (Exception e) {
             throw e;

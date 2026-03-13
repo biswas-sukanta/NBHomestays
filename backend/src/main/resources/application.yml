@@ -13,7 +13,8 @@ spring:
     hikari:
       minimum-idle: 5
       maximum-pool-size: 25
-      connection-timeout: 2000
+      connection-timeout: 10000
+      transaction-isolation: TRANSACTION_READ_COMMITTED
       idle-timeout: 30000
       validation-timeout: 5000
       initialization-fail-timeout: 0 # Prevent crash if DB is temporarily slow

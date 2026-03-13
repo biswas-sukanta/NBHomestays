@@ -5,12 +5,14 @@ import com.nbh.backend.model.User;
 import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +36,13 @@ public class AuthenticationService {
                         throw new ResponseStatusException(HttpStatus.CONFLICT,
                                         "User already exists with email: " + request.getEmail());
                 }
-                repository.save(user);
+                try {
+                        repository.save(user);
+                } catch (DataIntegrityViolationException e) {
+                        // Race-safe duplicate handling (unique constraint on users.email)
+                        throw new ResponseStatusException(HttpStatus.CONFLICT,
+                                        "User already exists with email: " + request.getEmail());
+                }
                 var jwtToken = jwtService.generateToken(java.util.Map.of(
                                 "role", user.getRole().name(),
                                 "userId", user.getId().toString()), user);
@@ -46,12 +54,17 @@ public class AuthenticationService {
         }
 
         public AuthDto.AuthenticationResponse authenticate(AuthDto.AuthenticationRequest request) {
-                authenticationManager.authenticate(
-                                new UsernamePasswordAuthenticationToken(
-                                                request.getEmail(),
-                                                request.getPassword()));
+                try {
+                        authenticationManager.authenticate(
+                                        new UsernamePasswordAuthenticationToken(
+                                                        request.getEmail(),
+                                                        request.getPassword()));
+                } catch (AuthenticationException ex) {
+                        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+                }
+
                 var user = repository.findByEmail(request.getEmail())
-                                .orElseThrow();
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
                 var jwtToken = jwtService.generateToken(java.util.Map.of(
                                 "role", user.getRole().name(),
                                 "userId", user.getId().toString()), user);

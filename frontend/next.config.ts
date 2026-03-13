@@ -26,6 +26,10 @@ const nextConfig: NextConfig = {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
     return [
       {
+        source: '/api/actuator/:path*',
+        destination: `${apiBase}/actuator/:path*`,
+      },
+      {
         source: '/api/:path*',
         destination: `${apiBase}/api/:path*`,
       },
