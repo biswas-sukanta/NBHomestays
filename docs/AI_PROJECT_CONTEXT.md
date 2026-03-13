@@ -204,6 +204,15 @@ Known pitfalls:
 - Homestay create flows that send only `files` but omit `request.media` can result in homestays without persisted media.
 - Community post edit flows must retain `fileId` values when re-submitting media; `fileId` is the stable identifier used for media retention logic.
 
+Upload architecture (production-safe default):
+
+Browser -> Backend (`/api/images/upload-multiple`) -> ImageKit -> CDN URL
+
+Notes:
+
+- ImageKit credentials (`IMAGEKIT_URL_ENDPOINT`, `IMAGEKIT_PUBLIC_KEY`, `IMAGEKIT_PRIVATE_KEY`) remain backend-only.
+- Frontend should not depend on any ImageKit keys; it uploads files to the backend endpoint.
+
 ## 5.7 Diagnostics / Logging / Observability
 
 - Infra startup check (`InfrastructureHealthCheck`) logs Redis + ImageKit status.

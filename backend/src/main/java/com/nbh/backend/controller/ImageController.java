@@ -25,7 +25,7 @@ public class ImageController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<MediaResource>> uploadImages(@RequestPart("files") List<MultipartFile> files) {
         try {
-            if (files == null || files.isEmpty() || files.size() > 10) {
+            if (files == null || files.isEmpty() || files.size() > 5) {
                 return ResponseEntity.badRequest().build();
             }
             List<MediaResource> urls = imageUploadService.uploadFiles(files);

@@ -23,7 +23,7 @@ Full-stack monorepo for homestay discovery plus a Community feature (posts, comm
 ```bash
 cd backend
 mvn clean install
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
 Backend base URL:
@@ -50,6 +50,12 @@ Run the stable Community Playwright suite:
 cd frontend
 npm test -- tests/community
 ```
+
+## Image upload architecture
+
+Image uploads are handled server-side:
+
+Browser -> Backend (`/api/images/upload-multiple`) -> ImageKit -> CDN URL
 
 ## AI-focused docs
 

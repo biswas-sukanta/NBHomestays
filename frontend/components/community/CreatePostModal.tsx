@@ -18,6 +18,7 @@ import { CommunityPost, QuotePost } from './types';
 import { StagedFile } from '@/components/host/ImageDropzone';
 import { IMAGE_UPLOAD_HELPER_TEXT, processImages } from '@/lib/utils/imageUploadPipeline';
 import { queryKeys } from '@/lib/queryKeys';
+import { axiosInstance as api } from '@/lib/api-client';
 
 const ImageCropModal = dynamic(() => import('@/components/host/ImageCropModal').then(m => m.ImageCropModal), { ssr: false });
 
@@ -130,59 +131,32 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
     };
 
     const uploadToImageKit = async (staged: StagedFile): Promise<{ fileId: string; url: string }> => {
-        const publicKey = process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY;
-        const endpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
-        const uploadUrl = process.env.NEXT_PUBLIC_IMAGEKIT_UPLOAD_URL || 'https://upload.imagekit.io/api/v1/files/upload';
-
-        if (!publicKey || !endpoint) {
-            throw new Error('Image upload is not configured (missing NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY or NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT).');
-        }
-
         setUploadState(prev => ({
             ...prev,
             [staged.id]: { status: 'uploading', progress: 0 }
         }));
 
         const form = new FormData();
-        form.append('file', staged.file);
-        form.append('fileName', staged.file.name || `upload_${Date.now()}`);
-        form.append('folder', '/uploads/staging');
-        form.append('useUniqueFileName', 'true');
+        form.append('files', staged.file);
 
-        const xhr = new XMLHttpRequest();
-        const auth = typeof window !== 'undefined'
-            ? btoa(`${publicKey}:`)
-            : '';
-
-        const promise = new Promise<{ fileId: string; url: string }>((resolve, reject) => {
-            xhr.upload.onprogress = (evt) => {
-                if (!evt.lengthComputable) return;
-                const pct = Math.round((evt.loaded / evt.total) * 100);
+        const res = await api.post('/images/upload-multiple', form, {
+            onUploadProgress: (evt) => {
+                const total = evt.total ?? 0;
+                if (!total) return;
+                const pct = Math.round((evt.loaded / total) * 100);
                 setUploadState(prev => ({
                     ...prev,
                     [staged.id]: { ...(prev[staged.id] || { status: 'uploading' as const }), status: 'uploading', progress: pct }
                 }));
-            };
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState !== 4) return;
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        const data = JSON.parse(xhr.responseText);
-                        resolve({ fileId: data.fileId, url: data.url });
-                    } catch (e) {
-                        reject(e);
-                    }
-                } else {
-                    reject(new Error(xhr.responseText || 'Image upload failed'));
-                }
-            };
-            xhr.onerror = () => reject(new Error('Image upload failed'));
-            xhr.open('POST', uploadUrl);
-            xhr.setRequestHeader('Authorization', `Basic ${auth}`);
-            xhr.send(form);
+            }
         });
 
-        const uploaded = await promise;
+        const first = Array.isArray(res.data) ? res.data[0] : null;
+        if (!first?.url) {
+            throw new Error('Image upload failed');
+        }
+
+        const uploaded = { fileId: first.fileId, url: first.url };
         setUploadState(prev => ({
             ...prev,
             [staged.id]: { status: 'done', progress: 100, fileId: uploaded.fileId, url: uploaded.url }

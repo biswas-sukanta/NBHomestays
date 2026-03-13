@@ -21,10 +21,18 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
 public class ImageUploadService {
+
+    private static final long MAX_FILE_SIZE_BYTES = 5L * 1024 * 1024;
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+    );
 
     @Value("${IMAGEKIT_PUBLIC_KEY:}")
     private String imageKitPublicKey;
@@ -97,6 +105,7 @@ public class ImageUploadService {
         }
 
         for (MultipartFile file : files) {
+            validateFile(file);
             String originalFilename = file.getOriginalFilename();
             if (originalFilename == null || originalFilename.isBlank()) {
                 originalFilename = "upload_" + System.currentTimeMillis();
@@ -107,7 +116,7 @@ public class ImageUploadService {
 
             try {
                 Result result = ImageKit.getInstance().upload(fileCreateRequest);
-                String cdnUrl = result.getUrl();
+                String cdnUrl = optimizeImageKitUrl(result.getUrl());
                 String fileId = result.getFileId();
                 log.info("[IMAGEKIT UPLOAD] Successfully uploaded file to {}. CDN URL: {} (File ID: {})",
                         resolvedFolder, cdnUrl, fileId);
@@ -180,5 +189,32 @@ public class ImageUploadService {
         String className = e.getClass().getSimpleName();
         String message = e.getMessage();
         return "NotFoundException".equals(className) || (message != null && message.contains("404"));
+    }
+
+    private void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty file");
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported image type");
+        }
+
+        long size = file.getSize();
+        if (size > MAX_FILE_SIZE_BYTES) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Each image must be under 5MB");
+        }
+    }
+
+    private String optimizeImageKitUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return url;
+        }
+        String transform = "tr=f-auto,q-80,w-1200";
+        if (url.contains("tr=")) {
+            return url;
+        }
+        return url.contains("?") ? (url + "&" + transform) : (url + "?" + transform);
     }
 }
