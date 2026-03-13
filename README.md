@@ -1,73 +1,58 @@
-# North Bengal Homestays Platform
+# North Bengal Homestays
 
-A comprehensive full-stack platform for booking homestays in North Bengal, featuring a viral, story-driven frontend and a robust Spring Boot backend.
+Full-stack monorepo for homestay discovery plus a Community feature (posts, comments, reposts, likes).
 
-## 🚀 Quick Start
+## Repository overview
 
-To start the full stack application locally with a single command (requires Docker Compose):
+- `backend/`: Spring Boot REST API (Java)
+- `frontend/`: Next.js App Router UI
 
-```bash
-docker-compose up --build
-```
+## Architecture summary
 
-Access the application:
-- **Frontend**: [http://localhost:3000](http://localhost:3000)
-- **Backend API**: [http://localhost:8080/api](http://localhost:8080/api)
-- **Maildev**: [http://localhost:1080](http://localhost:1080)
+- The frontend calls backend routes via the Next.js rewrite layer under `/api/*`.
+- Backend provides:
+  - JWT auth (`/api/auth/*`)
+  - Homestays + destinations/states
+  - Community posts/comments/reposts/likes
+  - Multipart image upload via `/api/images/upload-multiple`
 
-- **Backend**: Java 21, Spring Boot 3.3, PostgreSQL, Hibernate (EhCache L2), JWT Auth.
-- **Frontend**: Next.js 14, React 18, Tailwind CSS, Shadcn UI, Zustand, TanStack Query.
-- **Infrastructure**: Supabase (Database), ImageKit (Storage), Koyeb (Backend Hosting), Docker, GitHub Actions CI/CD.
-
-## ✨ Features
-
-- **Story Mode**: Immersive video-based homestay discovery.
-- **Interactive Map**: Location-based search using PostGIS.
-- **Comparison Tool**: Compare up to 3 homestays side-by-side.
-- **Booking System**: Real-time availability and dynamic pricing.
-- **Vibe Score**: Automated scoring based on reviews and amenities.
-
-## 🛠️ Development
+## Local development
 
 ### Backend
+
 ```bash
 cd backend
 mvn clean install
 mvn spring-boot:run
 ```
 
+Backend base URL:
+
+- `http://localhost:8080`
+
 ### Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-## 🧪 Verification
+Frontend base URL:
 
-Run the production readiness check:
+- `http://localhost:3000`
 
-**Windows (PowerShell):**
-```powershell
-./verify_production_readiness.ps1
-```
+## Community test suite
 
-**Linux/Mac:**
+Run the stable Community Playwright suite:
+
 ```bash
-./verify_production_readiness.sh
+cd frontend
+npm test -- tests/community
 ```
 
-## 📦 Deployment
+## AI-focused docs
 
-The project is configured for deployment on **Koyeb**.
-
-### Environment Variables Required:
-- `SPRING_DATASOURCE_URL`: Database connection string
-- `SPRING_DATASOURCE_USERNAME`: Database username
-- `SPRING_DATASOURCE_PASSWORD`: Database password
-- `JWT_SECRET_KEY`: Secure key for JWT signing
-- `IMAGEKIT_PUBLIC_KEY`: ImageKit public key
-- `IMAGEKIT_PRIVATE_KEY`: ImageKit private key
-- `IMAGEKIT_URL_ENDPOINT`: ImageKit URL endpoint
-
-The project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically builds and tests the application on every push to `main`.
+- `docs/AI_PROJECT_CONTEXT.md` (canonical AI onboarding context)
+- `docs/api-contract.md` (DTO/API contract reference)
+- `docs/system-map.md` (high-level system map)

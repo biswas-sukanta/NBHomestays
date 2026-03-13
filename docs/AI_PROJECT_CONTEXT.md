@@ -192,6 +192,18 @@ Health endpoint:
   - `POST /api/upload` (authenticated roles)
   - `POST /api/images/upload-multiple` (authenticated)
 
+## 5.6.1 Media pipeline notes (practical)
+
+Key behavior:
+
+- Upload endpoints return `MediaResource` metadata (`url`, `fileId`) but do not automatically persist those rows to entities.
+- Persistence happens when callers submit create/update requests containing `request.media`.
+
+Known pitfalls:
+
+- Homestay create flows that send only `files` but omit `request.media` can result in homestays without persisted media.
+- Community post edit flows must retain `fileId` values when re-submitting media; `fileId` is the stable identifier used for media retention logic.
+
 ## 5.7 Diagnostics / Logging / Observability
 
 - Infra startup check (`InfrastructureHealthCheck`) logs Redis + ImageKit status.
@@ -373,6 +385,19 @@ Located in `backend/src/test/java/com/nbh/backend`:
   - API contract/security-style tests
   - CRUD and admin flows
   - visual/regression scenarios
+
+## 10.1 Minimal stable Community suite
+
+Stable Community Playwright suite lives under:
+
+- `frontend/tests/community/`
+
+Recommended command:
+
+```bash
+cd frontend
+npm test -- tests/community
+```
 
 ## 11. Known Drift / Pitfalls (Important for AI Agents)
 
