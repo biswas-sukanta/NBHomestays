@@ -9,7 +9,8 @@ node_modules/
 .next/
 dist/
 out/
-.env*
+.env
+.env.*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -34,3 +35,11 @@ server_error.log
 temp/
 tmp/
 logback-test.xml
+
+# Local backend configs (keep local, never commit)
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-local.yaml
+backend/src/main/resources/logback-spring-local.xml
+
+# Local docs containing credentials (keep local, never commit)
+docs/AI_TEST_CREDENTIALS.md
