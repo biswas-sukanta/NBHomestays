@@ -33,7 +33,7 @@ import { normalizePost, NormalizedPost } from '@/lib/adapters/normalizePost';
 import { useHomestaysLookup } from '@/hooks/useHomestaysLookup';
 import { queryKeys } from '@/lib/queryKeys';
 import { getFeedVariant, resolveFeedLayout } from '@/lib/utils/feed-utils';
-import { getFeed, type FeedResponse } from '@/lib/api/feed';
+import { getFeed, getTrendingFeed, type FeedResponse } from '@/lib/api/feed';
 
 type Post = NormalizedPost;
 
@@ -77,6 +77,7 @@ export default function CommunityPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
     const [activeTag, setActiveTag] = useState<string | null>(null);
+    const [feedScope, setFeedScope] = useState<'latest' | 'following' | 'trending'>('latest');
 
     const { ref, inView } = useInView({ threshold: 0.1 });
 
@@ -85,6 +86,7 @@ export default function CommunityPage() {
         const response = await getFeed({ 
             cursor: pageParam || undefined, 
             tag: activeTag || undefined,
+            scope: feedScope,
             limit: 12 
         });
         return response;
@@ -98,7 +100,7 @@ export default function CommunityPage() {
         isPending,
         isError
     } = useInfiniteQuery({
-        queryKey: queryKeys.community.feed(activeTag || undefined),
+        queryKey: queryKeys.community.feed(activeTag || undefined, feedScope),
         queryFn: fetchPosts,
         initialPageParam: null as string | null,
         getNextPageParam: (lastPage: FeedResponse) => {
@@ -126,7 +128,7 @@ export default function CommunityPage() {
     const { data: trendingData } = useQuery({
         queryKey: queryKeys.community.trending,
         queryFn: async () => {
-            const response = await getFeed({ limit: 3 });
+            const response = await getTrendingFeed({ limit: 3 });
             return response;
         },
         staleTime: 10000, // 10 seconds — trending must be fresh
@@ -172,8 +174,8 @@ export default function CommunityPage() {
 
     const handleDeletePost = async (id: string) => {
         if (!window.confirm("Are you sure you want to delete this story?")) return;
-        const previousFeed = queryClient.getQueryData(queryKeys.community.feed(activeTag || undefined));
-        queryClient.setQueryData(queryKeys.community.feed(activeTag || undefined), (old: any) => {
+        const previousFeed = queryClient.getQueryData(queryKeys.community.feed(activeTag || undefined, feedScope));
+        queryClient.setQueryData(queryKeys.community.feed(activeTag || undefined, feedScope), (old: any) => {
             if (!old || !old.pages) return old;
             return {
                 ...old,
@@ -185,10 +187,10 @@ export default function CommunityPage() {
         });
         try {
             await postApi.delete(id);
-            queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.community.feed(activeTag || undefined, feedScope) });
             toast.success('Story deleted');
         } catch (err) {
-            queryClient.setQueryData(queryKeys.community.feed(activeTag || undefined), previousFeed);
+            queryClient.setQueryData(queryKeys.community.feed(activeTag || undefined, feedScope), previousFeed);
             toast.error('Failed to delete story');
         }
     };
@@ -243,17 +245,23 @@ export default function CommunityPage() {
                         {/* ── Sticky Filter Bar ── */}
                         <div className="sticky top-16 z-30 py-3 bg-white/95 backdrop-blur-md border-b border-neutral-200/50">
                             <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
-                                <button className="px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold whitespace-nowrap shrink-0 snap-start transition-all">
+                                <button
+                                    onClick={() => setFeedScope('latest')}
+                                    className={`px-4 py-2 rounded-full border text-sm font-semibold whitespace-nowrap shrink-0 snap-start transition-all ${feedScope === 'latest' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-transparent border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700'}`}
+                                >
                                     Latest
                                 </button>
-                                <button className="px-4 py-2 rounded-full bg-transparent border border-neutral-200 text-neutral-500 text-sm font-semibold whitespace-nowrap shrink-0 snap-start hover:border-neutral-300 hover:text-neutral-700 transition-all">
+                                <button
+                                    onClick={() => setFeedScope('trending')}
+                                    className={`px-4 py-2 rounded-full border text-sm font-semibold whitespace-nowrap shrink-0 snap-start transition-all ${feedScope === 'trending' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-transparent border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700'}`}
+                                >
                                     Trending
                                 </button>
-                                <button className="px-4 py-2 rounded-full bg-transparent border border-neutral-200 text-neutral-500 text-sm font-semibold whitespace-nowrap shrink-0 snap-start hover:border-neutral-300 hover:text-neutral-700 transition-all">
-                                    Mountains
-                                </button>
-                                <button className="px-4 py-2 rounded-full bg-transparent border border-neutral-200 text-neutral-500 text-sm font-semibold whitespace-nowrap shrink-0 snap-start hover:border-neutral-300 hover:text-neutral-700 transition-all">
-                                    Culture
+                                <button
+                                    onClick={() => setFeedScope('following')}
+                                    className={`px-4 py-2 rounded-full border text-sm font-semibold whitespace-nowrap shrink-0 snap-start transition-all ${feedScope === 'following' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-transparent border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700'}`}
+                                >
+                                    Following
                                 </button>
                             </div>
                         </div>

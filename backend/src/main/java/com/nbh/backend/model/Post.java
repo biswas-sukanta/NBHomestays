@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,6 +43,11 @@ public class Post {
     @JoinColumn(name = "homestay_id")
     private Homestay homestay;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_id")
+    private Destination destination;
+
     @Column(name = "location_name", nullable = false)
     private String locationName;
 
@@ -67,7 +72,7 @@ public class Post {
 
     @Column(name = "created_at", nullable = false)
     @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private Instant createdAt = Instant.now();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @lombok.ToString.Exclude
@@ -81,4 +86,39 @@ public class Post {
     @Column(name = "share_count", nullable = false, columnDefinition = "integer default 0")
     @Builder.Default
     private int shareCount = 0;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "post_type")
+    private PostType postType;
+
+    @Column(name = "is_editorial", nullable = false)
+    @Builder.Default
+    private boolean isEditorial = false;
+
+    @Column(name = "is_featured", nullable = false)
+    @Builder.Default
+    private boolean isFeatured = false;
+
+    @Column(name = "is_pinned", nullable = false)
+    @Builder.Default
+    private boolean isPinned = false;
+
+    @Column(name = "is_trending", nullable = false)
+    @Builder.Default
+    private boolean isTrending = false;
+
+    @Column(name = "view_count", nullable = false)
+    @Builder.Default
+    private int viewCount = 0;
+
+    @Column(name = "trending_score", nullable = false)
+    @Builder.Default
+    private double trendingScore = 0;
+
+    @Column(name = "trending_computed_at")
+    private Instant trendingComputedAt;
+
+    @Column(name = "editorial_score", nullable = false)
+    @Builder.Default
+    private double editorialScore = 0;
 }

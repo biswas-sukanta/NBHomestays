@@ -8,7 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import com.nbh.backend.model.PostType;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +36,9 @@ public class PostDto {
 
         @Size(max = 3, message = "Maximum 3 tags allowed")
         private List<String> tags;
+
+        private UUID destinationId;
+        private PostType postType;
     }
 
     @Data
@@ -49,12 +53,21 @@ public class PostDto {
         private List<MediaDto> media;
         private UUID homestayId;
         private String homestayName;
+        private UUID destinationId;
+        private PostType postType;
         private int loveCount;
         private int shareCount;
         private int commentCount;
+        private int viewCount;
         private boolean isLikedByCurrentUser;
+        private boolean isEditorial;
+        private boolean isFeatured;
+        private boolean isPinned;
+        private boolean isTrending;
+        private double trendingScore;
+        private double editorialScore;
         private Response originalPost;
-        private LocalDateTime createdAt;
+        private Instant createdAt;
         private List<String> tags;
     }
 

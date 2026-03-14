@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,7 +31,7 @@ public interface TimelineRepository extends JpaRepository<PostTimeline, Long> {
         ORDER BY t.createdAt DESC, t.postId DESC
         """)
     List<PostTimeline> findFeedFirstPage(
-            @Param("thirtyDaysAgo") LocalDateTime thirtyDaysAgo,
+            @Param("thirtyDaysAgo") Instant thirtyDaysAgo,
             org.springframework.data.domain.Pageable pageable);
 
     /**
@@ -46,7 +46,7 @@ public interface TimelineRepository extends JpaRepository<PostTimeline, Long> {
         ORDER BY t.createdAt DESC, t.postId DESC
         """)
     List<PostTimeline> findFeedWithCursor(
-            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("cursorCreatedAt") Instant cursorCreatedAt,
             @Param("cursorId") UUID cursorId,
             org.springframework.data.domain.Pageable pageable);
 
@@ -133,7 +133,7 @@ public interface TimelineRepository extends JpaRepository<PostTimeline, Long> {
         """, nativeQuery = true)
     void upsertTimelineEntry(
             @Param("postId") UUID postId,
-            @Param("createdAt") LocalDateTime createdAt,
+            @Param("createdAt") Instant createdAt,
             @Param("authorId") UUID authorId,
             @Param("authorName") String authorName,
             @Param("authorAvatarUrl") String authorAvatarUrl,

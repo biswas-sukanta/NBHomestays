@@ -22,7 +22,16 @@ export interface NormalizedPost {
     comments: number;
     shareCount: number;
     createdAt: string;
+    postType?: string;
+    isEditorial?: boolean;
+    isFeatured?: boolean;
+    isPinned?: boolean;
+    isTrending?: boolean;
+    viewCount?: number;
+    trendingScore?: number;
+    editorialScore?: number;
     // Optional/Legacy compatibility
+    destinationId?: string;
     homestayId?: string;
     homestayName?: string;
     isLikedByCurrentUser?: boolean;
@@ -58,6 +67,15 @@ export function normalizePost(post: any): NormalizedPost {
         comments: post.commentCount ?? 0,
         shareCount: post.shareCount ?? 0,
         createdAt: post.createdAt,
+        postType: post.postType,
+        isEditorial: post.isEditorial ?? false,
+        isFeatured: post.isFeatured ?? false,
+        isPinned: post.isPinned ?? false,
+        isTrending: post.isTrending ?? false,
+        viewCount: post.viewCount ?? 0,
+        trendingScore: post.trendingScore ?? 0,
+        editorialScore: post.editorialScore ?? 0,
+        destinationId: post.destinationId,
         homestayId: post.homestayId,
         homestayName: post.homestayName,
         isLikedByCurrentUser: post.isLikedByCurrentUser ?? false,

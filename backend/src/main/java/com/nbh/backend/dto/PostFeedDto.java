@@ -5,7 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import com.nbh.backend.model.PostType;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,7 +23,7 @@ public class PostFeedDto {
 
     private UUID postId;
     private String textContent;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
     
     // Author (pre-loaded via JOIN)
     private UUID authorId;
@@ -40,6 +41,15 @@ public class PostFeedDto {
     // Optional homestay reference
     private UUID homestayId;
     private String homestayName;
+    private UUID destinationId;
+    private PostType postType;
+    private boolean isEditorial;
+    private boolean isFeatured;
+    private boolean isPinned;
+    private boolean isTrending;
+    private int viewCount;
+    private double trendingScore;
+    private double editorialScore;
     
     // Tags (loaded via batch query)
     private List<String> tags;
@@ -114,8 +124,9 @@ public class PostFeedDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Cursor {
-        private LocalDateTime createdAt;
+        private Instant createdAt;
         private UUID id;
+        private Double trendingScore;
         private String previousBlockType;
         private Integer previousBlockTypeRun;
     }

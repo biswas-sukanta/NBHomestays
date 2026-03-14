@@ -25,6 +25,8 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
         org.springframework.data.domain.Page<Post> findByUser(com.nbh.backend.model.User user,
                         org.springframework.data.domain.Pageable pageable);
 
+        long countByUser_IdAndIsDeletedFalse(UUID userId);
+
         @Query("SELECT DISTINCT p FROM Post p JOIN p.tags t WHERE t = :tag")
         org.springframework.data.domain.Page<Post> findByTag(@Param("tag") String tag,
                         org.springframework.data.domain.Pageable pageable);
@@ -48,9 +50,18 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                        u.is_verified_host AS authorVerifiedHost,
                        h.id AS homestayId,
                        h.name AS homestayName,
+                       p.destination_id AS destinationId,
+                       p.post_type AS postType,
                        p.original_post_id AS originalPostId,
                        (SELECT COUNT(c.id) FROM comments c WHERE c.post_id = p.id) AS commentCount,
-                       (SELECT COALESCE(json_agg(pt.tag), '[]'::json) FROM post_tags pt WHERE pt.post_id = p.id) AS tags
+                       (SELECT COALESCE(json_agg(pt.tag), '[]'::json) FROM post_tags pt WHERE pt.post_id = p.id) AS tags,
+                       p.view_count AS viewCount,
+                       p.is_editorial AS isEditorial,
+                       p.is_featured AS isFeatured,
+                       p.is_pinned AS isPinned,
+                       p.is_trending AS isTrending,
+                       p.trending_score AS trendingScore,
+                       p.editorial_score AS editorialScore
                 FROM posts p
                 INNER JOIN users u ON p.user_id = u.id
                 LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -79,9 +90,18 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                        u.is_verified_host AS authorVerifiedHost,
                        h.id AS homestayId,
                        h.name AS homestayName,
+                       p.destination_id AS destinationId,
+                       p.post_type AS postType,
                        p.original_post_id AS originalPostId,
                        COUNT(DISTINCT c.id) AS commentCount,
-                       COALESCE(json_agg(DISTINCT pt.tag) FILTER (WHERE pt.tag IS NOT NULL), '[]'::json) AS tags
+                       COALESCE(json_agg(DISTINCT pt.tag) FILTER (WHERE pt.tag IS NOT NULL), '[]'::json) AS tags,
+                       p.view_count AS viewCount,
+                       p.is_editorial AS isEditorial,
+                       p.is_featured AS isFeatured,
+                       p.is_pinned AS isPinned,
+                       p.is_trending AS isTrending,
+                       p.trending_score AS trendingScore,
+                       p.editorial_score AS editorialScore
                 FROM posts p
                 INNER JOIN users u ON p.user_id = u.id
                 LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -136,9 +156,18 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                        u.is_verified_host AS authorVerifiedHost,
                        h.id AS homestayId,
                        h.name AS homestayName,
+                       p.destination_id AS destinationId,
+                       p.post_type AS postType,
                        p.original_post_id AS originalPostId,
                        (SELECT COUNT(c.id) FROM comments c WHERE c.post_id = p.id) AS commentCount,
-                       (SELECT COALESCE(json_agg(pt.tag), '[]'::json) FROM post_tags pt WHERE pt.post_id = p.id) AS tags
+                       (SELECT COALESCE(json_agg(pt.tag), '[]'::json) FROM post_tags pt WHERE pt.post_id = p.id) AS tags,
+                       p.view_count AS viewCount,
+                       p.is_editorial AS isEditorial,
+                       p.is_featured AS isFeatured,
+                       p.is_pinned AS isPinned,
+                       p.is_trending AS isTrending,
+                       p.trending_score AS trendingScore,
+                       p.editorial_score AS editorialScore
                 FROM posts p
                 INNER JOIN users u ON p.user_id = u.id
                 LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -167,9 +196,18 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                        u.is_verified_host AS authorVerifiedHost,
                        h.id AS homestayId,
                        h.name AS homestayName,
+                       p.destination_id AS destinationId,
+                       p.post_type AS postType,
                        p.original_post_id AS originalPostId,
                        (SELECT COUNT(c.id) FROM comments c WHERE c.post_id = p.id) AS commentCount,
-                       (SELECT COALESCE(json_agg(pt.tag), '[]'::json) FROM post_tags pt WHERE pt.post_id = p.id) AS tags
+                       (SELECT COALESCE(json_agg(pt.tag), '[]'::json) FROM post_tags pt WHERE pt.post_id = p.id) AS tags,
+                       p.view_count AS viewCount,
+                       p.is_editorial AS isEditorial,
+                       p.is_featured AS isFeatured,
+                       p.is_pinned AS isPinned,
+                       p.is_trending AS isTrending,
+                       p.trending_score AS trendingScore,
+                       p.editorial_score AS editorialScore
                 FROM posts p
                 INNER JOIN users u ON p.user_id = u.id
                 LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -199,6 +237,13 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
         @Modifying
         @Query(value = "UPDATE posts SET love_count = GREATEST(love_count - 1, 0) WHERE id = :postId", nativeQuery = true)
         int decrementLoveCount(@Param("postId") UUID postId);
+
+        @Modifying
+        @Query(value = "UPDATE posts SET view_count = COALESCE(view_count, 0) + 1 WHERE id = :postId", nativeQuery = true)
+        int incrementViewCount(@Param("postId") UUID postId);
+
+        @Query(value = "SELECT COUNT(*) FROM comments WHERE post_id = :postId", nativeQuery = true)
+        int countCommentsByPostId(@Param("postId") UUID postId);
 
         @Query(value = "SELECT love_count FROM posts WHERE id = :postId", nativeQuery = true)
         Integer findLoveCountById(@Param("postId") UUID postId);

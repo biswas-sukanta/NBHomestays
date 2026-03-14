@@ -3,11 +3,15 @@ package com.nbh.backend.service;
 import com.nbh.backend.dto.PostDto;
 import com.nbh.backend.dto.AuthorDto;
 import com.nbh.backend.dto.MediaDto;
+import com.nbh.backend.model.Destination;
 import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.MediaResource;
 import com.nbh.backend.model.Post;
 import com.nbh.backend.model.PostLike;
+import com.nbh.backend.model.PostType;
 import com.nbh.backend.model.User;
+import com.nbh.backend.model.VibeTag;
+import com.nbh.backend.repository.DestinationRepository;
 import com.nbh.backend.repository.MediaResourceRepository;
 import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.repository.UserRepository;
@@ -21,9 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Optional;
@@ -43,6 +48,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final HomestayRepository homestayRepository;
+    private final DestinationRepository destinationRepository;
     private final PostLikeRepository postLikeRepository;
     private final MediaResourceRepository mediaResourceRepository;
     private final CommentRepository commentRepository;
@@ -50,6 +56,7 @@ public class PostService {
     private final AsyncJobService asyncJobService;
     private final FeedCacheService feedCacheService;
     private final TimelineService timelineService;
+    private final ViewTrackingService viewTrackingService;
 
     /**
      * Get user ID by email - used by feed service for like status.
@@ -67,10 +74,16 @@ public class PostService {
             java.util.List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        validatePostRequest(request);
 
         Homestay homestay = null;
         if (request.getHomestayId() != null) {
             homestay = homestayRepository.findById(request.getHomestayId()).orElse(null);
+        }
+
+        Destination destination = null;
+        if (request.getDestinationId() != null) {
+            destination = destinationRepository.findById(request.getDestinationId()).orElse(null);
         }
 
         Post originalPost = null;
@@ -92,8 +105,11 @@ public class PostService {
                         .collect(java.util.stream.Collectors.toList()) : new java.util.ArrayList<>())
                 .user(user)
                 .homestay(homestay)
+                .destination(destination)
                 .originalPost(originalPost)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
+                .postType(request.getPostType())
+                .isEditorial(user.getRole() == User.Role.ROLE_ADMIN)
                 .build();
 
         if (post.getMediaFiles() != null) {
@@ -126,8 +142,9 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "postDetail", key = "#id", sync = true)
     public java.util.Optional<PostDto.Response> getPostById(java.util.UUID id) {
+        viewTrackingService.incrementPostView(id);
+        feedCacheService.invalidateAll();
         return postRepository.findById(id).map(this::mapToResponse);
     }
 
@@ -185,9 +202,7 @@ public class PostService {
         UUID postId = (UUID) row[0];
         String locationName = (String) row[1];
         String textContent = (String) row[2];
-        java.time.LocalDateTime createdAt = row[3] instanceof java.time.LocalDateTime 
-                ? (java.time.LocalDateTime) row[3] 
-                : ((java.sql.Timestamp) row[3]).toLocalDateTime();
+        Instant createdAt = toInstant(row[3]);
         int loveCount = ((Number) row[4]).intValue();
         int shareCount = ((Number) row[5]).intValue();
         
@@ -202,11 +217,13 @@ public class PostService {
         
         UUID homestayId = (UUID) row[12];
         String homestayName = (String) row[13];
-        UUID originalPostId = (UUID) row[14];
-        int commentCount = ((Number) row[15]).intValue();
-        
+        UUID destinationId = (UUID) row[14];
+        PostType postType = parsePostType(row[15]);
+        UUID originalPostId = (UUID) row[16];
+        int commentCount = ((Number) row[17]).intValue();
+
         // Parse tags from JSON array
-        List<String> tags = parseTagsFromJson(row[16]);
+        List<String> tags = parseTagsFromJson(row[18]);
         
         AuthorDto author = AuthorDto.builder()
                 .id(authorId)
@@ -225,10 +242,19 @@ public class PostService {
                 .media(mediaByPost.getOrDefault(postId, java.util.Collections.emptyList()))
                 .homestayId(homestayId)
                 .homestayName(homestayName)
+                .destinationId(destinationId)
+                .postType(postType)
                 .loveCount(loveCount)
                 .shareCount(shareCount)
                 .commentCount(commentCount)
+                .viewCount(toInt(row[19]))
                 .isLikedByCurrentUser(false) // Set by authenticated context if needed
+                .isEditorial(toBoolean(row[20]))
+                .isFeatured(toBoolean(row[21]))
+                .isPinned(toBoolean(row[22]))
+                .isTrending(toBoolean(row[23]))
+                .trendingScore(toDouble(row[24]))
+                .editorialScore(toDouble(row[25]))
                 .originalPost(null) // Not loaded in list view for performance
                 .createdAt(createdAt)
                 .tags(tags)
@@ -322,6 +348,7 @@ public class PostService {
             java.util.List<org.springframework.web.multipart.MultipartFile> files, String userEmail) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
+        validatePostRequest(request);
 
         if (!post.getUser().getEmail().equals(userEmail)) {
             User requestor = userRepository.findByEmail(userEmail)
@@ -338,6 +365,12 @@ public class PostService {
             post.setTextContent(request.getTextContent());
         if (request.getTags() != null)
             post.setTags(request.getTags());
+        if (request.getPostType() != null)
+            post.setPostType(request.getPostType());
+        if (request.getDestinationId() != null) {
+            post.setDestination(destinationRepository.findById(request.getDestinationId()).orElse(null));
+        }
+        post.setEditorial(post.getUser().getRole() == User.Role.ROLE_ADMIN);
 
         // --- CLOUD JANITOR DIFF: Purge images removed by the user ---
         java.util.List<com.nbh.backend.model.MediaResource> finalMergedMedia = new java.util.ArrayList<>();
@@ -534,8 +567,11 @@ public class PostService {
                                 .build())
                         .collect(java.util.stream.Collectors.toList()) : new java.util.ArrayList<>())
                 .user(user)
+                .destination(original.getDestination())
                 .originalPost(original)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
+                .postType(request.getPostType() != null ? request.getPostType() : original.getPostType())
+                .isEditorial(user.getRole() == User.Role.ROLE_ADMIN)
                 .build();
 
         if (post.getMediaFiles() != null) {
@@ -906,13 +942,82 @@ public class PostService {
                 .media(dtoMedia)
                 .homestayId(homestay != null ? homestay.getId() : null)
                 .homestayName(homestay != null ? homestay.getName() : null)
+                .destinationId(post.getDestination() != null ? post.getDestination().getId() : null)
+                .postType(post.getPostType())
                 .loveCount(post.getLoveCount())
                 .shareCount(post.getShareCount())
-                .commentCount(post.getComments() != null ? post.getComments().size() : 0)
+                .commentCount(postRepository.countCommentsByPostId(post.getId()))
+                .viewCount(post.getViewCount())
                 .isLikedByCurrentUser(isLiked)
+                .isEditorial(post.isEditorial())
+                .isFeatured(post.isFeatured())
+                .isPinned(post.isPinned())
+                .isTrending(post.isTrending())
+                .trendingScore(post.getTrendingScore())
+                .editorialScore(post.getEditorialScore())
                 .originalPost(originalPostDto)
                 .createdAt(post.getCreatedAt())
                 .tags(post.getTags() == null ? java.util.List.of() : new java.util.ArrayList<>(post.getTags()))
                 .build();
+    }
+
+    private void validatePostRequest(PostDto.Request request) {
+        if (request == null) {
+            return;
+        }
+        if (request.getTags() == null) {
+            return;
+        }
+        var invalid = request.getTags().stream()
+                .filter(tag -> !VibeTag.isAllowed(tag))
+                .collect(Collectors.toCollection(HashSet::new));
+        if (!invalid.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid vibe tags: " + String.join(", ", invalid));
+        }
+    }
+
+    private Instant toInstant(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Instant instant) {
+            return instant;
+        }
+        if (value instanceof java.sql.Timestamp timestamp) {
+            return timestamp.toInstant();
+        }
+        if (value instanceof java.time.LocalDateTime localDateTime) {
+            return localDateTime.toInstant(java.time.ZoneOffset.UTC);
+        }
+        return Instant.parse(value.toString());
+    }
+
+    private PostType parsePostType(Object value) {
+        if (value == null) {
+            return null;
+        }
+        return PostType.fromValue(value.toString());
+    }
+
+    private boolean toBoolean(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean booleanValue) {
+            return booleanValue;
+        }
+        if (value instanceof Number number) {
+            return number.intValue() != 0;
+        }
+        return Boolean.parseBoolean(value.toString());
+    }
+
+    private int toInt(Object value) {
+        return value instanceof Number number ? number.intValue() : 0;
+    }
+
+    private double toDouble(Object value) {
+        return value instanceof Number number ? number.doubleValue() : 0d;
     }
 }

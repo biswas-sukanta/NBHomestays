@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -27,7 +27,7 @@ public class PostLike {
 
     @Column(name = "liked_at", nullable = false)
     @Builder.Default
-    private LocalDateTime likedAt = LocalDateTime.now();
+    private Instant likedAt = Instant.now();
 
     // ── Composite PK Class ────────────────────────────────────
     @Data

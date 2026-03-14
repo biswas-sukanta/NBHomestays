@@ -30,6 +30,15 @@ export interface PostFeedItem {
   commentCount: number;
   likeCount: number;
   shareCount: number;
+  destinationId?: string;
+  postType?: string;
+  isEditorial?: boolean;
+  isFeatured?: boolean;
+  isPinned?: boolean;
+  isTrending?: boolean;
+  viewCount?: number;
+  trendingScore?: number;
+  editorialScore?: number;
   homestayId?: string;
   homestayName?: string;
   tags: string[];
@@ -74,6 +83,7 @@ export interface FeedResponse {
 
 export interface FeedParams {
   tag?: string;
+  scope?: 'latest' | 'following' | 'trending';
   cursor?: string;
   limit?: number;
   layout?: boolean;
@@ -90,6 +100,9 @@ export async function getFeed(params: FeedParams = {}): Promise<FeedResponse> {
   
   if (params.tag) {
     searchParams.append('tag', params.tag);
+  }
+  if (params.scope && params.scope !== 'latest') {
+    searchParams.append('scope', params.scope);
   }
   if (params.cursor) {
     searchParams.append('cursor', params.cursor);
@@ -110,6 +123,30 @@ export async function getFeed(params: FeedParams = {}): Promise<FeedResponse> {
   
   if (!response.ok) {
     throw new Error(`Feed API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function getTrendingFeed(params: Omit<FeedParams, 'scope' | 'tag'> = {}): Promise<FeedResponse> {
+  const searchParams = new URLSearchParams();
+
+  if (params.cursor) {
+    searchParams.append('cursor', params.cursor);
+  }
+  if (params.limit) {
+    searchParams.append('limit', params.limit.toString());
+  }
+  if (params.layout !== false) {
+    searchParams.append('layout', 'true');
+  }
+
+  const queryString = searchParams.toString();
+  const path = `/posts/trending${queryString ? `?${queryString}` : ''}`;
+  const response = await apiFetch(path);
+
+  if (!response.ok) {
+    throw new Error(`Trending feed API error: ${response.status}`);
   }
 
   return response.json();

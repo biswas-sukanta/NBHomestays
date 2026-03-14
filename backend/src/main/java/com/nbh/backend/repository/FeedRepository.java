@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,7 +71,7 @@ public interface FeedRepository extends Repository<Post, UUID> {
         """,
         nativeQuery = true)
     List<Object[]> findFeedWithCursor(
-            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("cursorCreatedAt") Instant cursorCreatedAt,
             @Param("cursorId") UUID cursorId,
             @Param("limit") int limit);
 
@@ -136,7 +136,7 @@ public interface FeedRepository extends Repository<Post, UUID> {
         nativeQuery = true)
     List<Object[]> findFeedByTagWithCursor(
             @Param("tag") String tag,
-            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("cursorCreatedAt") Instant cursorCreatedAt,
             @Param("cursorId") UUID cursorId,
             @Param("limit") int limit);
 
@@ -224,4 +224,121 @@ public interface FeedRepository extends Repository<Post, UUID> {
         """,
         nativeQuery = true)
     long countAllActive();
+
+    @Query(value = """
+        SELECT p.id as postId, p.destination_id as destinationId, p.post_type as postType,
+               p.view_count as viewCount, p.is_editorial as isEditorial, p.is_featured as isFeatured,
+               p.is_pinned as isPinned, p.is_trending as isTrending,
+               p.trending_score as trendingScore, p.editorial_score as editorialScore
+        FROM posts p
+        WHERE p.id IN :postIds
+        """, nativeQuery = true)
+    List<Object[]> findPostMetaByIds(@Param("postIds") List<UUID> postIds);
+
+    @Query(value = """
+        SELECT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
+               u.id as authorId,
+               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.is_verified_host as authorVerifiedHost,
+               p.love_count as likeCount, p.share_count as shareCount,
+               h.id as homestayId, h.name as homestayName,
+               p.original_post_id as originalPostId,
+               op.text_content as originalContent,
+               ou.id as originalAuthorId,
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        LEFT JOIN homestays h ON p.homestay_id = h.id
+        LEFT JOIN posts op ON p.original_post_id = op.id
+        LEFT JOIN users ou ON op.user_id = ou.id
+        WHERE p.is_deleted = false
+          AND p.trending_score IS NOT NULL
+        ORDER BY p.trending_score DESC, p.created_at DESC, p.id DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Object[]> findTrendingFirstPage(@Param("limit") int limit);
+
+    @Query(value = """
+        SELECT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
+               u.id as authorId,
+               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.is_verified_host as authorVerifiedHost,
+               p.love_count as likeCount, p.share_count as shareCount,
+               h.id as homestayId, h.name as homestayName,
+               p.original_post_id as originalPostId,
+               op.text_content as originalContent,
+               ou.id as originalAuthorId,
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        LEFT JOIN homestays h ON p.homestay_id = h.id
+        LEFT JOIN posts op ON p.original_post_id = op.id
+        LEFT JOIN users ou ON op.user_id = ou.id
+        WHERE p.is_deleted = false
+          AND (
+                p.trending_score < :cursorTrendingScore
+                OR (p.trending_score = :cursorTrendingScore AND p.created_at < :cursorCreatedAt)
+                OR (p.trending_score = :cursorTrendingScore AND p.created_at = :cursorCreatedAt AND p.id < :cursorId)
+              )
+        ORDER BY p.trending_score DESC, p.created_at DESC, p.id DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Object[]> findTrendingWithCursor(
+            @Param("cursorTrendingScore") double cursorTrendingScore,
+            @Param("cursorCreatedAt") Instant cursorCreatedAt,
+            @Param("cursorId") UUID cursorId,
+            @Param("limit") int limit);
+
+    @Query(value = """
+        SELECT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
+               u.id as authorId,
+               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.is_verified_host as authorVerifiedHost,
+               p.love_count as likeCount, p.share_count as shareCount,
+               h.id as homestayId, h.name as homestayName,
+               p.original_post_id as originalPostId,
+               op.text_content as originalContent,
+               ou.id as originalAuthorId,
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        LEFT JOIN homestays h ON p.homestay_id = h.id
+        LEFT JOIN posts op ON p.original_post_id = op.id
+        LEFT JOIN users ou ON op.user_id = ou.id
+        INNER JOIN user_follows uf ON uf.followed_user_id = p.user_id
+        WHERE p.is_deleted = false
+          AND uf.follower_user_id = :viewerUserId
+        ORDER BY p.created_at DESC, p.id DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Object[]> findFollowingFirstPage(@Param("viewerUserId") UUID viewerUserId, @Param("limit") int limit);
+
+    @Query(value = """
+        SELECT p.id as postId, p.text_content as textContent, p.created_at as createdAt,
+               u.id as authorId,
+               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.last_name), '')) as authorName,
+               u.avatar_url as authorAvatarUrl, u.role as authorRole, u.is_verified_host as authorVerifiedHost,
+               p.love_count as likeCount, p.share_count as shareCount,
+               h.id as homestayId, h.name as homestayName,
+               p.original_post_id as originalPostId,
+               op.text_content as originalContent,
+               ou.id as originalAuthorId,
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+        FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        LEFT JOIN homestays h ON p.homestay_id = h.id
+        LEFT JOIN posts op ON p.original_post_id = op.id
+        LEFT JOIN users ou ON op.user_id = ou.id
+        INNER JOIN user_follows uf ON uf.followed_user_id = p.user_id
+        WHERE p.is_deleted = false
+          AND uf.follower_user_id = :viewerUserId
+          AND (p.created_at < :cursorCreatedAt OR (p.created_at = :cursorCreatedAt AND p.id < :cursorId))
+        ORDER BY p.created_at DESC, p.id DESC
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Object[]> findFollowingWithCursor(
+            @Param("viewerUserId") UUID viewerUserId,
+            @Param("cursorCreatedAt") Instant cursorCreatedAt,
+            @Param("cursorId") UUID cursorId,
+            @Param("limit") int limit);
 }

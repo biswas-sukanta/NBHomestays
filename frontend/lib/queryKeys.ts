@@ -20,7 +20,11 @@ export const queryKeys = {
   },
 
   community: {
-    feed: (tag?: string) => ['community', 'posts', { tag }] as const,
+    feed: (tag?: string, scope?: 'latest' | 'following' | 'trending') => ['community', 'posts', { tag, scope: scope ?? 'latest' }] as const,
     trending: ['community', 'trending'] as const,
+  },
+
+  users: {
+    profile: (id: string) => ['users', 'profile', { id }] as const,
   },
 } as const;

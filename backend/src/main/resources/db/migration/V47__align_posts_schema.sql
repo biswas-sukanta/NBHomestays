@@ -1,0 +1,8 @@
+ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS original_post_id UUID REFERENCES posts(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS love_count INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS share_count INTEGER NOT NULL DEFAULT 0;
+
+CREATE INDEX IF NOT EXISTS idx_posts_feed_sort
+    ON posts (created_at DESC, id DESC);
+

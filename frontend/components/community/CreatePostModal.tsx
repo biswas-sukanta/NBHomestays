@@ -36,6 +36,25 @@ const VIBE_TAGS = [
 
 interface RepostTarget { id: string; authorName: string; textContent: string; }
 
+const ALLOWED_VIBE_TAGS = [
+    { label: 'Hidden Gem', value: 'Hidden Gem' },
+    { label: 'Offbeat', value: 'Offbeat' },
+    { label: 'Sunrise', value: 'Sunrise' },
+    { label: 'Heritage', value: 'Heritage' },
+    { label: 'Food', value: 'Food' },
+    { label: 'Local Tips', value: 'Local Tips' },
+    { label: 'Transport', value: 'Transport' },
+] as const;
+
+const POST_TYPES = [
+    { label: 'Question', value: 'Question' },
+    { label: 'Trip Report', value: 'Trip Report' },
+    { label: 'Review', value: 'Review' },
+    { label: 'Alert', value: 'Alert' },
+    { label: 'Photo', value: 'Photo' },
+    { label: 'Story', value: 'Story' },
+] as const;
+
 interface CreatePostModalProps {
     postData?: Post;
     repostTarget?: RepostTarget;
@@ -62,7 +81,8 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
     // Unified homestay search hook
     const { data: homestays = [] } = useHomestaySearch();
     const [selectedHomestay, setSelectedHomestay] = useState(postData?.homestayId || '');
-    const [selectedTags, setSelectedTags] = useState<string[]>(postData?.tags || []);
+    const [selectedTags, setSelectedTags] = useState<string[]>((postData?.tags || []).filter(tag => ALLOWED_VIBE_TAGS.some(option => option.value === tag)));
+    const [selectedPostType, setSelectedPostType] = useState<string>(postData?.postType || 'Story');
     const [error, setError] = useState('');
 
     const toggleTag = (tag: string) => {
@@ -83,7 +103,8 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                     : (postData.imageUrl ? [{ url: postData.imageUrl }] : [])
             );
             setSelectedHomestay(postData.homestayId || '');
-            setSelectedTags(postData.tags || []);
+            setSelectedTags((postData.tags || []).filter(tag => ALLOWED_VIBE_TAGS.some(option => option.value === tag)));
+            setSelectedPostType(postData.postType || 'Story');
         }
     }, [postData]);
 
@@ -191,6 +212,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             textContent: text,
             media: optimisticMedia,
             tags: selectedTags.length > 0 ? selectedTags : [],
+            postType: selectedPostType,
             loveCount: 0,
             shareCount: 0,
             commentCount: 0,
@@ -244,6 +266,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                 locationName: location || 'North Bengal',
                 media: [...existingMedia, ...uploadedMedia],
                 tags: selectedTags.length > 0 ? selectedTags : undefined,
+                postType: selectedPostType,
             };
 
             if (selectedHomestay) payload.homestayId = selectedHomestay;
@@ -406,9 +429,30 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                         </div>
 
                         <div className="pt-2">
-                            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-4">Post Category {selectedTags.length > 0 && <span className="text-emerald-600">({selectedTags.length}/3)</span>}</p>
+                            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-4">Post Type</p>
+                            <div className="flex flex-wrap gap-2 md:gap-3 mb-6">
+                                {POST_TYPES.map(type => {
+                                    const isSelected = selectedPostType === type.value;
+                                    return (
+                                        <button
+                                            key={type.value}
+                                            type="button"
+                                            onClick={() => setSelectedPostType(type.value)}
+                                            className={cn(
+                                                'px-3.5 py-2 md:px-4 md:py-2.5 rounded-full text-[11px] md:text-xs font-bold uppercase tracking-widest border transition-all duration-300 select-none shadow-sm flex-grow md:flex-grow-0',
+                                                isSelected
+                                                    ? 'bg-neutral-900 text-white border-neutral-900 shadow-md'
+                                                    : 'bg-neutral-50 text-neutral-600 border-neutral-200 hover:border-neutral-400 hover:text-neutral-900'
+                                            )}
+                                        >
+                                            {type.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-4">Vibe Tags {selectedTags.length > 0 && <span className="text-emerald-600">({selectedTags.length}/3)</span>}</p>
                             <div className="flex flex-wrap gap-2 md:gap-3">
-                                {VIBE_TAGS.map(tag => {
+                                {ALLOWED_VIBE_TAGS.map(tag => {
                                     const isSelected = selectedTags.includes(tag.value);
                                     const isDisabled = !isSelected && selectedTags.length >= 3;
                                     return (

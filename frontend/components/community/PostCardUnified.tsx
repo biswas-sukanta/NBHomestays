@@ -12,6 +12,7 @@ import type { MediaVariant } from '@/lib/adapters/normalizePost';
 import { RepostModal } from './RepostModal';
 import { extractTitleAndExcerpt, formatRelative, truncateText, FeedLayoutVariant, getAspectClass } from '@/lib/utils/feed-utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Link from 'next/link';
 
 // ── Step 1: Design Tokens & Typography ─────────────────────────────────────────
 // Serif (Playfair Display) for headlines/quotes - font-heading
@@ -293,6 +294,7 @@ export function PostCardUnified({
 
     const isFeatured = effectiveVariant === 'featured' || (post as any).isFeatured;
     const isEditorial = (post as any).isEditorial;
+    const profileHref = post.authorId ? `/profile/${post.authorId}` : null;
 
     // Step 2: Card Container Physics
     const articleClassName = cn(
@@ -361,14 +363,31 @@ export function PostCardUnified({
                     <div className="px-5 sm:px-6 py-4">
                         {/* User Metadata Byline */}
                         <div className="flex items-center gap-3 mb-3">
-                            <Avatar className="w-8 h-8 ring-2 ring-white shadow-sm">
-                                <AvatarImage src={authorAvatar} alt={authorName} />
-                                <AvatarFallback className="bg-gradient-to-br from-[#2D5A4A] to-teal-600 text-white text-xs font-bold">
-                                    {initials}
-                                </AvatarFallback>
-                            </Avatar>
+                            {profileHref ? (
+                                <Link href={profileHref}>
+                                    <Avatar className="w-8 h-8 ring-2 ring-white shadow-sm">
+                                        <AvatarImage src={authorAvatar} alt={authorName} />
+                                        <AvatarFallback className="bg-gradient-to-br from-[#2D5A4A] to-teal-600 text-white text-xs font-bold">
+                                            {initials}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </Link>
+                            ) : (
+                                <Avatar className="w-8 h-8 ring-2 ring-white shadow-sm">
+                                    <AvatarImage src={authorAvatar} alt={authorName} />
+                                    <AvatarFallback className="bg-gradient-to-br from-[#2D5A4A] to-teal-600 text-white text-xs font-bold">
+                                        {initials}
+                                    </AvatarFallback>
+                                </Avatar>
+                            )}
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <span className="text-sm font-semibold text-[#1A1A1A] truncate font-sans">{authorName}</span>
+                                {profileHref ? (
+                                    <Link href={profileHref} className="text-sm font-semibold text-[#1A1A1A] truncate font-sans hover:text-[#2D5A4A] transition-colors">
+                                        {authorName}
+                                    </Link>
+                                ) : (
+                                    <span className="text-sm font-semibold text-[#1A1A1A] truncate font-sans">{authorName}</span>
+                                )}
                                 {post.isVerifiedHost && (
                                     <span className="px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 rounded-full font-sans">
                                         Host
@@ -441,8 +460,13 @@ export function PostCardUnified({
                         )}
 
                         {/* Step 5: Category Pills below title */}
-                        {(post.tags ?? []).length > 0 && (
+                        {(post.postType || (post.tags ?? []).length > 0) && (
                             <div className="flex flex-wrap gap-2 mb-3">
+                                {post.postType && (
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1 border font-sans bg-neutral-900 text-white border-neutral-900">
+                                        {post.postType}
+                                    </span>
+                                )}
                                 {(post.tags ?? []).slice(0, 3).map(tag => {
                                     const config = CATEGORY_CONFIG[tag] || { icon: '🏷', color: 'bg-neutral-50 text-neutral-700 border-neutral-200' };
                                     return (
@@ -459,6 +483,16 @@ export function PostCardUnified({
                                     );
                                 })}
                             </div>
+                        )}
+
+                        {post.homestayId && post.homestayName && (
+                            <Link
+                                href={`/homestays/${post.homestayId}`}
+                                className="inline-flex items-center gap-2 text-sm text-[#2D5A4A] hover:text-[#1E4136] font-medium font-sans mb-3"
+                            >
+                                <span>📍</span>
+                                <span>{post.location || 'North Bengal'} • Stay at {post.homestayName}</span>
+                            </Link>
                         )}
                     </div>
                 )}

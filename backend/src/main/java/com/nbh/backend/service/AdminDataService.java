@@ -370,8 +370,8 @@ public class AdminDataService {
                                         .tags(postTags)
                                         .loveCount(random.nextInt(50))
                                         .shareCount(random.nextInt(10))
-                                        .createdAt(java.time.LocalDateTime.now()
-                                                        .minusDays(random.nextInt(30)))
+                                        .createdAt(java.time.Instant.now()
+                                                        .minus(java.time.Duration.ofDays(random.nextInt(30))))
                                         .build();
 
                         // Add media resources (1-5 random images from ImageKit)

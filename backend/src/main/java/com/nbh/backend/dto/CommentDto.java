@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,7 +33,7 @@ public class CommentDto {
 
     private String body;
     private List<MediaDto> media;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     /** First-level replies (populated only for top-level comments). */
     private List<CommentDto> replies;

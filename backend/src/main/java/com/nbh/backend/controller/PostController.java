@@ -54,6 +54,7 @@ public class PostController {
     @GetMapping("/feed")
     public ResponseEntity<PostFeedDto.FeedResponse> getFeed(
             @RequestParam(name = "tag", required = false) String tag,
+            @RequestParam(name = "scope", required = false, defaultValue = "latest") String scope,
             @RequestParam(name = "cursor", required = false) String cursor,
             @RequestParam(name = "limit", required = false) Integer limit,
             @RequestParam(name = "layout", required = false, defaultValue = "true") boolean layout,
@@ -65,7 +66,7 @@ public class PostController {
             userId = postService.getUserIdByEmail(email);
         }
         
-        PostFeedDto.FeedResponse response = feedService.getFeed(tag, cursor, limit, userId, layout);
+        PostFeedDto.FeedResponse response = feedService.getFeed(tag, scope, cursor, limit, userId, layout);
         
         // Generate ETag from response hash
         String etag = generateFeedETag(response);
@@ -134,6 +135,19 @@ public class PostController {
         return postService.getPostById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/trending")
+    public ResponseEntity<PostFeedDto.FeedResponse> getTrendingFeed(
+            @RequestParam(name = "cursor", required = false) String cursor,
+            @RequestParam(name = "limit", required = false) Integer limit,
+            @RequestParam(name = "layout", required = false, defaultValue = "true") boolean layout,
+            Authentication authentication) {
+        java.util.UUID userId = null;
+        if (authentication != null && authentication.isAuthenticated()) {
+            userId = postService.getUserIdByEmail(authentication.getName());
+        }
+        return ResponseEntity.ok(feedService.getFeed(null, "trending", cursor, limit, userId, layout));
     }
 
     @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)

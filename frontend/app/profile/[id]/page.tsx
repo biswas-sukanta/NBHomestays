@@ -1,149 +1,245 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { userApi } from '@/lib/api/users';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Award, MapPin, MessageSquare } from 'lucide-react';
+import { toast } from 'sonner';
+
 import { SharedPageBanner } from '@/components/shared-page-banner';
 import { HomestayCard } from '@/components/homestay-card';
-import { MapPin, Star, Award, MessageSquare } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { OptimizedImage } from '@/components/ui/optimized-image';
+import { useAuth } from '@/context/AuthContext';
+import { userApi, type PublicProfile } from '@/lib/api/users';
+import { queryKeys } from '@/lib/queryKeys';
 
-interface HostProfile {
-    id: string;
-    firstName: string;
-    lastName: string;
-    bio: string;
-    communityPoints: number;
-    badges: string[];
-    homestays: any[];
-    posts: any[];
+const AVATAR_FALLBACK = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=320&q=80';
+
+function formatCount(value: number) {
+    return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 }
 
 export default function PublicProfilePage() {
-    const { id } = useParams();
-    const [profile, setProfile] = useState<HostProfile | null>(null);
-    const [loading, setLoading] = useState(true);
+    const params = useParams<{ id: string }>();
+    const profileId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+    const queryClient = useQueryClient();
+    const { isAuthenticated, user } = useAuth();
 
-    useEffect(() => {
-        if (!id) return;
-        userApi.getProfile(id as string)
-            .then(res => setProfile(res.data))
-            .catch(err => console.error("Failed to load profile", err))
-            .finally(() => setLoading(false));
-    }, [id]);
+    const profileQuery = useQuery({
+        queryKey: profileId ? queryKeys.users.profile(profileId) : ['users', 'profile', 'missing-id'],
+        enabled: Boolean(profileId),
+        queryFn: async () => {
+            const response = await userApi.getProfile(profileId!);
+            return response.data;
+        },
+    });
 
-    if (loading) {
+    const followMutation = useMutation({
+        mutationFn: async (nextIsFollowing: boolean) => {
+            if (!profileId) {
+                throw new Error('Missing profile id');
+            }
+            if (nextIsFollowing) {
+                await userApi.follow(profileId);
+            } else {
+                await userApi.unfollow(profileId);
+            }
+            return nextIsFollowing;
+        },
+        onMutate: async (nextIsFollowing: boolean) => {
+            if (!profileId) {
+                return { previousProfile: undefined };
+            }
+
+            await queryClient.cancelQueries({ queryKey: queryKeys.users.profile(profileId) });
+            const previousProfile = queryClient.getQueryData<PublicProfile>(queryKeys.users.profile(profileId));
+
+            queryClient.setQueryData<PublicProfile>(queryKeys.users.profile(profileId), (current) => {
+                if (!current) {
+                    return current;
+                }
+                const followerDelta = nextIsFollowing ? 1 : -1;
+                return {
+                    ...current,
+                    isFollowing: nextIsFollowing,
+                    followersCount: Math.max(0, current.followersCount + followerDelta),
+                };
+            });
+
+            return { previousProfile };
+        },
+        onError: (_error, _nextIsFollowing, context) => {
+            if (profileId && context?.previousProfile) {
+                queryClient.setQueryData(queryKeys.users.profile(profileId), context.previousProfile);
+            }
+            toast.error('Failed to update follow status');
+        },
+        onSuccess: (nextIsFollowing) => {
+            toast.success(nextIsFollowing ? 'Now following this profile' : 'Unfollowed profile');
+        },
+        onSettled: async () => {
+            if (profileId) {
+                await queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(profileId) });
+            }
+        },
+    });
+
+    if (profileQuery.isPending) {
         return (
-            <div className="min-h-screen bg-white">
+            <div className="min-h-screen bg-background">
                 <Skeleton className="h-64 w-full" />
-                <div className="container mx-auto px-4 py-12 max-w-5xl">
-                    <Skeleton className="h-12 w-48 mb-6" />
-                    <Skeleton className="h-24 w-full mb-8" />
+                <div className="container mx-auto max-w-5xl px-4 py-12">
+                    <div className="flex flex-col gap-6 rounded-[2rem] border border-border/70 bg-card/80 p-8 shadow-sm md:flex-row md:items-center">
+                        <Skeleton className="h-28 w-28 rounded-full" />
+                        <div className="flex-1 space-y-4">
+                            <Skeleton className="h-10 w-56" />
+                            <Skeleton className="h-5 w-64" />
+                            <Skeleton className="h-20 w-full" />
+                        </div>
+                    </div>
                 </div>
             </div>
         );
     }
 
-    if (!profile) {
+    if (profileQuery.isError || !profileQuery.data) {
         return <div className="min-h-screen flex items-center justify-center">Profile not found.</div>;
     }
 
-    const fullName = `${profile.firstName} ${profile.lastName}`;
+    const profile = profileQuery.data;
+    const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+    const isOwnProfile = user?.id === profile.id;
+    const statLine = `${formatCount(profile.followersCount)} Followers • ${formatCount(profile.followingCount)} Following • ${formatCount(profile.postCount)} Posts`;
+
+    const handleFollowToggle = async () => {
+        if (!profileId || !isAuthenticated || isOwnProfile) {
+            return;
+        }
+        await followMutation.mutateAsync(!profile.isFollowing);
+    };
 
     return (
         <div className="min-h-screen bg-background">
             <SharedPageBanner
                 title={fullName}
                 subtitle={
-                    <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
-                        {profile.badges.map(badge => (
-                            <span key={badge} className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full shadow-sm">
-                                <Award className="w-3 h-3" />
-                                {badge}
+                    <div className="mt-4 flex flex-col items-center gap-3">
+                        <span className="text-sm text-white/80">@{profile.username}</span>
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                            {profile.badges.map((badge) => (
+                                <span key={badge} className="inline-flex items-center gap-1 rounded-full bg-amber-300 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-amber-950 shadow-sm">
+                                    <Award className="h-3 w-3" />
+                                    {badge}
+                                </span>
+                            ))}
+                            {profile.verifiedHost && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-300 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-emerald-950 shadow-sm">
+                                    Verified Host
+                                </span>
+                            )}
+                            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white">
+                                {profile.communityPoints} Community Points
                             </span>
-                        ))}
-                        <span className="text-white font-bold bg-white/20 px-3 py-1 rounded-full text-xs">
-                            {profile.communityPoints} Community Points
-                        </span>
+                        </div>
                     </div>
                 }
             />
 
-            <main className="container mx-auto px-4 py-12 max-w-5xl">
-                <div className="grid md:grid-cols-3 gap-12">
-                    {/* Left Column: Bio & Achievements */}
-                    <div className="md:col-span-1 space-y-8">
-                        <section>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">About the host</h2>
-                            <p className="text-gray-700 leading-relaxed italic border-l-4 border-primary pl-4 py-2 bg-gray-50 rounded-r-xl">
-                                {profile.bio || `Hi! I'm ${profile.firstName}, a local from North Bengal. I love hosting travelers and sharing the unique vibes of our hills.`}
-                            </p>
-                        </section>
+            <main className="container mx-auto max-w-5xl px-4 py-12">
+                <div className="grid gap-12 md:grid-cols-[320px_minmax(0,1fr)]">
+                    <aside className="space-y-8">
+                        <section className="overflow-hidden rounded-[2rem] border border-border/70 bg-card/90 shadow-sm">
+                            <div className="bg-gradient-to-br from-primary/10 via-transparent to-accent/20 p-8">
+                                <div className="mb-6 flex items-center gap-4">
+                                    <div className="h-24 w-24 overflow-hidden rounded-full border border-white/70 bg-white shadow-md">
+                                        <OptimizedImage
+                                            src={profile.avatar || AVATAR_FALLBACK}
+                                            alt={fullName || profile.username}
+                                            width={160}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="truncate text-lg font-bold text-foreground">{fullName || profile.username}</p>
+                                        <p className="truncate text-sm text-muted-foreground">@{profile.username}</p>
+                                    </div>
+                                </div>
 
-                        <section className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100">
-                            <h3 className="text-emerald-900 font-bold mb-3 flex items-center gap-2 text-sm uppercase tracking-wider">
-                                <Award className="w-4 h-4" />
-                                Community Standing
-                            </h3>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center bg-white/60 p-3 rounded-xl border border-white">
-                                    <span className="text-xs font-bold text-emerald-800">Scout Tier</span>
-                                    <span className="text-xs font-black text-emerald-950">Level 4</span>
+                                <div className="rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm text-muted-foreground">
+                                    {statLine}
                                 </div>
-                                <div className="flex justify-between items-center bg-white/60 p-3 rounded-xl border border-white">
-                                    <span className="text-xs font-bold text-emerald-800">Vibe Keeper</span>
-                                    <span className="text-xs font-black text-emerald-950">Traveler</span>
-                                </div>
+
+                                {!isOwnProfile && isAuthenticated && (
+                                    <Button
+                                        type="button"
+                                        onClick={handleFollowToggle}
+                                        disabled={followMutation.isPending}
+                                        variant={profile.isFollowing ? 'outline' : 'default'}
+                                        className={profile.isFollowing
+                                            ? 'mt-4 w-full rounded-full border-border bg-background text-foreground hover:bg-secondary'
+                                            : 'mt-4 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90'}
+                                    >
+                                        {followMutation.isPending
+                                            ? (profile.isFollowing ? 'Updating...' : 'Following...')
+                                            : (profile.isFollowing ? 'Following' : 'Follow')}
+                                    </Button>
+                                )}
+
+                                {isOwnProfile && (
+                                    <Button asChild type="button" variant="outline" className="mt-4 w-full rounded-full">
+                                        <Link href="/profile">Edit Profile</Link>
+                                    </Button>
+                                )}
+
+                                <p className="mt-6 rounded-2xl border border-border/60 bg-secondary/40 px-4 py-4 text-sm leading-7 text-foreground">
+                                    {profile.bio || `Hi! I'm ${profile.firstName}, sharing stays, local notes, and travel moments from North Bengal.`}
+                                </p>
                             </div>
                         </section>
-                    </div>
+                    </aside>
 
-                    {/* Right Column: Listings & Stories */}
-                    <div className="md:col-span-2 space-y-12">
-                        {/* Stays */}
+                    <div className="space-y-12">
                         <section>
-                            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                                Stays by {profile.firstName}
-                                <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{profile.homestays.length}</span>
-                            </h2>
-                            <div className="grid sm:grid-cols-2 gap-6">
-                                {profile.homestays.map((h, i) => (
-                                    <HomestayCard key={h.id} homestay={h} index={i} />
+                            <h2 className="mb-6 text-2xl font-black text-gray-900">Hosted Stays</h2>
+                            <div className="grid gap-6 sm:grid-cols-2">
+                                {profile.homestays.map((homestay, index) => (
+                                    <HomestayCard key={homestay.id} homestay={homestay} index={index} />
                                 ))}
                                 {profile.homestays.length === 0 && (
-                                    <p className="text-gray-500 italic">No public listings yet.</p>
+                                    <p className="text-muted-foreground italic">No public listings yet.</p>
                                 )}
                             </div>
                         </section>
 
-                        {/* Recent Stories */}
-                        <section className="pt-8 border-t border-gray-100">
-                            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                                Recent Stories
-                                <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{profile.posts.length}</span>
-                            </h2>
+                        <section className="border-t border-border pt-8">
+                            <h2 className="mb-6 text-2xl font-black text-gray-900">Recent Stories</h2>
                             <div className="space-y-4">
-                                {profile.posts.map(post => (
+                                {profile.posts.map((post) => (
                                     <Link key={post.id} href={`/community?postId=${post.id}`}>
-                                        <div className="bg-white border border-gray-100 p-5 rounded-2xl hover:shadow-md transition-shadow group cursor-pointer shadow-sm">
-                                            <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest mb-2 px-2 py-1 bg-primary/5 rounded-full w-fit">
-                                                <MapPin className="w-3 h-3" />
-                                                {post.locationName}
+                                        <div className="group cursor-pointer rounded-[1.5rem] border border-border/70 bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                                            <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                                                {post.postType && (
+                                                    <span className="rounded-full bg-neutral-900 px-2 py-1 text-white">{post.postType}</span>
+                                                )}
+                                                <span className="flex items-center gap-1 rounded-full bg-primary/5 px-2 py-1">
+                                                    <MapPin className="h-3 w-3" />
+                                                    {post.locationName}
+                                                </span>
                                             </div>
-                                            <p className="text-gray-800 font-medium line-clamp-2 leading-relaxed mb-4">
-                                                "{post.textContent}"
+                                            <p className="mb-4 line-clamp-2 text-gray-800 leading-relaxed">
+                                                &quot;{post.textContent}&quot;
                                             </p>
-                                            <div className="text-xs font-bold text-gray-400 group-hover:text-primary transition-colors flex items-center gap-1">
-                                                <MessageSquare className="w-3.5 h-3.5" />
-                                                Read full story →
+                                            <div className="flex items-center gap-1 text-xs font-bold text-muted-foreground transition-colors group-hover:text-primary">
+                                                <MessageSquare className="h-3.5 w-3.5" />
+                                                Read full story
                                             </div>
                                         </div>
                                     </Link>
                                 ))}
                                 {profile.posts.length === 0 && (
-                                    <p className="text-gray-500 italic">No stories shared yet.</p>
+                                    <p className="text-muted-foreground italic">No stories shared yet.</p>
                                 )}
                             </div>
                         </section>
