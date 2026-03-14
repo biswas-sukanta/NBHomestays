@@ -280,4 +280,40 @@ public class ImageUploadService {
         }
         return results;
     }
+
+    /**
+     * Upload raw bytes to ImageKit. Used for seeding from classpath resources.
+     * 
+     * @param bytes Image file bytes
+     * @param fileName Name for the file in ImageKit
+     * @param folder ImageKit folder to upload to
+     * @return MediaResource with CDN URL and fileId
+     */
+    public MediaResource uploadBytes(byte[] bytes, String fileName, String folder) throws IOException {
+        if (imageKitPublicKey == null || imageKitPublicKey.isBlank()
+                || imageKitPrivateKey == null || imageKitPrivateKey.isBlank()
+                || imageKitUrlEndpoint == null || imageKitUrlEndpoint.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Image upload service not configured");
+        }
+
+        String resolvedFolder = (folder == null || folder.isBlank()) ? "/uploads" : folder;
+        if (!resolvedFolder.startsWith("/")) {
+            resolvedFolder = "/" + resolvedFolder;
+        }
+
+        FileCreateRequest fileCreateRequest = new FileCreateRequest(bytes, fileName);
+        fileCreateRequest.setFolder(resolvedFolder);
+
+        try {
+            Result result = ImageKit.getInstance().upload(fileCreateRequest);
+            String cdnUrl = optimizeImageKitUrl(result.getUrl());
+            String fileId = result.getFileId();
+            log.info("[IMAGEKIT UPLOAD BYTES] Successfully uploaded {} to {}. CDN URL: {} (File ID: {})",
+                    fileName, resolvedFolder, cdnUrl, fileId);
+            return MediaResource.builder().url(cdnUrl).fileId(fileId).build();
+        } catch (Exception e) {
+            log.error("[IMAGEKIT UPLOAD BYTES] Failed to upload bytes for {}", fileName, e);
+            throw new IOException("Failed to upload bytes to ImageKit: " + fileName, e);
+        }
+    }
 }

@@ -39,117 +39,77 @@ public class AdminDataService {
 
         private static final String[] DESTINATIONS = { "Darjeeling", "Kalimpong", "Kurseong", "Mirik", "Siliguri" };
 
-        // Supported image extensions for seeding
-        private static final String[] IMAGE_EXTENSIONS = { ".webp", ".jpg", ".jpeg", ".png", ".gif" };
-
-        // Cached list of discovered local image paths (relative to project root)
-        private List<String> cachedLocalImagePaths = null;
-
-        /**
-         * Dynamically discover all images in frontend/public directory recursively.
-         * Caches the list for subsequent calls.
-         */
-        private List<String> discoverLocalImages() {
-                if (cachedLocalImagePaths != null && !cachedLocalImagePaths.isEmpty()) {
-                        return cachedLocalImagePaths;
-                }
-
-                String projectRoot = System.getProperty("user.dir");
-                log.info("[SEED IMAGE] Raw user.dir: {}", projectRoot);
-                
-                // Handle both IDE and jar execution scenarios
-                if (projectRoot.endsWith("backend") || projectRoot.endsWith("backend" + java.io.File.separator)) {
-                        projectRoot = projectRoot.substring(0, projectRoot.length() - "backend".length());
-                }
-                // Also handle trailing separator
-                if (projectRoot.endsWith(java.io.File.separator)) {
-                        projectRoot = projectRoot.substring(0, projectRoot.length() - 1);
-                }
-                
-                // Normalize path separators
-                projectRoot = projectRoot.replace(java.io.File.separatorChar, '/');
-
-                String publicDir = projectRoot + "/frontend/public";
-                log.info("[SEED IMAGE] Project root resolved to: {}", projectRoot);
-                log.info("[SEED IMAGE] Scanning for images in: {}", publicDir);
-
-                List<String> discoveredPaths = new ArrayList<>();
-                java.io.File publicFolder = new java.io.File(publicDir);
-                
-                log.info("[SEED IMAGE] Public folder exists: {}, isDirectory: {}", publicFolder.exists(), publicFolder.isDirectory());
-                
-                if (publicFolder.exists() && publicFolder.isDirectory()) {
-                        scanForImages(publicFolder, "frontend/public", discoveredPaths);
-                }
-
-                if (discoveredPaths.isEmpty()) {
-                        log.error("[SEED IMAGE] No images found in frontend/public! Checked path: {}", publicDir);
-                        throw new RuntimeException("No images found in frontend/public directory. Checked: " + publicDir);
-                }
-
-                cachedLocalImagePaths = discoveredPaths;
-                log.info("[SEED IMAGE] Discovered {} images in frontend/public", discoveredPaths.size());
-                return cachedLocalImagePaths;
-        }
+        // Seed images bundled in backend resources (works in deployed environments)
+        private static final String SEED_IMAGES_FOLDER = "seed-images";
+        
+        // Hardcoded list of seed image filenames (classpath directory listing doesn't work in jar)
+        private static final String[] SEED_IMAGE_NAMES = {
+                "community-hero-desktop.webp",
+                "community-hero-mobile.webp",
+                "dest-darjeeling.webp",
+                "dest-kalimpong.webp",
+                "dest-kurseong.webp",
+                "dest-lamahatta.webp",
+                "dest-lava.webp",
+                "dest-lolegaon.webp",
+                "dest-mirik.webp",
+                "dest-pedong.webp",
+                "dest-rishop.webp",
+                "dest-sandakphu.webp",
+                "dest-siliguri.webp",
+                "dest-sittong.webp",
+                "dest-srikhola.webp",
+                "dest-takdah.webp",
+                "dest-tinchuley.webp",
+                "hero-assam.webp",
+                "hero-meghalaya.webp",
+                "hero-sikkim.webp",
+                "hero-west-bengal.webp",
+                "thumb-assam.webp",
+                "thumb-meghalaya.webp",
+                "thumb-sikkim.webp",
+                "thumb-west-bengal.webp",
+                "trending-1.webp",
+                "trending-2.webp",
+                "trending-3.webp"
+        };
 
         /**
-         * Recursively scan directory for image files.
-         */
-        private void scanForImages(java.io.File directory, String relativePath, List<String> collected) {
-                java.io.File[] files = directory.listFiles();
-                if (files == null) return;
-
-                for (java.io.File file : files) {
-                        if (file.isDirectory()) {
-                                scanForImages(file, relativePath + "/" + file.getName(), collected);
-                        } else {
-                                String name = file.getName().toLowerCase();
-                                for (String ext : IMAGE_EXTENSIONS) {
-                                        if (name.endsWith(ext)) {
-                                                collected.add(relativePath + "/" + file.getName());
-                                                break;
-                                        }
-                                }
-                        }
-                }
-        }
-
-        /**
-         * Get random ImageKit URLs for a post. Discovers all local images,
+         * Get random ImageKit URLs for a post. Loads images from classpath resources,
          * randomly selects up to 5, uploads each to ImageKit, returns URLs.
          */
         private List<String> getRandomImageKitUrls(int count, Random random) {
-                List<String> localImages = discoverLocalImages();
+                List<String> imageNames = Arrays.asList(SEED_IMAGE_NAMES);
                 
                 // Randomly select 'count' images (max 5)
-                int selectCount = Math.min(count, Math.min(5, localImages.size()));
+                int selectCount = Math.min(count, Math.min(5, imageNames.size()));
                 List<String> selected = new ArrayList<>();
                 List<Integer> usedIndices = new ArrayList<>();
                 
                 while (selected.size() < selectCount) {
-                        int idx = random.nextInt(localImages.size());
+                        int idx = random.nextInt(imageNames.size());
                         if (!usedIndices.contains(idx)) {
                                 usedIndices.add(idx);
-                                selected.add(localImages.get(idx));
+                                selected.add(imageNames.get(idx));
                         }
                 }
 
-                // Get project root for absolute paths
-                String projectRoot = System.getProperty("user.dir");
-                if (projectRoot.endsWith("backend")) {
-                        projectRoot = projectRoot.substring(0, projectRoot.length() - "/backend".length());
-                }
-
-                // Upload each selected image to ImageKit
+                // Upload each selected image to ImageKit from classpath
                 List<String> imageKitUrls = new ArrayList<>();
-                for (String relativePath : selected) {
-                        String absolutePath = projectRoot + "/" + relativePath;
+                for (String imageName : selected) {
                         try {
-                                MediaResource media = imageUploadService.uploadLocalFile(absolutePath, "/seed-images");
+                                // Load image from classpath
+                                var resource = new org.springframework.core.io.ClassPathResource(SEED_IMAGES_FOLDER + "/" + imageName);
+                                java.io.InputStream is = resource.getInputStream();
+                                byte[] bytes = is.readAllBytes();
+                                is.close();
+                                
+                                // Upload to ImageKit
+                                MediaResource media = imageUploadService.uploadBytes(bytes, imageName, "/seed-images");
                                 imageKitUrls.add(media.getUrl());
-                                log.debug("[SEED IMAGE] Uploaded {} -> {}", relativePath, media.getUrl());
+                                log.debug("[SEED IMAGE] Uploaded {} -> {}", imageName, media.getUrl());
                         } catch (Exception e) {
-                                log.warn("[SEED IMAGE] Failed to upload {}: {}", relativePath, e.getMessage());
+                                log.warn("[SEED IMAGE] Failed to upload {}: {}", imageName, e.getMessage());
                         }
                 }
 
