@@ -46,6 +46,14 @@ export default function AdminPage() {
     const [activeTab, setActiveTab] = useState<Tab>('pending');
     const [loading, setLoading] = useState(true);
     const [togglingId, setTogglingId] = useState<string | null>(null);
+    
+    // Per-tab error states for graceful degradation
+    const [errors, setErrors] = useState<{
+        pending?: string;
+        all?: string;
+        community?: string;
+        stats?: string;
+    }>({});
 
     useEffect(() => {
         if (!isLoading) {
@@ -57,22 +65,55 @@ export default function AdminPage() {
     }, [isLoading, isAuthenticated, user, router]);
 
     const fetchData = async () => {
-        try {
-            const [pendingRes, allRes, postsRes, statsRes] = await Promise.all([
-                homestayApi.getPending(),
-                api.get('/admin/homestays/all'),
-                postApi.getFeed('size=100'),
-                adminApi.getStats(),
-            ]);
-            setPendingHomestays(pendingRes.data.content ? pendingRes.data.content : pendingRes.data);
-            setAllHomestays(allRes.data.content ? allRes.data.content : allRes.data);
-            setPosts(Array.isArray(postsRes.data) ? postsRes.data : postsRes.data.content ?? []);
-
-            setStats(statsRes.data);
-        } catch (error) {
-            console.error('Failed to fetch admin data', error);
-            toast.error('Failed to load admin data');
-        } finally { setLoading(false); }
+        setLoading(true);
+        setErrors({});
+        
+        // Use Promise.allSettled for resilient fetching - each tab handles its own failure
+        const results = await Promise.allSettled([
+            homestayApi.getPending(),
+            api.get('/admin/homestays/all'),
+            postApi.getFeed('size=100'),
+            adminApi.getStats(),
+        ]);
+        
+        // Process pending homestays
+        if (results[0].status === 'fulfilled') {
+            const res = results[0].value;
+            setPendingHomestays(res.data.content ? res.data.content : res.data);
+        } else {
+            console.error('Failed to fetch pending homestays:', results[0].reason);
+            setErrors(prev => ({ ...prev, pending: 'Failed to load pending listings' }));
+        }
+        
+        // Process all homestays
+        if (results[1].status === 'fulfilled') {
+            const res = results[1].value;
+            setAllHomestays(res.data.content ? res.data.content : res.data);
+        } else {
+            console.error('Failed to fetch all homestays:', results[1].reason);
+            setErrors(prev => ({ ...prev, all: 'Failed to load all listings' }));
+        }
+        
+        // Process posts (community tab)
+        if (results[2].status === 'fulfilled') {
+            const res = results[2].value;
+            // Handle both paginated and direct array responses
+            const postsData = res.data?.posts ?? res.data?.content ?? (Array.isArray(res.data) ? res.data : []);
+            setPosts(postsData);
+        } else {
+            console.error('Failed to fetch posts:', results[2].reason);
+            setErrors(prev => ({ ...prev, community: 'Failed to load community posts' }));
+        }
+        
+        // Process stats (analytics tab)
+        if (results[3].status === 'fulfilled') {
+            setStats(results[3].value.data);
+        } else {
+            console.error('Failed to fetch stats:', results[3].reason);
+            setErrors(prev => ({ ...prev, stats: 'Failed to load analytics' }));
+        }
+        
+        setLoading(false);
     };
 
     const handleApprove = async (id: string) => {
@@ -140,7 +181,22 @@ export default function AdminPage() {
 
             {/* ── Pending / All Listings ─────────────────────────── */}
             {(activeTab === 'pending' || activeTab === 'all') && (() => {
+                const error = activeTab === 'pending' ? errors.pending : errors.all;
                 const list = activeTab === 'pending' ? pendingHomestays : allHomestays;
+                
+                if (error) {
+                    return (
+                        <Card className="bg-red-50 border-red-200">
+                            <CardContent className="pt-4">
+                                <p className="text-red-600 flex items-center gap-2">
+                                    <XCircle className="w-4 h-4" /> {error}
+                                </p>
+                                <Button variant="outline" size="sm" className="mt-2" onClick={fetchData}>Retry</Button>
+                            </CardContent>
+                        </Card>
+                    );
+                }
+                
                 return list.length === 0 ? (
                     <p className="text-muted-foreground">{activeTab === 'pending' ? 'No pending homestays.' : 'No homestays found.'}</p>
                 ) : (
@@ -171,8 +227,18 @@ export default function AdminPage() {
             {/* ── Community Moderation ─────────────────────────── */}
             {activeTab === 'community' && (
                 <div className="space-y-4">
-                    {posts.length === 0 && <p className="text-muted-foreground">No posts found.</p>}
-                    {posts.map(p => (
+                    {errors.community && (
+                        <Card className="bg-red-50 border-red-200">
+                            <CardContent className="pt-4">
+                                <p className="text-red-600 flex items-center gap-2">
+                                    <XCircle className="w-4 h-4" /> {errors.community}
+                                </p>
+                                <Button variant="outline" size="sm" className="mt-2" onClick={fetchData}>Retry</Button>
+                            </CardContent>
+                        </Card>
+                    )}
+                    {!errors.community && posts.length === 0 && <p className="text-muted-foreground">No posts found.</p>}
+                    {!errors.community && posts.map(p => (
                         <Card key={p.id}>
                             <CardContent className="pt-4">
                                 <div className="flex items-start justify-between gap-4">
@@ -226,28 +292,42 @@ export default function AdminPage() {
             )}
 
             {/* ── Analytics ────────────────────────────────────── */}
-            {activeTab === 'analytics' && stats && (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {[
-                        { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-500' },
-                        { label: 'Community Stories', value: stats.totalPosts, icon: FileText, color: 'text-green-500' },
-                        { label: 'Total Homestays', value: stats.totalHomestays, icon: Home, color: 'text-purple-500' },
-                        { label: 'Pending Review', value: stats.pendingHomestays, icon: TrendingUp, color: 'text-yellow-500' },
-                        { label: 'Approved Stays', value: stats.approvedHomestays, icon: CheckCircle, color: 'text-emerald-500' },
-                        { label: 'Featured Stays', value: stats.featuredHomestays, icon: Star, color: 'text-orange-500' },
-                    ].map(({ label, value, icon: Icon, color }) => (
-                        <Card key={label}>
-                            <CardContent className="flex items-center gap-4 pt-6">
-                                <div className={`w-12 h-12 rounded-xl bg-secondary flex items-center justify-center ${color}`}>
-                                    <Icon className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
-                                    <p className="text-sm text-muted-foreground">{label}</p>
-                                </div>
+            {activeTab === 'analytics' && (
+                <div className="space-y-4">
+                    {errors.stats && (
+                        <Card className="bg-red-50 border-red-200">
+                            <CardContent className="pt-4">
+                                <p className="text-red-600 flex items-center gap-2">
+                                    <XCircle className="w-4 h-4" /> {errors.stats}
+                                </p>
+                                <Button variant="outline" size="sm" className="mt-2" onClick={fetchData}>Retry</Button>
                             </CardContent>
                         </Card>
-                    ))}
+                    )}
+                    {!errors.stats && stats && (
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {[
+                                { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-500' },
+                                { label: 'Community Stories', value: stats.totalPosts, icon: FileText, color: 'text-green-500' },
+                                { label: 'Total Homestays', value: stats.totalHomestays, icon: Home, color: 'text-purple-500' },
+                                { label: 'Pending Review', value: stats.pendingHomestays, icon: TrendingUp, color: 'text-yellow-500' },
+                                { label: 'Approved Stays', value: stats.approvedHomestays, icon: CheckCircle, color: 'text-emerald-500' },
+                                { label: 'Featured Stays', value: stats.featuredHomestays, icon: Star, color: 'text-orange-500' },
+                            ].map(({ label, value, icon: Icon, color }) => (
+                                <Card key={label}>
+                                    <CardContent className="flex items-center gap-4 pt-6">
+                                        <div className={`w-12 h-12 rounded-xl bg-secondary flex items-center justify-center ${color}`}>
+                                            <Icon className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+                                            <p className="text-sm text-muted-foreground">{label}</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 

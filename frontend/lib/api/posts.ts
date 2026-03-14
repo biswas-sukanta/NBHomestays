@@ -27,7 +27,7 @@ function ensureFormData(payload: any): FormData | any {
 
 export const postApi = {
     // Feed and query
-    getFeed: (params: string) => api.get(`/posts?${params}`),
+    getFeed: (params: string) => api.get(`/posts/feed?${params}`),
     getMyPosts: () => api.get('/posts/my-posts'),
     getById: (id: string) => api.get(`/posts/${id}`),
 
