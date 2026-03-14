@@ -59,3 +59,30 @@ public class AdminDataController {
         }
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// POST DATA MANAGEMENT CONTROLLER
+// ═══════════════════════════════════════════════════════════════════════════
+
+@RestController
+@RequestMapping("/api/admin/posts")
+@RequiredArgsConstructor
+@Slf4j
+class AdminPostDataController {
+
+    private final AdminDataService adminDataService;
+
+    @PostMapping("/seed")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Map<String, Object>> seedPosts(
+            @RequestParam(name = "count", defaultValue = "5") int count) {
+        try {
+            int inserted = adminDataService.seedPosts(count);
+            return ResponseEntity.ok(Map.of("success", true, "insertedCount", inserted, "message",
+                    "Successfully seeded " + inserted + " posts."));
+        } catch (Exception e) {
+            log.error("Failed to seed posts", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+}

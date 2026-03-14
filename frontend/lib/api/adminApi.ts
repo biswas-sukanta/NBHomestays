@@ -11,4 +11,6 @@ export const adminApi = {
     wipeAllPosts: () => api.delete('/posts/admin/wipe-all'),
     // Batch wipe posts - deletes a limited batch, returns hasMore flag
     wipePostsBatch: (limit: number) => api.delete(`/posts/admin/wipe-batch?limit=${limit}`),
+    // Post seeding
+    seedPosts: (count: number) => api.post(`/admin/posts/seed?count=${count}`),
 };
