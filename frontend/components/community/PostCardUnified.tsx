@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { Heart, MessageCircle, Repeat2, Share2, Plus, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { Heart, MessageCircle, Repeat2, Share2, Plus, ChevronDown, ChevronUp, ExternalLink, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox').then(m => m.ImageLightbox), { ssr: false });
@@ -65,6 +65,19 @@ function ImageCarousel({
     const imageCount = images.length;
     if (imageCount === 0) return null;
     
+    // Step 3: Scroll sync to update active dot indicator
+    const handleScroll = () => {
+        if (containerRef.current) {
+            const container = containerRef.current;
+            const scrollLeft = container.scrollLeft;
+            const itemWidth = container.clientWidth * 0.85; // Match w-[85%]
+            const newIndex = Math.round(scrollLeft / itemWidth);
+            if (newIndex !== currentIndex && newIndex >= 0 && newIndex < imageCount) {
+                setCurrentIndex(newIndex);
+            }
+        }
+    };
+    
     // Single image: Large horizontal with editorial aspect
     if (imageCount === 1) {
         return (
@@ -90,6 +103,7 @@ function ImageCarousel({
         <div className="relative w-full">
             <div 
                 ref={containerRef}
+                onScroll={handleScroll}
                 className="flex overflow-x-auto snap-x snap-mandatory gap-2 scrollbar-hide"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
@@ -112,15 +126,17 @@ function ImageCarousel({
                 ))}
             </div>
             
-            {/* Carousel indicators */}
+            {/* Step 3: Carousel indicators with scroll-synced active state */}
             {imageCount > 1 && (
-                <div className="flex justify-center gap-1.5 mt-3">
+                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
                     {images.slice(0, 5).map((_, idx) => (
                         <div 
                             key={idx}
                             className={cn(
-                                "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                                idx === currentIndex ? "bg-[#2D5A4A] w-4" : "bg-neutral-300"
+                                "rounded-full transition-all duration-300 ease-out",
+                                idx === currentIndex 
+                                    ? "bg-white w-2 h-2 opacity-100" 
+                                    : "bg-white/50 w-1.5 h-1.5 opacity-50"
                             )}
                         />
                     ))}
@@ -158,17 +174,19 @@ function TextOnlyCard({
     
     return (
         <div className="relative bg-gradient-to-br from-[#FDFBF7] to-[#F5F3EE] p-6 sm:p-8 min-h-[280px] flex flex-col justify-center">
-            {/* Step 5: FEATURED/EDITORIAL Pills at top */}
+            {/* Step 2: FEATURED Pill - Sleek minimalist, no emoji */}
             {isFeatured && (
                 <div className="absolute top-4 left-4 z-10">
-                    <span className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full shadow-sm">
-                        ✨ Featured
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-sm shadow-sm">
+                        <Sparkles size={12} strokeWidth={1.5} className="text-white/80" />
+                        Featured
                     </span>
                 </div>
             )}
+            {/* Step 2: EDITORIAL Pill - Dark forest green, sleek minimalist */}
             {isEditorial && (
                 <div className="absolute top-4 left-4 z-10">
-                    <span className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-[#2D5A4A] text-[#FDFBF7] rounded-full shadow-sm">
+                    <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-[#2D5A4A] text-white rounded-sm shadow-sm">
                         Editorial
                     </span>
                 </div>
@@ -297,19 +315,20 @@ export function PostCardUnified({
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 className={articleClassName}
             >
-                {/* Step 5: FEATURED Pill - Premium gold at top of card */}
+                {/* Step 2: FEATURED Pill - Sleek minimalist, no emoji */}
                 {isFeatured && imageCount > 0 && (
                     <div className="absolute top-4 left-4 z-10">
-                        <span className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full shadow-sm">
-                            ✨ Featured
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-sm shadow-sm">
+                            <Sparkles size={12} strokeWidth={1.5} className="text-white/80" />
+                            Featured
                         </span>
                     </div>
                 )}
                 
-                {/* Step 5: EDITORIAL Pill - Dark green at top of card */}
+                {/* Step 2: EDITORIAL Pill - Dark forest green, sleek minimalist */}
                 {isEditorial && imageCount > 0 && (
                     <div className="absolute top-4 left-4 z-10">
-                        <span className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-[#2D5A4A] text-[#FDFBF7] rounded-full shadow-sm">
+                        <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-[#2D5A4A] text-white rounded-sm shadow-sm">
                             Editorial
                         </span>
                     </div>
@@ -409,7 +428,7 @@ export function PostCardUnified({
                                 {hasLongContent && (
                                     <button 
                                         onClick={() => setExpanded(!expanded)}
-                                        className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-[#D4A574] hover:text-[#C49660] transition-colors font-sans"
+                                        className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-[#2D5A4A] hover:text-[#1A3A2A] transition-colors font-sans"
                                     >
                                         {expanded ? (
                                             <><ChevronUp className="w-4 h-4" strokeWidth={1.5} />Show less</>
