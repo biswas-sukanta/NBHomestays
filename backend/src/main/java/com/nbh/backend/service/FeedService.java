@@ -179,7 +179,6 @@ public class FeedService {
     /**
      * Get feed from timeline table (index-only scan).
      * Returns null if timeline is empty or has insufficient data (fallback protection).
-     * Uses 30-day bounded window for 60% cost reduction.
      */
     private PostFeedDto.FeedResponse getFeedFromTimeline(
             Instant cursorCreatedAt, UUID cursorId, int fetchLimit, int pageSize, UUID userId) {
@@ -189,14 +188,11 @@ public class FeedService {
             return null;
         }
         
-        // Calculate 30-day boundary for bounded keyset pagination
-        Instant thirtyDaysAgo = Instant.now().minus(java.time.Duration.ofDays(30));
-        
         // Query timeline - use separate queries for first page vs cursor pagination
         List<PostTimeline> timelineRows;
         if (cursorCreatedAt == null) {
-            // First page with 30-day window
-            timelineRows = timelineRepository.findFeedFirstPage(thirtyDaysAgo, PageRequest.of(0, fetchLimit));
+            // First page - no date filter to show all timeline posts
+            timelineRows = timelineRepository.findFeedFirstPage(PageRequest.of(0, fetchLimit));
         } else {
             // Cursor pagination without window
             timelineRows = timelineRepository.findFeedWithCursor(cursorCreatedAt, cursorId, PageRequest.of(0, fetchLimit));

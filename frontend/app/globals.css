@@ -409,3 +409,9 @@
     scrollbar-width: none;
   }
 }
+/* EMOJI RENDERING - capsule tags, category pills */
+.emoji, 
+[class*="icon-"],
+span[class*="bg-"][class*="text-"] span:first-child {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Google Color Emoji", "Samsung Color Emoji", sans-serif;
+}

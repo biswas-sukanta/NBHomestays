@@ -21,17 +21,15 @@ public interface TimelineRepository extends JpaRepository<PostTimeline, Long> {
 
     /**
      * First page feed from timeline (index-only scan).
-     * Uses 30-day bounded window to reduce index scan cost by ~60%.
+     * Removed 30-day window to ensure all timeline posts are visible.
      * Separate query to avoid null parameter type inference issues with Supabase/PgBouncer.
      */
     @Query(value = """
         SELECT t FROM PostTimeline t
         WHERE t.isDeleted = false
-          AND t.createdAt > :thirtyDaysAgo
         ORDER BY t.createdAt DESC, t.postId DESC
         """)
     List<PostTimeline> findFeedFirstPage(
-            @Param("thirtyDaysAgo") Instant thirtyDaysAgo,
             org.springframework.data.domain.Pageable pageable);
 
     /**
