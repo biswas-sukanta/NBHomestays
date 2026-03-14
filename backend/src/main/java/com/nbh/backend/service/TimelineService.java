@@ -173,6 +173,40 @@ public class TimelineService {
     }
 
     /**
+     * Get count of timeline entries.
+     */
+    @Transactional(readOnly = true)
+    public long getTimelineCount() {
+        return timelineRepository.countByIsDeletedFalse();
+    }
+
+    /**
+     * Backfill only missing posts (partial sync).
+     * Called on startup to ensure timeline is in sync with posts.
+     *
+     * @return Number of posts backfilled
+     */
+    @Transactional
+    public int backfillMissingPosts() {
+        List<Post> missingPosts = postRepository.findPostsNotInTimeline();
+        if (missingPosts.isEmpty()) {
+            return 0;
+        }
+        
+        log.info("Found {} missing posts in timeline, backfilling...", missingPosts.size());
+        int backfilled = 0;
+        for (Post post : missingPosts) {
+            try {
+                insertPostToTimeline(post);
+                backfilled++;
+            } catch (Exception e) {
+                log.warn("Failed to backfill post {}: {}", post.getId(), e.getMessage());
+            }
+        }
+        return backfilled;
+    }
+
+    /**
      * Backfill timeline with missing posts.
      * Called on startup or via admin endpoint to sync existing posts.
      * 

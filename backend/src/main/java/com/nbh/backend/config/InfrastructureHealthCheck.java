@@ -49,12 +49,20 @@ public class InfrastructureHealthCheck implements CommandLineRunner {
             log.error("ImageKit integration: DOWN - {}", imageKit.get("error"));
         }
 
-        if (!timelineService.hasTimelineEntries()) {
+        // 3. Timeline - always check for missing posts and backfill if needed
+        long timelineCount = timelineService.getTimelineCount();
+        if (timelineCount == 0) {
             log.warn("Timeline table is empty - running backfill to populate feed...");
             int backfilled = timelineService.backfillTimeline();
             log.info("Timeline backfill complete. Backfilled {} posts.", backfilled);
         } else {
-            log.debug("Timeline table already populated.");
+            // Check if timeline is missing posts (partial sync)
+            int missing = timelineService.backfillMissingPosts();
+            if (missing > 0) {
+                log.info("Timeline partial sync complete. Added {} missing posts.", missing);
+            } else {
+                log.debug("Timeline table already populated and in sync.");
+            }
         }
 
         log.info("Infrastructure connectivity check complete.");
