@@ -8,6 +8,7 @@ import com.nbh.backend.model.MediaResource;
 import com.nbh.backend.model.Post;
 import com.nbh.backend.model.PostLike;
 import com.nbh.backend.model.User;
+import com.nbh.backend.repository.MediaResourceRepository;
 import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.repository.HomestayRepository;
@@ -42,6 +43,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final HomestayRepository homestayRepository;
     private final PostLikeRepository postLikeRepository;
+    private final MediaResourceRepository mediaResourceRepository;
     private final ImageUploadService imageUploadService;
     private final AsyncJobService asyncJobService;
     private final FeedCacheService feedCacheService;
@@ -650,14 +652,19 @@ public class PostService {
         long likesDeleted = postLikeRepository.deleteAllAndGetCount();
         log.info("[DEEP WIPE] Deleted {} post_likes records", likesDeleted);
         
-        // Step 4: Hard delete all posts (bypass soft delete)
+        // Step 4: Delete all media_resources (hardDeleteAll bypasses JPA cascade)
+        long mediaResourcesDeleted = mediaResourceRepository.count();
+        mediaResourceRepository.deleteAllInBatch();
+        log.info("[DEEP WIPE] Deleted {} media_resources records", mediaResourcesDeleted);
+        
+        // Step 5: Hard delete all posts (bypass soft delete)
         long postsDeleted = postRepository.hardDeleteAll();
         log.info("[DEEP WIPE] Hard deleted {} posts", postsDeleted);
         
-        // Step 5: Clear timeline
+        // Step 6: Clear timeline
         timelineService.clearAll();
         
-        // Step 6: Invalidate all caches
+        // Step 7: Invalidate all caches
         feedCacheService.invalidateAll();
         
         return WipeResult.builder()
@@ -791,21 +798,25 @@ public class PostService {
         postLikeRepository.deleteByPostIdIn(postIds);
         log.info("[BATCH WIPE] Deleted likes for {} posts", postIds.size());
         
-        // Step 5: Delete the posts using repository (cascade handles comments)
+        // Step 5: Delete media_resources explicitly (deleteAllByIdInBatch bypasses JPA cascade)
+        int mediaResourcesDeleted = mediaResourceRepository.deleteByPostIdIn(postIds);
+        log.info("[BATCH WIPE] Deleted {} media_resources records", mediaResourcesDeleted);
+        
+        // Step 6: Delete the posts using repository (cascade handles comments)
         postRepository.deleteAllByIdInBatch(postIds);
         log.info("[BATCH WIPE] Deleted {} posts", postIds.size());
         
-        // Step 6: Clear timeline entries for deleted posts
+        // Step 7: Clear timeline entries for deleted posts
         timelineService.deletePostsFromTimeline(postIds);
         
-        // Step 7: Check if there are more posts remaining
+        // Step 8: Check if there are more posts remaining
         long remainingCount = postRepository.countIncludingDeleted();
         boolean hasMore = remainingCount > 0;
         
         log.info("[BATCH WIPE] Batch complete. {} posts deleted, {} remaining, hasMore: {}", 
                 postIds.size(), remainingCount, hasMore);
         
-        // Step 8: Invalidate all caches
+        // Step 9: Invalidate all caches
         feedCacheService.invalidateAll();
         
         return BatchWipeResult.builder()
