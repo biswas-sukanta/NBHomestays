@@ -588,7 +588,8 @@ public class PostService {
     @Caching(evict = {
             @CacheEvict(value = "postsList", allEntries = true),
             @CacheEvict(value = "postDetail", allEntries = true),
-            @CacheEvict(value = "postComments", allEntries = true)
+            @CacheEvict(value = "postComments", allEntries = true),
+            @CacheEvict(value = "adminStats", allEntries = true)
     })
     public WipeResult wipeAllPosts(String adminEmail) {
         log.info("[DEEP WIPE] Initiated by admin: {}", adminEmail);
