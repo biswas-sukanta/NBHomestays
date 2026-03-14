@@ -217,4 +217,67 @@ public class ImageUploadService {
         }
         return url.contains("?") ? (url + "&" + transform) : (url + "?" + transform);
     }
+
+    /**
+     * Upload a local file from filesystem to ImageKit.
+     * Used for seeding operations where we upload static assets to CDN.
+     * 
+     * @param localPath Absolute path to the local file
+     * @param folder ImageKit folder to upload to (e.g., "/seed-images")
+     * @return MediaResource with CDN URL and fileId
+     */
+    public MediaResource uploadLocalFile(String localPath, String folder) throws IOException {
+        if (imageKitPublicKey == null || imageKitPublicKey.isBlank()
+                || imageKitPrivateKey == null || imageKitPrivateKey.isBlank()
+                || imageKitUrlEndpoint == null || imageKitUrlEndpoint.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Image upload service not configured");
+        }
+
+        java.io.File file = new java.io.File(localPath);
+        if (!file.exists()) {
+            throw new IOException("Local file not found: " + localPath);
+        }
+
+        String fileName = file.getName();
+        String resolvedFolder = (folder == null || folder.isBlank()) ? "/uploads" : folder;
+        if (!resolvedFolder.startsWith("/")) {
+            resolvedFolder = "/" + resolvedFolder;
+        }
+
+        byte[] fileBytes = java.nio.file.Files.readAllBytes(file.toPath());
+        
+        FileCreateRequest fileCreateRequest = new FileCreateRequest(fileBytes, fileName);
+        fileCreateRequest.setFolder(resolvedFolder);
+
+        try {
+            Result result = ImageKit.getInstance().upload(fileCreateRequest);
+            String cdnUrl = optimizeImageKitUrl(result.getUrl());
+            String fileId = result.getFileId();
+            log.info("[IMAGEKIT UPLOAD LOCAL] Successfully uploaded {} to {}. CDN URL: {} (File ID: {})",
+                    localPath, resolvedFolder, cdnUrl, fileId);
+            return MediaResource.builder().url(cdnUrl).fileId(fileId).build();
+        } catch (Exception e) {
+            log.error("[IMAGEKIT UPLOAD LOCAL] Failed to upload local file {}", localPath, e);
+            throw new IOException("Failed to upload local file to ImageKit: " + localPath, e);
+        }
+    }
+
+    /**
+     * Upload multiple local files to ImageKit and return MediaResources.
+     * 
+     * @param localPaths List of absolute paths to local files
+     * @param folder ImageKit folder to upload to
+     * @return List of MediaResources with CDN URLs
+     */
+    public List<MediaResource> uploadLocalFiles(List<String> localPaths, String folder) throws IOException {
+        List<MediaResource> results = new ArrayList<>();
+        for (String path : localPaths) {
+            try {
+                results.add(uploadLocalFile(path, folder));
+            } catch (IOException e) {
+                log.warn("[IMAGEKIT UPLOAD LOCAL] Skipping failed file: {}", path);
+            }
+        }
+        return results;
+    }
 }

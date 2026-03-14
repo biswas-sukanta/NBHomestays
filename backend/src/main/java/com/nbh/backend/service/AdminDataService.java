@@ -35,24 +35,113 @@ public class AdminDataService {
         private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
         private final jakarta.persistence.EntityManager entityManager;
         private final org.springframework.cache.CacheManager cacheManager;
+        private final ImageUploadService imageUploadService;
 
         private static final String[] DESTINATIONS = { "Darjeeling", "Kalimpong", "Kurseong", "Mirik", "Siliguri" };
 
-        private static final String[] IMAGE_POOL = {
-                        "https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1626806819282-2c1dc01a5e0c?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1626621341517-bbf3e99c0b2c?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1587595431973-160d0d94add1?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1542314831-c53cd3816002?auto=format&fit=crop&q=80&w=800",
-                        "https://plus.unsplash.com/premium_photo-1697729606869-e58f00db11ee?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1502672260266-1c1e521154fc?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&q=80&w=800",
-                        "https://images.unsplash.com/photo-1681285312384-cbca6f2d5930?auto=format&fit=crop&q=80&w=800"
-        };
+        // Supported image extensions for seeding
+        private static final String[] IMAGE_EXTENSIONS = { ".webp", ".jpg", ".jpeg", ".png", ".gif" };
+
+        // Cached list of discovered local image paths (relative to project root)
+        private List<String> cachedLocalImagePaths = null;
+
+        /**
+         * Dynamically discover all images in frontend/public directory recursively.
+         * Caches the list for subsequent calls.
+         */
+        private List<String> discoverLocalImages() {
+                if (cachedLocalImagePaths != null && !cachedLocalImagePaths.isEmpty()) {
+                        return cachedLocalImagePaths;
+                }
+
+                String projectRoot = System.getProperty("user.dir");
+                if (projectRoot.endsWith("backend")) {
+                        projectRoot = projectRoot.substring(0, projectRoot.length() - "/backend".length());
+                }
+
+                String publicDir = projectRoot + "/frontend/public";
+                log.info("[SEED IMAGE] Scanning for images in: {}", publicDir);
+
+                List<String> discoveredPaths = new ArrayList<>();
+                java.io.File publicFolder = new java.io.File(publicDir);
+                
+                if (publicFolder.exists() && publicFolder.isDirectory()) {
+                        scanForImages(publicFolder, "frontend/public", discoveredPaths);
+                }
+
+                if (discoveredPaths.isEmpty()) {
+                        log.error("[SEED IMAGE] No images found in frontend/public!");
+                        throw new RuntimeException("No images found in frontend/public directory");
+                }
+
+                cachedLocalImagePaths = discoveredPaths;
+                log.info("[SEED IMAGE] Discovered {} images in frontend/public", discoveredPaths.size());
+                return cachedLocalImagePaths;
+        }
+
+        /**
+         * Recursively scan directory for image files.
+         */
+        private void scanForImages(java.io.File directory, String relativePath, List<String> collected) {
+                java.io.File[] files = directory.listFiles();
+                if (files == null) return;
+
+                for (java.io.File file : files) {
+                        if (file.isDirectory()) {
+                                scanForImages(file, relativePath + "/" + file.getName(), collected);
+                        } else {
+                                String name = file.getName().toLowerCase();
+                                for (String ext : IMAGE_EXTENSIONS) {
+                                        if (name.endsWith(ext)) {
+                                                collected.add(relativePath + "/" + file.getName());
+                                                break;
+                                        }
+                                }
+                        }
+                }
+        }
+
+        /**
+         * Get random ImageKit URLs for a post. Discovers all local images,
+         * randomly selects up to 5, uploads each to ImageKit, returns URLs.
+         */
+        private List<String> getRandomImageKitUrls(int count, Random random) {
+                List<String> localImages = discoverLocalImages();
+                
+                // Randomly select 'count' images (max 5)
+                int selectCount = Math.min(count, Math.min(5, localImages.size()));
+                List<String> selected = new ArrayList<>();
+                List<Integer> usedIndices = new ArrayList<>();
+                
+                while (selected.size() < selectCount) {
+                        int idx = random.nextInt(localImages.size());
+                        if (!usedIndices.contains(idx)) {
+                                usedIndices.add(idx);
+                                selected.add(localImages.get(idx));
+                        }
+                }
+
+                // Get project root for absolute paths
+                String projectRoot = System.getProperty("user.dir");
+                if (projectRoot.endsWith("backend")) {
+                        projectRoot = projectRoot.substring(0, projectRoot.length() - "/backend".length());
+                }
+
+                // Upload each selected image to ImageKit
+                List<String> imageKitUrls = new ArrayList<>();
+                for (String relativePath : selected) {
+                        String absolutePath = projectRoot + "/" + relativePath;
+                        try {
+                                MediaResource media = imageUploadService.uploadLocalFile(absolutePath, "/seed-images");
+                                imageKitUrls.add(media.getUrl());
+                                log.debug("[SEED IMAGE] Uploaded {} -> {}", relativePath, media.getUrl());
+                        } catch (Exception e) {
+                                log.warn("[SEED IMAGE] Failed to upload {}: {}", relativePath, e.getMessage());
+                        }
+                }
+
+                return imageKitUrls;
+        }
 
         private static final String[] TITLE_TEMPLATES = {
                         "%s Mountain Retreat", "The %s Heritage Stay", "Cloud 9 %s Villa", "%s Valley Attic",
@@ -144,12 +233,9 @@ public class AdminDataService {
                                         "Experience the pristine beauty of %s with panoramic views, local organic food, and premium comfort in this hyper-realistic property.",
                                         destination);
 
-                        // 3 to 5 images per stay
+                        // 3 to 5 random images per homestay from ImageKit
                         int photoCount = 3 + random.nextInt(3);
-                        List<String> photos = new ArrayList<>();
-                        for (int p = 0; p < photoCount; p++) {
-                                photos.add(IMAGE_POOL[random.nextInt(IMAGE_POOL.length)]);
-                        }
+                        List<String> photos = getRandomImageKitUrls(photoCount, random);
 
                         int price = 1500 + random.nextInt(7000);
 
@@ -275,6 +361,7 @@ public class AdminDataService {
 
                 // Get available homestays for linking
                 List<Homestay> homestays = homestayRepository.findAll();
+                
                 Random random = new Random();
 
                 List<Post> posts = new ArrayList<>();
@@ -314,12 +401,13 @@ public class AdminDataService {
                                                         .minusDays(random.nextInt(30)))
                                         .build();
 
-                        // Add media resources (1-3 images)
-                        int mediaCount = 1 + random.nextInt(3);
+                        // Add media resources (1-5 random images from ImageKit)
+                        int mediaCount = 1 + random.nextInt(5);
+                        List<String> imageUrls = getRandomImageKitUrls(mediaCount, random);
                         List<MediaResource> mediaList = new ArrayList<>();
-                        for (int m = 0; m < mediaCount; m++) {
+                        for (String url : imageUrls) {
                                 mediaList.add(MediaResource.builder()
-                                                .url(IMAGE_POOL[random.nextInt(IMAGE_POOL.length)])
+                                                .url(url)
                                                 .post(post)
                                                 .build());
                         }
