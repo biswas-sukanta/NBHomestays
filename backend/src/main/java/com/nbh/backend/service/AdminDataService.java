@@ -55,23 +55,36 @@ public class AdminDataService {
                 }
 
                 String projectRoot = System.getProperty("user.dir");
-                if (projectRoot.endsWith("backend")) {
-                        projectRoot = projectRoot.substring(0, projectRoot.length() - "/backend".length());
+                log.info("[SEED IMAGE] Raw user.dir: {}", projectRoot);
+                
+                // Handle both IDE and jar execution scenarios
+                if (projectRoot.endsWith("backend") || projectRoot.endsWith("backend" + java.io.File.separator)) {
+                        projectRoot = projectRoot.substring(0, projectRoot.length() - "backend".length());
                 }
+                // Also handle trailing separator
+                if (projectRoot.endsWith(java.io.File.separator)) {
+                        projectRoot = projectRoot.substring(0, projectRoot.length() - 1);
+                }
+                
+                // Normalize path separators
+                projectRoot = projectRoot.replace(java.io.File.separatorChar, '/');
 
                 String publicDir = projectRoot + "/frontend/public";
+                log.info("[SEED IMAGE] Project root resolved to: {}", projectRoot);
                 log.info("[SEED IMAGE] Scanning for images in: {}", publicDir);
 
                 List<String> discoveredPaths = new ArrayList<>();
                 java.io.File publicFolder = new java.io.File(publicDir);
+                
+                log.info("[SEED IMAGE] Public folder exists: {}, isDirectory: {}", publicFolder.exists(), publicFolder.isDirectory());
                 
                 if (publicFolder.exists() && publicFolder.isDirectory()) {
                         scanForImages(publicFolder, "frontend/public", discoveredPaths);
                 }
 
                 if (discoveredPaths.isEmpty()) {
-                        log.error("[SEED IMAGE] No images found in frontend/public!");
-                        throw new RuntimeException("No images found in frontend/public directory");
+                        log.error("[SEED IMAGE] No images found in frontend/public! Checked path: {}", publicDir);
+                        throw new RuntimeException("No images found in frontend/public directory. Checked: " + publicDir);
                 }
 
                 cachedLocalImagePaths = discoveredPaths;
