@@ -4,10 +4,12 @@ import com.nbh.backend.model.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -24,4 +26,25 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
 
     /** Check ownership before delete. */
     boolean existsByIdAndUserId(UUID commentId, UUID userId);
+
+    /**
+     * Delete all comment_images (ElementCollection table) for comments belonging to the given post IDs.
+     * The comment_images table is created by @ElementCollection on Comment.legacyImageUrls and lacks ON DELETE CASCADE.
+     * 
+     * @param postIds List of post IDs whose comment images should be deleted
+     * @return Number of rows deleted
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "DELETE FROM comment_images WHERE comment_id IN (SELECT id FROM comments WHERE post_id IN :postIds)", nativeQuery = true)
+    int deleteCommentImagesByPostIdIn(@Param("postIds") List<UUID> postIds);
+
+    /**
+     * Delete all comment_images (for full wipe).
+     * The comment_images table is created by @ElementCollection on Comment.legacyImageUrls and lacks ON DELETE CASCADE.
+     * 
+     * @return Number of rows deleted
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "DELETE FROM comment_images", nativeQuery = true)
+    int deleteAllCommentImages();
 }

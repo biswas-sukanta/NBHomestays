@@ -214,8 +214,9 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
         /**
          * Find a limited batch of posts including soft-deleted ones.
          * Bypasses @SQLRestriction for batch wipe operation.
+         * Uses ORDER BY for consistent results across batches.
          */
-        @Query(value = "SELECT * FROM posts LIMIT :limit", nativeQuery = true)
+        @Query(value = "SELECT * FROM posts ORDER BY created_at DESC LIMIT :limit", nativeQuery = true)
         List<Post> findAllIncludingDeletedWithLimit(@Param("limit") int limit);
 
         /**
@@ -226,11 +227,21 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
         long countIncludingDeleted();
 
         /**
+         * Hard delete posts by IDs, bypassing soft delete.
+         * Used for batch wipe operation.
+         * 
+         * @param postIds List of post IDs to delete
+         * @return Number of rows deleted
+         */
+        @Modifying(flushAutomatically = true, clearAutomatically = true)
+        @Query(value = "DELETE FROM posts WHERE id IN :postIds", nativeQuery = true)
+        int hardDeleteByIdIn(@Param("postIds") java.util.List<UUID> postIds);
+
+        /**
          * Hard delete all posts, bypassing soft delete.
          * Returns count of deleted rows.
          */
-        @Modifying
-        @Transactional
+        @Modifying(flushAutomatically = true, clearAutomatically = true)
         @Query(value = "DELETE FROM posts", nativeQuery = true)
         long hardDeleteAll();
 }

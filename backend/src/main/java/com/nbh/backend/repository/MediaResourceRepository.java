@@ -20,7 +20,29 @@ public interface MediaResourceRepository extends JpaRepository<MediaResource, UU
      * @param postIds List of post IDs whose media resources should be deleted
      * @return Number of rows deleted
      */
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM MediaResource m WHERE m.post.id IN :postIds")
     int deleteByPostIdIn(@Param("postIds") List<UUID> postIds);
+
+    /**
+     * Delete all media resources associated with comments belonging to the given post IDs.
+     * Used during batch wipe - media_resources.comment_id lacks ON DELETE CASCADE.
+     * 
+     * @param postIds List of post IDs whose comment media resources should be deleted
+     * @return Number of rows deleted
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "DELETE FROM media_resources WHERE comment_id IN (SELECT id FROM comments WHERE post_id IN :postIds)", nativeQuery = true)
+    int deleteByCommentPostIdIn(@Param("postIds") List<UUID> postIds);
+
+    /**
+     * Delete all media resources and return count (for full wipe).
+     * Used during deep wipe to clear all media_resources before posts.
+     * Named differently to avoid clash with CrudRepository.deleteAll() which returns void.
+     * 
+     * @return Number of rows deleted
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "DELETE FROM media_resources", nativeQuery = true)
+    int deleteAllAndCount();
 }

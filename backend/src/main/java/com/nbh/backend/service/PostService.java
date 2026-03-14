@@ -13,6 +13,7 @@ import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.PostLikeRepository;
+import com.nbh.backend.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,7 @@ public class PostService {
     private final HomestayRepository homestayRepository;
     private final PostLikeRepository postLikeRepository;
     private final MediaResourceRepository mediaResourceRepository;
+    private final CommentRepository commentRepository;
     private final ImageUploadService imageUploadService;
     private final AsyncJobService asyncJobService;
     private final FeedCacheService feedCacheService;
@@ -648,23 +650,26 @@ public class PostService {
         }
         log.info("[DEEP WIPE] Deleted {} files from ImageKit, {} failed", deletedFileCount, failedFileCount);
         
-        // Step 3: Delete all post_likes (separate table, no cascade)
-        long likesDeleted = postLikeRepository.deleteAllAndGetCount();
-        log.info("[DEEP WIPE] Deleted {} post_likes records", likesDeleted);
+        // Step 3: Delete all comment_images (ElementCollection table lacks ON DELETE CASCADE)
+        int commentImagesDeleted = commentRepository.deleteAllCommentImages();
+        log.info("[DEEP WIPE] Deleted {} comment_images records", commentImagesDeleted);
         
         // Step 4: Delete all media_resources (hardDeleteAll bypasses JPA cascade)
-        long mediaResourcesDeleted = mediaResourceRepository.count();
-        mediaResourceRepository.deleteAllInBatch();
+        int mediaResourcesDeleted = mediaResourceRepository.deleteAllAndCount();
         log.info("[DEEP WIPE] Deleted {} media_resources records", mediaResourcesDeleted);
         
-        // Step 5: Hard delete all posts (bypass soft delete)
-        long postsDeleted = postRepository.hardDeleteAll();
-        log.info("[DEEP WIPE] Hard deleted {} posts", postsDeleted);
+        // Step 5: Delete all post_likes (separate table)
+        long likesDeleted = postLikeRepository.deleteAllAndGetCount();
+        log.info("[DEEP WIPE] Deleted {} post_likes records", likesDeleted);
         
         // Step 6: Clear timeline
         timelineService.clearAll();
         
-        // Step 7: Invalidate all caches
+        // Step 7: Hard delete all posts (bypass soft delete)
+        long postsDeleted = postRepository.hardDeleteAll();
+        log.info("[DEEP WIPE] Hard deleted {} posts", postsDeleted);
+        
+        // Step 8: Invalidate all caches
         feedCacheService.invalidateAll();
         
         return WipeResult.builder()
@@ -794,20 +799,33 @@ public class PostService {
         }
         log.info("[BATCH WIPE] Deleted {} files from ImageKit, {} failed", deletedFileCount, failedFileCount);
         
-        // Step 4: Delete likes for these specific posts
-        postLikeRepository.deleteByPostIdIn(postIds);
-        log.info("[BATCH WIPE] Deleted likes for {} posts", postIds.size());
+        // Step 4: Delete comment_images (ElementCollection table lacks ON DELETE CASCADE)
+        // Must be deleted BEFORE comments are removed
+        int commentImagesDeleted = commentRepository.deleteCommentImagesByPostIdIn(postIds);
+        log.info("[BATCH WIPE] Deleted {} comment_images records", commentImagesDeleted);
         
         // Step 5: Delete media_resources explicitly (deleteAllByIdInBatch bypasses JPA cascade)
-        int mediaResourcesDeleted = mediaResourceRepository.deleteByPostIdIn(postIds);
-        log.info("[BATCH WIPE] Deleted {} media_resources records", mediaResourcesDeleted);
+        // 5a: Delete comment media first (media_resources.comment_id lacks ON DELETE CASCADE)
+        int commentMediaDeleted = mediaResourceRepository.deleteByCommentPostIdIn(postIds);
+        log.info("[BATCH WIPE] Deleted {} comment media_resources records", commentMediaDeleted);
+        // 5b: Delete post media
+        int postMediaDeleted = mediaResourceRepository.deleteByPostIdIn(postIds);
+        log.info("[BATCH WIPE] Deleted {} post media_resources records", postMediaDeleted);
         
-        // Step 6: Delete the posts using repository (cascade handles comments)
-        postRepository.deleteAllByIdInBatch(postIds);
-        log.info("[BATCH WIPE] Deleted {} posts", postIds.size());
-        
-        // Step 7: Clear timeline entries for deleted posts
+        // Step 6: Clear timeline entries for these posts (has CASCADE but delete explicitly for safety)
         timelineService.deletePostsFromTimeline(postIds);
+        log.info("[BATCH WIPE] Cleared timeline entries for {} posts", postIds.size());
+        
+        // Step 7: Hard delete the posts (DB cascade handles comments, post_tags, post_likes)
+        int postsDeleted = postRepository.hardDeleteByIdIn(postIds);
+        log.info("[BATCH WIPE] Hard deleted {} posts", postsDeleted);
+        
+        // Verify deletion succeeded
+        if (postsDeleted == 0 && !postIds.isEmpty()) {
+            log.error("[BATCH WIPE] Failed to delete any posts! Possible FK constraint violation.");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
+                    "Failed to delete posts - possible database constraint violation");
+        }
         
         // Step 8: Check if there are more posts remaining
         long remainingCount = postRepository.countIncludingDeleted();

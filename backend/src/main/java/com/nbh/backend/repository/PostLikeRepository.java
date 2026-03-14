@@ -31,14 +31,14 @@ public interface PostLikeRepository extends JpaRepository<PostLike, PostLike.Pos
     /**
      * Delete all post_likes and return the count.
      */
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "DELETE FROM post_likes", nativeQuery = true)
     long deleteAllAndGetCount();
 
     /**
      * Delete likes for multiple posts by post IDs.
      */
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "DELETE FROM post_likes WHERE post_id IN :postIds", nativeQuery = true)
-    void deleteByPostIdIn(@Param("postIds") java.util.List<UUID> postIds);
+    int deleteByPostIdIn(@Param("postIds") java.util.List<UUID> postIds);
 }
