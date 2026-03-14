@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,8 +56,8 @@ public class FeedService {
      * @return Feed response with posts, nextCursor, and hasMore
      */
     @Transactional(readOnly = true)
-    public PostFeedDto.FeedResponse getFeed(String tag, String cursor, Integer limit, UUID userId) {
-        return getFeed(tag, cursor, limit, userId, true);
+    public PostFeedDto.FeedResponse getFeed(String tag, String scope, String cursor, Integer limit, UUID userId) {
+        return getFeed(tag, scope, cursor, limit, userId, true);
     }
     
     /**
@@ -72,12 +72,13 @@ public class FeedService {
      * @return Feed response with posts, nextCursor, hasMore, and optional blocks
      */
     @Transactional(readOnly = true)
-    public PostFeedDto.FeedResponse getFeed(String tag, String cursor, Integer limit, UUID userId, boolean layout) {
+    public PostFeedDto.FeedResponse getFeed(String tag, String scope, String cursor, Integer limit, UUID userId, boolean layout) {
+        String resolvedScope = normalizeScope(scope);
         int pageSize = limit != null && limit > 0 ? limit : DEFAULT_LIMIT;
         int fetchLimit = pageSize + EXTRA_FOR_HAS_MORE;
 
         // Check cache with userId to prevent cache pollution
-        String cacheKey = cacheService.generateKey(tag, cursor, pageSize, userId);
+        String cacheKey = cacheService.generateKey((tag == null ? "all" : tag) + ":" + resolvedScope, cursor, pageSize, userId);
         Optional<PostFeedDto.FeedResponse> cached = cacheService.get(cacheKey);
         if (cached.isPresent()) {
             log.debug("Feed cache hit for key: {}", cacheKey);
@@ -86,20 +87,25 @@ public class FeedService {
 
         // Decode cursor
         PostFeedDto.Cursor cursorData = decodeCursor(cursor);
-        LocalDateTime cursorCreatedAt = cursorData != null ? cursorData.getCreatedAt() : null;
+        Instant cursorCreatedAt = cursorData != null ? cursorData.getCreatedAt() : null;
         UUID cursorId = cursorData != null ? cursorData.getId() : null;
+        Double cursorTrendingScore = cursorData != null ? cursorData.getTrendingScore() : null;
         String previousBlockType = cursorData != null ? cursorData.getPreviousBlockType() : null;
         Integer previousBlockTypeRun = cursorData != null ? cursorData.getPreviousBlockTypeRun() : null;
 
+        PostFeedDto.FeedResponse response;
+
+        if ("trending".equals(resolvedScope)) {
+            response = getTrendingFeed(cursorTrendingScore, cursorCreatedAt, cursorId, fetchLimit, pageSize, userId, cacheKey);
+        } else if ("following".equals(resolvedScope)) {
+            response = getFollowingFeed(cursorCreatedAt, cursorId, fetchLimit, pageSize, userId, cacheKey);
+        } else {
         // Try timeline first (if no tag filter - timeline is global)
-        List<PostFeedDto> posts;
-        boolean hasMore;
-        
         if (tag == null || tag.isBlank()) {
             PostFeedDto.FeedResponse timelineResponse = getFeedFromTimeline(cursorCreatedAt, cursorId, fetchLimit, pageSize, userId);
             if (timelineResponse != null) {
                 log.debug("Feed served from timeline");
-                PostFeedDto.FeedResponse response = timelineResponse;
+                response = timelineResponse;
 
                 if (layout && response.getPosts() != null && !response.getPosts().isEmpty()) {
                     List<PostFeedDto.FeedBlockDto> blocks = layoutEngine.generateLayout(
@@ -112,7 +118,7 @@ public class FeedService {
                     if (response.isHasMore() && nextCursor != null) {
                         PostFeedDto lastPost = response.getPosts().get(response.getPosts().size() - 1);
                         TailBlockRun tail = computeTailBlockRun(blocks);
-                        nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId(), tail.blockType, tail.runLength);
+                        nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId(), lastPost.getTrendingScore(), tail.blockType, tail.runLength);
                     }
 
                     response = PostFeedDto.FeedResponse.builder()
@@ -130,7 +136,8 @@ public class FeedService {
         }
 
         // Fallback: direct query from posts table
-        PostFeedDto.FeedResponse response = getFeedFromDirectQuery(tag, cursorCreatedAt, cursorId, fetchLimit, pageSize, userId, cacheKey);
+            response = getFeedFromDirectQuery(tag, cursorCreatedAt, cursorId, fetchLimit, pageSize, userId, cacheKey);
+        }
 
         // Generate layout blocks if requested
         if (layout && response.getPosts() != null && !response.getPosts().isEmpty()) {
@@ -144,7 +151,7 @@ public class FeedService {
             if (response.isHasMore() && nextCursor != null) {
                 PostFeedDto lastPost = response.getPosts().get(response.getPosts().size() - 1);
                 TailBlockRun tail = computeTailBlockRun(blocks);
-                nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId(), tail.blockType, tail.runLength);
+                nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId(), lastPost.getTrendingScore(), tail.blockType, tail.runLength);
             }
 
             response = PostFeedDto.FeedResponse.builder()
@@ -157,6 +164,14 @@ public class FeedService {
 
         return response;
     }
+
+    private String normalizeScope(String scope) {
+        if (scope == null || scope.isBlank()) {
+            return "latest";
+        }
+        String normalized = scope.toLowerCase(Locale.ROOT);
+        return "global".equals(normalized) ? "latest" : normalized;
+    }
     
     /**
      * Get feed from timeline table (index-only scan).
@@ -164,7 +179,7 @@ public class FeedService {
      * Uses 30-day bounded window for 60% cost reduction.
      */
     private PostFeedDto.FeedResponse getFeedFromTimeline(
-            LocalDateTime cursorCreatedAt, UUID cursorId, int fetchLimit, int pageSize, UUID userId) {
+            Instant cursorCreatedAt, UUID cursorId, int fetchLimit, int pageSize, UUID userId) {
         
         // Check if timeline has entries
         if (!timelineRepository.hasTimelineEntries()) {
@@ -172,7 +187,7 @@ public class FeedService {
         }
         
         // Calculate 30-day boundary for bounded keyset pagination
-        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        Instant thirtyDaysAgo = Instant.now().minus(java.time.Duration.ofDays(30));
         
         // Query timeline - use separate queries for first page vs cursor pagination
         List<PostTimeline> timelineRows;
@@ -222,19 +237,20 @@ public class FeedService {
         Map<UUID, List<String>> tagsByPost = loadTags(postIds);
         Map<UUID, Integer> commentCounts = loadCommentCounts(postIds);
         Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost = loadMediaDimensions(postIds);
+        Map<UUID, PostMeta> postMetaById = loadPostMeta(postIds);
         // Use precomputed like counts from timeline, but still batch load liked status
         Set<UUID> likedPostIds = userId != null ? loadLikedStatus(userId, postIds) : Collections.emptySet();
         
         // Map to DTOs
         List<PostFeedDto> posts = timelineRows.stream()
-                .map(t -> mapTimelineToDto(t, mediaByPost, tagsByPost, commentCounts, likedPostIds, dimensionsByPost))
+                .map(t -> mapTimelineToDto(t, mediaByPost, tagsByPost, commentCounts, likedPostIds, dimensionsByPost, postMetaById))
                 .collect(Collectors.toList());
         
         // Generate next cursor
         String nextCursor = null;
         if (hasMore && !posts.isEmpty()) {
             PostFeedDto lastPost = posts.get(posts.size() - 1);
-            nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId());
+            nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId(), lastPost.getTrendingScore());
         }
         
         return PostFeedDto.FeedResponse.builder()
@@ -248,7 +264,7 @@ public class FeedService {
      * Get feed from direct query (fallback when timeline empty).
      */
     private PostFeedDto.FeedResponse getFeedFromDirectQuery(
-            String tag, LocalDateTime cursorCreatedAt, UUID cursorId, 
+            String tag, Instant cursorCreatedAt, UUID cursorId,
             int fetchLimit, int pageSize, UUID userId, String cacheKey) {
         
         // Fetch posts (1 query)
@@ -295,18 +311,19 @@ public class FeedService {
         Map<UUID, Integer> commentCounts = loadCommentCounts(postIds);
         Map<UUID, Integer> likeCounts = loadLikeCounts(postIds);
         Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost = loadMediaDimensions(postIds);
+        Map<UUID, PostMeta> postMetaById = loadPostMeta(postIds);
         Set<UUID> likedPostIds = userId != null ? loadLikedStatus(userId, postIds) : Collections.emptySet();
 
         // Map to DTOs
         List<PostFeedDto> posts = rows.stream()
-                .map(row -> mapToDto(row, mediaByPost, tagsByPost, commentCounts, likeCounts, likedPostIds, dimensionsByPost))
+                .map(row -> mapToDto(row, mediaByPost, tagsByPost, commentCounts, likeCounts, likedPostIds, dimensionsByPost, postMetaById))
                 .collect(Collectors.toList());
 
         // Generate next cursor
         String nextCursor = null;
         if (hasMore && !posts.isEmpty()) {
             PostFeedDto lastPost = posts.get(posts.size() - 1);
-            nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId());
+            nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId(), lastPost.getTrendingScore());
         }
 
         PostFeedDto.FeedResponse response = PostFeedDto.FeedResponse.builder()
@@ -341,15 +358,20 @@ public class FeedService {
     /**
      * Encode cursor to Base64 string.
      */
-    private String encodeCursor(LocalDateTime createdAt, UUID id) {
-        return encodeCursor(createdAt, id, null, null);
+    private String encodeCursor(Instant createdAt, UUID id) {
+        return encodeCursor(createdAt, id, null, null, null);
     }
 
-    private String encodeCursor(LocalDateTime createdAt, UUID id, String previousBlockType, Integer previousBlockTypeRun) {
+    private String encodeCursor(Instant createdAt, UUID id, Double trendingScore) {
+        return encodeCursor(createdAt, id, trendingScore, null, null);
+    }
+
+    private String encodeCursor(Instant createdAt, UUID id, Double trendingScore, String previousBlockType, Integer previousBlockTypeRun) {
         try {
             PostFeedDto.Cursor cursor = PostFeedDto.Cursor.builder()
                     .createdAt(createdAt)
                     .id(id)
+                    .trendingScore(trendingScore)
                     .previousBlockType(previousBlockType)
                     .previousBlockTypeRun(previousBlockTypeRun)
                     .build();
@@ -617,7 +639,8 @@ public class FeedService {
             Map<UUID, List<String>> tagsByPost,
             Map<UUID, Integer> commentCounts,
             Set<UUID> likedPostIds,
-            Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost) {
+            Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost,
+            Map<UUID, PostMeta> postMetaById) {
 
         // Build repost metadata
         boolean isRepost = timeline.getOriginalPostId() != null;
@@ -634,6 +657,7 @@ public class FeedService {
         int mediaCount = media.size();
         int textLength = timeline.getTextContent() != null ? timeline.getTextContent().length() : 0;
         List<PostFeedDto.ImageDimDto> imageDims = dimensionsByPost.getOrDefault(timeline.getPostId(), Collections.emptyList());
+        PostMeta meta = postMetaById.get(timeline.getPostId());
 
         return PostFeedDto.builder()
                 .postId(timeline.getPostId())
@@ -649,6 +673,8 @@ public class FeedService {
                 .shareCount(timeline.getShareCount())
                 .homestayId(timeline.getHomestayId())
                 .homestayName(timeline.getHomestayName())
+                .destinationId(meta != null ? meta.destinationId : null)
+                .postType(meta != null ? meta.postType : null)
                 .tags(tagsByPost.getOrDefault(timeline.getPostId(), Collections.emptyList()))
                 .media(media)
                 .isRepost(isRepost)
@@ -659,6 +685,13 @@ public class FeedService {
                 .mediaCount(mediaCount)
                 .textLength(textLength)
                 .imageDimensions(imageDims)
+                .isEditorial(meta != null && meta.isEditorial)
+                .isFeatured(meta != null && meta.isFeatured)
+                .isPinned(meta != null && meta.isPinned)
+                .isTrending(meta != null && meta.isTrending)
+                .viewCount(meta != null ? meta.viewCount : 0)
+                .trendingScore(meta != null ? meta.trendingScore : 0d)
+                .editorialScore(meta != null ? meta.editorialScore : 0d)
                 .build();
     }
 
@@ -683,12 +716,12 @@ public class FeedService {
             Map<UUID, Integer> commentCounts,
             Map<UUID, Integer> likeCounts,
             Set<UUID> likedPostIds,
-            Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost) {
+            Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost,
+            Map<UUID, PostMeta> postMetaById) {
 
         UUID postId = (UUID) row[0];
         String textContent = (String) row[1];
-        Timestamp createdAtTs = (Timestamp) row[2];
-        LocalDateTime createdAt = createdAtTs != null ? createdAtTs.toLocalDateTime() : null;
+        Instant createdAt = toInstant(row[2]);
         
         UUID authorId = (UUID) row[3];
         String authorName = (String) row[4];
@@ -730,6 +763,7 @@ public class FeedService {
         int mediaCount = media.size();
         int textLength = textContent != null ? textContent.length() : 0;
         List<PostFeedDto.ImageDimDto> imageDims = dimensionsByPost.getOrDefault(postId, Collections.emptyList());
+        PostMeta meta = postMetaById.get(postId);
 
         return PostFeedDto.builder()
                 .postId(postId)
@@ -745,6 +779,8 @@ public class FeedService {
                 .shareCount(shareCountDb != null ? shareCountDb.intValue() : 0)
                 .homestayId(homestayId)
                 .homestayName(homestayName)
+                .destinationId(meta != null ? meta.destinationId : null)
+                .postType(meta != null ? meta.postType : null)
                 .tags(tagsByPost.getOrDefault(postId, Collections.emptyList()))
                 .media(media)
                 .isRepost(isRepost)
@@ -756,6 +792,139 @@ public class FeedService {
                 .mediaCount(mediaCount)
                 .textLength(textLength)
                 .imageDimensions(imageDims)
+                .isEditorial(meta != null && meta.isEditorial)
+                .isFeatured(meta != null && meta.isFeatured)
+                .isPinned(meta != null && meta.isPinned)
+                .isTrending(meta != null && meta.isTrending)
+                .viewCount(meta != null ? meta.viewCount : 0)
+                .trendingScore(meta != null ? meta.trendingScore : 0d)
+                .editorialScore(meta != null ? meta.editorialScore : 0d)
                 .build();
+    }
+
+    private PostFeedDto.FeedResponse getFollowingFeed(
+            Instant cursorCreatedAt, UUID cursorId, int fetchLimit, int pageSize, UUID userId, String cacheKey) {
+        if (userId == null) {
+            return PostFeedDto.FeedResponse.builder().posts(Collections.emptyList()).nextCursor(null).hasMore(false).build();
+        }
+        List<Object[]> rows = cursorCreatedAt == null
+                ? feedRepository.findFollowingFirstPage(userId, fetchLimit)
+                : feedRepository.findFollowingWithCursor(userId, cursorCreatedAt, cursorId, fetchLimit);
+        return mapDirectRows(rows, pageSize, userId, cacheKey, false);
+    }
+
+    private PostFeedDto.FeedResponse getTrendingFeed(
+            Double cursorTrendingScore, Instant cursorCreatedAt, UUID cursorId, int fetchLimit, int pageSize, UUID userId, String cacheKey) {
+        List<Object[]> rows = (cursorTrendingScore == null || cursorCreatedAt == null || cursorId == null)
+                ? feedRepository.findTrendingFirstPage(fetchLimit)
+                : feedRepository.findTrendingWithCursor(cursorTrendingScore, cursorCreatedAt, cursorId, fetchLimit);
+        return mapDirectRows(rows, pageSize, userId, cacheKey, true);
+    }
+
+    private PostFeedDto.FeedResponse mapDirectRows(
+            List<Object[]> rows, int pageSize, UUID userId, String cacheKey, boolean trending) {
+        if (rows.isEmpty()) {
+            return PostFeedDto.FeedResponse.builder().posts(Collections.emptyList()).nextCursor(null).hasMore(false).build();
+        }
+        boolean hasMore = rows.size() > pageSize;
+        if (hasMore) {
+            rows = rows.subList(0, pageSize);
+        }
+        List<UUID> postIds = rows.stream().map(row -> (UUID) row[0]).collect(Collectors.toList());
+        Map<UUID, List<PostFeedDto.MediaVariantDto>> mediaByPost = loadMedia(postIds);
+        Map<UUID, List<String>> tagsByPost = loadTags(postIds);
+        Map<UUID, Integer> commentCounts = loadCommentCounts(postIds);
+        Map<UUID, Integer> likeCounts = loadLikeCounts(postIds);
+        Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost = loadMediaDimensions(postIds);
+        Map<UUID, PostMeta> postMetaById = loadPostMeta(postIds);
+        Set<UUID> likedPostIds = userId != null ? loadLikedStatus(userId, postIds) : Collections.emptySet();
+
+        List<PostFeedDto> posts = rows.stream()
+                .map(row -> mapToDto(row, mediaByPost, tagsByPost, commentCounts, likeCounts, likedPostIds, dimensionsByPost, postMetaById))
+                .collect(Collectors.toList());
+
+        String nextCursor = null;
+        if (hasMore && !posts.isEmpty()) {
+            PostFeedDto lastPost = posts.get(posts.size() - 1);
+            nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId(), trending ? lastPost.getTrendingScore() : null);
+        }
+
+        PostFeedDto.FeedResponse response = PostFeedDto.FeedResponse.builder()
+                .posts(posts)
+                .nextCursor(nextCursor)
+                .hasMore(hasMore)
+                .build();
+        cacheService.put(cacheKey, response);
+        return response;
+    }
+
+    private Map<UUID, PostMeta> loadPostMeta(List<UUID> postIds) {
+        if (postIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<UUID, PostMeta> result = new HashMap<>();
+        for (Object[] row : feedRepository.findPostMetaByIds(postIds)) {
+            UUID postId = (UUID) row[0];
+            result.put(postId, new PostMeta(
+                    (UUID) row[1],
+                    row[2] != null ? com.nbh.backend.model.PostType.fromValue(row[2].toString()) : null,
+                    row[3] != null ? ((Number) row[3]).intValue() : 0,
+                    toBoolean(row[4]),
+                    toBoolean(row[5]),
+                    toBoolean(row[6]),
+                    toBoolean(row[7]),
+                    row[8] != null ? ((Number) row[8]).doubleValue() : 0d,
+                    row[9] != null ? ((Number) row[9]).doubleValue() : 0d
+            ));
+        }
+        return result;
+    }
+
+    private Instant toInstant(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Instant instant) {
+            return instant;
+        }
+        if (value instanceof Timestamp timestamp) {
+            return timestamp.toInstant();
+        }
+        if (value instanceof java.time.LocalDateTime localDateTime) {
+            return localDateTime.toInstant(java.time.ZoneOffset.UTC);
+        }
+        return Instant.parse(value.toString());
+    }
+
+    private static class PostMeta {
+        private final UUID destinationId;
+        private final com.nbh.backend.model.PostType postType;
+        private final int viewCount;
+        private final boolean isEditorial;
+        private final boolean isFeatured;
+        private final boolean isPinned;
+        private final boolean isTrending;
+        private final double trendingScore;
+        private final double editorialScore;
+
+        private PostMeta(UUID destinationId,
+                         com.nbh.backend.model.PostType postType,
+                         int viewCount,
+                         boolean isEditorial,
+                         boolean isFeatured,
+                         boolean isPinned,
+                         boolean isTrending,
+                         double trendingScore,
+                         double editorialScore) {
+            this.destinationId = destinationId;
+            this.postType = postType;
+            this.viewCount = viewCount;
+            this.isEditorial = isEditorial;
+            this.isFeatured = isFeatured;
+            this.isPinned = isPinned;
+            this.isTrending = isTrending;
+            this.trendingScore = trendingScore;
+            this.editorialScore = editorialScore;
+        }
     }
 }
