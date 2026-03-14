@@ -57,6 +57,7 @@ public class PostService {
     private final FeedCacheService feedCacheService;
     private final TimelineService timelineService;
     private final ViewTrackingService viewTrackingService;
+    private final AvatarUrlResolver avatarUrlResolver;
 
     /**
      * Get user ID by email - used by feed service for like status.
@@ -230,7 +231,8 @@ public class PostService {
                 .name((authorFirstName != null ? authorFirstName : "") 
                         + (authorLastName != null ? " " + authorLastName : ""))
                 .role(authorRole)
-                .avatarUrl(authorAvatarUrl)
+                .avatarUrl(avatarUrlResolver.resolveUserAvatar(authorId, authorAvatarUrl,
+                        ((authorFirstName != null ? authorFirstName : "") + (authorLastName != null ? " " + authorLastName : "")).trim()))
                 .isVerifiedHost(authorVerifiedHost)
                 .build();
         
@@ -920,7 +922,11 @@ public class PostService {
                 .name(post.getUser().getFirstName()
                         + (post.getUser().getLastName() != null ? " " + post.getUser().getLastName() : ""))
                 .role(post.getUser().getRole().name())
-                .avatarUrl(post.getUser().getAvatarUrl())
+                .avatarUrl(avatarUrlResolver.resolveUserAvatar(
+                        post.getUser().getId(),
+                        post.getUser().getAvatarUrl(),
+                        post.getUser().getFirstName()
+                                + (post.getUser().getLastName() != null ? " " + post.getUser().getLastName() : "")))
                 .isVerifiedHost(post.getUser().isVerifiedHost())
                 .build();
         List<MediaDto> dtoMedia = combinedMedia.stream()

@@ -1,3 +1,5 @@
+import { resolveAvatarUrl } from '@/lib/avatar'
+
 export interface MediaVariant {
     id: string;
     fileId?: string;
@@ -42,6 +44,10 @@ export interface NormalizedPost {
 export function normalizePost(post: any): NormalizedPost {
     if (!post) return {} as NormalizedPost;
 
+    const authorId = post.authorId ?? post.author?.id
+    const authorName = post.authorName ?? post.author?.name ?? "Unknown"
+    const authorAvatar = resolveAvatarUrl(authorId, post.authorAvatarUrl ?? post.author?.avatarUrl, authorName)
+
     // Handle both cursor API format (PostFeedDto) and legacy format
     const media = (post.media ?? post.mediaResources ?? []).map((m: any) => ({
         id: m.id || m.postId || '',
@@ -55,9 +61,9 @@ export function normalizePost(post: any): NormalizedPost {
 
     return {
         id: post.postId ?? post.id,
-        authorName: post.authorName ?? post.author?.name ?? "Unknown",
-        authorAvatar: post.authorAvatarUrl ?? post.author?.avatarUrl ?? "/images/default-avatar.webp",
-        authorId: post.authorId ?? post.author?.id,
+        authorName,
+        authorAvatar,
+        authorId,
         location: post.homestayName ?? post.locationName ?? "",
         caption: post.textContent ?? "",
         imageUrl: media[0]?.url ?? null,

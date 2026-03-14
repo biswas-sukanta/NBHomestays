@@ -13,9 +13,8 @@ import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useAuth } from '@/context/AuthContext';
 import { userApi, type PublicProfile } from '@/lib/api/users';
+import { resolveAvatarUrl } from '@/lib/avatar';
 import { queryKeys } from '@/lib/queryKeys';
-
-const AVATAR_FALLBACK = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=320&q=80';
 
 function formatCount(value: number) {
     return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
@@ -114,6 +113,7 @@ export default function PublicProfilePage() {
 
     const profile = profileQuery.data;
     const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+    const avatarUrl = resolveAvatarUrl(profile.id, profile.avatar, fullName || profile.username);
     const isOwnProfile = user?.id === profile.id;
     const statLine = `${formatCount(profile.followersCount)} Followers • ${formatCount(profile.followingCount)} Following • ${formatCount(profile.postCount)} Posts`;
 
@@ -159,7 +159,7 @@ export default function PublicProfilePage() {
                                 <div className="mb-6 flex items-center gap-4">
                                     <div className="h-24 w-24 overflow-hidden rounded-full border border-white/70 bg-white shadow-md">
                                         <OptimizedImage
-                                            src={profile.avatar || AVATAR_FALLBACK}
+                                            src={avatarUrl}
                                             alt={fullName || profile.username}
                                             width={160}
                                             className="h-full w-full object-cover"

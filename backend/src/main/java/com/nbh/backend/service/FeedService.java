@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nbh.backend.dto.PostFeedDto;
 import com.nbh.backend.model.PostTimeline;
-import com.nbh.backend.model.User;
 import com.nbh.backend.repository.FeedRepository;
 import com.nbh.backend.repository.TimelineRepository;
 import com.nbh.backend.repository.UserRepository;
@@ -44,6 +43,7 @@ public class FeedService {
     private final ObjectMapper objectMapper;
     private final FeedLayoutEngine layoutEngine;
     private final UserRepository userRepository;
+    private final AvatarUrlResolver avatarUrlResolver;
 
     private static final int DEFAULT_LIMIT = 12;
     private static final int EXTRA_FOR_HAS_MORE = 1;
@@ -668,10 +668,10 @@ public class FeedService {
         List<PostFeedDto.ImageDimDto> imageDims = dimensionsByPost.getOrDefault(timeline.getPostId(), Collections.emptyList());
         PostMeta meta = postMetaById.get(timeline.getPostId());
         AuthorSnapshot author = authorsById.get(timeline.getAuthorId());
-        String authorName = author != null ? author.name : timeline.getAuthorName();
-        String authorAvatarUrl = author != null ? author.avatarUrl : timeline.getAuthorAvatarUrl();
-        String authorRole = author != null ? author.role : timeline.getAuthorRole();
-        boolean authorVerifiedHost = author != null ? author.verifiedHost : timeline.isAuthorVerifiedHost();
+        String authorName = author != null ? author.name : "User";
+        String authorAvatarUrl = avatarUrlResolver.resolveUserAvatar(timeline.getAuthorId(), author != null ? author.avatarUrl : null, authorName);
+        String authorRole = author != null ? author.role : null;
+        boolean authorVerifiedHost = author != null && author.verifiedHost;
 
         return PostFeedDto.builder()
                 .postId(timeline.getPostId())
@@ -713,17 +713,17 @@ public class FeedService {
         if (authorIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        return userRepository.findAllById(authorIds).stream()
+        return userRepository.findSocialAuthorsByIds(authorIds).stream()
                 .collect(Collectors.toMap(
-                        User::getId,
+                        UserRepository.SocialAuthorProjection::getId,
                         user -> new AuthorSnapshot(
                                 buildAuthorName(user),
                                 user.getAvatarUrl(),
-                                user.getRole() != null ? user.getRole().name() : null,
-                                user.isVerifiedHost())));
+                                user.getRole(),
+                                Boolean.TRUE.equals(user.getVerifiedHost()))));
     }
 
-    private String buildAuthorName(User user) {
+    private String buildAuthorName(UserRepository.SocialAuthorProjection user) {
         if (user == null) {
             return null;
         }
@@ -763,7 +763,7 @@ public class FeedService {
         
         UUID authorId = (UUID) row[3];
         String authorName = (String) row[4];
-        String authorAvatarUrl = (String) row[5];
+        String authorAvatarUrl = avatarUrlResolver.resolveUserAvatar(authorId, (String) row[5], authorName);
         String authorRole = (String) row[6];
         boolean authorVerifiedHost = toBoolean(row[7]);
         

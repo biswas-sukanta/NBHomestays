@@ -33,6 +33,7 @@ public class CommentService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final AsyncJobService asyncJobService;
+    private final AvatarUrlResolver avatarUrlResolver;
 
     // ── Add top-level comment ──────────────────────────────────
     @Transactional
@@ -221,7 +222,7 @@ public class CommentService {
                         .id(author.getId())
                         .name(authorName.isBlank() ? "Anonymous" : authorName.trim())
                         .role(author.getRole().name())
-                        .avatarUrl(author.getAvatarUrl())
+                        .avatarUrl(avatarUrlResolver.resolveUserAvatar(author.getId(), author.getAvatarUrl(), authorName))
                         .build())
                 .body(c.getBody())
                 .media(dtoMedia)

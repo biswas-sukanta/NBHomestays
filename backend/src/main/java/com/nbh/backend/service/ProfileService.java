@@ -23,6 +23,7 @@ public class ProfileService {
     private final PostRepository postRepository;
     private final HomestayService homestayService;
     private final PostService postService;
+    private final AvatarUrlResolver avatarUrlResolver;
 
     @Transactional(readOnly = true)
     public HostProfileDto getProfile(UUID userId, UUID viewerUserId) {
@@ -39,7 +40,7 @@ public class ProfileService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .username(buildUsername(user))
-                .avatar(user.getAvatarUrl())
+                .avatar(avatarUrlResolver.resolveUserAvatar(user.getId(), user.getAvatarUrl(), buildDisplayName(user)))
                 .bio(user.getBio())
                 .communityPoints(user.getCommunityPoints())
                 .badges(user.getBadges())
@@ -52,6 +53,18 @@ public class ProfileService {
                 .homestays(homestayService.getHomestaysByOwner(user.getEmail(), PageRequest.of(0, 10)).getContent())
                 .posts(postsPage.getContent())
                 .build();
+    }
+
+    private String buildDisplayName(User user) {
+        String firstName = user.getFirstName() == null ? "" : user.getFirstName().trim();
+        String lastName = user.getLastName() == null ? "" : user.getLastName().trim();
+        String fullName = (firstName + (lastName.isBlank() ? "" : " " + lastName)).trim();
+        if (!fullName.isBlank()) {
+            return fullName;
+        }
+        String email = user.getEmail() == null ? "" : user.getEmail();
+        int at = email.indexOf('@');
+        return at > 0 ? email.substring(0, at) : email;
     }
 
     private String buildUsername(User user) {

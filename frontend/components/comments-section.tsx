@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { apiFetch } from '@/lib/api-client';
 import { getAccessToken } from '@/lib/auth/tokenStore';
 import { IMAGE_UPLOAD_HELPER_TEXT, processImages } from '@/lib/utils/imageUploadPipeline';
+import { resolveAvatarUrl } from '@/lib/avatar';
 
 import {
     DropdownMenu,
@@ -140,11 +141,14 @@ function SingleComment({ comment, postId, depth = 0, onDelete, currentUserId, to
     const canModify = isOwner || isAdmin;
 
     const totalReplies = localReplies.length;
+    const commentAvatarUrl = resolveAvatarUrl(comment.author?.id, comment.author?.avatarUrl, comment.author?.name);
 
     return (
         <div data-testid="comment-item" className={cn('group', depth > 0 && 'ml-8 mt-3 pl-3 border-l-2 border-border/50')}>
             <div className="flex gap-2.5">
-                <Initials name={comment.author?.name || 'User'} />
+                <div className="w-9 h-9 rounded-full overflow-hidden flex-none shadow-xl">
+                    <img src={commentAvatarUrl} alt={comment.author?.name || 'User'} className="w-full h-full object-cover" />
+                </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start w-full">
                         <div className="flex flex-col flex-1 min-w-0">
@@ -298,6 +302,11 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
     const open = externalOpen !== undefined ? externalOpen : internalOpen;
     const [stagedFiles, setStagedFiles] = useState<{ id: string, file: File, previewUrl: string }[]>([]);
     const fileRef = React.useRef<HTMLInputElement>(null);
+    const currentUserAvatarUrl = resolveAvatarUrl(
+        user?.id,
+        user?.avatarUrl,
+        [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email
+    );
 
     // ... cleanup preview URLs
     useEffect(() => {
@@ -359,7 +368,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
                 id: user?.id || 'anon',
                 name: (user?.firstName || 'User') + (user?.lastName ? ' ' + user?.lastName : ''),
                 role: user?.role || 'USER',
-                avatarUrl: user?.avatarUrl
+                avatarUrl: currentUserAvatarUrl
             },
             createdAt: new Date().toISOString(),
             media: stagedPreviewMedia
@@ -536,7 +545,7 @@ export function CommentsSection({ postId, hideTrigger, externalOpen, onExternalC
 
                                         <div className="flex items-center gap-4">
                                             <div className="w-11 h-11 flex-none rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-white text-sm font-black shadow-2xl">
-                                                {user?.firstName?.[0] || 'U'}
+                                                <img src={currentUserAvatarUrl} alt={user?.email || 'User'} className="w-full h-full object-cover rounded-full" />
                                             </div>
                                             <div className="flex-1 flex items-center bg-zinc-900/50 rounded-2xl px-5 py-4 border border-white/10 focus-within:border-green-500/50 focus-within:bg-zinc-900 transition-all shadow-2xl relative">
                                                 <input data-testid="comment-image-input" ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleFileChange} />

@@ -19,6 +19,7 @@ import { StagedFile } from '@/components/host/ImageDropzone';
 import { IMAGE_UPLOAD_HELPER_TEXT, processImages } from '@/lib/utils/imageUploadPipeline';
 import { queryKeys } from '@/lib/queryKeys';
 import { axiosInstance as api } from '@/lib/api-client';
+import { resolveAvatarUrl } from '@/lib/avatar';
 
 const ImageCropModal = dynamic(() => import('@/components/host/ImageCropModal').then(m => m.ImageCropModal), { ssr: false });
 
@@ -68,6 +69,11 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
     const viewerId = user?.id ?? null;
     const communityFeedPrefix = ['community', 'posts'] as const;
     const trendingQueryKey = queryKeys.community.trending(viewerId);
+    const currentUserAvatarUrl = resolveAvatarUrl(
+        user?.id,
+        (user as any)?.avatarUrl,
+        [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email
+    );
     const [text, setText] = useState(postData?.caption || '');
     const [location, setLocation] = useState(postData?.location || '');
     const [submitting, setSubmitting] = useState(false);
@@ -209,7 +215,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                 id: user?.id,
                 name: user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : 'You',
                 role: user?.role ?? 'ROLE_USER',
-                avatarUrl: (user as any)?.avatarUrl,
+                avatarUrl: currentUserAvatarUrl,
                 isVerifiedHost: (user as any)?.isVerifiedHost ?? false
             },
             locationName: location || 'North Bengal',

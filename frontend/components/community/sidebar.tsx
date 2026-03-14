@@ -39,7 +39,7 @@ export function CommunitySidebar({ posts = [] }: { posts?: NormalizedPost[] }) {
                             <div className="w-7 text-[11px] font-black text-neutral-400 group-hover:text-neutral-600 transition-colors">
                                 #{i + 1}
                             </div>
-                            {user.avatar && user.avatar !== "/images/default-avatar.webp" ? (
+                            {user.avatar ? (
                                 <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-transparent group-hover:ring-emerald-200 transition-all" />
                             ) : (
                                 <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${user.color} flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent group-hover:ring-emerald-200 transition-all`}>
