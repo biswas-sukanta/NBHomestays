@@ -1,6 +1,7 @@
 package com.nbh.backend.config;
 
 import com.nbh.backend.service.InfrastructureDetailsService;
+import com.nbh.backend.service.TimelineService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -14,6 +15,7 @@ import java.util.Map;
 public class InfrastructureHealthCheck implements CommandLineRunner {
 
     private final InfrastructureDetailsService detailsService;
+    private final TimelineService timelineService;
 
     @Override
     public void run(String... args) {
@@ -45,6 +47,14 @@ public class InfrastructureHealthCheck implements CommandLineRunner {
             log.info("ImageKit integration: UP - endpoint={}", imageKit.get("endpoint"));
         } else {
             log.error("ImageKit integration: DOWN - {}", imageKit.get("error"));
+        }
+
+        if (!timelineService.hasTimelineEntries()) {
+            log.warn("Timeline table is empty - running backfill to populate feed...");
+            int backfilled = timelineService.backfillTimeline();
+            log.info("Timeline backfill complete. Backfilled {} posts.", backfilled);
+        } else {
+            log.debug("Timeline table already populated.");
         }
 
         log.info("Infrastructure connectivity check complete.");

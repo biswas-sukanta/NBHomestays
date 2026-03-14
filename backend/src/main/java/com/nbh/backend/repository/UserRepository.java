@@ -38,4 +38,36 @@ public interface UserRepository extends JpaRepository<User, UUID> {
         String getRole();
         Boolean getVerifiedHost();
     }
+
+    /**
+     * Find top contributors by post count.
+     * Returns users with most posts in the system.
+     */
+    @Query(value = """
+            SELECT u.id AS id,
+                   u.first_name AS firstName,
+                   u.last_name AS lastName,
+                   u.email AS email,
+                   u.avatar_url AS avatarUrl,
+                   u.role AS role,
+                   u.is_verified_host AS verifiedHost,
+                   COUNT(p.id) AS postCount
+            FROM users u
+            INNER JOIN posts p ON p.user_id = u.id AND p.is_deleted = false
+            GROUP BY u.id, u.first_name, u.last_name, u.email, u.avatar_url, u.role, u.is_verified_host
+            ORDER BY COUNT(p.id) DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<TopContributorProjection> findTopContributors(@Param("limit") int limit);
+
+    interface TopContributorProjection {
+        UUID getId();
+        String getFirstName();
+        String getLastName();
+        String getEmail();
+        String getAvatarUrl();
+        String getRole();
+        Boolean getVerifiedHost();
+        Long getPostCount();
+    }
 }

@@ -160,3 +160,26 @@ export const feedKeys = {
   lists: () => [...feedKeys.all, 'list'] as const,
   list: (params: FeedParams) => [...feedKeys.lists(), params] as const,
 };
+
+export interface TopContributor {
+  id: string;
+  name: string;
+  avatarUrl: string;
+  role: string;
+  verifiedHost: boolean;
+  postCount: number;
+}
+
+/**
+ * Get top contributors by post count.
+ * Independent of feed filters - always returns global top contributors.
+ */
+export async function getTopContributors(limit: number = 3): Promise<TopContributor[]> {
+  const response = await apiFetch(`/community/top-contributors?limit=${limit}`);
+  
+  if (!response.ok) {
+    throw new Error(`Top contributors API error: ${response.status}`);
+  }
+  
+  return response.json();
+}

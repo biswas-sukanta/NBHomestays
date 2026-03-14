@@ -26,7 +26,7 @@ public class AvatarUrlResolver {
 
     public String generateFallbackAvatar(UUID userId, String displayName) {
         String seed = userId != null ? userId.toString() : "guest";
-        int hash = Math.abs(seed.hashCode());
+        int hash = computeConsistentHash(seed);
         String topColor = hsl(hash % 360, 62, 52);
         String bottomColor = hsl((hash + 47) % 360, 68, 38);
         String initials = buildInitials(displayName);
@@ -44,6 +44,15 @@ public class AvatarUrlResolver {
                 </svg>
                 """.formatted(topColor, bottomColor, escapeXml(initials));
         return "data:image/svg+xml;base64," + Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private int computeConsistentHash(String seed) {
+        int hash = 0;
+        for (int i = 0; i < seed.length(); i++) {
+            hash = seed.charAt(i) + ((hash << 5) - hash);
+            hash |= 0;
+        }
+        return Math.abs(hash);
     }
 
     private String buildInitials(String displayName) {

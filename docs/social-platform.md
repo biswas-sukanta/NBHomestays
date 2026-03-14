@@ -173,13 +173,17 @@ Posts track view counts for trending calculation:
 
 **Formula:**
 ```
-baseScore = (loveCount * 2) + (commentCount * 3) + (shareCount * 4) + viewCount
-
-if (daysOld > 7) {
-    decayFactor = 0.9 ^ (daysOld - 7)
-    baseScore = baseScore * decayFactor
-}
+engagement = (loveCount * 3.0) + (commentCount * 4.0) + (shareCount * 5.0) + (viewCount * 0.2)
+recencyBoost = 24.0 / max(ageHours, 1.0)
+score = engagement + recencyBoost
 ```
+
+**Weight Rationale:**
+- Comments weighted highest (4.0) as they indicate active discussion
+- Shares weighted high (5.0) as they indicate content worth spreading
+- Loves weighted moderately (3.0) as passive engagement
+- Views weighted low (0.2) as passive consumption
+- Recency boost ensures newer posts get visibility boost
 
 ### 6.2 Scheduled Job
 
@@ -193,9 +197,9 @@ if (daysOld > 7) {
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `trendingScore` | `int` | Computed trending score |
+| `trendingScore` | `double` | Computed trending score |
 | `trendingComputedAt` | `Instant` | Last computation time |
-| `isTrending` | `boolean` | Whether score exceeds threshold |
+| `isTrending` | `boolean` | Whether post is in top 20 by score |
 
 ### 6.4 Trending History
 

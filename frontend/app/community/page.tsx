@@ -362,7 +362,7 @@ export default function CommunityPage() {
 
                     {/* Right: Sidebar Rail (Desktop Only) */}
                     <div className="relative">
-                        <CommunitySidebar posts={normalizedPosts} />
+                        <CommunitySidebar />
                     </div>
                 </div>
                 </div>
