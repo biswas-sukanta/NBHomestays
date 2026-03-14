@@ -195,6 +195,11 @@ function TextOnlyCard({
     timestamp: string;
     tags?: string[];
 }) {
+    // Smart duplicate detection: if title and body are identical, only render once
+    const isDuplicate = title === body || !body || body.trim() === '';
+    const displayTitle = title;
+    const displayBody = isDuplicate ? null : body;
+    
     return (
         <div className="relative bg-gradient-to-br from-[#FDFBF7] to-[#F5F3EE] p-8 min-h-[320px] flex flex-col justify-center">
             {/* User info combined at top */}
@@ -212,14 +217,16 @@ function TextOnlyCard({
             </div>
             
             {/* Title as classic serif quote - center-aligned */}
-            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A] text-center leading-snug mb-4 italic">
-                "{title}"
+            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A] text-center leading-snug italic">
+                "{displayTitle}"
             </h3>
             
-            {/* Body text - full text with editorial feel */}
-            <p className="text-sm text-[#6B7280] text-center leading-relaxed max-w-md mx-auto whitespace-pre-wrap">
-                {body}
-            </p>
+            {/* Body text - only if different from title */}
+            {displayBody && (
+                <p className="text-sm text-[#6B7280] text-center leading-relaxed max-w-md mx-auto whitespace-pre-wrap mt-4">
+                    {displayBody}
+                </p>
+            )}
             
             {/* Category Tags for text-only */}
             {tags && tags.length > 0 && (
@@ -300,7 +307,6 @@ export function PostCardUnified({
     // Variant-specific rendering
     const isFeatured = effectiveVariant === 'featured';
     const isCollage = effectiveVariant === 'collage';
-    const isOverlay = isFeatured; // Only featured uses overlay
 
     const articleClassName = cn(
         'relative overflow-hidden transition-all duration-300 isolate bg-[#FDFBF7]',
@@ -318,50 +324,44 @@ export function PostCardUnified({
                 className={articleClassName}
             >
                 {/* STEP 4: Curation Signals - Backend-Driven Pills */}
-                {!isOverlay && (
-                    <div className="flex items-center gap-2 px-6 pt-5">
-                        {/* FEATURED Pill - Only when backend-driven */}
-                        {(post as any).isFeatured && (
-                            <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-[#D4A574] to-[#C49660] text-white rounded-full shadow-sm">
-                                Featured
-                            </span>
-                        )}
-                        {/* EDITORIAL Pill - Only when backend-driven */}
-                        {(post as any).isEditorial && (
-                            <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-[#2D5A4A] text-[#FDFBF7] rounded-full">
-                                Editorial
-                            </span>
-                        )}
-                    </div>
-                )}
+                <div className="flex items-center gap-2 px-6 pt-5">
+                    {/* FEATURED Pill - Gold background for featured variant or backend-driven */}
+                    {(isFeatured || (post as any).isFeatured) && (
+                        <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full shadow-sm">
+                            Featured
+                        </span>
+                    )}
+                    {/* EDITORIAL Pill - Only when backend-driven */}
+                    {(post as any).isEditorial && (
+                        <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-[#2D5A4A] text-[#FDFBF7] rounded-full">
+                            Editorial
+                        </span>
+                    )}
+                </div>
 
                 {/* STEP 3: Multi-Image Editorial Grid OR Text-Only Premium */}
-                {!isOverlay && (
-                    <>
-                        {imageCount > 0 ? (
-                            <div className="px-6 pt-3 pb-4">
-                                <EditorialImageGrid
-                                    images={images}
-                                    onImageClick={(idx) => setLightboxIndex(idx)}
-                                />
-                            </div>
-                        ) : (
-                            /* STEP 3: Super-Premium Text-Only Card */
-                            <TextOnlyCard
-                                title={title || post.caption?.slice(0, 50) || 'Untitled'}
-                                body={post.caption || ''}
-                                authorName={authorName}
-                                authorAvatar={authorAvatar}
-                                initials={initials}
-                                timestamp={formatRelative(post.createdAt)}
-                                tags={post.tags}
-                            />
-                        )}
-                    </>
+                {imageCount > 0 ? (
+                    <div className="px-6 pt-3 pb-4">
+                        <EditorialImageGrid
+                            images={images}
+                            onImageClick={(idx) => setLightboxIndex(idx)}
+                        />
+                    </div>
+                ) : (
+                    /* STEP 3: Super-Premium Text-Only Card */
+                    <TextOnlyCard
+                        title={title || post.caption?.slice(0, 50) || 'Untitled'}
+                        body={post.caption || ''}
+                        authorName={authorName}
+                        authorAvatar={authorAvatar}
+                        initials={initials}
+                        timestamp={formatRelative(post.createdAt)}
+                        tags={post.tags}
+                    />
                 )}
 
                 {/* Category Tags - Below title/quote */}
-                {!isOverlay && imageCount > 0 && (post.tags ?? []).length > 0 && (
+                {imageCount > 0 && (post.tags ?? []).length > 0 && (
                     <div className="flex flex-wrap gap-2 px-6 pb-3">
                         {(post.tags ?? []).slice(0, 3).map(tag => {
                             const config = CATEGORY_CONFIG[tag] || { icon: '🏷', color: 'bg-neutral-50 text-neutral-700 border-neutral-200' };
@@ -382,7 +382,7 @@ export function PostCardUnified({
                 )}
 
                 {/* User Metadata Byline */}
-                {!isOverlay && imageCount > 0 && (
+                {imageCount > 0 && (
                     <div className="px-6 pt-2 pb-3">
                         <div className="flex items-center gap-3">
                             <Avatar className="w-9 h-9 ring-2 ring-white shadow-sm">
@@ -421,7 +421,7 @@ export function PostCardUnified({
                 )}
 
                 {/* Editorial Content Teaser with Fading Read More */}
-                {!isOverlay && imageCount > 0 && post.caption && (
+                {imageCount > 0 && post.caption && (
                     <div className="px-6 pb-4">
                         <h3 className="font-serif text-xl font-bold text-[#1A1A1A] leading-tight mb-2">
                             {title}
@@ -449,42 +449,8 @@ export function PostCardUnified({
                     </div>
                 )}
 
-                {/* Featured overlay image */}
-                {isOverlay && imageCount > 0 && (
-                    <div className="relative z-10 w-full overflow-hidden">
-                        <div className={cn("relative w-full cursor-pointer group overflow-hidden", aspectClass)} onClick={() => setLightboxIndex(0)}>
-                            <OptimizedImage
-                                src={images[0]?.url || ''}
-                                alt={post.location || 'Post image'}
-                                width={900}
-                                small={images[0]?.small}
-                                medium={images[0]?.medium}
-                                large={images[0]?.large}
-                                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
-                            <div className="absolute top-4 left-4">
-                                <span className="px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                                    Featured
-                                </span>
-                            </div>
-                            <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                                {post.location && (
-                                    <div className="flex items-center gap-1.5 text-white/80 text-xs mb-2">
-                                        <span>📍</span>
-                                        <span>{post.location}</span>
-                                    </div>
-                                )}
-                                <h3 className="text-xl sm:text-2xl font-bold font-serif leading-tight tracking-tight line-clamp-2">
-                                    {title}
-                                </h3>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Quoted Repost */}
-                {post.originalPost && !isOverlay && (
+                {post.originalPost && (
                     <div className="px-4 pb-4 bg-[#FDFBF7]">
                         <div className="rounded-lg border border-neutral-200 bg-neutral-50 overflow-hidden">
                             <PostCardUnified post={post.originalPost} isQuoted={true} currentUser={currentUser} />
@@ -494,10 +460,7 @@ export function PostCardUnified({
 
                 {/* STEP 5: Social Interaction Bar - Grouped Layout */}
                 {!isQuoted && (
-                    <div className={cn(
-                        "border-t border-gray-100 px-6 py-4",
-                        isOverlay && "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent border-t-0"
-                    )}>
+                    <div className="border-t border-gray-100 px-6 py-4">
                         <div className="flex items-center justify-between">
                             {/* Left Group: Like, Comment, Repost */}
                             <div className="flex items-center gap-5">
@@ -508,7 +471,7 @@ export function PostCardUnified({
                                         "flex items-center gap-1.5 transition-all duration-200 group",
                                         post.isLikedByCurrentUser 
                                             ? "text-[#2D5A4A]" 
-                                            : isOverlay ? "text-white/80 hover:text-white" : "text-[#6B7280] hover:text-[#D4A574]"
+                                            : "text-[#6B7280] hover:text-[#D4A574]"
                                     )}
                                 >
                                     <motion.div
@@ -528,7 +491,7 @@ export function PostCardUnified({
                                     onClick={(e) => { e.stopPropagation(); onOpenComments?.(post.id); }}
                                     className={cn(
                                         "flex items-center gap-1.5 transition-all duration-200 group",
-                                        isOverlay ? "text-white/80 hover:text-white" : "text-[#6B7280] hover:text-[#D4A574]"
+                                        "text-[#6B7280] hover:text-[#D4A574]"
                                     )}
                                 >
                                     <motion.div
@@ -545,7 +508,7 @@ export function PostCardUnified({
                                     onClick={(e) => { e.stopPropagation(); handleRepost(); }}
                                     className={cn(
                                         "flex items-center gap-1.5 transition-all duration-200 group",
-                                        isOverlay ? "text-white/80 hover:text-white" : "text-[#6B7280] hover:text-[#D4A574]"
+                                        "text-[#6B7280] hover:text-[#D4A574]"
                                     )}
                                 >
                                     <motion.div
@@ -574,7 +537,7 @@ export function PostCardUnified({
                                 }}
                                 className={cn(
                                     "flex items-center gap-1.5 transition-all duration-200 group",
-                                    isOverlay ? "text-white/80 hover:text-white" : "text-[#6B7280] hover:text-[#D4A574]"
+                                    "text-[#6B7280] hover:text-[#D4A574]"
                                 )}
                             >
                                 <motion.div
