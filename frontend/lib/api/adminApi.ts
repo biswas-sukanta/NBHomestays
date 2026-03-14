@@ -9,4 +9,6 @@ export const adminApi = {
     seedHomestays: (count: number) => api.post(`/admin/homestays/seed?count=${count}`),
     // Deep wipe posts - deletes all posts, comments, likes, and physical media files
     wipeAllPosts: () => api.delete('/posts/admin/wipe-all'),
+    // Batch wipe posts - deletes a limited batch, returns hasMore flag
+    wipePostsBatch: (limit: number) => api.delete(`/posts/admin/wipe-batch?limit=${limit}`),
 };

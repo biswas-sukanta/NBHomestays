@@ -225,4 +225,24 @@ public class PostController {
         PostService.WipeResult result = postService.wipeAllPosts(authentication.getName());
         return ResponseEntity.ok(result);
     }
+
+    // ── Batch Wipe Endpoint (Admin Only) ─────────────────────────────────────
+    /**
+     * BATCH WIPE: Deletes a limited batch of posts, comments, likes, and physical media files.
+     * Designed to avoid timeouts by processing in chunks.
+     * 
+     * @param limit Maximum number of posts to delete in this batch (default 10)
+     * @return BatchWipeResult with deletedCount and hasMore flag
+     */
+    @DeleteMapping("/admin/wipe-batch")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ROLE_ADMIN')")
+    public ResponseEntity<PostService.BatchWipeResult> wipePostsBatch(
+            @RequestParam(value = "limit", defaultValue = "10") int limit,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        PostService.BatchWipeResult result = postService.wipePostsBatch(authentication.getName(), limit);
+        return ResponseEntity.ok(result);
+    }
 }

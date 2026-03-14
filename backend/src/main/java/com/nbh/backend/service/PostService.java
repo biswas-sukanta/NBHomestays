@@ -678,6 +678,144 @@ public class PostService {
         private long likesDeleted;
     }
 
+    // Result DTO for batch wipe operation
+    @lombok.Data
+    @lombok.Builder
+    public static class BatchWipeResult {
+        private int deletedCount;
+        private boolean hasMore;
+        private int mediaFilesDeleted;
+        private int mediaFilesFailed;
+    }
+
+    // ── Batch Wipe: Admin-only chunked deletion ────────────────────────────────
+    /**
+     * BATCH WIPE: Deletes a limited batch of posts, comments, likes, and physical media files.
+     * Designed to avoid timeouts by processing in manageable chunks.
+     * 
+     * Order of operations:
+     * 1. Fetch a limited batch of posts (including soft-deleted)
+     * 2. Collect media fileIds from posts AND their comments
+     * 3. Delete physical files from ImageKit
+     * 4. Delete likes for these specific posts
+     * 5. Delete the posts (cascade handles comments)
+     * 6. Clear timeline entries for deleted posts
+     * 
+     * @param adminEmail Email of the admin performing the wipe
+     * @param limit Maximum number of posts to delete in this batch
+     * @return BatchWipeResult with deletedCount and hasMore flag
+     */
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "postsList", allEntries = true),
+            @CacheEvict(value = "postDetail", allEntries = true),
+            @CacheEvict(value = "postComments", allEntries = true),
+            @CacheEvict(value = "adminStats", allEntries = true)
+    })
+    public BatchWipeResult wipePostsBatch(String adminEmail, int limit) {
+        log.info("[BATCH WIPE] Initiated by admin: {} with limit: {}", adminEmail, limit);
+        
+        // Validate limit
+        if (limit <= 0 || limit > 100) {
+            limit = Math.max(1, Math.min(limit, 100)); // Clamp between 1-100
+        }
+        
+        // Verify admin role
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (admin.getRole() != User.Role.ROLE_ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
+                    "Only admins can perform batch wipe");
+        }
+        
+        // Step 1: Fetch a limited batch of posts (including soft-deleted)
+        List<Post> batchPosts = postRepository.findAllIncludingDeletedWithLimit(limit);
+        
+        if (batchPosts.isEmpty()) {
+            log.info("[BATCH WIPE] No posts found to delete");
+            feedCacheService.invalidateAll();
+            return BatchWipeResult.builder()
+                    .deletedCount(0)
+                    .hasMore(false)
+                    .mediaFilesDeleted(0)
+                    .mediaFilesFailed(0)
+                    .build();
+        }
+        
+        // Step 2: Collect media fileIds from posts AND their comments
+        List<String> fileIds = new java.util.ArrayList<>();
+        List<UUID> postIds = new java.util.ArrayList<>();
+        
+        for (Post post : batchPosts) {
+            postIds.add(post.getId());
+            
+            // Post media
+            if (post.getMediaFiles() != null) {
+                for (MediaResource mr : post.getMediaFiles()) {
+                    if (mr.getFileId() != null && !mr.getFileId().isBlank()) {
+                        fileIds.add(mr.getFileId());
+                    }
+                }
+            }
+            // Comment media
+            if (post.getComments() != null) {
+                for (com.nbh.backend.model.Comment comment : post.getComments()) {
+                    if (comment.getMediaFiles() != null) {
+                        for (MediaResource mr : comment.getMediaFiles()) {
+                            if (mr.getFileId() != null && !mr.getFileId().isBlank()) {
+                                fileIds.add(mr.getFileId());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        log.info("[BATCH WIPE] Batch of {} posts, {} media files to delete", batchPosts.size(), fileIds.size());
+        
+        // Step 3: Delete physical files from ImageKit
+        int deletedFileCount = 0;
+        int failedFileCount = 0;
+        for (String fileId : fileIds) {
+            try {
+                imageUploadService.deleteFileById(fileId);
+                deletedFileCount++;
+            } catch (Exception e) {
+                log.warn("[BATCH WIPE] Failed to delete fileId {}: {}", fileId, e.getMessage());
+                failedFileCount++;
+            }
+        }
+        log.info("[BATCH WIPE] Deleted {} files from ImageKit, {} failed", deletedFileCount, failedFileCount);
+        
+        // Step 4: Delete likes for these specific posts
+        postLikeRepository.deleteByPostIdIn(postIds);
+        log.info("[BATCH WIPE] Deleted likes for {} posts", postIds.size());
+        
+        // Step 5: Delete the posts using repository (cascade handles comments)
+        postRepository.deleteAllByIdInBatch(postIds);
+        log.info("[BATCH WIPE] Deleted {} posts", postIds.size());
+        
+        // Step 6: Clear timeline entries for deleted posts
+        timelineService.deletePostsFromTimeline(postIds);
+        
+        // Step 7: Check if there are more posts remaining
+        long remainingCount = postRepository.countIncludingDeleted();
+        boolean hasMore = remainingCount > 0;
+        
+        log.info("[BATCH WIPE] Batch complete. {} posts deleted, {} remaining, hasMore: {}", 
+                postIds.size(), remainingCount, hasMore);
+        
+        // Step 8: Invalidate all caches
+        feedCacheService.invalidateAll();
+        
+        return BatchWipeResult.builder()
+                .deletedCount(postIds.size())
+                .hasMore(hasMore)
+                .mediaFilesDeleted(deletedFileCount)
+                .mediaFilesFailed(failedFileCount)
+                .build();
+    }
+
     // ── Mapping Helper ────────────────────────────────────────
     private PostDto.Response mapToResponse(Post post) {
         return mapToResponse(post, null);

@@ -233,4 +233,21 @@ public class TimelineService {
             log.error("Failed to clear timeline: {}", e.getMessage());
         }
     }
+
+    /**
+     * Delete multiple posts from timeline (for batch wipe).
+     */
+    @Transactional
+    public void deletePostsFromTimeline(List<UUID> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return;
+        }
+        
+        try {
+            timelineRepository.deleteByPostIdIn(postIds);
+            log.debug("[BATCH WIPE] Deleted {} posts from timeline", postIds.size());
+        } catch (Exception e) {
+            log.error("Failed to delete {} posts from timeline: {}", postIds.size(), e.getMessage());
+        }
+    }
 }

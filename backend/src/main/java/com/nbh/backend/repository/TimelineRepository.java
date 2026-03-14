@@ -145,4 +145,11 @@ public interface TimelineRepository extends JpaRepository<PostTimeline, Long> {
             @Param("originalPostId") UUID originalPostId,
             @Param("likeCount") int likeCount,
             @Param("shareCount") int shareCount);
+
+    /**
+     * Delete timeline entries for multiple posts (for batch wipe).
+     */
+    @Modifying
+    @Query(value = "DELETE FROM post_timelines_global WHERE post_id IN :postIds", nativeQuery = true)
+    void deleteByPostIdIn(@Param("postIds") List<UUID> postIds);
 }

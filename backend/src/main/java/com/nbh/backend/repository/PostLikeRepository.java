@@ -34,4 +34,11 @@ public interface PostLikeRepository extends JpaRepository<PostLike, PostLike.Pos
     @Modifying
     @Query(value = "DELETE FROM post_likes", nativeQuery = true)
     long deleteAllAndGetCount();
+
+    /**
+     * Delete likes for multiple posts by post IDs.
+     */
+    @Modifying
+    @Query(value = "DELETE FROM post_likes WHERE post_id IN :postIds", nativeQuery = true)
+    void deleteByPostIdIn(@Param("postIds") java.util.List<UUID> postIds);
 }
