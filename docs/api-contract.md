@@ -1,10 +1,11 @@
 # API Contract
 
-*Auto-Updated Document*: This file maps the exact DTO structures found in the `com.nbh.backend.dto.*` package.
+*Auto-Updated Document*: This file maps the exact DTO structures and endpoints found in the `com.nbh.backend` package.
 
 ## Authentication (AuthDto)
-- **Register**: `email`, `password`, `firstname`, `lastname`, `role`.
-- **Authenticate**: `email`, `password` -> Returns `accessToken`, `refreshToken`.
+- **Register**: `POST /api/auth/register` - `email`, `password`, `firstname`, `lastname`, `role`
+- **Authenticate**: `POST /api/auth/authenticate` - `email`, `password` → Returns `accessToken`, `refreshToken`
+- **Refresh**: `POST /api/auth/refresh` - `refreshToken` → Returns new `accessToken`
 
 ## User Profile (AuthorDto)
 ```json
@@ -48,12 +49,190 @@
   "locationName": "String",
   "textContent": "String",
   "media": ["MediaDto"],
+  "homestayId": "UUID",
+  "homestayName": "String",
+  "destinationId": "UUID",
+  "postType": "PostType",
   "loveCount": "int",
+  "shareCount": "int",
   "commentCount": "int",
+  "viewCount": "int",
   "isLikedByCurrentUser": "boolean",
-  "createdAt": "LocalDateTime",
+  "isEditorial": "boolean",
+  "isFeatured": "boolean",
+  "isPinned": "boolean",
+  "isTrending": "boolean",
+  "trendingScore": "double",
+  "editorialScore": "double",
+  "createdAt": "Instant",
   "tags": ["String"],
   "originalPost": "PostDto.Response"
+}
+```
+
+## Community Feed Endpoints
+
+### GET /api/posts/feed
+
+Retrieves the community feed with cursor-based pagination.
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `cursor` | String | No | Base64-encoded pagination cursor |
+| `limit` | Integer | No | Page size (default: 12) |
+| `scope` | String | No | Feed scope: `latest`, `following`, `trending`, `global` |
+| `tag` | String | No | Filter by vibe tag |
+
+**Supported Scopes:**
+| Scope | Description |
+|-------|-------------|
+| `latest` | All posts, newest first (default) |
+| `following` | Posts from followed users |
+| `trending` | Posts sorted by trending score |
+| `global` | Alias for `latest` |
+
+**Response:**
+```json
+{
+  "posts": ["PostFeedDto"],
+  "nextCursor": "String|null",
+  "hasMore": "boolean",
+  "blocks": ["FeedBlockDto"]
+}
+```
+
+### GET /api/posts/trending
+
+Retrieves trending posts.
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `cursor` | String | No | Pagination cursor |
+| `limit` | Integer | No | Page size (default: 12) |
+
+**Response:** Same as feed response.
+
+### GET /api/posts/{id}
+
+Retrieves a single post by ID.
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | UUID | Post ID |
+
+**Response:** `PostDto.Response`
+
+### POST /api/posts
+
+Creates a new post. Requires authentication.
+
+**Request:** `multipart/form-data`
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `request` | JSON Blob | Yes | Post creation request |
+| `files` | File[] | No | Image files |
+
+**Request JSON:**
+```json
+{
+  "textContent": "String",
+  "locationName": "String",
+  "homestayId": "UUID",
+  "postType": "String",
+  "tags": ["String"],
+  "media": [{"url": "String", "fileId": "String"}]
+}
+```
+
+**Response:** `PostDto.Response`
+
+### POST /api/posts/{id}/like
+
+Likes a post. Requires authentication.
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | UUID | Post ID |
+
+**Response:**
+```json
+{
+  "liked": "boolean",
+  "likeCount": "int"
+}
+```
+
+### DELETE /api/posts/{id}/like
+
+Unlikes a post. Requires authentication.
+
+**Response:**
+```json
+{
+  "liked": "boolean",
+  "likeCount": "int"
+}
+```
+
+### POST /api/posts/{id}/share
+
+Records a share and increments share count.
+
+**Response:**
+```json
+{
+  "shareCount": "int"
+}
+```
+
+### POST /api/posts/{id}/repost
+
+Creates a repost. Requires authentication.
+
+**Request Body:**
+```json
+{
+  "textContent": "String (optional quote)"
+}
+```
+
+**Response:** `PostDto.Response`
+
+## User Endpoints
+
+### GET /api/users/{id}/profile
+
+Retrieves a user's public profile.
+
+**Response:** `HostProfileDto`
+
+### POST /api/users/{id}/follow
+
+Follows a user. Requires authentication.
+
+**Response:**
+```json
+{
+  "isFollowing": "boolean",
+  "followersCount": "long",
+  "followingCount": "long"
+}
+```
+
+### DELETE /api/users/{id}/follow
+
+Unfollows a user. Requires authentication.
+
+**Response:**
+```json
+{
+  "isFollowing": "boolean",
+  "followersCount": "long",
+  "followingCount": "long"
 }
 ```
 
@@ -82,7 +261,7 @@
   "author": "AuthorDto",
   "body": "String",
   "media": ["MediaDto"],
-  "createdAt": "LocalDateTime",
+  "createdAt": "Instant",
   "replies": ["CommentDto"],
   "replyCount": "int"
 }
@@ -114,9 +293,16 @@
   "id": "UUID",
   "firstName": "String",
   "lastName": "String",
+  "username": "String",
+  "avatar": "String",
   "bio": "String",
   "communityPoints": "int",
   "badges": ["String"],
+  "verifiedHost": "boolean",
+  "followersCount": "long",
+  "followingCount": "long",
+  "postCount": "long",
+  "isFollowing": "boolean",
   "homestays": ["HomestayDto.Response"],
   "posts": ["PostDto.Response"]
 }
@@ -143,4 +329,3 @@
   "fileId": "String"
 }
 ```
-

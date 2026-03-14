@@ -1,22 +1,83 @@
 # North Bengal Homestays
 
-Full-stack monorepo for homestay discovery plus a Community feature (posts, comments, reposts, likes).
+Full-stack monorepo for homestay discovery and community platform focused on North Bengal and nearby eastern Himalayan regions.
 
-## Repository overview
+## Project Overview
 
-- `backend/`: Spring Boot REST API (Java)
-- `frontend/`: Next.js App Router UI
+- **Homestay Discovery**: Browse and search homestays with map views, filters, and detailed listings
+- **Community Platform**: Share travel stories, ask questions, post reviews, and connect with other travelers
+- **Host Dashboard**: List and manage homestays with media uploads and booking inquiries
+- **Social Features**: Follow users, like posts, repost content, and build a travel community
 
-## Architecture summary
+## Tech Stack
 
-- The frontend calls backend routes via the Next.js rewrite layer under `/api/*`.
-- Backend provides:
-  - JWT auth (`/api/auth/*`)
-  - Homestays + destinations/states
-  - Community posts/comments/reposts/likes
-  - Multipart image upload via `/api/images/upload-multiple`
+### Backend
+- **Java 21** with **Spring Boot 3.3.5**
+- **PostgreSQL** with **Flyway** migrations
+- **Redis** for caching
+- **JWT** authentication
+- **ImageKit** for media storage and CDN
 
-## Local development
+### Frontend
+- **Next.js 16.1.6** with App Router
+- **React 19.2.3** with TypeScript 5.9.3
+- **Tailwind CSS 4**
+- **TanStack Query 5** for server state
+- **Framer Motion** for animations
+- **Leaflet** for map views
+- **Playwright** for E2E testing
+
+## Key Features
+
+### Homestay Discovery
+- Search with filters (price, amenities, location)
+- Map-based exploration
+- Detailed homestay pages with reviews
+- Save to trip board
+
+### Community Feed
+- Post stories, questions, trip reports, and alerts
+- Image galleries with lightbox
+- Vibe tags for categorization
+- Like, comment, repost, and share
+- Follow users and see following feed
+- Trending posts algorithm
+
+### Host Features
+- Create and manage listings
+- Multi-step homestay form
+- Image upload with cropping
+- View inquiries and reviews
+
+### Profile System
+- Public host profiles
+- Follower/following counts
+- Post history
+- Verified host badges
+
+## System Architecture Summary
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Frontend      │────▶│    Backend      │────▶│   PostgreSQL    │
+│   (Next.js)     │     │  (Spring Boot)  │     │   (Supabase)    │
+│   Vercel        │     │   Koyeb         │     │                 │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                               │
+                               ▼
+                        ┌─────────────────┐
+                        │    Redis        │
+                        │   (Cache)       │
+                        └─────────────────┘
+                               │
+                               ▼
+                        ┌─────────────────┐
+                        │   ImageKit      │
+                        │   (Media CDN)   │
+                        └─────────────────┘
+```
+
+## Local Development
 
 ### Backend
 
@@ -26,9 +87,7 @@ mvn clean install
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-Backend base URL:
-
-- `http://localhost:8080`
+Backend runs at `http://localhost:8080`
 
 ### Frontend
 
@@ -38,42 +97,57 @@ npm install
 npm run dev
 ```
 
-Frontend base URL:
+Frontend runs at `http://localhost:3000`
 
-- `http://localhost:3000`
+### Docker Services
 
-## Community test suite
+```bash
+docker-compose up -d
+```
 
-Run the stable Community Playwright suite:
+Provides PostgreSQL, Redis, and MailDev for local development.
+
+## Testing
+
+### Community Test Suite
 
 ```bash
 cd frontend
 npm test -- tests/community
 ```
 
-## Image upload architecture
+### Backend Tests
 
-Image uploads are handled server-side:
+```bash
+cd backend
+mvn test
+```
 
-Browser -> Backend (`/api/images/upload-multiple`) -> ImageKit -> CDN URL
+## Documentation
 
-## Community Feed
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/architecture.md) | System architecture, tech stack, entities, caching, media pipeline |
+| [Social Platform](docs/social-platform.md) | Post taxonomy, follow graph, trending algorithm, feed scopes |
+| [API Contract](docs/api-contract.md) | REST API endpoints and DTO structures |
+| [Deployment](docs/deployment.md) | Flyway migrations, indexes, build commands, deployment checklist |
+| [AI Context](docs/AI_PROJECT_CONTEXT.md) | Canonical onboarding context for AI coding agents |
+| [Community Feed Design](docs/frontend/community-feed.md) | Frontend feed component design specifications |
 
-The community feed features a premium editorial design inspired by Instagram/Airbnb:
+## Environment Variables
 
-- **Image-first layout**: 16:9 aspect ratio hero images
-- **Post cards**: 18px radius, 24px padding, hover elevation
-- **Responsive srcset**: Uses ImageKit transformations (small/medium/large variants)
-- **Relative timestamps**: "Just now", "5 min ago", "2 hr ago", "Yesterday"
-- **Lazy loading**: Images load on scroll with skeleton placeholders
+### Backend Required
+- `SPRING_DATASOURCE_URL`
+- `SPRING_DATASOURCE_USERNAME`
+- `SPRING_DATASOURCE_PASSWORD`
+- `JWT_SECRET_KEY`
+- `IMAGEKIT_PUBLIC_KEY`
+- `IMAGEKIT_PRIVATE_KEY`
+- `IMAGEKIT_URL_ENDPOINT`
 
-Key components:
-- `frontend/components/community/PostCardUnified.tsx` - Main post card
-- `frontend/components/community/PostInteractionBar.tsx` - Like/comment/repost actions
-- `frontend/lib/utils/feed-utils.ts` - Layout utilities and timestamp formatting
+### Frontend Required
+- `NEXT_PUBLIC_API_URL`
 
-## AI-focused docs
+## License
 
-- `docs/AI_PROJECT_CONTEXT.md` (canonical AI onboarding context)
-- `docs/api-contract.md` (DTO/API contract reference)
-- `docs/system-map.md` (high-level system map)
+Private repository. All rights reserved.
