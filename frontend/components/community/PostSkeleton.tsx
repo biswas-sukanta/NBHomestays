@@ -8,7 +8,7 @@ export function PostSkeleton({ isQuoted = false }: { isQuoted?: boolean }) {
             "overflow-hidden relative bg-[#FDFBF7]",
             isQuoted ? "rounded-[20px] mt-3 ring-1 ring-neutral-200" : "rounded-[20px] border-none shadow-[0_12px_40px_-12px_rgba(0,0,0,0.08)]"
         )}>
-            {/* Curation Pills */}
+            {/* Curation Pills - Backend-Driven */}
             <div className="flex items-center gap-2 px-6 pt-5">
                 <Skeleton className="h-6 w-20 rounded-full bg-neutral-200 animate-pulse" />
                 <Skeleton className="h-6 w-16 rounded-full bg-neutral-200 animate-pulse" />
@@ -38,19 +38,24 @@ export function PostSkeleton({ isQuoted = false }: { isQuoted?: boolean }) {
                 </div>
             </div>
 
-            {/* Editorial Content Teaser */}
+            {/* Editorial Content Teaser with Fading Effect */}
             <div className="px-6 pb-4 space-y-2">
                 <Skeleton className="h-6 w-3/4 bg-neutral-200 animate-pulse" />
                 <Skeleton className="h-4 w-full bg-neutral-200 animate-pulse" />
                 <Skeleton className="h-4 w-2/3 bg-neutral-200 animate-pulse" />
             </div>
 
-            {/* Social Interaction Bar */}
+            {/* Social Interaction Bar - Grouped Layout */}
             {!isQuoted && (
-                <div className="border-t border-gray-100 px-6 py-4 flex items-center gap-5">
-                    <Skeleton className="h-4 w-16 bg-neutral-200 animate-pulse rounded" />
-                    <Skeleton className="h-4 w-16 bg-neutral-200 animate-pulse rounded" />
-                    <Skeleton className="h-4 w-20 bg-neutral-200 animate-pulse rounded ml-auto" />
+                <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-between">
+                    {/* Left Group: Like, Comment, Repost */}
+                    <div className="flex items-center gap-5">
+                        <Skeleton className="h-4 w-16 bg-neutral-200 animate-pulse rounded" />
+                        <Skeleton className="h-4 w-20 bg-neutral-200 animate-pulse rounded" />
+                        <Skeleton className="h-4 w-16 bg-neutral-200 animate-pulse rounded" />
+                    </div>
+                    {/* Right: External Share */}
+                    <Skeleton className="h-4 w-20 bg-neutral-200 animate-pulse rounded" />
                 </div>
             )}
         </div>
