@@ -239,20 +239,20 @@ export default function CommunityPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-10 items-start">
 
                     {/* Left: Main Feed */}
-                    <div className="w-full max-w-[720px] mx-auto space-y-9">
+                    <div className="w-full max-w-[720px] mx-auto space-y-6 pb-24">
                         {/* ── Sticky Filter Bar ── */}
-                        <div className="sticky top-16 z-30 py-3 bg-white/95 backdrop-blur-md border-b border-neutral-200">
-                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                                <button className="px-4 py-2 rounded-full bg-black text-white text-sm font-semibold transition-all">
+                        <div className="sticky top-16 z-30 py-3 bg-white/95 backdrop-blur-md border-b border-neutral-200/50">
+                            <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
+                                <button className="px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold whitespace-nowrap shrink-0 snap-start transition-all">
                                     Latest
                                 </button>
-                                <button className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-600 text-sm font-semibold hover:bg-neutral-200 transition-all">
+                                <button className="px-4 py-2 rounded-full bg-transparent border border-neutral-200 text-neutral-500 text-sm font-semibold whitespace-nowrap shrink-0 snap-start hover:border-neutral-300 hover:text-neutral-700 transition-all">
                                     Trending
                                 </button>
-                                <button className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-600 text-sm font-semibold hover:bg-neutral-200 transition-all">
+                                <button className="px-4 py-2 rounded-full bg-transparent border border-neutral-200 text-neutral-500 text-sm font-semibold whitespace-nowrap shrink-0 snap-start hover:border-neutral-300 hover:text-neutral-700 transition-all">
                                     Mountains
                                 </button>
-                                <button className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-600 text-sm font-semibold hover:bg-neutral-200 transition-all">
+                                <button className="px-4 py-2 rounded-full bg-transparent border border-neutral-200 text-neutral-500 text-sm font-semibold whitespace-nowrap shrink-0 snap-start hover:border-neutral-300 hover:text-neutral-700 transition-all">
                                     Culture
                                 </button>
                             </div>

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Repeat2, Share2, Plus } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { Heart, MessageCircle, Repeat2, Share2, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 const ImageLightbox = dynamic(() => import('@/components/community/ImageLightbox').then(m => m.ImageLightbox), { ssr: false });
@@ -308,10 +308,13 @@ export function PostCardUnified({
     const isFeatured = effectiveVariant === 'featured';
     const isCollage = effectiveVariant === 'collage';
 
+    // STEP 4: Mobile Visual Rhythm & Card Physics
     const articleClassName = cn(
-        'relative overflow-hidden transition-all duration-300 isolate bg-[#FDFBF7]',
-        isQuoted ? "mt-3 rounded-[20px] ring-1 ring-neutral-200" : "rounded-[20px] border-none shadow-[0_12px_40px_-12px_rgba(0,0,0,0.08)]",
-        !isQuoted && 'hover:-translate-y-1'
+        'relative overflow-hidden transition-all duration-300 isolate bg-white',
+        isQuoted 
+            ? "mt-3 rounded-2xl ring-1 ring-neutral-200" 
+            : "rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-none",
+        !isQuoted && 'hover:-translate-y-0.5'
     );
 
     return (
@@ -323,25 +326,26 @@ export function PostCardUnified({
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 className={articleClassName}
             >
-                {/* STEP 4: Curation Signals - Backend-Driven Pills */}
-                <div className="flex items-center gap-2 px-6 pt-5">
-                    {/* FEATURED Pill - Gold background for featured variant or backend-driven */}
-                    {(isFeatured || (post as any).isFeatured) && (
-                        <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full shadow-sm">
-                            Featured
+                {/* STEP 4: Featured Badge with Glassmorphism */}
+                {(isFeatured || (post as any).isFeatured) && (
+                    <div className="absolute top-4 left-4 z-10">
+                        <span className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md bg-white/30 text-amber-700 rounded-full shadow-sm border border-white/20">
+                            ✨ Featured
                         </span>
-                    )}
-                    {/* EDITORIAL Pill - Only when backend-driven */}
-                    {(post as any).isEditorial && (
-                        <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-[#2D5A4A] text-[#FDFBF7] rounded-full">
+                    </div>
+                )}
+                {/* EDITORIAL Pill - Only when backend-driven */}
+                {(post as any).isEditorial && (
+                    <div className="absolute top-4 left-4 z-10">
+                        <span className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-600/90 text-white rounded-full shadow-sm">
                             Editorial
                         </span>
-                    )}
-                </div>
+                    </div>
+                )}
 
-                {/* STEP 3: Multi-Image Editorial Grid OR Text-Only Premium */}
+                {/* STEP 4: Full-Bleed Images on Mobile */}
                 {imageCount > 0 ? (
-                    <div className="px-6 pt-3 pb-4">
+                    <div className="relative w-full">
                         <EditorialImageGrid
                             images={images}
                             onImageClick={(idx) => setLightboxIndex(idx)}
@@ -420,30 +424,43 @@ export function PostCardUnified({
                     </div>
                 )}
 
-                {/* Editorial Content Teaser with Fading Read More */}
+                {/* STEP 2: Editorial Content Teaser with Animated Read More */}
                 {imageCount > 0 && post.caption && (
                     <div className="px-6 pb-4">
                         <h3 className="font-serif text-xl font-bold text-[#1A1A1A] leading-tight mb-2">
                             {title}
                         </h3>
-                        <div className="relative">
-                            <p className={cn(
-                                "text-sm text-[#6B7280] leading-relaxed",
-                                !expanded && "line-clamp-3"
-                            )}>
-                                {post.caption}
-                            </p>
+                        <div className="relative overflow-hidden">
+                            <motion.div
+                                initial={false}
+                                animate={{ 
+                                    height: expanded ? 'auto' : '4.5rem',
+                                    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+                                }}
+                                className="relative"
+                            >
+                                <p className={cn(
+                                    "text-sm text-[#6B7280] leading-relaxed leading-6",
+                                    !expanded && "line-clamp-3"
+                                )}>
+                                    {post.caption}
+                                </p>
+                            </motion.div>
                             {/* Dynamic fading 'read more' effect */}
                             {hasLongContent && !expanded && (
-                                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#FDFBF7] to-transparent pointer-events-none" />
+                                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#FDFBF7] via-[#FDFBF7]/80 to-transparent pointer-events-none" />
                             )}
                         </div>
                         {hasLongContent && (
                             <button 
                                 onClick={() => setExpanded(!expanded)}
-                                className="mt-2 text-sm font-medium text-[#D4A574] hover:text-[#C49660] transition-colors"
+                                className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline transition-colors active:scale-95"
                             >
-                                {expanded ? 'Show less' : 'Read more'}
+                                {expanded ? (
+                                    <><ChevronUp className="w-4 h-4" />Show less</>
+                                ) : (
+                                    <><ChevronDown className="w-4 h-4" />Read more</>
+                                )}
                             </button>
                         )}
                     </div>
@@ -458,97 +475,67 @@ export function PostCardUnified({
                     </div>
                 )}
 
-                {/* STEP 5: Social Interaction Bar - Grouped Layout */}
+                {/* STEP 3: De-congested Mobile Interaction Bar */}
                 {!isQuoted && (
-                    <div className="border-t border-gray-100 px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            {/* Left Group: Like, Comment, Repost */}
-                            <div className="flex items-center gap-5">
-                                {/* Like Button - Active state uses forest green */}
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); onUpdate?.({ ...post, likes: (post.likes || 0) + (post.isLikedByCurrentUser ? -1 : 1), isLikedByCurrentUser: !post.isLikedByCurrentUser }); }}
-                                    className={cn(
-                                        "flex items-center gap-1.5 transition-all duration-200 group",
-                                        post.isLikedByCurrentUser 
-                                            ? "text-[#2D5A4A]" 
-                                            : "text-[#6B7280] hover:text-[#D4A574]"
-                                    )}
-                                >
-                                    <motion.div
-                                        whileTap={{ scale: 1.3 }}
-                                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                                    >
-                                        <Heart 
-                                            className={cn("w-[18px] h-[18px] transition-all duration-200", post.isLikedByCurrentUser && "fill-current scale-110")} 
-                                            strokeWidth={1.5} 
-                                        />
-                                    </motion.div>
-                                    <span className="text-xs font-medium">Like {post.likes || 0}</span>
-                                </button>
-
-                                {/* Comment Button */}
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); onOpenComments?.(post.id); }}
-                                    className={cn(
-                                        "flex items-center gap-1.5 transition-all duration-200 group",
-                                        "text-[#6B7280] hover:text-[#D4A574]"
-                                    )}
-                                >
-                                    <motion.div
-                                        whileHover={{ scale: 1.1 }}
-                                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                                    >
-                                        <MessageCircle className="w-[18px] h-[18px]" strokeWidth={1.5} />
-                                    </motion.div>
-                                    <span className="text-xs font-medium">Comment {post.comments || 0}</span>
-                                </button>
-
-                                {/* Repost Button - Platform intent */}
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleRepost(); }}
-                                    className={cn(
-                                        "flex items-center gap-1.5 transition-all duration-200 group",
-                                        "text-[#6B7280] hover:text-[#D4A574]"
-                                    )}
-                                >
-                                    <motion.div
-                                        whileHover={{ rotate: 180 }}
-                                        transition={{ duration: 0.3 }}
-                                    >
-                                        <Repeat2 className="w-[18px] h-[18px]" strokeWidth={1.5} />
-                                    </motion.div>
-                                    <span className="text-xs font-medium">Repost {post.shareCount || 0}</span>
-                                </button>
-                            </div>
-
-                            {/* Right: External Share */}
+                    <div className="flex items-center justify-between pt-3 pb-2 px-4 sm:px-6 border-t border-neutral-100/50">
+                        {/* Left Group: Likes & Comments - gap-6 for mobile touch */}
+                        <div className="flex items-center gap-6">
+                            {/* Like Button - 44x44 touch target */}
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const shareData = {
-                                        title: title || 'Check out this post',
-                                        url: window.location.href
-                                    };
-                                    if (navigator.share) {
-                                        navigator.share(shareData);
-                                    } else {
-                                        navigator.clipboard.writeText(window.location.href);
-                                    }
-                                }}
-                                className={cn(
-                                    "flex items-center gap-1.5 transition-all duration-200 group",
-                                    "text-[#6B7280] hover:text-[#D4A574]"
-                                )}
+                                onClick={(e) => { e.stopPropagation(); onUpdate?.({ ...post, likes: (post.likes || 0) + (post.isLikedByCurrentUser ? -1 : 1), isLikedByCurrentUser: !post.isLikedByCurrentUser }); }}
+                                className="p-2 -m-2 flex items-center gap-1.5 transition-transform duration-150 active:scale-95"
                             >
                                 <motion.div
-                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 1.3 }}
                                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                                 >
-                                    <Share2 className="w-[18px] h-[18px]" strokeWidth={1.5} />
+                                    <Heart 
+                                        className={cn(
+                                            "w-5 h-5 transition-all duration-200",
+                                            post.isLikedByCurrentUser 
+                                                ? "text-emerald-600 fill-emerald-600" 
+                                                : "text-neutral-400"
+                                        )} 
+                                        strokeWidth={1.25} 
+                                    />
                                 </motion.div>
-                                <span className="text-xs font-medium">Share (External)</span>
+                                <span className="text-xs font-medium text-neutral-700 ml-1.5">{post.likes || 0}</span>
+                            </button>
+
+                            {/* Comment Button - 44x44 touch target */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onOpenComments?.(post.id); }}
+                                className="p-2 -m-2 flex items-center gap-1.5 transition-transform duration-150 active:scale-95"
+                            >
+                                <MessageCircle 
+                                    className="w-5 h-5 text-neutral-400" 
+                                    strokeWidth={1.25} 
+                                />
+                                <span className="text-xs font-medium text-neutral-700 ml-1.5">{post.comments || 0}</span>
                             </button>
                         </div>
+
+                        {/* Right Group: Share - pushed to far right */}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const shareData = {
+                                    title: title || 'Check out this post',
+                                    url: window.location.href
+                                };
+                                if (navigator.share) {
+                                    navigator.share(shareData);
+                                } else {
+                                    navigator.clipboard.writeText(window.location.href);
+                                }
+                            }}
+                            className="p-2 -m-2 flex items-center gap-1.5 transition-transform duration-150 active:scale-95"
+                        >
+                            <Share2 
+                                className="w-5 h-5 text-neutral-400" 
+                                strokeWidth={1.25} 
+                            />
+                        </button>
                     </div>
                 )}
             </motion.article>
