@@ -63,7 +63,7 @@ export function useStagedPrefetch(queryClient: QueryClient) {
           });
 
           await queryClient.prefetchQuery({
-            queryKey: queryKeys.community.trending,
+            queryKey: queryKeys.community.trending(),
             queryFn: async () => {
               const { data } = await postApi.getFeed('page=0&size=3&sort=loveCount,desc');
               return data;

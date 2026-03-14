@@ -20,11 +20,12 @@ export const queryKeys = {
   },
 
   community: {
-    feed: (tag?: string, scope?: 'latest' | 'following' | 'trending') => ['community', 'posts', { tag, scope: scope ?? 'latest' }] as const,
-    trending: ['community', 'trending'] as const,
+    feed: (tag?: string, scope?: 'latest' | 'following' | 'trending', viewerId?: string | null) =>
+      ['community', 'posts', { tag, scope: scope ?? 'latest', viewerId: viewerId ?? 'anon' }] as const,
+    trending: (viewerId?: string | null) => ['community', 'trending', { viewerId: viewerId ?? 'anon' }] as const,
   },
 
   users: {
-    profile: (id: string) => ['users', 'profile', { id }] as const,
+    profile: (id: string, viewerId?: string | null) => ['users', 'profile', { id, viewerId: viewerId ?? 'anon' }] as const,
   },
 } as const;

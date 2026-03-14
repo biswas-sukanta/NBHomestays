@@ -70,6 +70,7 @@ const CommunityFeedSkeleton = () => (
 export default function CommunityPage() {
     const { isAuthenticated, user } = useAuth() as any;
     const queryClient = useQueryClient();
+    const viewerId = user?.id ?? null;
     const [composerOpen, setComposerOpen] = useState(false);
     const [postToEdit, setPostToEdit] = useState<Post | null>(null);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -80,6 +81,8 @@ export default function CommunityPage() {
     const [feedScope, setFeedScope] = useState<'latest' | 'following' | 'trending'>('latest');
 
     const { ref, inView } = useInView({ threshold: 0.1 });
+    const activeFeedQueryKey = queryKeys.community.feed(activeTag || undefined, feedScope, viewerId);
+    const communityFeedPrefix = ['community', 'posts'] as const;
 
     // Cursor-based pagination using FeedService API
     const fetchPosts = async ({ pageParam = null as string | null }) => {
@@ -100,7 +103,7 @@ export default function CommunityPage() {
         isPending,
         isError
     } = useInfiniteQuery({
-        queryKey: queryKeys.community.feed(activeTag || undefined, feedScope),
+        queryKey: activeFeedQueryKey,
         queryFn: fetchPosts,
         initialPageParam: null as string | null,
         getNextPageParam: (lastPage: FeedResponse) => {
@@ -126,7 +129,7 @@ export default function CommunityPage() {
     }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage, searchQuery, isMobile]);
 
     const { data: trendingData } = useQuery({
-        queryKey: queryKeys.community.trending,
+        queryKey: queryKeys.community.trending(viewerId),
         queryFn: async () => {
             const response = await getTrendingFeed({ limit: 3 });
             return response;
@@ -147,7 +150,7 @@ export default function CommunityPage() {
                 <h2 className="text-3xl font-heading font-bold text-neutral-900 mb-2 tracking-tight">Connection hiccup</h2>
                 <p className="text-neutral-500 mb-8 max-w-sm font-medium leading-relaxed">We couldn&apos;t reach the travelers&apos; network. Please check your connection and try again.</p>
                 <Button
-                    onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() })}
+                    onClick={() => queryClient.invalidateQueries({ queryKey: communityFeedPrefix })}
                     className="bg-neutral-900 text-white hover:bg-neutral-800 rounded-full px-10 py-6 font-bold shadow-lg transition-all active:scale-95"
                 >
                     Refresh Discovery
@@ -159,14 +162,14 @@ export default function CommunityPage() {
     const trendingPosts = (trendingData?.posts || []).slice(0, 3).map(normalizePost);
 
     const handleNewPost = () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
+        queryClient.invalidateQueries({ queryKey: communityFeedPrefix });
         setComposerOpen(false);
         setPostToEdit(null);
         toast.success('Story shared!');
     };
 
     const handleUpdatePost = () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
+        queryClient.invalidateQueries({ queryKey: communityFeedPrefix });
         setComposerOpen(false);
         setPostToEdit(null);
         toast.success('Post updated!');
@@ -174,8 +177,8 @@ export default function CommunityPage() {
 
     const handleDeletePost = async (id: string) => {
         if (!window.confirm("Are you sure you want to delete this story?")) return;
-        const previousFeed = queryClient.getQueryData(queryKeys.community.feed(activeTag || undefined, feedScope));
-        queryClient.setQueryData(queryKeys.community.feed(activeTag || undefined, feedScope), (old: any) => {
+        const previousFeed = queryClient.getQueryData(activeFeedQueryKey);
+        queryClient.setQueryData(activeFeedQueryKey, (old: any) => {
             if (!old || !old.pages) return old;
             return {
                 ...old,
@@ -187,10 +190,10 @@ export default function CommunityPage() {
         });
         try {
             await postApi.delete(id);
-            queryClient.invalidateQueries({ queryKey: queryKeys.community.feed(activeTag || undefined, feedScope) });
+            queryClient.invalidateQueries({ queryKey: activeFeedQueryKey });
             toast.success('Story deleted');
         } catch (err) {
-            queryClient.setQueryData(queryKeys.community.feed(activeTag || undefined, feedScope), previousFeed);
+            queryClient.setQueryData(activeFeedQueryKey, previousFeed);
             toast.error('Failed to delete story');
         }
     };
@@ -399,7 +402,7 @@ export default function CommunityPage() {
                     externalOpen={true}
                     onExternalClose={() => setActiveCommentPostId(null)}
                     onCommentCountChange={(newTotal: number) => {
-                        queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
+                        queryClient.invalidateQueries({ queryKey: communityFeedPrefix });
                     }}
                     currentUserRole={user?.role}
                 />

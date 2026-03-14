@@ -5,6 +5,7 @@ import com.nbh.backend.model.UserFollow;
 import com.nbh.backend.repository.UserFollowRepository;
 import com.nbh.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,13 +36,21 @@ public class FollowService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Users cannot follow themselves");
         }
 
-        UserFollow.UserFollowPk pk = new UserFollow.UserFollowPk(follower.getId(), followed.getId());
-        if (!userFollowRepository.isFollowing(follower.getId(), followed.getId())) {
+        if (userFollowRepository.isFollowing(follower.getId(), followed.getId())) {
+            return;
+        }
+
+        try {
             userFollowRepository.save(UserFollow.builder()
                     .followerUserId(follower.getId())
                     .followedUserId(followed.getId())
                     .createdAt(OffsetDateTime.now(ZoneOffset.UTC))
                     .build());
+        } catch (DataIntegrityViolationException ex) {
+            // Composite PK guarantees uniqueness. Concurrent duplicate follows are treated as idempotent success.
+            if (!userFollowRepository.isFollowing(follower.getId(), followed.getId())) {
+                throw ex;
+            }
         }
     }
 

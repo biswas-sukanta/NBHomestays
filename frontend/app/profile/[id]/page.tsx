@@ -26,9 +26,13 @@ export default function PublicProfilePage() {
     const profileId = Array.isArray(params?.id) ? params.id[0] : params?.id;
     const queryClient = useQueryClient();
     const { isAuthenticated, user } = useAuth();
+    const viewerId = user?.id ?? null;
+    const profileQueryKey = profileId
+        ? queryKeys.users.profile(profileId, viewerId)
+        : ['users', 'profile', 'missing-id'] as const;
 
     const profileQuery = useQuery({
-        queryKey: profileId ? queryKeys.users.profile(profileId) : ['users', 'profile', 'missing-id'],
+        queryKey: profileQueryKey,
         enabled: Boolean(profileId),
         queryFn: async () => {
             const response = await userApi.getProfile(profileId!);
@@ -53,10 +57,10 @@ export default function PublicProfilePage() {
                 return { previousProfile: undefined };
             }
 
-            await queryClient.cancelQueries({ queryKey: queryKeys.users.profile(profileId) });
-            const previousProfile = queryClient.getQueryData<PublicProfile>(queryKeys.users.profile(profileId));
+            await queryClient.cancelQueries({ queryKey: profileQueryKey });
+            const previousProfile = queryClient.getQueryData<PublicProfile>(profileQueryKey);
 
-            queryClient.setQueryData<PublicProfile>(queryKeys.users.profile(profileId), (current) => {
+            queryClient.setQueryData<PublicProfile>(profileQueryKey, (current) => {
                 if (!current) {
                     return current;
                 }
@@ -72,7 +76,7 @@ export default function PublicProfilePage() {
         },
         onError: (_error, _nextIsFollowing, context) => {
             if (profileId && context?.previousProfile) {
-                queryClient.setQueryData(queryKeys.users.profile(profileId), context.previousProfile);
+                queryClient.setQueryData(profileQueryKey, context.previousProfile);
             }
             toast.error('Failed to update follow status');
         },
@@ -81,7 +85,7 @@ export default function PublicProfilePage() {
         },
         onSettled: async () => {
             if (profileId) {
-                await queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(profileId) });
+                await queryClient.invalidateQueries({ queryKey: profileQueryKey });
             }
         },
     });

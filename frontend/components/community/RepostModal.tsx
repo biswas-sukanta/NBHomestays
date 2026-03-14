@@ -14,6 +14,7 @@ import { useHomestaySearch } from '@/hooks/useHomestaySearch';
 import { QuotePost, CommunityPost } from './types';
 import { IMAGE_UPLOAD_HELPER_TEXT, processImages } from '@/lib/utils/imageUploadPipeline';
 import { queryKeys } from '@/lib/queryKeys';
+import { useAuth } from '@/context/AuthContext';
 
 interface RepostModalProps {
     quote: QuotePost;
@@ -22,7 +23,12 @@ interface RepostModalProps {
 }
 
 export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
+    const { user } = useAuth() as any;
     const queryClient = useQueryClient();
+    const viewerId = user?.id ?? null;
+    const latestFeedKey = queryKeys.community.feed(undefined, 'latest', viewerId);
+    const trendingKey = queryKeys.community.trending(viewerId);
+    const communityFeedPrefix = ['community', 'posts'] as const;
     const [text, setText] = useState('');
     const [location, setLocation] = useState('North Bengal');
     const [submitting, setSubmitting] = useState(false);
@@ -64,7 +70,7 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
     const handleSubmit = async () => {
         if (submitting) return;
         setSubmitting(true);
-        const previousFeed = queryClient.getQueryData(queryKeys.community.feed());
+        const previousFeed = queryClient.getQueryData(latestFeedKey);
         const tempId = `temp-repost-${Date.now()}`;
         const previewMedia = stagedFiles.map(staged => ({ url: staged.previewUrl }));
         const optimisticPost = {
@@ -86,8 +92,8 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
             }
         };
 
-        await queryClient.cancelQueries({ queryKey: queryKeys.community.feed() });
-        queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
+        await queryClient.cancelQueries({ queryKey: communityFeedPrefix });
+        queryClient.setQueryData(latestFeedKey, (old: any) => {
             if (!old || !old.pages) return old;
             const newPages = [...old.pages];
             if (newPages.length > 0) {
@@ -118,7 +124,7 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
             const res = await postApi.create(formData);
             toast.success('Reposted!');
 
-            queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
+            queryClient.setQueryData(latestFeedKey, (old: any) => {
                 if (!old || !old.pages) return old;
                 return {
                     ...old,
@@ -129,13 +135,13 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
                 };
             });
 
-            queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
-            queryClient.invalidateQueries({ queryKey: queryKeys.community.trending });
+            queryClient.invalidateQueries({ queryKey: communityFeedPrefix });
+            queryClient.invalidateQueries({ queryKey: trendingKey });
             stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
             onSuccess(res.data);
         } catch (err) {
             console.error('Repost failed', err);
-            queryClient.setQueryData(queryKeys.community.feed(), previousFeed);
+            queryClient.setQueryData(latestFeedKey, previousFeed);
             toast.error('Repost failed');
         } finally {
             setSubmitting(false);

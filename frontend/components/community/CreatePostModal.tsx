@@ -65,6 +65,9 @@ interface CreatePostModalProps {
 export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }: CreatePostModalProps) {
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const viewerId = user?.id ?? null;
+    const communityFeedPrefix = ['community', 'posts'] as const;
+    const trendingQueryKey = queryKeys.community.trending(viewerId);
     const [text, setText] = useState(postData?.caption || '');
     const [location, setLocation] = useState(postData?.location || '');
     const [submitting, setSubmitting] = useState(false);
@@ -192,12 +195,13 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
         }
         setError('');
         setSubmitting(true);
-        const previousFeed = queryClient.getQueryData(queryKeys.community.feed());
+        const latestFeedKey = queryKeys.community.feed(undefined, 'latest', viewerId);
+        const previousFeed = queryClient.getQueryData(latestFeedKey);
         const tempId = `temp-${Date.now()}`;
         const previewMedia = stagedFiles.map(staged => ({ url: staged.previewUrl }));
         const optimisticMedia = [...existingMedia, ...previewMedia];
 
-        await queryClient.cancelQueries({ queryKey: queryKeys.community.feed() });
+        await queryClient.cancelQueries({ queryKey: communityFeedPrefix });
 
         const optimisticPost = {
             id: postData?.id ?? tempId,
@@ -221,7 +225,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             homestayId: selectedHomestay || null
         };
 
-        queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
+        queryClient.setQueryData(latestFeedKey, (old: any) => {
             if (!old || !old.pages) return old;
             const newPages = [...old.pages];
             if (postData) {
@@ -280,7 +284,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                 ? await postApi.update(postData.id, formData)
                 : await postApi.create(formData);
 
-            queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
+            queryClient.setQueryData(latestFeedKey, (old: any) => {
                 if (!old || !old.pages) return old;
                 return {
                     ...old,
@@ -294,8 +298,8 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                 };
             });
 
-            queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
-            queryClient.invalidateQueries({ queryKey: queryKeys.community.trending });
+            queryClient.invalidateQueries({ queryKey: communityFeedPrefix });
+            queryClient.invalidateQueries({ queryKey: trendingQueryKey });
             if (postData) {
                 queryClient.invalidateQueries({ queryKey: ['post', postData.id] });
             }
@@ -304,7 +308,7 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             stagedFiles.forEach(f => URL.revokeObjectURL(f.previewUrl));
         } catch (err: any) {
             console.error('Post failed', err);
-            queryClient.setQueryData(queryKeys.community.feed(), previousFeed);
+            queryClient.setQueryData(latestFeedKey, previousFeed);
             toast.error(err.response?.data?.message || "Failed to share story.");
         } finally {
             setSubmitting(false);

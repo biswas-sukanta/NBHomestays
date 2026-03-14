@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nbh.backend.dto.PostFeedDto;
 import com.nbh.backend.model.PostTimeline;
+import com.nbh.backend.model.User;
 import com.nbh.backend.repository.FeedRepository;
 import com.nbh.backend.repository.TimelineRepository;
+import com.nbh.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +43,7 @@ public class FeedService {
     private final FeedCacheService cacheService;
     private final ObjectMapper objectMapper;
     private final FeedLayoutEngine layoutEngine;
+    private final UserRepository userRepository;
 
     private static final int DEFAULT_LIMIT = 12;
     private static final int EXTRA_FOR_HAS_MORE = 1;
@@ -238,12 +241,17 @@ public class FeedService {
         Map<UUID, Integer> commentCounts = loadCommentCounts(postIds);
         Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost = loadMediaDimensions(postIds);
         Map<UUID, PostMeta> postMetaById = loadPostMeta(postIds);
+        Map<UUID, AuthorSnapshot> authorsById = loadCurrentAuthors(timelineRows.stream()
+                .map(PostTimeline::getAuthorId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList()));
         // Use precomputed like counts from timeline, but still batch load liked status
         Set<UUID> likedPostIds = userId != null ? loadLikedStatus(userId, postIds) : Collections.emptySet();
-        
+
         // Map to DTOs
         List<PostFeedDto> posts = timelineRows.stream()
-                .map(t -> mapTimelineToDto(t, mediaByPost, tagsByPost, commentCounts, likedPostIds, dimensionsByPost, postMetaById))
+                .map(t -> mapTimelineToDto(t, mediaByPost, tagsByPost, commentCounts, likedPostIds, dimensionsByPost, postMetaById, authorsById))
                 .collect(Collectors.toList());
         
         // Generate next cursor
@@ -640,7 +648,8 @@ public class FeedService {
             Map<UUID, Integer> commentCounts,
             Set<UUID> likedPostIds,
             Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost,
-            Map<UUID, PostMeta> postMetaById) {
+            Map<UUID, PostMeta> postMetaById,
+            Map<UUID, AuthorSnapshot> authorsById) {
 
         // Build repost metadata
         boolean isRepost = timeline.getOriginalPostId() != null;
@@ -658,16 +667,21 @@ public class FeedService {
         int textLength = timeline.getTextContent() != null ? timeline.getTextContent().length() : 0;
         List<PostFeedDto.ImageDimDto> imageDims = dimensionsByPost.getOrDefault(timeline.getPostId(), Collections.emptyList());
         PostMeta meta = postMetaById.get(timeline.getPostId());
+        AuthorSnapshot author = authorsById.get(timeline.getAuthorId());
+        String authorName = author != null ? author.name : timeline.getAuthorName();
+        String authorAvatarUrl = author != null ? author.avatarUrl : timeline.getAuthorAvatarUrl();
+        String authorRole = author != null ? author.role : timeline.getAuthorRole();
+        boolean authorVerifiedHost = author != null ? author.verifiedHost : timeline.isAuthorVerifiedHost();
 
         return PostFeedDto.builder()
                 .postId(timeline.getPostId())
                 .textContent(timeline.getTextContent())
                 .createdAt(timeline.getCreatedAt())
                 .authorId(timeline.getAuthorId())
-                .authorName(timeline.getAuthorName())
-                .authorAvatarUrl(timeline.getAuthorAvatarUrl())
-                .authorRole(timeline.getAuthorRole())
-                .authorVerifiedHost(timeline.isAuthorVerifiedHost())
+                .authorName(authorName)
+                .authorAvatarUrl(authorAvatarUrl)
+                .authorRole(authorRole)
+                .authorVerifiedHost(authorVerifiedHost)
                 .commentCount(commentCounts.getOrDefault(timeline.getPostId(), 0))
                 .likeCount(timeline.getLikeCount())
                 .shareCount(timeline.getShareCount())
@@ -693,6 +707,30 @@ public class FeedService {
                 .trendingScore(meta != null ? meta.trendingScore : 0d)
                 .editorialScore(meta != null ? meta.editorialScore : 0d)
                 .build();
+    }
+
+    private Map<UUID, AuthorSnapshot> loadCurrentAuthors(List<UUID> authorIds) {
+        if (authorIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return userRepository.findAllById(authorIds).stream()
+                .collect(Collectors.toMap(
+                        User::getId,
+                        user -> new AuthorSnapshot(
+                                buildAuthorName(user),
+                                user.getAvatarUrl(),
+                                user.getRole() != null ? user.getRole().name() : null,
+                                user.isVerifiedHost())));
+    }
+
+    private String buildAuthorName(User user) {
+        if (user == null) {
+            return null;
+        }
+        String firstName = user.getFirstName() != null ? user.getFirstName().trim() : "";
+        String lastName = user.getLastName() != null ? user.getLastName().trim() : "";
+        String fullName = (firstName + (lastName.isBlank() ? "" : " " + lastName)).trim();
+        return fullName.isBlank() ? user.getEmail() : fullName;
     }
 
     /**
@@ -925,6 +963,20 @@ public class FeedService {
             this.isTrending = isTrending;
             this.trendingScore = trendingScore;
             this.editorialScore = editorialScore;
+        }
+    }
+
+    private static class AuthorSnapshot {
+        private final String name;
+        private final String avatarUrl;
+        private final String role;
+        private final boolean verifiedHost;
+
+        private AuthorSnapshot(String name, String avatarUrl, String role, boolean verifiedHost) {
+            this.name = name;
+            this.avatarUrl = avatarUrl;
+            this.role = role;
+            this.verifiedHost = verifiedHost;
         }
     }
 }

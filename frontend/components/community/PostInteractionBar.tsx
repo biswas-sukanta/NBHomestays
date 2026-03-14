@@ -34,9 +34,13 @@ export function PostInteractionBar({
     variant = 'default',
     className
 }: PostInteractionBarProps) {
-    const { isAuthenticated } = useAuth() as any;
+    const { isAuthenticated, user } = useAuth() as any;
     const [popping, setPopping] = useState(false);
     const queryClient = useQueryClient();
+    const viewerId = user?.id ?? null;
+    const latestFeedKey = queryKeys.community.feed(undefined, 'latest', viewerId);
+    const trendingKey = queryKeys.community.trending(viewerId);
+    const communityFeedPrefix = ['community', 'posts'] as const;
 
     const mutation = useMutation({
         mutationFn: async () => {
@@ -51,12 +55,12 @@ export function PostInteractionBar({
             setPopping(true);
             setTimeout(() => setPopping(false), 420);
 
-            await queryClient.cancelQueries({ queryKey: queryKeys.community.feed() });
-            await queryClient.cancelQueries({ queryKey: queryKeys.community.trending });
-            const previousPosts = queryClient.getQueryData(queryKeys.community.feed());
-            const previousTrending = queryClient.getQueryData(queryKeys.community.trending);
+            await queryClient.cancelQueries({ queryKey: communityFeedPrefix });
+            await queryClient.cancelQueries({ queryKey: trendingKey });
+            const previousPosts = queryClient.getQueryData(latestFeedKey);
+            const previousTrending = queryClient.getQueryData(trendingKey);
 
-            queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
+            queryClient.setQueryData(latestFeedKey, (old: any) => {
                 if (!old || !old.pages) return old;
                 return {
                     ...old,
@@ -75,7 +79,7 @@ export function PostInteractionBar({
                 };
             });
 
-            queryClient.setQueryData(queryKeys.community.trending, (old: any) => {
+            queryClient.setQueryData(trendingKey, (old: any) => {
                 if (!old || !old.posts) return old;
                 return {
                     ...old,
@@ -94,10 +98,10 @@ export function PostInteractionBar({
         },
         onError: (err: any, _, context: any) => {
             if (context?.previousPosts) {
-                queryClient.setQueryData(queryKeys.community.feed(), context.previousPosts);
+                queryClient.setQueryData(latestFeedKey, context.previousPosts);
             }
             if (context?.previousTrending) {
-                queryClient.setQueryData(queryKeys.community.trending, context.previousTrending);
+                queryClient.setQueryData(trendingKey, context.previousTrending);
             }
             if (err.message !== 'Unauthenticated') {
                 const isNetworkError = !err.response || err.code === 'ERR_NETWORK';
@@ -105,8 +109,8 @@ export function PostInteractionBar({
             }
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.community.feed() });
-            queryClient.invalidateQueries({ queryKey: queryKeys.community.trending });
+            queryClient.invalidateQueries({ queryKey: communityFeedPrefix });
+            queryClient.invalidateQueries({ queryKey: trendingKey });
         }
     });
 
@@ -128,7 +132,7 @@ export function PostInteractionBar({
             await postApi.share(postId);
             toast.success('Link copied to clipboard!');
             
-            queryClient.setQueryData(queryKeys.community.feed(), (old: any) => {
+            queryClient.setQueryData(latestFeedKey, (old: any) => {
                 if (!old || !old.pages) return old;
                 return {
                     ...old,
