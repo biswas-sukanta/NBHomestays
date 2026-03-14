@@ -220,4 +220,17 @@ public class TimelineService {
         }
         return name.toString();
     }
+
+    /**
+     * Clear all timeline entries (for deep wipe).
+     */
+    @Transactional
+    public void clearAll() {
+        try {
+            timelineRepository.deleteAll();
+            log.info("[DEEP WIPE] Cleared all timeline entries");
+        } catch (Exception e) {
+            log.error("Failed to clear timeline: {}", e.getMessage());
+        }
+    }
 }

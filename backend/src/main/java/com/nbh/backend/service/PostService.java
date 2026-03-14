@@ -13,6 +13,7 @@ import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.PostLikeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -32,6 +33,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -569,6 +571,110 @@ public class PostService {
                 .filter(s -> !s.isBlank())
                 .distinct()
                 .toList();
+    }
+
+    // ── Deep Wipe: Admin-only nuclear option ────────────────────────────────
+    /**
+     * DEEP WIPE: Deletes ALL posts, comments, likes, and physical media files.
+     * This is a nuclear option for admin use only.
+     * 
+     * Order of operations:
+     * 1. Collect ALL media fileIds from posts AND comments
+     * 2. Delete physical files from ImageKit
+     * 3. Delete all post_likes (separate table, no cascade)
+     * 4. Hard delete all posts (bypasses soft delete)
+     */
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "postsList", allEntries = true),
+            @CacheEvict(value = "postDetail", allEntries = true),
+            @CacheEvict(value = "postComments", allEntries = true)
+    })
+    public WipeResult wipeAllPosts(String adminEmail) {
+        log.info("[DEEP WIPE] Initiated by admin: {}", adminEmail);
+        
+        // Verify admin role
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (admin.getRole() != User.Role.ROLE_ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
+                    "Only admins can perform deep wipe");
+        }
+        
+        // Step 1: Collect ALL media fileIds from posts
+        List<Post> allPosts = postRepository.findAllIncludingDeleted();
+        List<String> allFileIds = new java.util.ArrayList<>();
+        
+        for (Post post : allPosts) {
+            // Post media
+            if (post.getMediaFiles() != null) {
+                for (MediaResource mr : post.getMediaFiles()) {
+                    if (mr.getFileId() != null && !mr.getFileId().isBlank()) {
+                        allFileIds.add(mr.getFileId());
+                    }
+                }
+            }
+            // Comment media (comments cascade from posts, but we need fileIds first)
+            if (post.getComments() != null) {
+                for (com.nbh.backend.model.Comment comment : post.getComments()) {
+                    if (comment.getMediaFiles() != null) {
+                        for (MediaResource mr : comment.getMediaFiles()) {
+                            if (mr.getFileId() != null && !mr.getFileId().isBlank()) {
+                                allFileIds.add(mr.getFileId());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        int totalFileIds = allFileIds.size();
+        log.info("[DEEP WIPE] Found {} media files to delete", totalFileIds);
+        
+        // Step 2: Delete physical files from ImageKit (synchronously for wipe)
+        int deletedFileCount = 0;
+        int failedFileCount = 0;
+        for (String fileId : allFileIds) {
+            try {
+                imageUploadService.deleteFileById(fileId);
+                deletedFileCount++;
+            } catch (Exception e) {
+                log.warn("[DEEP WIPE] Failed to delete fileId {}: {}", fileId, e.getMessage());
+                failedFileCount++;
+            }
+        }
+        log.info("[DEEP WIPE] Deleted {} files from ImageKit, {} failed", deletedFileCount, failedFileCount);
+        
+        // Step 3: Delete all post_likes (separate table, no cascade)
+        long likesDeleted = postLikeRepository.deleteAllAndGetCount();
+        log.info("[DEEP WIPE] Deleted {} post_likes records", likesDeleted);
+        
+        // Step 4: Hard delete all posts (bypass soft delete)
+        long postsDeleted = postRepository.hardDeleteAll();
+        log.info("[DEEP WIPE] Hard deleted {} posts", postsDeleted);
+        
+        // Step 5: Clear timeline
+        timelineService.clearAll();
+        
+        // Step 6: Invalidate all caches
+        feedCacheService.invalidateAll();
+        
+        return WipeResult.builder()
+                .postsDeleted(postsDeleted)
+                .mediaFilesDeleted(deletedFileCount)
+                .mediaFilesFailed(failedFileCount)
+                .likesDeleted(likesDeleted)
+                .build();
+    }
+    
+    // Result DTO for wipe operation
+    @lombok.Data
+    @lombok.Builder
+    public static class WipeResult {
+        private long postsDeleted;
+        private int mediaFilesDeleted;
+        private int mediaFilesFailed;
+        private long likesDeleted;
     }
 
     // ── Mapping Helper ────────────────────────────────────────

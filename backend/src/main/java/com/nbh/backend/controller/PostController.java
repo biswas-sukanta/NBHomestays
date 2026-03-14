@@ -208,4 +208,21 @@ public class PostController {
         }
         return ResponseEntity.ok(postService.repost(id, request, files, authentication.getName()));
     }
+
+    // ── Deep Wipe Endpoint (Admin Only) ─────────────────────────────────────
+    /**
+     * DEEP WIPE: Deletes ALL posts, comments, likes, and physical media files.
+     * This is a nuclear option - admin only.
+     * 
+     * @return WipeResult with counts of deleted entities
+     */
+    @DeleteMapping("/admin/wipe-all")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ROLE_ADMIN')")
+    public ResponseEntity<PostService.WipeResult> wipeAllPosts(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        PostService.WipeResult result = postService.wipeAllPosts(authentication.getName());
+        return ResponseEntity.ok(result);
+    }
 }

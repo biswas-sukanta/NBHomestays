@@ -6,5 +6,7 @@ export const adminApi = {
     featureHomestay: (id: string) => api.put(`/admin/homestays/${id}/feature`),
     deleteHomestaysLimit: (limit: number) => api.delete(`/admin/homestays?limit=${limit}`),
     deleteAllHomestays: () => api.delete('/admin/homestays/all'),
-    seedHomestays: (count: number) => api.post(`/admin/homestays/seed?count=${count}`)
+    seedHomestays: (count: number) => api.post(`/admin/homestays/seed?count=${count}`),
+    // Deep wipe posts - deletes all posts, comments, likes, and physical media files
+    wipeAllPosts: () => api.delete('/posts/admin/wipe-all'),
 };

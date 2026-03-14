@@ -26,4 +26,12 @@ public interface PostLikeRepository extends JpaRepository<PostLike, PostLike.Pos
 
     @Query("SELECT pl.postId FROM PostLike pl WHERE pl.userId = :userId")
     java.util.List<UUID> findLikedPostIdsByUserId(@Param("userId") UUID userId);
+
+    // ── Deep Wipe Method ────────────────────────────────────────
+    /**
+     * Delete all post_likes and return the count.
+     */
+    @Modifying
+    @Query(value = "DELETE FROM post_likes", nativeQuery = true)
+    long deleteAllAndGetCount();
 }

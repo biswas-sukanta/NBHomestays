@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -201,4 +202,21 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 
         @Query(value = "SELECT love_count FROM posts WHERE id = :postId", nativeQuery = true)
         Integer findLoveCountById(@Param("postId") UUID postId);
+
+        // ── Deep Wipe Methods ────────────────────────────────────────
+        /**
+         * Find all posts including soft-deleted ones.
+         * Bypasses @SQLRestriction for wipe operation.
+         */
+        @Query(value = "SELECT * FROM posts", nativeQuery = true)
+        List<Post> findAllIncludingDeleted();
+
+        /**
+         * Hard delete all posts, bypassing soft delete.
+         * Returns count of deleted rows.
+         */
+        @Modifying
+        @Transactional
+        @Query(value = "DELETE FROM posts", nativeQuery = true)
+        long hardDeleteAll();
 }
