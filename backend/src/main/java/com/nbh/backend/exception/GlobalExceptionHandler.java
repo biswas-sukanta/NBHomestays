@@ -37,6 +37,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<Map<String, String>> handleNullPointerException(NullPointerException ex) {
+        logger.error("NullPointerException: ", ex);
+        return new ResponseEntity<>(Map.of(
+                "error", "A null reference was encountered. If you recently wiped data, please refresh or seed data.",
+                "details", ex.getMessage() != null ? ex.getMessage() : "No details available"
+        ), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
     public ResponseEntity<Map<String, String>> handleResponseStatusException(
             org.springframework.web.server.ResponseStatusException ex) {
