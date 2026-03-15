@@ -14,10 +14,10 @@ export class CommunityHelper {
     // The feed can be legitimately empty, so accept either:
     // - at least one post card
     // - the empty-feed placeholder
-    // - the feed heading as a last-resort ready signal
+    // - the feed heading as a last-resort ready signal (use role for specificity)
     const postCard = this.page.locator('[data-testid^="post-card"], [data-testid="post-card"]').first();
     const emptyState = this.page.getByText('Deep silence here...');
-    const heading = this.page.getByText('Community Feed');
+    const heading = this.page.getByRole('heading', { name: 'Community Feed' });
 
     await Promise.race([
       postCard.waitFor({ state: 'visible', timeout: 30000 }),

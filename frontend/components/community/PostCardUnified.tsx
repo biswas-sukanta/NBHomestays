@@ -152,6 +152,7 @@ function TextOnlyCard({
     title, 
     body, 
     authorName,
+    authorId,
     authorAvatar,
     initials,
     timestamp,
@@ -162,6 +163,7 @@ function TextOnlyCard({
     title: string; 
     body: string;
     authorName: string;
+    authorId?: string;
     authorAvatar?: string;
     initials: string;
     timestamp: string;
@@ -193,16 +195,33 @@ function TextOnlyCard({
                 </div>
             )}
             
-            {/* User info at top */}
+            {/* User info at top - unified with image post structure */}
             <div className="flex items-center gap-3 mb-6">
-                <Avatar className="w-9 h-9 ring-2 ring-white/80 shadow-sm">
-                    <AvatarImage src={authorAvatar} alt={authorName} />
-                    <AvatarFallback className="bg-gradient-to-br from-[#2D5A4A] to-teal-600 text-white text-xs font-bold">
-                        {initials}
-                    </AvatarFallback>
-                </Avatar>
+                {authorId ? (
+                    <Link href={`/profile/${authorId}`}>
+                        <Avatar className="w-9 h-9 ring-2 ring-white/80 shadow-sm cursor-pointer">
+                            <AvatarImage src={authorAvatar} alt={authorName} />
+                            <AvatarFallback className="bg-gradient-to-br from-[#2D5A4A] to-teal-600 text-white text-xs font-bold">
+                                {initials}
+                            </AvatarFallback>
+                        </Avatar>
+                    </Link>
+                ) : (
+                    <Avatar className="w-9 h-9 ring-2 ring-white/80 shadow-sm">
+                        <AvatarImage src={authorAvatar} alt={authorName} />
+                        <AvatarFallback className="bg-gradient-to-br from-[#2D5A4A] to-teal-600 text-white text-xs font-bold">
+                            {initials}
+                        </AvatarFallback>
+                    </Avatar>
+                )}
                 <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[#1A1A1A] font-sans">{authorName}</span>
+                    {authorId ? (
+                        <Link href={`/profile/${authorId}`} className="text-sm font-semibold text-[#1A1A1A] font-sans hover:text-[#2D5A4A] transition-colors">
+                            {authorName}
+                        </Link>
+                    ) : (
+                        <span className="text-sm font-semibold text-[#1A1A1A] font-sans">{authorName}</span>
+                    )}
                     <span className="text-xs text-[#6B7280] font-sans">· {timestamp}</span>
                 </div>
             </div>
@@ -349,6 +368,7 @@ export function PostCardUnified({
                         title={title || post.caption?.slice(0, 50) || 'Untitled'}
                         body={post.caption || ''}
                         authorName={authorName}
+                        authorId={post.authorId}
                         authorAvatar={authorAvatar}
                         initials={initials}
                         timestamp={formatRelative(post.createdAt)}

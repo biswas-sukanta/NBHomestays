@@ -20,7 +20,7 @@ async function sleep(ms: number) {
   await new Promise((r) => setTimeout(r, ms));
 }
 
-function seededCreds(role: Role): { email: string; password: string } | null {
+export function seededCreds(role: Role): { email: string; password: string } | null {
   if (role === 'ROLE_ADMIN') {
     return {
       email: process.env.PW_ADMIN_EMAIL || 'admin@nbh.com',
@@ -45,7 +45,7 @@ function seededCreds(role: Role): { email: string; password: string } | null {
   return null;
 }
 
-async function login(email: string, password: string, baseURL?: string): Promise<Tokens> {
+export async function login(email: string, password: string, baseURL?: string): Promise<Tokens> {
   const res = await fetchWithTimeout(`${apiBase(baseURL)}/auth/login`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
