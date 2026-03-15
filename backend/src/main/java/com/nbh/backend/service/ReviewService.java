@@ -62,14 +62,16 @@ public class ReviewService {
         private ReviewDto.Response mapToResponse(Review review) {
                 return ReviewDto.Response.builder()
                                 .id(review.getId())
+                                .authorId(review.getUser().getId())
                                 .userName(review.getUser().getFirstName() + " " + review.getUser().getLastName())
+                                .authorAvatarUrl(review.getUser().getAvatarUrl())
                                 .atmosphereRating(review.getAtmosphereRating())
                                 .serviceRating(review.getServiceRating())
                                 .accuracyRating(review.getAccuracyRating())
                                 .valueRating(review.getValueRating())
                                 .comment(review.getComment())
                                 .photoUrls(review.getPhotoUrls())
-                                .createdAt(review.getCreatedAt())
+                                .createdAt(review.getCreatedAt() != null ? review.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant() : null)
                                 .build();
         }
 }

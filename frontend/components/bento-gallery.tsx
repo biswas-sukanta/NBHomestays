@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 
-const FALLBACK = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=1965&auto=format&fit=crop';
+const FALLBACK = '/images/hero_background.jpg';
 
 interface BentoGalleryProps {
     mediaUrls: string[];

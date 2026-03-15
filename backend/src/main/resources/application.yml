@@ -65,3 +65,7 @@ homestay:
   signals:
     popularInquiryThreshold: 5
     highDemandViewThreshold: 200
+
+imagekit:
+  max-file-size-bytes: 5242880
+  allowed-content-types: image/jpeg,image/png,image/webp

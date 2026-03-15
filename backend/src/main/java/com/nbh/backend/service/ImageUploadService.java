@@ -27,12 +27,11 @@ import java.util.Set;
 @Slf4j
 public class ImageUploadService {
 
-    private static final long MAX_FILE_SIZE_BYTES = 5L * 1024 * 1024;
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
-            "image/jpeg",
-            "image/png",
-            "image/webp"
-    );
+    @Value("${imagekit.max-file-size-bytes:5242880}")
+    private long maxFileSizeBytes;
+
+    @Value("${imagekit.allowed-content-types:image/jpeg,image/png,image/webp}")
+    private String allowedContentTypesConfig;
 
     @Value("${IMAGEKIT_PUBLIC_KEY:}")
     private String imageKitPublicKey;
@@ -88,6 +87,7 @@ public class ImageUploadService {
 
     public List<MediaResource> uploadFiles(List<MultipartFile> files, String folder) throws IOException {
         List<MediaResource> mediaResources = new ArrayList<>();
+        List<String> uploadedFileIds = new ArrayList<>(); // Track for rollback
 
         if (files == null || files.isEmpty()) {
             return mediaResources;
@@ -104,30 +104,55 @@ public class ImageUploadService {
             resolvedFolder = "/" + resolvedFolder;
         }
 
-        for (MultipartFile file : files) {
-            validateFile(file);
-            String originalFilename = file.getOriginalFilename();
-            if (originalFilename == null || originalFilename.isBlank()) {
-                originalFilename = "upload_" + System.currentTimeMillis();
-            }
+        try {
+            for (MultipartFile file : files) {
+                validateFile(file);
+                String originalFilename = file.getOriginalFilename();
+                if (originalFilename == null || originalFilename.isBlank()) {
+                    originalFilename = "upload_" + System.currentTimeMillis();
+                }
 
-            FileCreateRequest fileCreateRequest = new FileCreateRequest(file.getBytes(), originalFilename);
-            fileCreateRequest.setFolder(resolvedFolder);
+                FileCreateRequest fileCreateRequest = new FileCreateRequest(file.getBytes(), originalFilename);
+                fileCreateRequest.setFolder(resolvedFolder);
 
-            try {
-                Result result = ImageKit.getInstance().upload(fileCreateRequest);
-                String cdnUrl = optimizeImageKitUrl(result.getUrl());
-                String fileId = result.getFileId();
-                log.info("[IMAGEKIT UPLOAD] Successfully uploaded file to {}. CDN URL: {} (File ID: {})",
-                        resolvedFolder, cdnUrl, fileId);
-                mediaResources.add(MediaResource.builder().url(cdnUrl).fileId(fileId).build());
-            } catch (Exception e) {
-                log.error("[IMAGEKIT UPLOAD] FATAL ERROR: Failed to upload file {}", originalFilename, e);
-                throw new IOException("Failed to upload file to ImageKit", e);
+                try {
+                    Result result = ImageKit.getInstance().upload(fileCreateRequest);
+                    String cdnUrl = optimizeImageKitUrl(result.getUrl());
+                    String fileId = result.getFileId();
+                    log.info("[IMAGEKIT UPLOAD] Successfully uploaded file to {}. CDN URL: {} (File ID: {})",
+                            resolvedFolder, cdnUrl, fileId);
+                    mediaResources.add(MediaResource.builder().url(cdnUrl).fileId(fileId).build());
+                    uploadedFileIds.add(fileId); // Track for potential rollback
+                } catch (Exception e) {
+                    log.error("[IMAGEKIT UPLOAD] FATAL ERROR: Failed to upload file {}", originalFilename, e);
+                    // Compensating transaction: delete already uploaded files
+                    rollbackUploads(uploadedFileIds);
+                    throw new IOException("Failed to upload file to ImageKit", e);
+                }
             }
+        } catch (IOException e) {
+            throw e;
         }
 
         return mediaResources;
+    }
+
+    /**
+     * Compensating transaction to clean up orphaned files when batch upload fails.
+     */
+    private void rollbackUploads(List<String> uploadedFileIds) {
+        if (uploadedFileIds == null || uploadedFileIds.isEmpty()) {
+            return;
+        }
+        log.warn("[IMAGEKIT ROLLBACK] Cleaning up {} orphaned files due to batch upload failure", uploadedFileIds.size());
+        for (String fileId : uploadedFileIds) {
+            try {
+                deleteFileById(fileId);
+                log.info("[IMAGEKIT ROLLBACK] Deleted orphaned file: {}", fileId);
+            } catch (Exception e) {
+                log.error("[IMAGEKIT ROLLBACK] Failed to delete orphaned file {}: {}", fileId, e.getMessage());
+            }
+        }
     }
 
     public void deleteFile(String fileId) {
@@ -197,13 +222,16 @@ public class ImageUploadService {
         }
 
         String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported image type");
+        Set<String> allowedTypes = Set.of(allowedContentTypesConfig.split(","));
+        if (contentType == null || !allowedTypes.contains(contentType)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                    "Unsupported image type. Allowed: " + allowedContentTypesConfig);
         }
 
         long size = file.getSize();
-        if (size > MAX_FILE_SIZE_BYTES) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Each image must be under 5MB");
+        if (size > maxFileSizeBytes) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                    "Each image must be under " + (maxFileSizeBytes / (1024 * 1024)) + "MB");
         }
     }
 

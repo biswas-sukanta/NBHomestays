@@ -142,7 +142,7 @@ public class AdminDataService {
                 return toDelete.size();
         }
 
-        @Transactional
+        @Transactional(timeout = 300)
         public void deleteAllHomestays() {
                 log.info("Purging all homestays using failsafe DML...");
                 // Nuclear wipe using DELETE to avoid locking and handle legacy tables

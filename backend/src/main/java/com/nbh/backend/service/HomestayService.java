@@ -280,12 +280,14 @@ public class HomestayService {
                                 .build();
         }
 
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public List<HomestayDto.Response> getAllHomestays() {
                 return repository.findAll().stream()
                                 .map(this::mapToResponse)
                                 .collect(Collectors.toList());
         }
 
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public List<HomestayDto.LookupResponse> getHomestayLookups() {
                 return repository.findAll().stream()
                                 .map(h -> HomestayDto.LookupResponse.builder()
@@ -296,6 +298,7 @@ public class HomestayService {
                                 .collect(Collectors.toList());
         }
 
+        @org.springframework.transaction.annotation.Transactional
         @Caching(evict = {
                         @CacheEvict(value = "homestay", key = "#id"),
                         @CacheEvict(value = "homestaysSearch", allEntries = true)
@@ -308,6 +311,7 @@ public class HomestayService {
                 repository.save(homestay);
         }
 
+        @org.springframework.transaction.annotation.Transactional
         @Caching(evict = {
                         @CacheEvict(value = "homestay", key = "#id"),
                         @CacheEvict(value = "homestaysSearch", allEntries = true)
@@ -469,6 +473,7 @@ public class HomestayService {
                 return pageResults.map(this::mapToResponse);
         }
 
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public org.springframework.data.domain.Page<HomestayDto.Response> getHomestaysByDestinationSlug(String slug,
                         Pageable pageable) {
                 return repository.findByDestinationSlug(slug, pageable).map(this::mapToResponse);

@@ -9,7 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.UUID;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class ReviewDto {
 
@@ -53,7 +53,9 @@ public class ReviewDto {
     @NoArgsConstructor
     public static class Response {
         private UUID id;
+        private UUID authorId;
         private String userName;
+        private String authorAvatarUrl;
         private Integer atmosphereRating;
         private Integer serviceRating;
         private Integer accuracyRating;
@@ -61,6 +63,6 @@ public class ReviewDto {
         private Double overallRating;
         private String comment;
         private java.util.List<String> photoUrls;
-        private LocalDateTime createdAt;
+        private Instant createdAt;
     }
 }

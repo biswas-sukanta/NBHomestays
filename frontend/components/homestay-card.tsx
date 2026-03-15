@@ -51,7 +51,7 @@ interface HomestayCardProps {
     onMouseLeave?: () => void;
 }
 
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3';
+const FALLBACK_IMAGE = '/images/hero_background.jpg';
 
 export const HomestayCard = React.memo(({ homestay, index = 0, featured = false, isHighlighted = false, onMouseEnter, onMouseLeave }: HomestayCardProps) => {
     const { addToCompare, selectedIds } = useCompareStore();

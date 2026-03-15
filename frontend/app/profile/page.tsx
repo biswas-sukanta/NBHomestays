@@ -26,7 +26,7 @@ interface SavedHomestay {
     id: string; name: string; pricePerNight: number; media?: { url: string; fileId?: string }[]; vibeScore?: number;
 }
 
-const FALLBACK = 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=600&q=80';
+const FALLBACK = '/images/hero_background.jpg';
 
 const TABS = [
     { key: 'boards', label: 'Trip Boards', icon: Heart },

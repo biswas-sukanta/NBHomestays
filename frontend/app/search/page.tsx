@@ -496,7 +496,7 @@ function SearchResults() {
                                                                 <Link href={`/homestays/${h.id}`} className="flex h-[110px]">
                                                                     <div className="w-[110px] h-full shrink-0 relative bg-gray-100">
                                                                         <Image
-                                                                            src={h.media?.[0]?.url || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=300'}
+                                                                            src={h.media?.[0]?.url || '/images/hero_background.jpg'}
                                                                             alt={h.name}
                                                                             fill
                                                                             className="object-cover"
@@ -564,7 +564,7 @@ function SearchResults() {
                                         <Link href={`/homestays/${allStays[0].id}`} className="block group rounded-2xl overflow-hidden relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                                             <div className="relative w-full aspect-[4/3] md:aspect-[16/9] bg-gray-100">
                                                 <OptimizedImage
-                                                    src={allStays[0].media?.[0]?.url || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=1400'}
+                                                    src={allStays[0].media?.[0]?.url || '/images/hero_background.jpg'}
                                                     alt={allStays[0].name}
                                                     width={1400}
                                                     className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700"
