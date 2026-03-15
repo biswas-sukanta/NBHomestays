@@ -21,12 +21,6 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
     @Query("SELECT c FROM Comment c WHERE c.post.id = :postId AND c.parent IS NULL ORDER BY c.createdAt ASC")
     Page<Comment> findTopLevelByPostId(@Param("postId") UUID postId, Pageable pageable);
 
-    /** Count all comments (including replies) for a post. */
-    long countByPostId(UUID postId);
-
-    /** Check ownership before delete. */
-    boolean existsByIdAndUserId(UUID commentId, UUID userId);
-
     /**
      * Delete all comment_images (ElementCollection table) for comments belonging to the given post IDs.
      * The comment_images table is created by @ElementCollection on Comment.legacyImageUrls and lacks ON DELETE CASCADE.
@@ -47,4 +41,11 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "DELETE FROM comment_images", nativeQuery = true)
     int deleteAllCommentImages();
+    
+    /**
+     * Count comments by user that have been marked as helpful.
+     * Used for Helper badge eligibility (The Margdarshak badge).
+     */
+    @Query("SELECT SUM(c.helpfulCount) FROM Comment c WHERE c.user.id = :userId")
+    long countHelpfulByUserId(@Param("userId") UUID userId);
 }

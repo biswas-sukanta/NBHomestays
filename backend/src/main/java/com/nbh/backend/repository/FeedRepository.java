@@ -30,7 +30,9 @@ public interface FeedRepository extends Repository<Post, UUID> {
                p.original_post_id as originalPostId,
                op.text_content as originalContent,
                ou.id as originalAuthorId,
-               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName,
+               p.helpful_count as helpfulCount,
+               p.last_computed_xp as lastComputedXp
         FROM posts p
         INNER JOIN users u ON p.user_id = u.id
         LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -57,7 +59,9 @@ public interface FeedRepository extends Repository<Post, UUID> {
                p.original_post_id as originalPostId,
                op.text_content as originalContent,
                ou.id as originalAuthorId,
-               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName,
+               p.helpful_count as helpfulCount,
+               p.last_computed_xp as lastComputedXp
         FROM posts p
         INNER JOIN users u ON p.user_id = u.id
         LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -89,7 +93,9 @@ public interface FeedRepository extends Repository<Post, UUID> {
                p.original_post_id as originalPostId,
                op.text_content as originalContent,
                ou.id as originalAuthorId,
-               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName,
+               p.helpful_count as helpfulCount,
+               p.last_computed_xp as lastComputedXp
         FROM posts p
         INNER JOIN users u ON p.user_id = u.id
         LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -119,7 +125,9 @@ public interface FeedRepository extends Repository<Post, UUID> {
                p.original_post_id as originalPostId,
                op.text_content as originalContent,
                ou.id as originalAuthorId,
-               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName,
+               p.helpful_count as helpfulCount,
+               p.last_computed_xp as lastComputedXp
         FROM posts p
         INNER JOIN users u ON p.user_id = u.id
         LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -245,7 +253,9 @@ public interface FeedRepository extends Repository<Post, UUID> {
                p.original_post_id as originalPostId,
                op.text_content as originalContent,
                ou.id as originalAuthorId,
-               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName,
+               p.helpful_count as helpfulCount,
+               p.last_computed_xp as lastComputedXp
         FROM posts p
         INNER JOIN users u ON p.user_id = u.id
         LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -268,7 +278,9 @@ public interface FeedRepository extends Repository<Post, UUID> {
                p.original_post_id as originalPostId,
                op.text_content as originalContent,
                ou.id as originalAuthorId,
-               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName,
+               p.helpful_count as helpfulCount,
+               p.last_computed_xp as lastComputedXp
         FROM posts p
         INNER JOIN users u ON p.user_id = u.id
         LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -299,7 +311,9 @@ public interface FeedRepository extends Repository<Post, UUID> {
                p.original_post_id as originalPostId,
                op.text_content as originalContent,
                ou.id as originalAuthorId,
-               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName,
+               p.helpful_count as helpfulCount,
+               p.last_computed_xp as lastComputedXp
         FROM posts p
         INNER JOIN users u ON p.user_id = u.id
         LEFT JOIN homestays h ON p.homestay_id = h.id
@@ -323,7 +337,9 @@ public interface FeedRepository extends Repository<Post, UUID> {
                p.original_post_id as originalPostId,
                op.text_content as originalContent,
                ou.id as originalAuthorId,
-               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName
+               CONCAT(ou.first_name, COALESCE(CONCAT(' ', ou.last_name), '')) as originalAuthorName,
+               p.helpful_count as helpfulCount,
+               p.last_computed_xp as lastComputedXp
         FROM posts p
         INNER JOIN users u ON p.user_id = u.id
         LEFT JOIN homestays h ON p.homestay_id = h.id

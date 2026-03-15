@@ -566,30 +566,6 @@ public class FeedService {
     }
 
     /**
-     * Batch load like counts.
-     */
-    private Map<UUID, Integer> loadLikeCounts(List<UUID> postIds) {
-        if (postIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        List<Object[]> rows = feedRepository.countLikesByPostIds(postIds);
-        Map<UUID, Integer> result = new HashMap<>();
-
-        for (Object[] row : rows) {
-            UUID postId = (UUID) row[0];
-            Number count = (Number) row[1];
-            result.put(postId, count.intValue());
-        }
-
-        // Posts with no likes won't appear in result - default to 0
-        for (UUID postId : postIds) {
-            result.putIfAbsent(postId, 0);
-        }
-
-        return result;
-    }
-
-    /**
      * Batch load liked status for user.
      */
     private Set<UUID> loadLikedStatus(UUID userId, List<UUID> postIds) {
@@ -739,6 +715,10 @@ public class FeedService {
         String originalContent = (String) row[14];
         UUID originalAuthorId = (UUID) row[15];
         String originalAuthorName = (String) row[16];
+        
+        // Elevation Engine fields (indices 17-18)
+        Number helpfulCountDb = (Number) row[17];
+        Number lastComputedXpDb = (Number) row[18];
 
         // Build author
         PostFeedDto.AuthorDto author = PostFeedDto.AuthorDto.builder()
@@ -799,6 +779,9 @@ public class FeedService {
                 .viewCount(meta != null ? meta.viewCount : 0)
                 .trendingScore(meta != null ? meta.trendingScore : 0d)
                 .editorialScore(meta != null ? meta.editorialScore : 0d)
+                // Elevation Engine fields
+                .helpfulCount(helpfulCountDb != null ? helpfulCountDb.intValue() : 0)
+                .lastComputedXp(lastComputedXpDb != null ? lastComputedXpDb.intValue() : 0)
                 .build();
     }
 

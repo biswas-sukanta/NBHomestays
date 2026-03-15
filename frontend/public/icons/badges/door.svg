@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="doorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B45309"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </linearGradient>
+    <linearGradient id="doorInner" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FCD34D"/>
+    </linearGradient>
+  </defs>
+  <!-- Door frame -->
+  <rect x="12" y="4" width="40" height="56" rx="4" fill="url(#doorGrad)" stroke="#451A03" stroke-width="2"/>
+  <!-- Door panels -->
+  <rect x="16" y="8" width="32" height="48" rx="2" fill="url(#doorInner)" stroke="#92400E" stroke-width="1"/>
+  <!-- Upper panel -->
+  <rect x="20" y="12" width="24" height="20" rx="1" fill="#D97706" opacity="0.3" stroke="#92400E" stroke-width="0.5"/>
+  <!-- Lower panel -->
+  <rect x="20" y="36" width="24" height="16" rx="1" fill="#D97706" opacity="0.3" stroke="#92400E" stroke-width="0.5"/>
+  <!-- Door handle -->
+  <circle cx="42" cy="32" r="3" fill="#FBBF24" stroke="#78350F" stroke-width="1.5"/>
+  <!-- Welcome garland -->
+  <path d="M16 4 Q24 0 32 4 Q40 0 48 4" stroke="#059669" stroke-width="2" fill="none"/>
+  <circle cx="24" cy="2" r="2" fill="#F97316"/>
+  <circle cx="32" cy="4" r="2" fill="#F97316"/>
+  <circle cx="40" cy="2" r="2" fill="#F97316"/>
+</svg>

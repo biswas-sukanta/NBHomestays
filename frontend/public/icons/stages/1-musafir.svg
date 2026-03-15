@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="musafirGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+  <!-- Small hill - beginning of journey -->
+  <path d="M8 48 L32 24 L56 48 Z" fill="url(#musafirGrad)" stroke="#047857" stroke-width="2"/>
+  <!-- Traveler figure -->
+  <circle cx="32" cy="16" r="6" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+  <path d="M32 22 L32 34" stroke="#78350F" stroke-width="2"/>
+  <path d="M24 28 L32 24 L40 28" stroke="#78350F" stroke-width="2" fill="none"/>
+  <path d="M26 44 L32 34 L38 44" stroke="#78350F" stroke-width="2" fill="none"/>
+  <!-- Walking stick -->
+  <line x1="42" y1="24" x2="48" y2="44" stroke="#92400E" stroke-width="2"/>
+  <!-- Sun rising -->
+  <circle cx="52" cy="12" r="4" fill="#FCD34D"/>
+</svg>

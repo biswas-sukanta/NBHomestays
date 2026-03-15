@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="inkGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+  <!-- Inkwell base -->
+  <path d="M16 44 C16 40 20 36 32 36 C44 36 48 40 48 44 L48 56 C48 58 46 60 44 60 L20 60 C18 60 16 58 16 56 Z" fill="url(#inkGrad)" stroke="#3B82F6" stroke-width="2"/>
+  <!-- Well opening -->
+  <ellipse cx="32" cy="36" rx="12" ry="4" fill="#1E40AF" stroke="#3B82F6" stroke-width="1.5"/>
+  <!-- Ink pool -->
+  <ellipse cx="32" cy="38" rx="8" ry="2" fill="#0F172A"/>
+  <!-- Quill pen -->
+  <path d="M32 4 L28 32 L32 28 L36 32 Z" fill="#FEF3C7" stroke="#D97706" stroke-width="1"/>
+  <!-- Quill tip -->
+  <path d="M30 28 L32 36 L34 28" fill="#1E3A8A"/>
+  <!-- Decorative band -->
+  <rect x="20" y="48" width="24" height="4" rx="1" fill="#D97706"/>
+</svg>

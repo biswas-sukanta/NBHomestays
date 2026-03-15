@@ -53,6 +53,9 @@ export interface PostFeedItem {
   imageDimensions?: ImageDim[];
   postCategory?: string;
   postPriority?: number;
+  // Elevation Engine fields (Phase 3)
+  helpfulCount?: number;
+  lastComputedXp?: number;
 }
 
 export type BlockType = 'FEATURED' | 'STANDARD' | 'COLLAGE' | 'PHOTO' | 'HERO' | 'PLACEHOLDER';
@@ -179,6 +182,35 @@ export async function getTopContributors(limit: number = 3): Promise<TopContribu
   
   if (!response.ok) {
     throw new Error(`Top contributors API error: ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+// ============================================================
+// Leaderboard Types and API
+// ============================================================
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  avatarUrl: string;
+  totalXp: number;
+  stageTitle: string;
+  stageIconUrl: string;
+  postCount: number;
+  followersCount: number;
+}
+
+/**
+ * Get the community leaderboard - top 50 users by XP.
+ */
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  const response = await apiFetch('/community/leaderboard');
+  
+  if (!response.ok) {
+    throw new Error(`Leaderboard API error: ${response.status}`);
   }
   
   return response.json();

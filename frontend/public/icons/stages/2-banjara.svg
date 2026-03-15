@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="banjaraGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+  </defs>
+  <!-- Rolling hills path -->
+  <path d="M4 48 Q16 36 28 44 Q40 52 52 40 Q58 36 60 40" stroke="#A78BFA" stroke-width="3" fill="none"/>
+  <path d="M4 52 Q20 44 36 50 Q52 56 60 48" stroke="#8B5CF6" stroke-width="2" fill="none"/>
+  <!-- Nomad tent -->
+  <path d="M20 32 L32 16 L44 32 Z" fill="url(#banjaraGrad)" stroke="#6D28D9" stroke-width="2"/>
+  <ellipse cx="32" cy="32" rx="12" ry="4" fill="#6D28D9"/>
+  <!-- Campfire -->
+  <ellipse cx="52" cy="44" rx="4" ry="2" fill="#F59E0B"/>
+  <path d="M48 44 Q52 38 56 44" fill="#FBBF24"/>
+  <!-- Stars -->
+  <circle cx="8" cy="12" r="1.5" fill="#FCD34D"/>
+  <circle cx="16" cy="8" r="1" fill="#FCD34D"/>
+  <circle cx="48" cy="10" r="1.5" fill="#FCD34D"/>
+  <circle cx="56" cy="6" r="1" fill="#FCD34D"/>
+</svg>

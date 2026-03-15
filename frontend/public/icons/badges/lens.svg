@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="lensGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="70%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </radialGradient>
+    <linearGradient id="lensRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer ring -->
+  <circle cx="32" cy="32" r="28" fill="none" stroke="url(#lensRing)" stroke-width="4"/>
+  <!-- Lens body -->
+  <circle cx="32" cy="32" r="22" fill="url(#lensGlow)" stroke="#1E40AF" stroke-width="2"/>
+  <!-- Aperture blades -->
+  <circle cx="32" cy="32" r="14" fill="none" stroke="#1E3A8A" stroke-width="1.5"/>
+  <circle cx="32" cy="32" r="8" fill="none" stroke="#1E3A8A" stroke-width="1.5"/>
+  <!-- Center iris -->
+  <circle cx="32" cy="32" r="4" fill="#0F172A"/>
+  <!-- Highlight -->
+  <ellipse cx="26" cy="26" rx="6" ry="4" fill="#BFDBFE" opacity="0.5" transform="rotate(-30 26 26)"/>
+</svg>

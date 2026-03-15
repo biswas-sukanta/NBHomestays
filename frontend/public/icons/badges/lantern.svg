@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="lanternBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="lanternGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FCD34D"/>
+    </linearGradient>
+  </defs>
+  <!-- Handle -->
+  <path d="M24 8 C24 4 40 4 40 8" stroke="#78350F" stroke-width="3" fill="none"/>
+  <!-- Top cap -->
+  <rect x="20" y="10" width="24" height="4" rx="1" fill="#78350F"/>
+  <!-- Lantern body -->
+  <path d="M22 14 L18 50 C18 54 46 54 46 50 L42 14 Z" fill="url(#lanternBody)" stroke="#92400E" stroke-width="2"/>
+  <!-- Glass panels -->
+  <path d="M26 18 L24 46 L40 46 L38 18 Z" fill="url(#lanternGlow)" opacity="0.8"/>
+  <!-- Flame -->
+  <ellipse cx="32" cy="36" rx="4" ry="6" fill="#FBBF24"/>
+  <ellipse cx="32" cy="34" rx="2" ry="4" fill="#FEF3C7"/>
+  <!-- Base -->
+  <rect x="20" y="50" width="24" height="4" rx="1" fill="#78350F"/>
+</svg>

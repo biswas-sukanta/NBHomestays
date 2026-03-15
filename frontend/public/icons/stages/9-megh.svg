@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="meghGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+  </defs>
+  <!-- Cloud layer -->
+  <ellipse cx="20" cy="32" rx="14" ry="10" fill="url(#meghGrad)"/>
+  <ellipse cx="36" cy="28" rx="16" ry="12" fill="#E2E8F0"/>
+  <ellipse cx="48" cy="34" rx="12" ry="8" fill="url(#meghGrad)"/>
+  <!-- Mountain peak emerging -->
+  <path d="M28 56 L40 32 L52 56 Z" fill="#64748B" stroke="#475569" stroke-width="1"/>
+  <!-- Snow cap -->
+  <path d="M36 40 L40 32 L44 40 Z" fill="#F8FAFC"/>
+  <!-- Rain/mist drops -->
+  <path d="M16 44 L14 52" stroke="#60A5FA" stroke-width="1.5" opacity="0.6"/>
+  <path d="M28 48 L26 56" stroke="#60A5FA" stroke-width="1.5" opacity="0.6"/>
+  <path d="M48 44 L46 52" stroke="#60A5FA" stroke-width="1.5" opacity="0.6"/>
+  <!-- Sun rays through clouds -->
+  <path d="M52 16 L56 20" stroke="#FCD34D" stroke-width="2" stroke-linecap="round"/>
+  <path d="M56 28 L60 28" stroke="#FCD34D" stroke-width="2" stroke-linecap="round"/>
+</svg>

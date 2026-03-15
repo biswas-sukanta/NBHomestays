@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="kanchenGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="40%" stop-color="#94A3B8"/>
+      <stop offset="70%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#F8FAFC"/>
+    </linearGradient>
+    <linearGradient id="goldenPeak" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <!-- Kanchenjunga - five peaks -->
+  <path d="M4 56 L16 28 L24 36 L32 4 L40 36 L48 28 L60 56 Z" fill="url(#kanchenGrad)" stroke="#334155" stroke-width="2"/>
+  <!-- Golden summit -->
+  <path d="M28 16 L32 4 L36 16 Z" fill="url(#goldenPeak)"/>
+  <!-- Snow caps on all peaks -->
+  <path d="M12 32 L16 28 L20 32 Z" fill="#F8FAFC"/>
+  <path d="M44 32 L48 28 L52 32 Z" fill="#F8FAFC"/>
+  <!-- Glowing aura -->
+  <circle cx="32" cy="4" r="8" fill="#FCD34D" opacity="0.3"/>
+  <!-- Prayer flags -->
+  <path d="M20 20 Q24 16 28 20" stroke="#DC2626" stroke-width="1" fill="none"/>
+  <path d="M36 20 Q40 16 44 20" stroke="#2563EB" stroke-width="1" fill="none"/>
+  <path d="M24 24 Q28 20 32 24" stroke="#FBBF24" stroke-width="1" fill="none"/>
+  <path d="M32 24 Q36 20 40 24" stroke="#059669" stroke-width="1" fill="none"/>
+  <!-- Base camp -->
+  <rect x="28" y="48" width="8" height="4" fill="#78350F"/>
+</svg>

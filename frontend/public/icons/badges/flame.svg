@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="flameGrad" x1="50%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#DC2626"/>
+      <stop offset="40%" stop-color="#EA580C"/>
+      <stop offset="70%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#FCD34D"/>
+    </linearGradient>
+    <linearGradient id="flameInner" x1="50%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="60%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#FEF3C7"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer flame -->
+  <path d="M32 4 C28 12 20 16 20 28 C20 40 24 52 32 56 C40 52 44 40 44 28 C44 16 36 12 32 4" fill="url(#flameGrad)" stroke="#B45309" stroke-width="1"/>
+  <!-- Inner flame -->
+  <path d="M32 16 C30 22 26 24 26 32 C26 38 28 46 32 48 C36 46 38 38 38 32 C38 24 34 22 32 16" fill="url(#flameInner)"/>
+  <!-- Core -->
+  <ellipse cx="32" cy="40" rx="4" ry="6" fill="#FEF3C7" opacity="0.8"/>
+  <!-- Rising sparks -->
+  <circle cx="24" cy="8" r="2" fill="#FCD34D" opacity="0.7"/>
+  <circle cx="40" cy="10" r="1.5" fill="#FBBF24" opacity="0.6"/>
+  <circle cx="36" cy="4" r="1" fill="#FEF3C7" opacity="0.5"/>
+</svg>

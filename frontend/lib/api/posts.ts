@@ -38,6 +38,9 @@ export const postApi = {
     like: (id: string) => api.post(`/posts/${id}/like`),
     unlike: (id: string) => api.delete(`/posts/${id}/like`),
     share: (id: string) => api.post(`/posts/${id}/share`),
+    
+    // Helpful vote (Phase 3 - Elevation Engine)
+    markHelpful: (id: string) => api.post(`/posts/${id}/helpful`),
 
     // Comments via native fetch (since they upload images and use advanced stream logic)
     getCommentsFetch: (postId: string, page = 0, size = 20) =>

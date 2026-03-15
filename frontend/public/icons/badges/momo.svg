@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="momoGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FCD34D"/>
+    </linearGradient>
+  </defs>
+  <!-- Steamer basket -->
+  <ellipse cx="32" cy="48" rx="24" ry="8" fill="#78350F" stroke="#451A03" stroke-width="2"/>
+  <path d="M8 48 C8 40 56 40 56 48" fill="#92400E" stroke="#451A03" stroke-width="1.5"/>
+  <!-- Basket weave pattern -->
+  <path d="M12 44 Q32 38 52 44" stroke="#B45309" stroke-width="1" fill="none"/>
+  <path d="M14 46 Q32 40 50 46" stroke="#B45309" stroke-width="1" fill="none"/>
+  <!-- Momo dumplings -->
+  <ellipse cx="20" cy="36" rx="8" ry="6" fill="url(#momoGrad)" stroke="#D97706" stroke-width="1.5"/>
+  <ellipse cx="32" cy="34" rx="8" ry="6" fill="url(#momoGrad)" stroke="#D97706" stroke-width="1.5"/>
+  <ellipse cx="44" cy="36" rx="8" ry="6" fill="url(#momoGrad)" stroke="#D97706" stroke-width="1.5"/>
+  <!-- Pleated folds on momos -->
+  <path d="M16 34 Q20 32 24 34" stroke="#B45309" stroke-width="1" fill="none"/>
+  <path d="M28 32 Q32 30 36 32" stroke="#B45309" stroke-width="1" fill="none"/>
+  <path d="M40 34 Q44 32 48 34" stroke="#B45309" stroke-width="1" fill="none"/>
+  <!-- Steam -->
+  <path d="M20 24 Q22 20 20 16" stroke="#E5E7EB" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M32 22 Q34 18 32 14" stroke="#E5E7EB" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M44 24 Q46 20 44 16" stroke="#E5E7EB" stroke-width="2" fill="none" opacity="0.6"/>
+</svg>

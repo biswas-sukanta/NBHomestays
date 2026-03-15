@@ -30,6 +30,8 @@ spring:
   flyway:
     out-of-order: true
     baseline-on-migrate: true
+    repair-on-migrate: true
+    validate-on-migrate: false
     connect-retries: 5
     enabled: true
   data:

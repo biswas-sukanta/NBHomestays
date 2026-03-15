@@ -167,13 +167,16 @@ public class FeedLayoutEngine {
         int likeCount = post.getLikeCount();
         int commentCount = post.getCommentCount();
         int shareCount = post.getShareCount();
+        int helpfulCount = post.getHelpfulCount() != null ? post.getHelpfulCount() : 0;
         int mediaCount = post.getMediaCount() != null ? post.getMediaCount() :
                 (post.getMedia() != null ? post.getMedia().size() : 0);
         int postPriority = post.getPostPriority() != null ? post.getPostPriority() : 0;
 
+        // Updated formula with helpfulCount (weight 3.0)
         int score = (likeCount * 2)
                 + (commentCount * 3)
                 + (shareCount * 4)
+                + (helpfulCount * 3)
                 + (mediaCount * 2)
                 + postPriority;
 

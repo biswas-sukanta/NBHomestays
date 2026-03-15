@@ -91,6 +91,18 @@ public class Post {
     @Builder.Default
     private int commentCount = 0;
 
+    // ========================================================================
+    // Elevation Engine Fields (V58 Migration)
+    // ========================================================================
+
+    @Column(name = "helpful_count", nullable = false, columnDefinition = "integer default 0")
+    @Builder.Default
+    private int helpfulCount = 0;
+
+    @Column(name = "last_computed_xp", nullable = false, columnDefinition = "integer default 0")
+    @Builder.Default
+    private int lastComputedXp = 0;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "post_type")
     private PostType postType;

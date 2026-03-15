@@ -70,6 +70,12 @@ public class PostFeedDto {
     private String postCategory;     // Editorial category (nullable)
     private Integer postPriority;    // Editorial priority score (nullable)
     
+    // ========================================================================
+    // Elevation Engine Fields (V58 Migration)
+    // ========================================================================
+    private Integer helpfulCount;    // Number of helpful votes on this post
+    private Integer lastComputedXp;  // Last computed XP for this post
+    
     /**
      * Image dimensions for layout decisions.
      */

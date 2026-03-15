@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="darraGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748B"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+  </defs>
+  <!-- Mountain walls -->
+  <path d="M8 56 L8 16 L24 8 L24 56" fill="url(#darraGrad)" stroke="#1E293B" stroke-width="1"/>
+  <path d="M56 56 L56 16 L40 8 L40 56" fill="url(#darraGrad)" stroke="#1E293B" stroke-width="1"/>
+  <!-- Pass opening -->
+  <rect x="24" y="16" width="16" height="40" fill="#0F172A"/>
+  <!-- Snow on peaks -->
+  <path d="M8 16 L16 8 L24 16" fill="#E2E8F0"/>
+  <path d="M40 16 L48 8 L56 16" fill="#E2E8F0"/>
+  <!-- Path through pass -->
+  <path d="M32 56 L32 24" stroke="#92400E" stroke-width="3" stroke-linecap="round"/>
+  <!-- Distant peak -->
+  <path d="M28 28 L32 20 L36 28" fill="#94A3B8"/>
+  <!-- Sun through pass -->
+  <circle cx="32" cy="12" r="4" fill="#FCD34D" opacity="0.8"/>
+</svg>

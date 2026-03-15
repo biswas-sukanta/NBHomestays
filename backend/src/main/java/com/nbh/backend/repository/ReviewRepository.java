@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
     List<Review> findByHomestayId(UUID homestayId);
+    
+    long countByUserId(UUID userId);
 }

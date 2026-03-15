@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Award, MapPin, MessageSquare } from 'lucide-react';
+import { Award, MapPin, MessageSquare, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { SharedPageBanner } from '@/components/shared-page-banner';
@@ -15,6 +15,8 @@ import { useAuth } from '@/context/AuthContext';
 import { userApi, type PublicProfile } from '@/lib/api/users';
 import { resolveAvatarUrl } from '@/lib/avatar';
 import { queryKeys } from '@/lib/queryKeys';
+import { StageRibbon } from '@/components/profile/StageRibbon';
+import { TrophyCase } from '@/components/profile/TrophyCase';
 
 function formatCount(value: number) {
     return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
@@ -34,7 +36,7 @@ export default function PublicProfilePage() {
         queryKey: profileQueryKey,
         enabled: Boolean(profileId),
         queryFn: async () => {
-            const response = await userApi.getProfile(profileId!);
+            const response = await userApi.getProfile(profileId!, viewerId);
             return response.data;
         },
     });
@@ -200,6 +202,30 @@ export default function PublicProfilePage() {
                                 <p className="mt-6 rounded-2xl border border-border/60 bg-secondary/40 px-4 py-4 text-sm leading-7 text-foreground">
                                     {profile.bio || `Hi! I'm ${profile.firstName}, sharing stays, local notes, and travel moments from North Bengal.`}
                                 </p>
+
+                                {/* Stage Ribbon (Elevation Engine) */}
+                                {profile.currentStageTitle && (
+                                    <div className="mt-6">
+                                        <StageRibbon
+                                            stageTitle={profile.currentStageTitle}
+                                            stageIconUrl={profile.currentStageIconUrl || '/icons/stages/newcomer.svg'}
+                                            totalXp={profile.totalXp || 0}
+                                            xpToNextStage={profile.xpToNextStage}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Trophy Case */}
+                                <div className="mt-6">
+                                    <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                                        <Trophy className="w-4 h-4" />
+                                        Badges Earned
+                                    </h3>
+                                    <TrophyCase 
+                                        badges={profile.allBadges || []} 
+                                        isOwner={isOwnProfile}
+                                    />
+                                </div>
                             </div>
                         </section>
                     </aside>

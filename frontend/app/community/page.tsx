@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Image as ImageIcon, Send, X, Pencil, Search, Loader2, Scissors, Share2, MapPin } from 'lucide-react';
+import { Image as ImageIcon, Send, X, Pencil, Search, Loader2, Scissors, Share2, MapPin, Trophy } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -266,6 +266,13 @@ export default function CommunityPage() {
                                 >
                                     Following
                                 </button>
+                                <a
+                                    href="/community/leaderboard"
+                                    className="px-4 py-2 rounded-full border text-sm font-semibold whitespace-nowrap shrink-0 snap-start transition-all bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 text-amber-700 hover:from-amber-100 hover:to-yellow-100 flex items-center gap-1.5"
+                                >
+                                    <Trophy className="w-4 h-4" />
+                                    Leaderboard
+                                </a>
                             </div>
                         </div>
 

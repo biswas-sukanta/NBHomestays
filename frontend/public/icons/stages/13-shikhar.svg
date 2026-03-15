@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="shikharGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="50%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#F8FAFC"/>
+    </linearGradient>
+    <linearGradient id="peakGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <!-- Majestic peak -->
+  <path d="M8 56 L32 4 L56 56 Z" fill="url(#shikharGrad)" stroke="#334155" stroke-width="2"/>
+  <!-- Summit glow -->
+  <path d="M24 20 L32 4 L40 20 Z" fill="url(#peakGold)"/>
+  <!-- Climber at summit -->
+  <circle cx="32" cy="12" r="3" fill="#FEF3C7" stroke="#D97706" stroke-width="1"/>
+  <path d="M32 15 L32 22" stroke="#78350F" stroke-width="1.5"/>
+  <path d="M28 18 L32 16 L36 18" stroke="#78350F" stroke-width="1" fill="none"/>
+  <!-- Flag on summit -->
+  <line x1="40" y1="8" x2="40" y2="16" stroke="#78350F" stroke-width="1"/>
+  <path d="M40 8 L48 10 L40 12 Z" fill="#DC2626"/>
+  <!-- Base camp -->
+  <rect x="28" y="48" width="8" height="4" fill="#78350F"/>
+  <path d="M28 48 L32 44 L36 48 Z" fill="#92400E"/>
+</svg>

@@ -2,9 +2,16 @@ package com.nbh.backend.controller;
 
 import com.nbh.backend.dto.PostDto;
 import com.nbh.backend.dto.PostFeedDto;
+import com.nbh.backend.model.HelpfulVote;
+import com.nbh.backend.model.Post;
+import com.nbh.backend.repository.HelpfulVoteRepository;
+import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.service.FeedService;
 import com.nbh.backend.service.PostService;
+import com.nbh.backend.service.UserService;
+import com.nbh.backend.service.XpService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,7 +27,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Sort;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -29,6 +38,10 @@ public class PostController {
 
     private final PostService postService;
     private final FeedService feedService;
+    private final HelpfulVoteRepository helpfulVoteRepository;
+    private final PostRepository postRepository;
+    private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Legacy pageable endpoint - unchanged for backward compatibility.
@@ -59,7 +72,7 @@ public class PostController {
             @RequestParam(name = "limit", required = false) Integer limit,
             @RequestParam(name = "layout", required = false, defaultValue = "true") boolean layout,
             Authentication authentication) {
-        java.util.UUID userId = null;
+        UUID userId = null;
         if (authentication != null && authentication.isAuthenticated()) {
             String email = authentication.getName();
             // Get user ID from email for like status
@@ -114,7 +127,7 @@ public class PostController {
     @DeleteMapping("/{id}/like")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.LikeResponse> unlike(
-            @PathVariable("id") java.util.UUID id,
+            @PathVariable("id") UUID id,
             Authentication authentication) {
         if (authentication == null || authentication.getName() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to unlike this post");
@@ -131,7 +144,7 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PostDto.Response> getPostById(@PathVariable("id") java.util.UUID id) {
+    public ResponseEntity<PostDto.Response> getPostById(@PathVariable("id") UUID id) {
         return postService.getPostById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -143,7 +156,7 @@ public class PostController {
             @RequestParam(name = "limit", required = false) Integer limit,
             @RequestParam(name = "layout", required = false, defaultValue = "true") boolean layout,
             Authentication authentication) {
-        java.util.UUID userId = null;
+        UUID userId = null;
         if (authentication != null && authentication.isAuthenticated()) {
             userId = postService.getUserIdByEmail(authentication.getName());
         }
@@ -154,7 +167,7 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.Response> createPost(
             @Valid @RequestPart("request") PostDto.Request request,
-            @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
+            @RequestPart(value = "files", required = false) List<org.springframework.web.multipart.MultipartFile> files,
             Authentication authentication) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(postService.createPost(request, files, authentication.getName()));
@@ -171,9 +184,9 @@ public class PostController {
     @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.Response> updatePost(
-            @PathVariable("id") java.util.UUID id,
+            @PathVariable("id") UUID id,
             @RequestPart("request") PostDto.Request request,
-            @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
+            @RequestPart(value = "files", required = false) List<org.springframework.web.multipart.MultipartFile> files,
             Authentication authentication) {
         return ResponseEntity.ok(postService.updatePost(id, request, files, authentication.getName()));
     }
@@ -181,7 +194,7 @@ public class PostController {
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deletePost(
-            @PathVariable("id") java.util.UUID id,
+            @PathVariable("id") UUID id,
             Authentication authentication) {
         postService.deletePost(id, authentication.getName());
         return ResponseEntity.ok().build();
@@ -190,7 +203,7 @@ public class PostController {
     @PostMapping("/{id}/like")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.LikeResponse> toggleLike(
-            @PathVariable("id") java.util.UUID id,
+            @PathVariable("id") UUID id,
             Authentication authentication) {
         if (authentication == null || authentication.getName() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to like this post");
@@ -203,9 +216,79 @@ public class PostController {
         }
     }
 
+    // ═════════════════════════════════════════════════════════════════════════
+    // HELPFUL VOTE ENDPOINT (Phase 3 - Elevation Engine)
+    // ═════════════════════════════════════════════════════════════════════════
+    
+    /**
+     * Mark a post as helpful.
+     * 
+     * Rules:
+     * - User must be authenticated
+     * - Cannot mark own post as helpful
+     * - Cannot mark same post twice
+     * 
+     * Side effects:
+     * - Increments helpful_count on Post
+     * - Publishes HelpfulVoteEvent for async XP processing
+     */
+    @PostMapping("/{id}/helpful")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<HelpfulVoteResponse> markPostHelpful(
+            @PathVariable("id") UUID id,
+            Authentication authentication) {
+        
+        if (authentication == null || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in to mark posts as helpful");
+        }
+        
+        UUID voterId = userService.findUserIdByEmail(authentication.getName());
+        if (voterId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found");
+        }
+        
+        // Check if already voted
+        if (helpfulVoteRepository.existsByPostIdAndUserId(id, voterId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Already marked as helpful");
+        }
+        
+        // Get post and author
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+        
+        // Prevent self-voting
+        if (post.getUser().getId().equals(voterId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot mark own post as helpful");
+        }
+        
+        // Save helpful vote
+        HelpfulVote vote = HelpfulVote.builder()
+                .postId(id)
+                .userId(voterId)
+                .votedAt(Instant.now())
+                .build();
+        helpfulVoteRepository.save(vote);
+        
+        // Increment helpful count on post
+        int newHelpfulCount = post.getHelpfulCount() + 1;
+        post.setHelpfulCount(newHelpfulCount);
+        postRepository.save(post);
+        
+        // Publish event for XpService to process async
+        eventPublisher.publishEvent(new XpService.HelpfulVoteEvent(
+                id, voterId, post.getUser().getId(), Instant.now()));
+        
+        return ResponseEntity.ok(new HelpfulVoteResponse(newHelpfulCount, true));
+    }
+    
+    /**
+     * Response DTO for helpful vote endpoint.
+     */
+    public record HelpfulVoteResponse(int helpfulCount, boolean voted) {}
+
     @PostMapping("/{id}/share")
     public ResponseEntity<PostDto.LikeResponse> sharePost(
-            @PathVariable("id") java.util.UUID id) {
+            @PathVariable("id") UUID id) {
         PostDto.LikeResponse resp = postService.incrementShare(id);
         return ResponseEntity.ok(resp);
     }
@@ -213,9 +296,9 @@ public class PostController {
     @PostMapping(value = "/{id}/repost", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostDto.Response> repost(
-            @PathVariable("id") java.util.UUID id,
+            @PathVariable("id") UUID id,
             @RequestPart(value = "request", required = false) PostDto.Request request,
-            @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
+            @RequestPart(value = "files", required = false) List<org.springframework.web.multipart.MultipartFile> files,
             Authentication authentication) {
         if (request == null) {
             request = new PostDto.Request();

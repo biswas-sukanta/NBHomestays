@@ -148,21 +148,81 @@ function MyPostsTab() {
 // ── Settings Tab ──────────────────────────────────────────────
 function SettingsTab() {
     const { user, logout } = useAuth() as any;
+    const [pending, setPending] = useState<string | null>(null);
+    
+    const updateField = async (field: string, value: any) => {
+        setPending(field);
+        try {
+            await userApi.updateProfile({ [field]: value });
+            toast.success('Profile updated!');
+        } catch {
+            toast.error('Failed to update profile');
+        } finally {
+            setPending(null);
+        }
+    };
+    
     return (
         <div className="max-w-md space-y-6">
+            {/* Display Name */}
+            <div className="bg-secondary/40 rounded-xl p-4 space-y-4">
+                <h3 className="font-semibold text-sm text-foreground">Display Name</h3>
+                <input
+                    type="text"
+                    placeholder="How should we call you?"
+                    defaultValue={user?.displayName || ''}
+                    className="w-full bg-white border border-border/50 rounded-lg px-3 py-2 text-sm"
+                    onBlur={(e) => updateField('displayName', e.target.value)}
+                    disabled={pending === 'displayName'}
+                />
+            </div>
+            
+            {/* Location */}
+            <div className="bg-secondary/40 rounded-xl p-4 space-y-4">
+                <h3 className="font-semibold text-sm text-foreground">Location</h3>
+                <input
+                    type="text"
+                    placeholder="Where are you based?"
+                    defaultValue={user?.location || ''}
+                    className="w-full bg-white border border-border/50 rounded-lg px-3 py-2 text-sm"
+                    onBlur={(e) => updateField('location', e.target.value)}
+                    disabled={pending === 'location'}
+                />
+            </div>
+            
+            {/* Bio */}
             <div className="bg-secondary/40 rounded-xl p-4 space-y-4">
                 <h3 className="font-semibold text-sm text-foreground">Public Bio</h3>
                 <Textarea
                     placeholder="Tell the community about yourself..."
                     defaultValue={user?.bio}
                     className="bg-white border-border/50 text-sm italic"
-                    onBlur={(e) => {
-                        userApi.updateProfile({ bio: e.target.value })
-                            .then(() => toast.success('Bio updated!'))
-                            .catch(() => toast.error('Failed to update bio'));
-                    }}
+                    onBlur={(e) => updateField('bio', e.target.value)}
+                    disabled={pending === 'bio'}
                 />
             </div>
+            
+            {/* Traveller Type */}
+            <div className="bg-secondary/40 rounded-xl p-4 space-y-4">
+                <h3 className="font-semibold text-sm text-foreground">Traveller Type</h3>
+                <select
+                    defaultValue={user?.travellerType || ''}
+                    className="w-full bg-white border border-border/50 rounded-lg px-3 py-2 text-sm"
+                    onChange={(e) => updateField('travellerType', e.target.value || null)}
+                    disabled={pending === 'travellerType'}
+                >
+                    <option value="">Select your travel style</option>
+                    <option value="SOLO">Solo Traveller</option>
+                    <option value="COUPLE">Couple</option>
+                    <option value="FAMILY">Family</option>
+                    <option value="GROUP">Group</option>
+                    <option value="BUSINESS">Business</option>
+                    <option value="DIGITAL_NOMAD">Digital Nomad</option>
+                    <option value="BACKPACKER">Backpacker</option>
+                    <option value="LUXURY">Luxury</option>
+                </select>
+            </div>
+            
             <Button
                 variant="destructive"
                 className="w-full"
@@ -176,13 +236,23 @@ function SettingsTab() {
 
 // ── Main Profile Page ──────────────────────────────────────────
 export default function ProfilePage() {
-    const { isAuthenticated, user, logout } = useAuth() as any;
+    const { isAuthenticated, isLoading, user, logout } = useAuth() as any;
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<TabKey>('boards');
 
     useEffect(() => {
-        if (!isAuthenticated) router.replace('/login');
-    }, [isAuthenticated]);
+        // Only redirect after loading is complete and user is not authenticated
+        if (!isLoading && !isAuthenticated) router.replace('/login');
+    }, [isLoading, isAuthenticated]);
+
+    // Show loading state while checking auth
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
 
     if (!isAuthenticated) return null;
 

@@ -61,6 +61,14 @@ public class Comment {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String body;
+    /**
+     * Count of how many users marked this comment as helpful.
+     * Used for Helper badge eligibility and XP rewards.
+     */
+    @Column(name = "helpful_count", nullable = false)
+    @Builder.Default
+    private int helpfulCount = 0;
+
 
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

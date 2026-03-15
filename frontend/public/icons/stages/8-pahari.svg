@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="pahariGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#78716C"/>
+      <stop offset="50%" stop-color="#A8A29E"/>
+      <stop offset="100%" stop-color="#D6D3D1"/>
+    </linearGradient>
+  </defs>
+  <!-- Mountain range -->
+  <path d="M4 56 L20 28 L32 40 L44 16 L60 56 Z" fill="url(#pahariGrad)" stroke="#57534E" stroke-width="2"/>
+  <!-- Snow caps -->
+  <path d="M16 32 L20 28 L24 32 Z" fill="#F8FAFC"/>
+  <path d="M40 20 L44 16 L48 20 Z" fill="#F8FAFC"/>
+  <!-- Terraced fields -->
+  <path d="M12 48 Q20 44 28 48 Q36 52 44 48" stroke="#059669" stroke-width="2" fill="none"/>
+  <path d="M16 52 Q24 48 32 52 Q40 56 48 52" stroke="#10B981" stroke-width="2" fill="none"/>
+  <!-- Mountain hut -->
+  <path d="M48 44 L52 36 L56 44 Z" fill="#78350F" stroke="#451A03" stroke-width="1"/>
+  <rect x="50" y="40" width="4" height="4" fill="#FEF3C7"/>
+  <!-- Sun behind mountain -->
+  <circle cx="44" cy="12" r="6" fill="#FCD34D" opacity="0.8"/>
+</svg>
