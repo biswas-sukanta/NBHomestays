@@ -380,7 +380,7 @@ Sentry:
 
 - Flyway migration files in:
   - `backend/src/main/resources/db/migration`
-- Current latest migration file present: `V39__add_homestay_meta.sql`
+- Current latest migration file present: `V57__create_media_uploads_table.sql`
 
 ## 8.2 Notable Schema Evolution
 
@@ -393,6 +393,10 @@ Sentry:
 - Destination and state geography model
 - Meal configuration JSONB and additional homestay meta JSONB
 - Legacy `bookings` table dropped in `V23__Drop_Bookings_And_Constraints.sql`
+- Follow system with `user_follows` table (V48)
+- Trending score computation and history (V51, V53, V55)
+- Comment count denormalization (V56)
+- Media uploads orphan tracking table (V57)
 
 ## 8.3 Deployment SQL Files
 
@@ -446,11 +450,11 @@ Stable Community Playwright suite lives under `frontend/tests/community/`.
 
 ## 11. Known Drift / Pitfalls (Important for AI Agents)
 
-1. Bookings are removed in backend migrations (`V23` dropped table), and there is no booking controller in backend Java code.
-2. Frontend still has `/bookings` page calling `GET /bookings/my-bookings`, which is likely stale/incompatible.
-3. Generated OpenAPI client under `frontend/src/lib/api` includes `booking-controller-api.ts`, indicating stale or mixed contract generation state.
-4. In `frontend/app/host/dashboard/page.tsx`, `homestayApi` is imported from `@/lib/api-client` (generated controller instance) but code calls wrapper-style methods (`getMyListings`, `deleteHomestay`) that belong to `frontend/lib/api/homestays.ts`. This is a likely bug hotspot.
-5. Deployment SQL files under `deployment/` are not synchronized with latest Flyway migrations; avoid treating them as canonical schema.
+1. ~~Bookings are removed in backend migrations~~ - **RESOLVED**: Frontend `/bookings` route has been purged. No `/bookings` references found in frontend codebase.
+2. ~~Frontend still has `/bookings` page~~ - **RESOLVED**: Route no longer exists.
+3. Generated OpenAPI client under `frontend/src/lib/api` may include stale artifacts; prefer manual wrappers in `frontend/lib/api/*` for active development.
+4. Deployment SQL files under `deployment/` are not synchronized with latest Flyway migrations; avoid treating them as canonical schema.
+5. Test credentials in `AI_TEST_CREDENTIALS.md` use `admin@nbh.com`, `host@nbh.com`, `user@nbh.com` - these differ from seed data emails (`host@example.com`, `guest@example.com`). Tests use environment variables (`PW_ADMIN_EMAIL`, etc.) with fallbacks.
 
 ## 12. AI Agent Working Guide (Recommended Edits by Concern)
 
@@ -511,13 +515,39 @@ Stable Community Playwright suite lives under `frontend/tests/community/`.
 - `PLAYWRIGHT_TEST_BASE_URL`
 - `BACKEND_URL`
 
-## 14. Current Reality Snapshot (As of 2026-03-08)
+## 14. Current Reality Snapshot (As of 2026-03-15)
 
-- Repository contains both mature feature flows and legacy/stale artifacts.
-- Core active systems are homestays, destinations/states, community, admin, uploads, reviews, and caching.
-- Booking-related pieces appear deprecated in backend but partially present in frontend/generated client.
+- Repository contains mature feature flows with legacy drift largely resolved.
+- Core active systems: homestays, destinations/states, community (posts/comments/likes/follows), admin, uploads, reviews, trending, and caching.
+- Orphan media tracking system implemented with `MediaUpload` entity and scheduled cleanup job.
+- HomestayService `rejectHomestay()` now has `@Transactional` annotation (resolved).
+- Frontend race conditions addressed: homestay dropdown loading state, immediate rollback on post failure.
 - When making changes, prefer:
   - Flyway migrations + live Java model/controller reality
-  - manual frontend API wrappers in `frontend/lib/api/*` (unless intentionally migrating fully to generated client)
+  - manual frontend API wrappers in `frontend/lib/api/*`
   - explicit validation against actual backend route map before editing UI flows
+
+## 15. Trending & Feed Engine (Verified Implementation)
+
+### Trending Score Formula (`TrendingService.calculateScore`)
+```
+engagement = (loveCount * 3.0) + (commentCount * 4.0) + (shareCount * 5.0) + (viewCount * 0.2)
+recencyBoost = 24.0 / ageHours
+score = max(0, engagement + recencyBoost)
+```
+
+- Scheduled job runs every 15 minutes: `@Scheduled(cron = "0 */15 * * * *")`
+- Top 20 posts with score > 0 marked as `trending = true`
+- History tracked in `post_trending_history` table
+
+### Feed Layout Engine Scoring (`FeedLayoutEngine.scorePost`)
+```
+score = (likeCount * 2) + (commentCount * 3) + (shareCount * 4) + (mediaCount * 2) + postPriority
+```
+
+Block types: `FEATURED`, `HERO`, `STANDARD`, `PHOTO`, `COLLAGE`, `PLACEHOLDER`
+- Editorial pattern cycles through block types for visual rhythm
+- Max 2 consecutive same block type (diversity enforcement)
+- Max 2 posts per author in sequence
+- Max 3 same-tag cluster in sequence
 

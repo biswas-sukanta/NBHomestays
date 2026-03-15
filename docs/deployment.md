@@ -6,7 +6,7 @@ Verified against repository code on 2026-03-15.
 
 ### 1.1 Migration Sequence
 
-Social platform migrations (V47-V55):
+Social platform migrations (V47-V57):
 
 | Migration | Description |
 |-----------|-------------|
@@ -19,6 +19,8 @@ Social platform migrations (V47-V55):
 | `V53__add_trending_computed_at.sql` | Add trending_computed_at timestamp |
 | `V54__community_timestamp_timezone.sql` | Convert community timestamps to timezone-safe |
 | `V55__post_trending_history.sql` | Add trending history analytics table |
+| `V56__add_comment_count.sql` | Add comment_count denormalization |
+| `V57__create_media_uploads_table.sql` | Add orphan media tracking table |
 
 ### 1.2 Migration Best Practices
 
@@ -39,7 +41,7 @@ LIMIT 10;
 -- Verify community tables exist
 SELECT table_name FROM information_schema.tables 
 WHERE table_schema = 'public' 
-AND table_name IN ('posts', 'user_follows', 'post_trending_history');
+AND table_name IN ('posts', 'user_follows', 'post_trending_history', 'media_uploads');
 
 -- Verify timestamp columns are timezone-aware
 SELECT column_name, data_type 
@@ -162,9 +164,10 @@ docker build -t nbh-backend:latest .
 
 ### 5.2 Database Verification
 
-- [ ] Flyway migrations applied through V55
+- [ ] Flyway migrations applied through V57
 - [ ] `post_trending_history` table exists
 - [ ] `user_follows` table exists
+- [ ] `media_uploads` table exists (orphan tracking)
 - [ ] Community timestamps use timezone
 - [ ] Indexes created
 
@@ -187,7 +190,7 @@ docker build -t nbh-backend:latest .
 ### 5.5 Post-Deployment
 
 - [ ] Monitor logs for errors
-- [ ] Verify scheduled jobs running (VibeScoreJob, TrendingScoreJob)
+- [ ] Verify scheduled jobs running (VibeScoreJob, TrendingScoreJob, OrphanedMediaCleanupJob)
 - [ ] Check Redis cache connectivity
 - [ ] Verify ImageKit uploads working
 

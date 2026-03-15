@@ -1,8 +1,9 @@
 # System Integrity Audit Report
 
-**Audit Date:** 2025-01-XX  
+**Audit Date:** 2026-03-15  
 **Auditor:** Staff Security & Performance Engineer  
 **Scope:** Ultra-deep system integrity and codebase audit across five phases  
+**Status:** Updated with resolution tracking  
 
 ---
 
@@ -275,31 +276,23 @@ if (c.getLegacyImageUrls() != null && !c.getLegacyImageUrls().isEmpty() && combi
 
 ### Findings
 
-#### 3.1 Missing @Transactional on Delete Operations 🔴 HIGH
+#### 3.1 Missing @Transactional on Delete Operations ✅ RESOLVED
 
-**Location:** `@backend/src/main/java/com/nbh/backend/service/HomestayService.java:315-321`
+**Location:** `@backend/src/main/java/com/nbh/backend/service/HomestayService.java:314-325`
 
+**Original Issue:** `rejectHomestay()` lacked `@Transactional`. If the save fails after cache eviction, cache is invalidated but DB is inconsistent.
+
+**Resolution:** `@Transactional` annotation now present at line 314:
 ```java
+@org.springframework.transaction.annotation.Transactional
 @Caching(evict = {
     @CacheEvict(value = "homestay", key = "#id"),
     @CacheEvict(value = "homestaysSearch", allEntries = true)
 })
-public void rejectHomestay(UUID id) {  // NO @Transactional!
-    Homestay homestay = repository.findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Homestay not found"));
-    homestay.setStatus(Homestay.Status.REJECTED);
-    repository.save(homestay);
-}
-```
-
-**Issue:** `rejectHomestay()` lacks `@Transactional`. If the save fails after cache eviction, cache is invalidated but DB is inconsistent.
-
-**Recommendation:** Add `@Transactional` annotation:
-```java
-@Transactional
-@Caching(evict = {...})
 public void rejectHomestay(UUID id) { ... }
 ```
+
+**Status:** ✅ RESOLVED
 
 ---
 
@@ -435,38 +428,25 @@ public void initImageKit() {
 
 ---
 
-#### 4.2 Upload Error Handling - Partial Rollback 🟡 MEDIUM
+#### 4.2 Upload Error Handling - Partial Rollback ✅ RESOLVED
 
-**Location:** `@backend/src/main/java/com/nbh/backend/service/ImageUploadService.java:117-128`
+**Location:** `@backend/src/main/java/com/nbh/backend/service/ImageUploadService.java`
 
-```java
-for (MultipartFile file : files) {
-    try {
-        Result result = ImageKit.getInstance().upload(fileCreateRequest);
-        // Success - add to results
-    } catch (Exception e) {
-        log.error("[IMAGEKIT UPLOAD] FATAL ERROR: Failed to upload file {}", originalFilename, e);
-        throw new IOException("Failed to upload file to ImageKit", e);  // Stops processing
-    }
-}
-```
+**Original Issue:** If uploading multiple files and one fails, successfully uploaded files remained orphaned in ImageKit.
 
-**Issue:** If uploading 3 files and the 2nd fails, the 1st file remains orphaned in ImageKit. No cleanup of partial uploads.
+**Resolution:** 
+1. `MediaUploadTrackingService` implemented to track PENDING uploads
+2. `OrphanedMediaCleanupJob` scheduled every 6 hours to clean orphaned files
+3. Frontend rollback on post failure calls `DELETE /images/rollback`
 
-**Recommendation:** Implement compensating transaction:
-```java
-// Track successfully uploaded fileIds
-List<String> uploadedFileIds = new ArrayList<>();
-try {
-    // ... upload loop, track fileIds
-} catch (Exception e) {
-    // Cleanup partial uploads
-    uploadedFileIds.forEach(fileId -> {
-        try { deleteFileById(fileId); } catch (Exception ignored) {}
-    });
-    throw e;
-}
-```
+**New files:**
+- `MediaUpload.java` - Entity tracking upload status
+- `MediaUploadStatus.java` - Enum (PENDING, ATTACHED, ORPHANED_DELETED)
+- `MediaUploadTrackingService.java` - Service for status management
+- `OrphanedMediaCleanupJob.java` - Scheduled cleanup job
+- `V57__create_media_uploads_table.sql` - Database migration
+
+**Status:** ✅ RESOLVED
 
 ---
 
@@ -521,22 +501,17 @@ public void deleteFileById(String fileId) {
 
 ---
 
-#### 4.5 Orphaned Media Risk - Homestay Update 🟡 MEDIUM
+#### 4.5 Orphaned Media Risk - Homestay Update ✅ RESOLVED
 
-**Location:** `@backend/src/main/java/com/nbh/backend/service/HomestayService.java:378-436`
+**Original Issue:** Failed async jobs leave orphaned files in ImageKit, incurring storage costs.
 
-**Flow:**
-1. User removes media from homestay
-2. `removedFileIds` collected
-3. `asyncJobService.enqueueDeleteMedia(removedFileIds)` called
-4. If async job fails after max retries → **ORPHANED FILES**
+**Resolution:**
+1. `OrphanedMediaCleanupJob` runs every 6 hours (`@Scheduled(cron = "0 0 */6 * * *")`)
+2. Finds PENDING uploads older than 6 hours
+3. Deletes files from ImageKit and marks as ORPHANED_DELETED
+4. `MediaUploadTrackingService.markAsAttached()` called on successful post/homestay creation
 
-**Risk:** Failed async jobs leave orphaned files in ImageKit, incurring storage costs.
-
-**Recommendation:**
-1. Add monitoring/alerting for failed async jobs
-2. Implement periodic orphan cleanup job
-3. Consider synchronous delete for critical paths
+**Status:** ✅ RESOLVED
 
 ---
 

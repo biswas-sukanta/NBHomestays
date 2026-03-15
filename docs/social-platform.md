@@ -189,7 +189,7 @@ score = engagement + recencyBoost
 
 **Job:** `backend/src/main/java/com/nbh/backend/job/TrendingScoreJob.java`
 
-**Schedule:** Hourly (`@Scheduled(cron = "0 0 * * * *")`)
+**Schedule:** Every 15 minutes (`@Scheduled(cron = "0 */15 * * * *")`)
 
 **Service:** `backend/src/main/java/com/nbh/backend/service/TrendingService.java`
 

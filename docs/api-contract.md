@@ -2,9 +2,12 @@
 
 *Auto-Updated Document*: This file maps the exact DTO structures and endpoints found in the `com.nbh.backend` package.
 
+Verified against repository code on 2026-03-15.
+
 ## Authentication (AuthDto)
 - **Register**: `POST /api/auth/register` - `email`, `password`, `firstname`, `lastname`, `role`
 - **Authenticate**: `POST /api/auth/authenticate` - `email`, `password` → Returns `accessToken`, `refreshToken`
+- **Login**: `POST /api/auth/login` - `email`, `password` → Returns `accessToken`, `refreshToken`
 - **Refresh**: `POST /api/auth/refresh` - `refreshToken` → Returns new `accessToken`
 
 ## User Profile (AuthorDto)
@@ -201,6 +204,130 @@ Creates a repost. Requires authentication.
 ```
 
 **Response:** `PostDto.Response`
+
+### DELETE /api/posts/{id}
+
+Deletes a post. Requires authentication.
+
+**Response:** 200 OK
+
+### DELETE /api/posts/admin/wipe-all
+
+Nuclear wipe - deletes ALL posts, comments, likes, and media. Admin only.
+
+**Response:**
+```json
+{
+  "postsDeleted": "int",
+  "commentsDeleted": "int",
+  "likesDeleted": "int",
+  "mediaDeleted": "int"
+}
+```
+
+### DELETE /api/posts/admin/wipe-batch
+
+Batch wipe - deletes limited batch of posts. Admin only.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | int | 10 | Max posts to delete |
+
+**Response:**
+```json
+{
+  "deletedCount": "int",
+  "hasMore": "boolean"
+}
+```
+
+## Image Endpoints
+
+### POST /api/images/upload-multiple
+
+Uploads multiple images. Requires authentication.
+
+**Request:** `multipart/form-data`
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `files` | File[] | Yes | Image files (max 5, each under 5MB) |
+
+**Response:** `[MediaResource]`
+```json
+[
+  {
+    "id": "UUID",
+    "url": "String",
+    "fileId": "String"
+  }
+]
+```
+
+### DELETE /api/images/rollback
+
+Rollback endpoint for orphaned media. Called by frontend when post creation fails.
+
+**Request Body:**
+```json
+["fileId1", "fileId2", ...]
+```
+
+**Response:**
+```json
+{
+  "deleted": "int",
+  "failed": "int",
+  "total": "int"
+}
+```
+
+## Homestay Endpoints
+
+### GET /api/homestays
+Returns all homestays for dropdown.
+
+### GET /api/homestays/lookup
+Returns lightweight homestay list for combobox selection.
+
+**Response:** `[LookupResponse]`
+```json
+[
+  { "id": "UUID", "name": "String" }
+]
+```
+
+### GET /api/homestays/search
+Search homestays with filters.
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `q` | String | Search query |
+| `tag` | String | Filter by tag |
+| `stateSlug` | String | Filter by state |
+| `isFeatured` | Boolean | Filter featured |
+| `minPrice` / `maxPrice` | BigDecimal | Price range |
+| `minLat` / `maxLat` / `minLng` / `maxLng` | Double | Geo bounds |
+| `page` / `size` | int | Pagination |
+
+### POST /api/homestays/{id}/view
+Records a homestay view.
+
+### POST /api/homestays/{id}/inquiry
+Records a homestay inquiry.
+
+### PUT /api/homestays/{id}/approve
+Approves a pending homestay. Admin only.
+
+### PUT /api/homestays/{id}/reject
+Rejects a pending homestay. Admin only.
+
+### GET /api/homestays/pending
+Returns pending homestays for admin approval.
+
+### GET /api/homestays/my-listings
+Returns current user's homestay listings.
 
 ## User Endpoints
 

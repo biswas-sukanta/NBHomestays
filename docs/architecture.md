@@ -53,6 +53,7 @@ backend/src/main/java/com/nbh/backend/
 | `Review` | Overall + categorical ratings |
 | `Destination` / `State` | Geography hierarchy |
 | `MediaResource` | Unified media table |
+| `MediaUpload` | Orphan media tracking (PENDING, ATTACHED, ORPHANED_DELETED) |
 | `UserFollow` | Follow graph (follower/followed) |
 | `PostLike` | Post likes (composite PK) |
 | `PostTimeline` | Timeline hot window entries |
@@ -173,6 +174,7 @@ GET /api/posts/feed?cursor=eyJpZCI6IjEyMyIsImNyZWF0ZWRBdCI6IjIwMjQtMDEtMDEifQ==&
 | `post_likes` | Post likes (composite PK) |
 | `post_tags` | Post tags (ElementCollection) |
 | `media_resources` | Unified media storage |
+| `media_uploads` | Orphan media tracking |
 | `destinations` | Destination hierarchy |
 | `states` | State hierarchy |
 | `reviews` | Homestay reviews |
@@ -237,7 +239,8 @@ Browser → POST /api/images/upload-multiple → ImageKit → CDN URL
 | Job | Schedule | Description |
 |-----|----------|-------------|
 | `VibeScoreJob` | Hourly | Calculates homestay vibe scores |
-| `TrendingScoreJob` | Hourly | Calculates post trending scores |
+| `TrendingScoreJob` | Every 15 min | Calculates post trending scores |
+| `OrphanedMediaCleanupJob` | Every 6 hours | Cleans orphaned media uploads |
 
 ## 9. Performance Indexes
 
