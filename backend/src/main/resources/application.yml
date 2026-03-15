@@ -24,7 +24,6 @@ spring:
       ddl-auto: none # Temporary workaround until entity-schema alignment migration is created
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         generate_statistics: false
         format_sql: true
   flyway:
