@@ -68,5 +68,8 @@ export const postApi = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
             body: JSON.stringify(data)
-        })
+        }),
+
+    // Rollback: Delete uploaded media files when post creation fails
+    rollbackMedia: (fileIds: string[]) => api.delete('/images/rollback', { data: fileIds })
 };

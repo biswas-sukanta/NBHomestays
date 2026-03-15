@@ -59,6 +59,7 @@ public class PostService {
     private final ViewTrackingService viewTrackingService;
     private final AvatarUrlResolver avatarUrlResolver;
     private final TrendingService trendingService;
+    private final MediaUploadTrackingService mediaUploadTrackingService;
 
     /**
      * Get user ID by email - used by feed service for like status.
@@ -137,6 +138,8 @@ public class PostService {
 
         Post saved = postRepository.save(post);
         asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "posts/" + saved.getId());
+        // Mark media uploads as attached to prevent orphan cleanup
+        mediaUploadTrackingService.markAsAttached(extractFileIds(request.getMedia()), "POST", saved.getId().toString());
         feedCacheService.invalidateAll();
         // Fan-out to timeline
         timelineService.insertPostToTimeline(saved);
@@ -439,6 +442,8 @@ public class PostService {
         Post saved = postRepository.save(post);
         asyncJobService.enqueueDeleteMedia(removedFileIds);
         asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "posts/" + saved.getId());
+        // Mark media uploads as attached to prevent orphan cleanup
+        mediaUploadTrackingService.markAsAttached(extractFileIds(request.getMedia()), "POST", saved.getId().toString());
         feedCacheService.invalidateAll();
         // Update timeline
         timelineService.insertPostToTimeline(saved);

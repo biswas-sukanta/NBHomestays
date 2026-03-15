@@ -13,7 +13,7 @@ export interface HomestayLookup {
  * Caches results for 1 hour to reduce redundant API calls.
  */
 export function useHomestaySearch() {
-    return useQuery<HomestayLookup[]>({
+    const query = useQuery<HomestayLookup[]>({
         queryKey: queryKeys.homestays.lookup,
         queryFn: async () => {
             const { data } = await homestayApi.getLookup();
@@ -22,4 +22,11 @@ export function useHomestaySearch() {
         staleTime: 1000 * 60 * 60, // 1 hour
         gcTime: 1000 * 60 * 60 * 24, // 24 hours
     });
+
+    return {
+        data: query.data ?? [],
+        isLoading: query.isLoading,
+        isFetching: query.isFetching,
+        error: query.error,
+    };
 }

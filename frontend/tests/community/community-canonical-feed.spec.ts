@@ -810,3 +810,75 @@ test.describe('Following Tab - Comprehensive UI Scenarios', () => {
     }
   });
 });
+
+// ── Homestay Dropdown Loading State Test ─────────────────────────────────
+authedTest.describe('Create Post - Homestay Dropdown Loading State', () => {
+  authedTest('dropdown is disabled while homestays are loading', async ({ page }) => {
+    // Intercept the homestay lookup API and delay response by 2 seconds
+    await page.route('**/api/homestays/lookup', async (route) => {
+      // Delay response by 2 seconds
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Fulfill with mock data
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          { id: 'test-id-1', name: 'Test Homestay 1' },
+          { id: 'test-id-2', name: 'Test Homestay 2' },
+        ]),
+      });
+    });
+
+    // Navigate to community page
+    await page.goto('/community');
+    await page.waitForLoadState('networkidle');
+
+    // Open create post modal via FAB button
+    const createPostBtn = page.getByTestId('fab-add-post');
+    await createPostBtn.waitFor({ state: 'visible', timeout: 5000 });
+    await createPostBtn.click();
+
+    // Wait for modal to appear
+    const modal = page.locator('[data-testid="create-post-modal"], .fixed:has-text("Publish")').first();
+    await expect(modal).toBeVisible({ timeout: 5000 });
+
+    // Check that the combobox input is disabled while loading
+    const comboboxInput = page.getByTestId('homestay-combobox-input');
+    
+    // Verify it shows loading state
+    await expect(comboboxInput).toBeDisabled({ timeout: 1000 });
+    
+    // Verify loading placeholder text
+    const placeholder = await comboboxInput.getAttribute('placeholder');
+    expect(placeholder).toContain('Loading');
+
+    // Wait for the API to resolve (2s delay + buffer)
+    await page.waitForTimeout(2500);
+
+    // Now verify the dropdown is enabled
+    await expect(comboboxInput).toBeEnabled({ timeout: 2000 });
+
+    // Click to open dropdown
+    const comboboxBtn = page.getByTestId('homestay-combobox-btn');
+    await comboboxBtn.click();
+
+    // Verify dropdown options appear
+    const dropdown = page.getByTestId('homestay-dropdown');
+    await expect(dropdown).toBeVisible({ timeout: 2000 });
+
+    // Verify homestay options are visible and selectable
+    const option1 = page.getByTestId('combobox-option-test-id-1');
+    await expect(option1).toBeVisible({ timeout: 2000 });
+
+    // Select an option
+    await option1.click();
+
+    // Verify selection is shown as a pill
+    const selectedPill = page.getByTestId('homestay-selected-pill');
+    await expect(selectedPill).toBeVisible({ timeout: 2000 });
+    await expect(selectedPill).toContainText('Test Homestay 1');
+
+    console.log('✅ PASSED: Homestay dropdown loading state works correctly');
+  });
+});

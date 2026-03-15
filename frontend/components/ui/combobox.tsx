@@ -17,15 +17,18 @@ interface ComboboxProps {
     onChange: (value: string) => void;
     placeholder?: string;
     className?: string;
+    disabled?: boolean;
+    loading?: boolean;
 }
 
-export function CustomCombobox({ options, value, onChange, placeholder = "Tag Homestay", className }: ComboboxProps) {
+export function CustomCombobox({ options, value, onChange, placeholder = "Tag Homestay", className, disabled = false, loading = false }: ComboboxProps) {
     const [query, setQuery] = useState('');
     const [mounted, setMounted] = useState(false);
     const triggerRef = useRef<HTMLDivElement>(null);
     const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
 
     const selectedOption = options.find((opt) => opt.id === value) || null;
+    const isDisabled = disabled || loading;
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -95,16 +98,25 @@ export function CustomCombobox({ options, value, onChange, placeholder = "Tag Ho
                             <div className="relative w-full">
                                 <Combobox.Input
                                     data-testid="homestay-combobox-input"
-                                    className="w-full bg-zinc-900/50 border border-white/10 rounded-2xl pl-11 pr-11 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 text-white placeholder:text-zinc-600 transition-all duration-300 hover:bg-zinc-900 shadow-2xl"
+                                    className={cn(
+                                        "w-full bg-zinc-900/50 border border-white/10 rounded-2xl pl-11 pr-11 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500/50 text-white placeholder:text-zinc-600 transition-all duration-300 hover:bg-zinc-900 shadow-2xl",
+                                        isDisabled && "opacity-50 cursor-not-allowed"
+                                    )}
                                     displayValue={(opt: Option) => opt?.name || ''}
                                     onChange={(event) => setQuery(event.target.value)}
-                                    placeholder={placeholder}
+                                    placeholder={loading ? 'Loading homestays...' : placeholder}
                                     autoComplete="off"
+                                    disabled={isDisabled}
                                 />
-                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 pointer-events-none" />
+                                {loading ? (
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 animate-pulse pointer-events-none" />
+                                ) : (
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 pointer-events-none" />
+                                )}
                                 <Combobox.Button
                                     data-testid="homestay-combobox-btn"
                                     className="absolute inset-y-0 right-0 flex items-center pr-4"
+                                    disabled={isDisabled}
                                 >
                                     <ChevronsUpDown className="h-4 w-4 text-zinc-500" aria-hidden="true" />
                                 </Combobox.Button>

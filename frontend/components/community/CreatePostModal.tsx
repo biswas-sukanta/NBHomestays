@@ -88,7 +88,8 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
     const fileRef = useRef<HTMLInputElement>(null);
 
     // Unified homestay search hook
-    const { data: homestays = [] } = useHomestaySearch();
+    const { data: homestays = [], isLoading: homestaysLoading, isFetching: homestaysFetching } = useHomestaySearch();
+    const homestaysBusy = homestaysLoading || homestaysFetching;
     const [selectedHomestay, setSelectedHomestay] = useState(postData?.homestayId || '');
     const [selectedTags, setSelectedTags] = useState<string[]>((postData?.tags || []).filter(tag => ALLOWED_VIBE_TAGS.some(option => option.value === tag)));
     const [selectedPostType, setSelectedPostType] = useState<string>(postData?.postType || 'Story');
@@ -252,8 +253,10 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             return { ...old, pages: newPages };
         });
 
+        // Track uploaded media for potential rollback
+        let uploadedMedia: { url: string; fileId?: string }[] = [];
+
         try {
-            let uploadedMedia: { url: string; fileId?: string }[] = [];
             if (stagedFiles.length > 0) {
                 const results = await Promise.all(
                     stagedFiles.map(async (staged) => {
@@ -316,6 +319,19 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             console.error('Post failed', err);
             queryClient.setQueryData(latestFeedKey, previousFeed);
             toast.error(err.response?.data?.message || "Failed to share story.");
+
+            // Rollback: Delete uploaded media files to prevent orphans
+            const uploadedFileIds = uploadedMedia
+                .map((m) => m.fileId)
+                .filter((id): id is string => id !== undefined);
+            if (uploadedFileIds.length > 0) {
+                try {
+                    await postApi.rollbackMedia(uploadedFileIds);
+                    console.log('Rollback: Deleted orphaned media files', uploadedFileIds);
+                } catch (rollbackErr) {
+                    console.error('Rollback failed', rollbackErr);
+                }
+            }
         } finally {
             setSubmitting(false);
         }
@@ -435,6 +451,8 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
                                 value={selectedHomestay}
                                 onChange={setSelectedHomestay}
                                 placeholder="Tag a specific Homestay..."
+                                loading={homestaysBusy}
+                                disabled={!homestaysBusy && homestays.length === 0}
                             />
                         </div>
 

@@ -35,7 +35,8 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
     const [stagedFiles, setStagedFiles] = useState<{ id: string; file: File; previewUrl: string }[]>([]);
 
     // Unified homestay search hook
-    const { data: homestays = [] } = useHomestaySearch();
+    const { data: homestays = [], isLoading: homestaysLoading, isFetching: homestaysFetching } = useHomestaySearch();
+    const homestaysBusy = homestaysLoading || homestaysFetching;
     const [selectedHomestay, setSelectedHomestay] = useState('');
     const fileRef = useRef<HTMLInputElement>(null);
 
@@ -218,7 +219,14 @@ export function RepostModal({ quote, onSuccess, onCancel }: RepostModalProps) {
                             <MapPin className="w-3.5 h-3.5" /> Tagged Homestay
                         </p>
                         <div className="border border-neutral-200 rounded-2xl shadow-sm overflow-hidden bg-white isolate z-10">
-                            <CustomCombobox options={homestays} value={selectedHomestay} onChange={setSelectedHomestay} placeholder="Tag a specific Homestay" />
+                            <CustomCombobox
+                                options={homestays}
+                                value={selectedHomestay}
+                                onChange={setSelectedHomestay}
+                                placeholder="Tag a specific Homestay"
+                                loading={homestaysBusy}
+                                disabled={!homestaysBusy && homestays.length === 0}
+                            />
                         </div>
                     </div>
 

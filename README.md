@@ -99,13 +99,7 @@ npm run dev
 
 Frontend runs at `http://localhost:3000`
 
-### Docker Services
-
-```bash
-docker-compose up -d
-```
-
-Provides PostgreSQL, Redis, and MailDev for local development.
+> **Note:** All local configuration is centralized in the `.env` file at the project root. We connect directly to Supabase for the database and ImageKit for media. Redis and Loki are disabled for local runs.
 
 ## Testing
 

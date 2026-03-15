@@ -25,7 +25,7 @@ Social platform migrations (V47-V55):
 - All migrations are additive (no DROP, no breaking ALTER)
 - All new columns have DEFAULT values
 - Migrations are idempotent where possible
-- Run `mvn clean install` before deployment to verify
+- Run `mvn clean install -DskipTests` before deployment to verify
 
 ### 1.3 Verifying Migrations
 
@@ -112,7 +112,7 @@ Java entities use `Instant` for these fields:
 
 ```bash
 cd backend
-mvn clean install
+mvn clean install -DskipTests
 ```
 
 **Build artifacts:**
@@ -155,7 +155,7 @@ docker build -t nbh-backend:latest .
 ### 5.1 Pre-Deployment
 
 - [ ] All migrations tested locally
-- [ ] `mvn clean install` passes
+- [ ] `mvn clean install -DskipTests` passes
 - [ ] `npm run build` passes
 - [ ] Environment variables configured
 - [ ] Database backup taken

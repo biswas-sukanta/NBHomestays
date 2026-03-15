@@ -12,7 +12,81 @@ It consolidates backend, frontend, DB, infrastructure, integrations, tests, and 
 - Supporting folders:
   - `docker/`, `deployment/`, `.github/workflows/`, `docs/`, `scripts/`
 
-## 2. High-Level Architecture
+## 2. ZERO-HALLUCINATION: Local Development & UI Automation Cheatsheet
+
+**CRITICAL: AI agents MUST follow these exact commands. Never guess ports, startup sequences, or test commands.**
+
+### 2.1 Prerequisites (Environment)
+
+**Single Source of Truth:** All local configuration is centralized in the `.env` file at the project root (`NorthBengalHomestays/.env`).
+
+This file contains:
+- Direct Supabase PostgreSQL connection strings (`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`)
+- ImageKit public/private keys and endpoints (`IMAGEKIT_PUBLIC_KEY`, `IMAGEKIT_PRIVATE_KEY`, `IMAGEKIT_URL_ENDPOINT`)
+- JWT Secrets (`JWT_SECRET_KEY`)
+- Redis disable flags (`APP_CACHE_REDIS_ENABLED=false`, `app.cache.redis.enabled=false`)
+- Test user credentials (Admin, Host, Guest)
+
+**DO NOT run Docker.** Redis, Loki, and MailDev are explicitly disabled for local runs.
+
+### 2.2 Backend Startup Sequence
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+
+2. Build the project (wait for `BUILD SUCCESS`):
+   ```bash
+   mvn clean install
+   ```
+
+3. Start the Spring Boot server with the local profile (wait for `Tomcat started on port 8080`):
+   ```bash
+   mvn spring-boot:run -Dspring-boot.run.profiles=local
+   ```
+
+Backend runs at: `http://localhost:8080`
+
+### 2.3 Frontend Startup Sequence
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server (wait for `server ready on port 3000`):
+   ```bash
+   npm run dev
+   ```
+
+Frontend runs at: `http://localhost:3000`
+
+### 2.4 UI Automation (Playwright) Execution
+
+**RULE: Backend and frontend MUST be running locally first.**
+
+**EXECUTION RULE:** Before starting the backend or running UI automation tests, the AI must ensure the variables from the root `NorthBengalHomestays/.env` file are loaded into its environment context.
+
+Run the full community test suite:
+
+```bash
+cd frontend
+npx playwright test tests/community
+```
+
+### 2.5 Test Credentials Pointer
+
+**For all E2E tests and manual logins, you MUST read `docs/AI_TEST_CREDENTIALS.md` for the exact Admin, Host, and Guest credentials. Never invent users.**
+
+---
+
+## 3. High-Level Architecture
 
 - Frontend (Next.js) calls backend REST via `/api/*` rewrite in `frontend/next.config.ts`.
 - Backend is JWT-secured Spring Boot with PostgreSQL (Flyway migrations), Redis cache, and ImageKit for media.
@@ -29,7 +103,7 @@ Data flow (typical):
 3. Spring controllers/services execute with DB + cache + media pipeline
 4. Response returns to UI via axios/fetch + React Query
 
-## 3. Tech Stack and Versions
+## 4. Tech Stack and Versions
 
 ## Backend (`backend/pom.xml`)
 
@@ -59,7 +133,7 @@ Data flow (typical):
 - Playwright for E2E/API tests
 - OpenAPI generator (typescript-axios) output under `frontend/src/lib/api`
 
-## 4. Repository Structure (Important Paths)
+## 5. Repository Structure (Important Paths)
 
 - `backend/src/main/java/com/nbh/backend/`
   - `controller/`: REST routes
@@ -81,9 +155,9 @@ Data flow (typical):
 - `frontend/context/AuthContext.tsx`: client auth state
 - `frontend/tests/`: Playwright suites (UI and API style)
 
-## 5. Backend Deep Context
+## 6. Backend Deep Context
 
-## 5.1 Runtime Config
+## 6.1 Runtime Config
 
 - Main config: `backend/src/main/resources/application.yml`
 - Default active profile: `dev`
@@ -102,7 +176,7 @@ Profiles:
 - `application-dev.yml`: Flyway `out-of-order: true`
 - `application-prod.yml`: Flyway `out-of-order: false`
 
-## 5.2 Security Model
+## 6.2 Security Model
 
 - Stateless JWT auth via:
   - `JwtAuthenticationFilter`
@@ -129,7 +203,7 @@ JWT specifics:
 - Refresh token exp default 7d
 - Claims include `role` and `userId` (set in `AuthenticationService`)
 
-## 5.3 Core Entities (Current Model Layer)
+## 6.3 Core Entities (Current Model Layer)
 
 - `User`: identity + roles + host profile bits + gamification fields + soft delete
 - `Homestay`: listing core + geo + JSONB metadata + status + featured + destination + meal/meta JSON
@@ -142,7 +216,7 @@ JWT specifics:
 - `PostLike`: likes (composite PK)
 - `HomestayQuestion` + `HomestayAnswer`: Q&A with soft delete
 
-## 5.4 Controllers and Route Surface
+## 6.4 Controllers and Route Surface
 
 Main controllers:
 - `AuthController`: register/authenticate/login/refresh
@@ -161,7 +235,7 @@ Main controllers:
 Health endpoint:
 - `/api/health/ping`
 
-## 5.5 Caching and Async/Scheduled Work
+## 6.5 Caching and Async/Scheduled Work
 
 - Redis cache config in `RedisConfig`:
   - cache kill switch: `app.cache.redis.enabled` (default true)
@@ -178,7 +252,7 @@ Health endpoint:
   - hourly scheduled job (`VibeScoreJob`)
   - async recalculation path in `VibeService.updateVibeScoreAsync`
 
-## 5.6 Media / ImageKit Integration
+## 6.6 Media / ImageKit Integration
 
 - SDK init in `ImageKitConfig` from:
   - `IMAGEKIT_PUBLIC_KEY`
@@ -192,7 +266,7 @@ Health endpoint:
   - `POST /api/upload` (authenticated roles)
   - `POST /api/images/upload-multiple` (authenticated)
 
-## 5.6.1 Media pipeline notes (practical)
+## 6.6.1 Media pipeline notes (practical)
 
 Key behavior:
 
@@ -213,7 +287,7 @@ Notes:
 - ImageKit credentials (`IMAGEKIT_URL_ENDPOINT`, `IMAGEKIT_PUBLIC_KEY`, `IMAGEKIT_PRIVATE_KEY`) remain backend-only.
 - Frontend should not depend on any ImageKit keys; it uploads files to the backend endpoint.
 
-## 5.7 Diagnostics / Logging / Observability
+## 6.7 Diagnostics / Logging / Observability
 
 - Infra startup check (`InfrastructureHealthCheck`) logs Redis + ImageKit status.
 - Runtime diagnostics endpoint:
@@ -228,9 +302,9 @@ Notes:
     - `GRAFANA_LOKI_USER`
     - `GRAFANA_LOKI_TOKEN`
 
-## 6. Frontend Deep Context
+## 7. Frontend Deep Context
 
-## 6.1 App Routing (Next App Router)
+## 7.1 App Routing (Next App Router)
 
 Major pages under `frontend/app`:
 - `/` home
@@ -247,7 +321,7 @@ Major pages under `frontend/app`:
 - `/login`, `/register`
 - `/bookings` (see known drift below)
 
-## 6.2 Frontend State + Data Strategy
+## 7.2 Frontend State + Data Strategy
 
 - Auth: `AuthContext` + localStorage token/refreshToken
 - API:
@@ -258,7 +332,7 @@ Major pages under `frontend/app`:
   - compare store: `store/useCompareStore.ts`
   - trip board store: `store/useTripBoard.ts`
 
-## 6.3 API Wiring Layers
+## 7.3 API Wiring Layers
 
 - Manual wrappers:
   - `frontend/lib/api/auth.ts`
@@ -275,7 +349,7 @@ Major pages under `frontend/app`:
 Rewrite behavior:
 - In `next.config.ts`, `/api/:path*` -> `${NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/:path*`
 
-## 6.4 Key Feature Components
+## 7.4 Key Feature Components
 
 - Search/discovery/map:
   - `HomestayMapView`, `HomestayCard`, `emoji-category-filter`, destination/state pages
@@ -286,7 +360,7 @@ Rewrite behavior:
 - Admin:
   - dashboard + `components/admin/AdminDataManagement.tsx`
 
-## 6.5 Frontend Env + Monitoring
+## 7.5 Frontend Env + Monitoring
 
 Observed frontend env keys:
 - `NEXT_PUBLIC_API_URL`
@@ -300,15 +374,15 @@ Sentry:
 - configured in `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`
 - verify script: `npm run sentry:verify`
 
-## 7. Database, Migrations, and Schema Evolution
+## 8. Database, Migrations, and Schema Evolution
 
-## 7.1 Source of Truth
+## 8.1 Source of Truth
 
 - Flyway migration files in:
   - `backend/src/main/resources/db/migration`
 - Current latest migration file present: `V39__add_homestay_meta.sql`
 
-## 7.2 Notable Schema Evolution
+## 8.2 Notable Schema Evolution
 
 - Initial homestays/users/reviews + geo indexes
 - Auth schema (`users`)
@@ -320,41 +394,10 @@ Sentry:
 - Meal configuration JSONB and additional homestay meta JSONB
 - Legacy `bookings` table dropped in `V23__Drop_Bookings_And_Constraints.sql`
 
-## 7.3 Deployment SQL Files
+## 8.3 Deployment SQL Files
 
 - `deployment/supabase_schema.sql` and `deployment/supabase_setup.sql` exist but represent older schema snapshots (include bookings and legacy tables).
 - Treat Flyway migrations as authoritative for current runtime schema.
-
-## 8. Local Development and Runtime
-
-## 8.1 Docker Services
-
-`docker-compose.yml` provides:
-- `postgres` (PostGIS image, db init script at `docker/init.sql`)
-- `redis`
-- `maildev`
-
-Ports:
-- Postgres: `5432`
-- Redis: `6379`
-- Maildev UI: `1080`
-- Maildev SMTP: `1025`
-
-## 8.2 Backend Run
-
-From `backend/`:
-- `mvn clean install`
-- `mvn spring-boot:run`
-
-Backend default port: `8080`
-
-## 8.3 Frontend Run
-
-From `frontend/`:
-- `npm install`
-- `npm run dev`
-
-Frontend default port: `3000`
 
 ## 9. CI/CD and Deployment
 
@@ -378,14 +421,16 @@ Backend Dockerfile:
 
 ## 10. Testing Surface
 
-## Backend tests
+Refer to Section 2 (Zero-Hallucination Cheatsheet) for all startup and execution commands.
+
+### 10.1 Backend Tests
 
 Located in `backend/src/test/java/com/nbh/backend`:
 - integration tests for auth/homestay/search/reviews/audit
 - repository and seeder/service tests
 - multiple test configs in `backend/src/test/resources`
 
-## Frontend tests
+### 10.2 Frontend Tests
 
 - Playwright config: `frontend/playwright.config.ts`
 - test base URL defaults to deployed site (`https://nb-homestays.vercel.app`) unless overridden
@@ -395,18 +440,9 @@ Located in `backend/src/test/java/com/nbh/backend`:
   - CRUD and admin flows
   - visual/regression scenarios
 
-## 10.1 Minimal stable Community suite
+### 10.3 Community Suite Location
 
-Stable Community Playwright suite lives under:
-
-- `frontend/tests/community/`
-
-Recommended command:
-
-```bash
-cd frontend
-npm test -- tests/community
-```
+Stable Community Playwright suite lives under `frontend/tests/community/`.
 
 ## 11. Known Drift / Pitfalls (Important for AI Agents)
 

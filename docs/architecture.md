@@ -11,7 +11,7 @@ North Bengal Homestays is a monorepo for a homestay discovery and community plat
 - `frontend/`: Next.js App Router UI (React 19)
 
 **Supporting folders:**
-- `docker/`: Local development services (PostgreSQL, Redis, MailDev)
+- `docker/`: Docker configurations (NOT used for local development)
 - `deployment/`: Deployment configurations
 - `.github/workflows/`: CI/CD pipelines
 - `docs/`: Documentation

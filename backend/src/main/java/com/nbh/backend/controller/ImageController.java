@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/images")
@@ -35,5 +36,34 @@ public class ImageController {
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    /**
+     * Rollback endpoint: Delete uploaded media files when post creation fails.
+     * This prevents orphaned files in ImageKit when the frontend post submission fails.
+     */
+    @DeleteMapping("/rollback")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> rollbackMedia(@RequestBody List<String> fileIds) {
+        if (fileIds == null || fileIds.isEmpty()) {
+            return ResponseEntity.ok(Map.of("deleted", 0, "message", "No fileIds provided"));
+        }
+
+        int deleted = 0;
+        int failed = 0;
+        for (String fileId : fileIds) {
+            try {
+                imageUploadService.deleteFileById(fileId);
+                deleted++;
+            } catch (Exception e) {
+                failed++;
+            }
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "deleted", deleted,
+                "failed", failed,
+                "total", fileIds.size()
+        ));
     }
 }

@@ -8,6 +8,7 @@ import io.imagekit.sdk.models.FileCreateRequest;
 import io.imagekit.sdk.models.MoveFileRequest;
 import io.imagekit.sdk.models.results.Result;
 import io.imagekit.sdk.models.results.ResultList;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,10 @@ import java.util.Set;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ImageUploadService {
+
+    private final MediaUploadTrackingService mediaUploadTrackingService;
 
     @Value("${imagekit.max-file-size-bytes:5242880}")
     private long maxFileSizeBytes;
@@ -123,6 +127,8 @@ public class ImageUploadService {
                             resolvedFolder, cdnUrl, fileId);
                     mediaResources.add(MediaResource.builder().url(cdnUrl).fileId(fileId).build());
                     uploadedFileIds.add(fileId); // Track for potential rollback
+                    // Track for orphan detection
+                    mediaUploadTrackingService.recordPendingUpload(fileId, cdnUrl);
                 } catch (Exception e) {
                     log.error("[IMAGEKIT UPLOAD] FATAL ERROR: Failed to upload file {}", originalFilename, e);
                     // Compensating transaction: delete already uploaded files
