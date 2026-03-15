@@ -25,7 +25,6 @@ const PUBLIC_ENDPOINTS = [
     '/api/destinations',
     '/api/states',
     '/api/homestays',
-    '/api/posts',
     '/api/health',
     '/actuator',
 ];
