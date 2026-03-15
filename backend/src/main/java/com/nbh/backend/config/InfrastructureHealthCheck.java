@@ -2,6 +2,7 @@ package com.nbh.backend.config;
 
 import com.nbh.backend.service.InfrastructureDetailsService;
 import com.nbh.backend.service.TimelineService;
+import com.nbh.backend.service.TrendingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -16,6 +17,7 @@ public class InfrastructureHealthCheck implements CommandLineRunner {
 
     private final InfrastructureDetailsService detailsService;
     private final TimelineService timelineService;
+    private final TrendingService trendingService;
 
     @Override
     public void run(String... args) {
@@ -49,7 +51,16 @@ public class InfrastructureHealthCheck implements CommandLineRunner {
             log.error("ImageKit integration: DOWN - {}", imageKit.get("error"));
         }
 
-        // 3. Timeline - always check for missing posts and backfill if needed
+        // 3. Trending scores - compute on startup to ensure feed ordering
+        log.info("Computing trending scores for feed ranking...");
+        try {
+            trendingService.refreshTrendingScores();
+            log.info("Trending scores computed successfully.");
+        } catch (Exception e) {
+            log.warn("Failed to compute trending scores on startup: {}", e.getMessage());
+        }
+
+        // 4. Timeline - always check for missing posts and backfill if needed
         long timelineCount = timelineService.getTimelineCount();
         if (timelineCount == 0) {
             log.warn("Timeline table is empty - running backfill to populate feed...");
