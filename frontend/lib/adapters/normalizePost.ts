@@ -39,6 +39,9 @@ export interface NormalizedPost {
     isLikedByCurrentUser?: boolean;
     isVerifiedHost?: boolean;
     originalPost?: NormalizedPost;
+    // Elevation Engine fields
+    helpfulCount?: number;
+    lastComputedXp?: number;
 }
 
 export function normalizePost(post: any): NormalizedPost {
@@ -86,6 +89,9 @@ export function normalizePost(post: any): NormalizedPost {
         homestayName: post.homestayName,
         isLikedByCurrentUser: post.isLikedByCurrentUser ?? false,
         isVerifiedHost: post.authorVerifiedHost ?? post.author?.isVerifiedHost ?? post.author?.verifiedHost ?? false,
-        originalPost: post.originalPost ? normalizePost(post.originalPost) : undefined
+        originalPost: post.originalPost ? normalizePost(post.originalPost) : undefined,
+        // Elevation Engine fields
+        helpfulCount: post.helpfulCount ?? 0,
+        lastComputedXp: post.lastComputedXp ?? 0,
     };
 }
