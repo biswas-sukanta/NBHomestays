@@ -551,3 +551,85 @@ Block types: `FEATURED`, `HERO`, `STANDARD`, `PHOTO`, `COLLAGE`, `PLACEHOLDER`
 - Max 2 posts per author in sequence
 - Max 3 same-tag cluster in sequence
 
+---
+
+## DOCUMENT MAP FOR AI AGENTS (MANDATORY)
+
+Before performing ANY analysis, debugging, or code modification, AI agents MUST read the following documentation files in this repository. These files act as **guardrails** and the **single source of truth** for system architecture and behavior.
+
+### Required Reading Order
+
+1. docs/AI_PROJECT_CONTEXT.md
+   Canonical system context: architecture, runtime configuration, startup commands, infrastructure integration, and AI operational rules.
+
+2. docs/nbh_ai_prompts_with_guardrails.md
+   Defines AI engineering guardrails including:
+   - zero hallucination rule
+   - backend-first implementation
+   - feed system invariants
+   - media pipeline constraints
+   - database safety rules
+   - debugging protocol
+
+3. docs/architecture.md
+   Detailed architecture overview including:
+   - backend package structure
+   - frontend architecture
+   - feed engine design
+   - cursor pagination system
+   - caching strategy
+   - media pipeline architecture
+
+4. docs/api-contract.md
+   Exact API contract extracted from backend code:
+   - controller endpoints
+   - DTO request/response schemas
+   - feed API format
+   - media endpoints
+   - homestay APIs
+   AI agents MUST NOT invent or modify API structures without verifying this document.
+
+5. docs/social-platform.md
+   Domain logic for the community platform including:
+   - PostType taxonomy
+   - VibeTag system
+   - trending algorithm
+   - follow graph design
+   - profile model
+   - feed scopes
+
+6. docs/system-integrity-audit.md
+   Deep system audit including:
+   - API contract validation
+   - database transaction safety
+   - N+1 query prevention analysis
+   - dead code detection
+   - external service lifecycle validation
+
+7. docs/deployment.md
+   Production deployment reference including:
+   - Flyway migration sequence
+   - database indexes
+   - build commands
+   - environment variables
+   - deployment verification checklist
+
+8. docs/AI_TEST_CREDENTIALS.md
+   Verified test accounts for UI automation and manual login tests.
+   AI agents must never invent credentials and must read from this file.
+
+---
+
+### AI Guardrail Rule
+
+If documentation conflicts with assumptions made by the AI agent, the documentation MUST take precedence.
+
+AI agents must:
+
+• Never invent endpoints, DTO fields, or database columns
+• Never assume infrastructure configuration
+• Always verify behavior against repository code and documentation
+• Always maintain backend‑frontend‑database consistency
+
+These documents collectively form the **AI knowledge base for the North Bengal Homestays repository**.
+
