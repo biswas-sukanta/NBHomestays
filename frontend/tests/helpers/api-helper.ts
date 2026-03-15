@@ -8,6 +8,31 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
+function seededCreds(role: Role): { email: string; password: string } | null {
+  if (role === 'ROLE_ADMIN') {
+    return {
+      email: process.env.PW_ADMIN_EMAIL || 'admin@nbh.com',
+      password: process.env.PW_ADMIN_PASSWORD || 'admin123',
+    };
+  }
+
+  if (role === 'ROLE_HOST') {
+    return {
+      email: process.env.PW_HOST_EMAIL || 'host@nbh.com',
+      password: process.env.PW_HOST_PASSWORD || 'host123',
+    };
+  }
+
+  if (role === 'ROLE_USER') {
+    return {
+      email: process.env.PW_USER_EMAIL || 'user@nbh.com',
+      password: process.env.PW_USER_PASSWORD || 'user123',
+    };
+  }
+
+  return null;
+}
+
 async function sleep(ms: number) {
   await new Promise((r) => setTimeout(r, ms));
 }
@@ -45,6 +70,12 @@ export async function registerViaApi(
 
     // Non-retryable
     break;
+  }
+
+  const creds = seededCreds(role);
+  if (creds) {
+    const tokens = await authenticateViaApi(request, baseURL, creds.email, creds.password);
+    return { email: creds.email, password: creds.password, tokens };
   }
 
   throw new Error(`Register failed: ${lastStatus ?? 'unknown'}`);
