@@ -11,6 +11,8 @@ import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.service.AvatarUrlResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -38,13 +40,19 @@ public class LeaderboardController {
     private final BadgeDefinitionRepository badgeDefinitionRepository;
     private final AvatarUrlResolver avatarUrlResolver;
 
+    // Cache enabled flag - bypassed when Redis is disabled locally
+    @Value("${app.cache.redis.enabled:true}")
+    private boolean cacheEnabled;
+
     // Cached stage definitions for computing stages on the fly
     private List<StageInfo> stages;
 
     /**
      * Get the community leaderboard - top 50 users by XP.
+     * Cached for 15 minutes when Redis is enabled.
      */
     @GetMapping("/leaderboard")
+    @Cacheable(value = "leaderboard", unless = "!${app.cache.redis.enabled:true}")
     public ResponseEntity<List<LeaderboardEntryDto>> getLeaderboard() {
         log.info("Fetching community leaderboard");
         

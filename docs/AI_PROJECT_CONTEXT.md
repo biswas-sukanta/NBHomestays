@@ -618,6 +618,17 @@ Before performing ANY analysis, debugging, or code modification, AI agents MUST 
    Verified test accounts for UI automation and manual login tests.
    AI agents must never invent credentials and must read from this file.
 
+9. docs/elevation-engine.md
+   Single source of truth for the Elevation Engine gamification system including:
+   - XP loop and Log10 quality score formula
+   - 20-stage Himalayan Yatra progression ladder
+   - 10 Khazana merit badges with achievement criteria
+   - Syndicate anti-spam rules
+   - Community Leaderboard API
+   - StageRibbon, TrophyCase, and ProfileSettings components
+   - React Query caching patterns for gamification data
+   - Flyway migrations V58-V61
+
 ---
 
 ### AI Guardrail Rule

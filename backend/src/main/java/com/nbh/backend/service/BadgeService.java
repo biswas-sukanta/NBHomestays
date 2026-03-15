@@ -51,21 +51,33 @@ public class BadgeService {
     /**
      * Daily scheduled job to check Khazana merit badges.
      * Runs at 2:00 AM server time.
+     * Processes users in batches of 100 to prevent memory bottlenecks.
      */
     @Scheduled(cron = "0 0 2 * * ?")
     @Transactional
     public void checkKhazanaMeritBadges() {
         log.info("Starting Khazana merit badge check job");
         
-        List<User> users = userRepository.findAll();
+        int batchSize = 100;
+        int pageNumber = 0;
+        int processedCount = 0;
         
-        for (User user : users) {
-            checkHelperBadge(user);
-            checkReviewerBadge(user);
-            checkContributorBadge(user);
-        }
+        org.springframework.data.domain.Page<User> userPage;
+        do {
+            userPage = userRepository.findAll(
+                    org.springframework.data.domain.PageRequest.of(pageNumber, batchSize));
+            
+            for (User user : userPage.getContent()) {
+                checkHelperBadge(user);
+                checkReviewerBadge(user);
+                checkContributorBadge(user);
+                processedCount++;
+            }
+            
+            pageNumber++;
+        } while (userPage.hasNext());
         
-        log.info("Completed Khazana merit badge check job");
+        log.info("Completed Khazana merit badge check job. Processed {} users", processedCount);
     }
 
     /**
