@@ -87,6 +87,10 @@ public class Post {
     @Builder.Default
     private int shareCount = 0;
 
+    @Column(name = "comment_count", nullable = false, columnDefinition = "integer default 0")
+    @Builder.Default
+    private int commentCount = 0;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "post_type")
     private PostType postType;

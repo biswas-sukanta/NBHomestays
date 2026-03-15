@@ -58,6 +58,7 @@ public class PostService {
     private final TimelineService timelineService;
     private final ViewTrackingService viewTrackingService;
     private final AvatarUrlResolver avatarUrlResolver;
+    private final TrendingService trendingService;
 
     /**
      * Get user ID by email - used by feed service for like status.
@@ -499,6 +500,11 @@ public class PostService {
 
         feedCacheService.invalidateAll();
         timelineService.updateLikeCount(postId, resolvedLoveCount);
+        // Update trending score on engagement
+        Post postForTrending = postRepository.findById(postId).orElse(null);
+        if (postForTrending != null) {
+            trendingService.updatePostTrendingScore(postForTrending);
+        }
         return PostDto.LikeResponse.builder().loveCount(resolvedLoveCount).isLiked(true).build();
     }
 
@@ -519,6 +525,8 @@ public class PostService {
             postRepository.save(post);
             feedCacheService.invalidateAll();
             timelineService.updateLikeCount(postId, post.getLoveCount());
+            // Update trending score on engagement
+            trendingService.updatePostTrendingScore(post);
         }
 
         return PostDto.LikeResponse.builder().loveCount(post.getLoveCount()).isLiked(false).build();
@@ -537,6 +545,8 @@ public class PostService {
         feedCacheService.invalidateAll();
         // Update timeline share count
         timelineService.updateShareCount(postId, post.getShareCount());
+        // Update trending score on engagement
+        trendingService.updatePostTrendingScore(post);
         return PostDto.LikeResponse.builder().loveCount(post.getLoveCount()).isLiked(false).build();
     }
 

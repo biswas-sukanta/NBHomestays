@@ -79,6 +79,9 @@ public class FeedService {
         String resolvedScope = normalizeScope(scope);
         int pageSize = limit != null && limit > 0 ? limit : DEFAULT_LIMIT;
         int fetchLimit = pageSize + EXTRA_FOR_HAS_MORE;
+        
+        // Log viewerUserId for auth verification
+        log.debug("getFeed called: scope={}, userId={}, tag={}", resolvedScope, userId, tag);
 
         // Check cache with userId to prevent cache pollution
         String cacheKey = cacheService.generateKey((tag == null ? "all" : tag) + ":" + resolvedScope, cursor, pageSize, userId);
@@ -103,43 +106,8 @@ public class FeedService {
         } else if ("following".equals(resolvedScope)) {
             response = getFollowingFeed(cursorCreatedAt, cursorId, fetchLimit, pageSize, userId, cacheKey);
         } else {
-        // Try timeline first (if no tag filter - timeline is global)
-        if (tag == null || tag.isBlank()) {
-            PostFeedDto.FeedResponse timelineResponse = getFeedFromTimeline(cursorCreatedAt, cursorId, fetchLimit, pageSize, userId);
-            if (timelineResponse != null) {
-                log.debug("Feed served from timeline");
-                response = timelineResponse;
-
-                if (layout && response.getPosts() != null && !response.getPosts().isEmpty()) {
-                    List<PostFeedDto.FeedBlockDto> blocks = layoutEngine.generateLayout(
-                            response.getPosts(),
-                            pageSize,
-                            previousBlockType,
-                            previousBlockTypeRun);
-
-                    String nextCursor = response.getNextCursor();
-                    if (response.isHasMore() && nextCursor != null) {
-                        PostFeedDto lastPost = response.getPosts().get(response.getPosts().size() - 1);
-                        TailBlockRun tail = computeTailBlockRun(blocks);
-                        nextCursor = encodeCursor(lastPost.getCreatedAt(), lastPost.getPostId(), lastPost.getTrendingScore(), tail.blockType, tail.runLength);
-                    }
-
-                    response = PostFeedDto.FeedResponse.builder()
-                            .posts(response.getPosts())
-                            .nextCursor(nextCursor)
-                            .hasMore(response.isHasMore())
-                            .blocks(blocks)
-                            .build();
-                }
-
-                cacheService.put(cacheKey, response);
-                return response;
-            }
-            log.debug("Timeline empty, falling back to direct query");
-        }
-
-        // Fallback: direct query from posts table
-            response = getFeedFromDirectQuery(tag, cursorCreatedAt, cursorId, fetchLimit, pageSize, userId, cacheKey);
+            // Latest feed: query posts table directly (canonical source)
+            response = getLatestFeed(tag, cursorCreatedAt, cursorId, fetchLimit, pageSize, userId, cacheKey);
         }
 
         // Generate layout blocks if requested
@@ -265,9 +233,10 @@ public class FeedService {
     }
     
     /**
-     * Get feed from direct query (fallback when timeline empty).
+     * Get latest feed from posts table (canonical source).
+     * Queries posts table directly with ORDER BY created_at DESC.
      */
-    private PostFeedDto.FeedResponse getFeedFromDirectQuery(
+    private PostFeedDto.FeedResponse getLatestFeed(
             String tag, Instant cursorCreatedAt, UUID cursorId,
             int fetchLimit, int pageSize, UUID userId, String cacheKey) {
         
@@ -312,15 +281,13 @@ public class FeedService {
         // Batch load media, tags, counts
         Map<UUID, List<PostFeedDto.MediaVariantDto>> mediaByPost = loadMedia(postIds);
         Map<UUID, List<String>> tagsByPost = loadTags(postIds);
-        Map<UUID, Integer> commentCounts = loadCommentCounts(postIds);
-        Map<UUID, Integer> likeCounts = loadLikeCounts(postIds);
         Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost = loadMediaDimensions(postIds);
         Map<UUID, PostMeta> postMetaById = loadPostMeta(postIds);
         Set<UUID> likedPostIds = userId != null ? loadLikedStatus(userId, postIds) : Collections.emptySet();
 
         // Map to DTOs
         List<PostFeedDto> posts = rows.stream()
-                .map(row -> mapToDto(row, mediaByPost, tagsByPost, commentCounts, likeCounts, likedPostIds, dimensionsByPost, postMetaById))
+                .map(row -> mapToDto(row, mediaByPost, tagsByPost, likedPostIds, dimensionsByPost, postMetaById))
                 .collect(Collectors.toList());
 
         // Generate next cursor
@@ -747,8 +714,6 @@ public class FeedService {
             Object[] row,
             Map<UUID, List<PostFeedDto.MediaVariantDto>> mediaByPost,
             Map<UUID, List<String>> tagsByPost,
-            Map<UUID, Integer> commentCounts,
-            Map<UUID, Integer> likeCounts,
             Set<UUID> likedPostIds,
             Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost,
             Map<UUID, PostMeta> postMetaById) {
@@ -765,14 +730,15 @@ public class FeedService {
         
         Number likeCountDb = (Number) row[8];
         Number shareCountDb = (Number) row[9];
+        Number commentCountDb = (Number) row[10];
         
-        UUID homestayId = (UUID) row[10];
-        String homestayName = (String) row[11];
+        UUID homestayId = (UUID) row[11];
+        String homestayName = (String) row[12];
         
-        UUID originalPostId = (UUID) row[12];
-        String originalContent = (String) row[13];
-        UUID originalAuthorId = (UUID) row[14];
-        String originalAuthorName = (String) row[15];
+        UUID originalPostId = (UUID) row[13];
+        String originalContent = (String) row[14];
+        UUID originalAuthorId = (UUID) row[15];
+        String originalAuthorName = (String) row[16];
 
         // Build author
         PostFeedDto.AuthorDto author = PostFeedDto.AuthorDto.builder()
@@ -808,8 +774,8 @@ public class FeedService {
                 .authorAvatarUrl(authorAvatarUrl)
                 .authorRole(authorRole)
                 .authorVerifiedHost(authorVerifiedHost)
-                .commentCount(commentCounts.getOrDefault(postId, 0))
-                .likeCount(likeCounts.getOrDefault(postId, 0))
+                .commentCount(commentCountDb != null ? commentCountDb.intValue() : 0)
+                .likeCount(likeCountDb != null ? likeCountDb.intValue() : 0)
                 .shareCount(shareCountDb != null ? shareCountDb.intValue() : 0)
                 .homestayId(homestayId)
                 .homestayName(homestayName)
@@ -867,14 +833,12 @@ public class FeedService {
         List<UUID> postIds = rows.stream().map(row -> (UUID) row[0]).collect(Collectors.toList());
         Map<UUID, List<PostFeedDto.MediaVariantDto>> mediaByPost = loadMedia(postIds);
         Map<UUID, List<String>> tagsByPost = loadTags(postIds);
-        Map<UUID, Integer> commentCounts = loadCommentCounts(postIds);
-        Map<UUID, Integer> likeCounts = loadLikeCounts(postIds);
         Map<UUID, List<PostFeedDto.ImageDimDto>> dimensionsByPost = loadMediaDimensions(postIds);
         Map<UUID, PostMeta> postMetaById = loadPostMeta(postIds);
         Set<UUID> likedPostIds = userId != null ? loadLikedStatus(userId, postIds) : Collections.emptySet();
 
         List<PostFeedDto> posts = rows.stream()
-                .map(row -> mapToDto(row, mediaByPost, tagsByPost, commentCounts, likeCounts, likedPostIds, dimensionsByPost, postMetaById))
+                .map(row -> mapToDto(row, mediaByPost, tagsByPost, likedPostIds, dimensionsByPost, postMetaById))
                 .collect(Collectors.toList());
 
         String nextCursor = null;

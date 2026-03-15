@@ -56,6 +56,22 @@ public class TrendingService {
         feedCacheService.invalidateAll();
     }
 
+    /**
+     * Update trending score for a single post (called on engagement events).
+     * Uses stored comment_count from post entity.
+     */
+    @Transactional
+    public void updatePostTrendingScore(Post post) {
+        Instant now = Instant.now();
+        int commentCount = post.getCommentCount();
+        double score = calculateScore(post, commentCount, now);
+        post.setTrendingScore(score);
+        post.setTrendingComputedAt(now);
+        post.setTrending(score > 0);
+        postRepository.save(post);
+        feedCacheService.invalidateAll();
+    }
+
     private double calculateScore(Post post, int commentCount, Instant now) {
         Instant createdAt = post.getCreatedAt() == null ? now : post.getCreatedAt();
         double ageHours = Math.max(1.0, Duration.between(createdAt, now).toHours());
