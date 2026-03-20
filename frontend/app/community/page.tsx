@@ -29,6 +29,7 @@ import { TrendingStories } from '@/components/community/trending-stories';
 import { CommunitySidebar } from '@/components/community/sidebar';
 import { CommunityPageSkeleton } from '@/components/community/Skeletons';
 import { LoginPromptModal } from '@/components/community/LoginPromptModal';
+import { EmptyFeedState } from '@/components/community/EmptyFeedState';
 import { normalizePost, NormalizedPost } from '@/lib/adapters/normalizePost';
 import { useHomestaysLookup } from '@/hooks/useHomestaysLookup';
 import { queryKeys } from '@/lib/queryKeys';
@@ -261,7 +262,14 @@ export default function CommunityPage() {
                                     Trending
                                 </button>
                                 <button
-                                    onClick={() => setFeedScope('following')}
+                                    onClick={() => {
+                                        if (!user) {
+                                            setLoginAction('share');
+                                            setIsLoginModalOpen(true);
+                                            return;
+                                        }
+                                        setFeedScope('following');
+                                    }}
                                     className={`px-4 py-2 rounded-full border text-sm font-semibold whitespace-nowrap shrink-0 snap-start transition-all ${feedScope === 'following' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-transparent border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700'}`}
                                 >
                                     Following
@@ -329,11 +337,13 @@ export default function CommunityPage() {
                         </AnimatePresence>
 
                         {displayPosts.length === 0 && !isFetchingNextPage && !isPending && (
-                            <div className="text-center py-24 bg-neutral-50 rounded-2xl border border-dashed border-neutral-200 text-neutral-500 overflow-hidden relative">
-                                <div className="text-6xl mb-6 opacity-30 animate-pulse">🍃</div>
-                                <p className="font-bold text-2xl text-neutral-900 mb-2 font-heading">Deep silence here...</p>
-                                <p className="text-sm text-neutral-500 max-w-xs mx-auto">No stories found. Be the first to share a journey or try a different filter.</p>
-                            </div>
+                            <EmptyFeedState
+                                reason={feedScope === 'following' && !user ? 'NOT_LOGGED_IN' : feedScope === 'following' && user ? 'NO_FOLLOWS' : 'NO_POSTS'}
+                                onLogin={() => {
+                                    setLoginAction('share');
+                                    setIsLoginModalOpen(true);
+                                }}
+                            />
                         )}
 
                         {isFetchingNextPage && (
