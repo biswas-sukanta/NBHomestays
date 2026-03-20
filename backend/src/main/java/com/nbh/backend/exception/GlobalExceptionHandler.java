@@ -52,6 +52,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(Map.of("error", ex.getReason()), ex.getStatusCode());
     }
 
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Map<String, String>> handleHttpMediaTypeNotSupportedException(
+            org.springframework.web.HttpMediaTypeNotSupportedException ex) {
+        return new ResponseEntity<>(Map.of("error", "Unsupported Media Type: " + ex.getMessage()), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    }
+
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(
             org.springframework.dao.DataIntegrityViolationException ex) {

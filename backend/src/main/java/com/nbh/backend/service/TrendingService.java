@@ -57,6 +57,16 @@ public class TrendingService {
     }
 
     /**
+     * Update trending score for a single post by ID directly from DB.
+     * Prevents stale state from memory.
+     */
+    @Transactional
+    public void updateTrendingScoreByPostId(java.util.UUID postId) {
+        Post post = postRepository.findById(postId).orElseThrow();
+        updatePostTrendingScore(post);
+    }
+
+    /**
      * Update trending score for a single post (called on engagement events).
      * Uses stored comment_count from post entity.
      */
@@ -65,10 +75,8 @@ public class TrendingService {
         Instant now = Instant.now();
         int commentCount = post.getCommentCount();
         double score = calculateScore(post, commentCount, now);
-        post.setTrendingScore(score);
-        post.setTrendingComputedAt(now);
-        post.setTrending(score > 0);
-        postRepository.save(post);
+        
+        postRepository.updateTrendingData(post.getId(), score, now, score > 0);
         feedCacheService.invalidateAll();
     }
 

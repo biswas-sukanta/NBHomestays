@@ -34,6 +34,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final AsyncJobService asyncJobService;
     private final AvatarUrlResolver avatarUrlResolver;
+    private final TrendingService trendingService;
 
     // ── Add top-level comment ──────────────────────────────────
     @Transactional
@@ -66,6 +67,10 @@ public class CommentService {
 
         Comment saved = commentRepository.save(comment);
         asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "comments/" + saved.getId());
+        
+        postRepository.incrementCommentCount(postId);
+        trendingService.updateTrendingScoreByPostId(postId);
+        
         return toDto(saved, true);
     }
 
@@ -104,6 +109,10 @@ public class CommentService {
 
         Comment saved = commentRepository.save(reply);
         asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "comments/" + saved.getId());
+        
+        postRepository.incrementCommentCount(postId);
+        trendingService.updateTrendingScoreByPostId(postId);
+
         return toDto(saved, false);
     }
 
@@ -183,6 +192,8 @@ public class CommentService {
                 : comment.getMediaFiles().stream().map(com.nbh.backend.model.MediaResource::getFileId).toList());
 
         commentRepository.delete(comment);
+        postRepository.decrementCommentCount(comment.getPost().getId());
+        trendingService.updateTrendingScoreByPostId(comment.getPost().getId());
     }
 
     // ── Mapping ────────────────────────────────────────────────

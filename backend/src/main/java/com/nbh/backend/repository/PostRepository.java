@@ -230,17 +230,45 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                 """)
         List<Post> findPostsNotInTimeline();
 
+        @Transactional
         @Modifying
         @Query(value = "UPDATE posts SET love_count = love_count + 1 WHERE id = :postId", nativeQuery = true)
         int incrementLoveCount(@Param("postId") UUID postId);
 
-        @Modifying
+        @Transactional
+        @Modifying(clearAutomatically = true, flushAutomatically = true)
         @Query(value = "UPDATE posts SET love_count = GREATEST(love_count - 1, 0) WHERE id = :postId", nativeQuery = true)
         int decrementLoveCount(@Param("postId") UUID postId);
 
+        @Transactional
+        @Modifying(clearAutomatically = true, flushAutomatically = true)
+        @Query(value = "UPDATE posts SET comment_count = comment_count + 1 WHERE id = :postId", nativeQuery = true)
+        int incrementCommentCount(@Param("postId") UUID postId);
+
+        @Transactional
+        @Modifying(clearAutomatically = true, flushAutomatically = true)
+        @Query(value = "UPDATE posts SET comment_count = GREATEST(comment_count - 1, 0) WHERE id = :postId", nativeQuery = true)
+        int decrementCommentCount(@Param("postId") UUID postId);
+
+        @Transactional
+        @Modifying(clearAutomatically = true, flushAutomatically = true)
+        @Query(value = "UPDATE posts SET share_count = COALESCE(share_count, 0) + 1 WHERE id = :postId", nativeQuery = true)
+        int incrementShareCount(@Param("postId") UUID postId);
+
+        @Transactional
+        @Modifying(clearAutomatically = true, flushAutomatically = true)
+        @Query(value = "UPDATE posts SET trending_score = :score, trending_computed_at = :now, is_trending = :isTrending WHERE id = :postId", nativeQuery = true)
+        int updateTrendingData(@Param("postId") UUID postId, @Param("score") double score, @Param("now") java.time.Instant now, @Param("isTrending") boolean isTrending);
+
+        @Transactional
         @Modifying
         @Query(value = "UPDATE posts SET view_count = COALESCE(view_count, 0) + 1 WHERE id = :postId", nativeQuery = true)
         int incrementViewCount(@Param("postId") UUID postId);
+
+        @Transactional
+        @Modifying(clearAutomatically = true, flushAutomatically = true)
+        @Query(value = "UPDATE posts SET last_computed_xp = :xp WHERE id = :postId", nativeQuery = true)
+        int updateLastComputedXp(@Param("postId") UUID postId, @Param("xp") int xp);
 
         @Query(value = "SELECT COUNT(*) FROM comments WHERE post_id = :postId", nativeQuery = true)
         int countCommentsByPostId(@Param("postId") UUID postId);

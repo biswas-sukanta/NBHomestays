@@ -55,7 +55,6 @@ public class LeaderboardController {
      * @param limit Maximum number of entries to return (default: 50, max: 50)
      */
     @GetMapping("/leaderboard")
-    @Cacheable(value = "leaderboard", unless = "!${app.cache.redis.enabled:true}")
     public ResponseEntity<List<LeaderboardEntryDto>> getLeaderboard(
             @RequestParam(value = "limit", defaultValue = "50") int limit) {
         log.info("Fetching community leaderboard with limit: {}", limit);

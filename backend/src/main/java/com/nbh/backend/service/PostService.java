@@ -146,7 +146,7 @@ public class PostService {
         return mapToResponse(saved);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public java.util.Optional<PostDto.Response> getPostById(java.util.UUID id) {
         viewTrackingService.incrementPostView(id);
         feedCacheService.invalidateAll();
@@ -543,10 +543,9 @@ public class PostService {
             @CacheEvict(value = "postDetail", key = "#postId")
     })
     public PostDto.LikeResponse incrementShare(java.util.UUID postId) {
+        postRepository.incrementShareCount(postId);
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
-        post.setShareCount(post.getShareCount() + 1);
-        postRepository.save(post);
         feedCacheService.invalidateAll();
         // Update timeline share count
         timelineService.updateShareCount(postId, post.getShareCount());

@@ -2,6 +2,7 @@ package com.nbh.backend.service;
 
 import com.nbh.backend.model.PostLike;
 import com.nbh.backend.repository.PostLikeRepository;
+import com.nbh.backend.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,8 @@ import java.util.UUID;
 public class LikeService {
 
     private final PostLikeRepository postLikeRepository;
+    private final PostRepository postRepository;
+    private final TrendingService trendingService;
 
     @Transactional
     @CacheEvict(value = "postsList", allEntries = true)
@@ -22,12 +25,16 @@ public class LikeService {
         PostLike.PostLikePk pk = new PostLike.PostLikePk(userId, postId);
         if (postLikeRepository.existsById(pk)) {
             postLikeRepository.deleteById(pk);
+            postRepository.decrementLoveCount(postId);
+            trendingService.updateTrendingScoreByPostId(postId);
             return false; // unliked
         } else {
             postLikeRepository.save(PostLike.builder()
                     .userId(userId)
                     .postId(postId)
                     .build());
+            postRepository.incrementLoveCount(postId);
+            trendingService.updateTrendingScoreByPostId(postId);
             return true; // liked
         }
     }
