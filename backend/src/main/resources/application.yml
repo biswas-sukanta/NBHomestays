@@ -14,6 +14,7 @@ spring:
       minimum-idle: 5
       maximum-pool-size: 25
       connection-timeout: 10000
+      schema: public
       transaction-isolation: TRANSACTION_READ_COMMITTED
       idle-timeout: 30000
       validation-timeout: 5000
@@ -24,6 +25,7 @@ spring:
       ddl-auto: none # Temporary workaround until entity-schema alignment migration is created
     properties:
       hibernate:
+        default_schema: public
         generate_statistics: false
         format_sql: true
   flyway:
@@ -31,6 +33,7 @@ spring:
     baseline-on-migrate: true
     repair-on-migrate: true
     validate-on-migrate: false
+    schemas: public
     connect-retries: 5
     enabled: true
   data:

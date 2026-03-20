@@ -1,2 +1,0 @@
-ALTER TABLE posts
-    ADD COLUMN IF NOT EXISTS trending_computed_at TIMESTAMP WITH TIME ZONE;
