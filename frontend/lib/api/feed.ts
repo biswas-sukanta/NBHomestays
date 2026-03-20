@@ -204,10 +204,11 @@ export interface LeaderboardEntry {
 }
 
 /**
- * Get the community leaderboard - top 50 users by XP.
+ * Get the community leaderboard - top users by XP.
+ * @param limit Maximum number of entries to return (default: 50, max: 50)
  */
-export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
-  const response = await apiFetch('/community/leaderboard');
+export async function getLeaderboard(limit: number = 50): Promise<LeaderboardEntry[]> {
+  const response = await apiFetch(`/community/leaderboard?limit=${limit}`);
   
   if (!response.ok) {
     throw new Error(`Leaderboard API error: ${response.status}`);

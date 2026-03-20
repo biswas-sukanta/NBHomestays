@@ -1,15 +1,9 @@
 import React from 'react';
-import { Award, Loader2 } from 'lucide-react';
+import { Award, Compass } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { getTopContributors, TopContributor } from '@/lib/api/feed';
+import { getLeaderboard, LeaderboardEntry } from '@/lib/api/feed';
 import Link from 'next/link';
-
-// Hardcoded suggested travelers for backfill when API returns empty
-const SUGGESTED_TRAVELERS: TopContributor[] = [
-    { id: 'suggested-1', name: 'Mountain Explorer', avatarUrl: '', role: 'TRAVELER', verifiedHost: false, postCount: 42 },
-    { id: 'suggested-2', name: 'Himalayan Wanderer', avatarUrl: '', role: 'TRAVELER', verifiedHost: false, postCount: 38 },
-    { id: 'suggested-3', name: 'Valley Trekker', avatarUrl: '', role: 'TRAVELER', verifiedHost: false, postCount: 35 },
-];
+import { Button } from '@/components/ui/button';
 
 // Loading skeleton for sidebar
 function TravelerSkeleton() {
@@ -25,24 +19,23 @@ function TravelerSkeleton() {
     );
 }
 
-// Single traveler row component
-function TravelerRow({ user, index, isSuggested = false }: { user: TopContributor; index: number; isSuggested?: boolean }) {
+// Single traveler row component - uses real userId from LeaderboardEntry
+function TravelerRow({ user, index }: { user: LeaderboardEntry; index: number }) {
     return (
-        <Link href={`/profile/${user.id}`} className="flex items-center gap-3 cursor-pointer group">
+        <Link href={`/profile/${user.userId}`} className="flex items-center gap-3 cursor-pointer group">
             <div className="w-7 text-[11px] font-black text-neutral-400 group-hover:text-neutral-600 transition-colors">
                 #{index + 1}
             </div>
             {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-transparent group-hover:ring-emerald-200 transition-all" />
+                <img src={user.avatarUrl} alt={user.displayName} className="w-10 h-10 rounded-full object-cover ring-2 ring-transparent group-hover:ring-emerald-200 transition-all" />
             ) : (
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent group-hover:ring-emerald-200 transition-all">
-                    {(user.name || 'NB').slice(0, 2).toUpperCase()}
+                    {user.displayName.slice(0, 2).toUpperCase()}
                 </div>
             )}
             <div className="min-w-0">
                 <p className="text-sm font-bold text-neutral-900 group-hover:text-emerald-600 transition-colors leading-tight truncate">
-                    {user.name}
-                    {isSuggested && <span className="ml-1 text-[10px] text-amber-500 font-normal">✨</span>}
+                    {user.displayName}
                 </p>
                 <p className="text-[11px] text-neutral-500 font-black uppercase tracking-widest">{user.postCount} stories</p>
             </div>
@@ -50,20 +43,30 @@ function TravelerRow({ user, index, isSuggested = false }: { user: TopContributo
     );
 }
 
+// Empty state CTA - no fake users, just encouragement
+function EmptyLeaderboardCTA() {
+    return (
+        <div className="text-center py-6">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center mb-3 mx-auto">
+                <Compass className="w-5 h-5 text-emerald-600" />
+            </div>
+            <p className="text-sm font-bold text-neutral-900 mb-1">Start your journey</p>
+            <p className="text-[11px] text-neutral-500 max-w-[180px] mx-auto">
+                Share stories and earn XP to appear here as a top traveler.
+            </p>
+        </div>
+    );
+}
+
 export function CommunitySidebar() {
-    const { data: topContributors, isLoading, isError } = useQuery({
+    const { data: leaderboard, isLoading, isError } = useQuery({
         queryKey: ['community', 'trendingTravelers'],
-        queryFn: () => getTopContributors(3),
-        staleTime: 60000,
+        queryFn: () => getLeaderboard(5), // Only fetch top 5 for sidebar
+        staleTime: 5 * 60 * 1000, // 5 minutes - avoid refetch on tab switches
     });
 
-    // Determine what to display
-    const displayUsers = (() => {
-        if (isLoading || isError) return null;
-        if (topContributors && topContributors.length > 0) return topContributors;
-        // Backfill with suggested travelers when empty
-        return SUGGESTED_TRAVELERS;
-    })();
+    // Extract top 5 from leaderboard (already limited by API)
+    const topTravelers = leaderboard?.slice(0, 5) ?? [];
 
     return (
         <aside className="hidden lg:flex flex-col gap-6 sticky top-24">
@@ -82,32 +85,16 @@ export function CommunitySidebar() {
                             <TravelerSkeleton />
                         </>
                     ) : isError ? (
-                        // Error state with backfill
-                        <>
-                            {SUGGESTED_TRAVELERS.map((user, i) => (
-                                <TravelerRow key={user.id} user={user} index={i} isSuggested />
-                            ))}
-                            <p className="text-[10px] text-neutral-400 text-center mt-2 italic">
-                                Showing suggested travelers
-                            </p>
-                        </>
+                        // Error state - show CTA, no fake users
+                        <EmptyLeaderboardCTA />
+                    ) : topTravelers.length === 0 ? (
+                        // Empty leaderboard - show CTA, no fake users
+                        <EmptyLeaderboardCTA />
                     ) : (
-                        // Success state (either real data or backfill)
-                        <>
-                            {displayUsers?.map((user, i) => (
-                                <TravelerRow 
-                                    key={user.id} 
-                                    user={user} 
-                                    index={i} 
-                                    isSuggested={topContributors?.length === 0} 
-                                />
-                            ))}
-                            {topContributors?.length === 0 && (
-                                <p className="text-[10px] text-neutral-400 text-center mt-2 italic">
-                                    Showing suggested travelers
-                                </p>
-                            )}
-                        </>
+                        // Success state - real data from leaderboard
+                        topTravelers.map((user, i) => (
+                            <TravelerRow key={user.userId} user={user} index={i} />
+                        ))
                     )}
                 </div>
             </div>

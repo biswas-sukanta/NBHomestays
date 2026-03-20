@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -48,21 +49,27 @@ public class LeaderboardController {
     private List<StageInfo> stages;
 
     /**
-     * Get the community leaderboard - top 50 users by XP.
+     * Get the community leaderboard - top users by XP.
      * Cached for 15 minutes when Redis is enabled.
+     * 
+     * @param limit Maximum number of entries to return (default: 50, max: 50)
      */
     @GetMapping("/leaderboard")
     @Cacheable(value = "leaderboard", unless = "!${app.cache.redis.enabled:true}")
-    public ResponseEntity<List<LeaderboardEntryDto>> getLeaderboard() {
-        log.info("Fetching community leaderboard");
+    public ResponseEntity<List<LeaderboardEntryDto>> getLeaderboard(
+            @RequestParam(value = "limit", defaultValue = "50") int limit) {
+        log.info("Fetching community leaderboard with limit: {}", limit);
+        
+        // Clamp limit to reasonable bounds
+        int effectiveLimit = Math.min(Math.max(limit, 1), 50);
         
         // Load stages if not cached
         if (stages == null || stages.isEmpty()) {
             loadStages();
         }
         
-        // Fetch top 50 users by XP
-        Page<User> topUsers = userRepository.findAllByOrderByTotalXpDesc(PageRequest.of(0, 50));
+        // Fetch top users by XP with limit
+        Page<User> topUsers = userRepository.findAllByOrderByTotalXpDesc(PageRequest.of(0, effectiveLimit));
         
         List<LeaderboardEntryDto> entries = new ArrayList<>();
         int rank = 1;
