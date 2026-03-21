@@ -16,7 +16,8 @@ import AdminDataManagement from '@/components/admin/AdminDataManagement';
 
 interface Homestay {
     id: string; name: string; description: string; pricePerNight: number;
-    status: string; media?: { url: string; fileId?: string }[]; ownerEmail: string; featured?: boolean;
+    status: string; media?: { url: string; fileId?: string }[]; featured?: boolean;
+    host?: { name?: string | null };
 }
 interface Post {
     id: string; userName: string; locationName: string; textContent: string;
@@ -28,7 +29,6 @@ interface Stats {
 }
 
 type Tab = 'pending' | 'all' | 'community' | 'featured' | 'analytics' | 'data';
-const API = '/api';
 
 const statusColor: Record<string, string> = {
     PENDING: 'bg-yellow-100 text-yellow-800',
@@ -37,7 +37,7 @@ const statusColor: Record<string, string> = {
 };
 
 export default function AdminPage() {
-    const { user, isAuthenticated, isLoading, token } = useAuth() as any;
+    const { user, isAuthenticated, isLoading } = useAuth();
     const router = useRouter();
     const [pendingHomestays, setPendingHomestays] = useState<Homestay[]>([]);
     const [allHomestays, setAllHomestays] = useState<Homestay[]>([]);
@@ -206,7 +206,7 @@ export default function AdminPage() {
                                 <CardHeader><CardTitle className="text-base">{h.name}</CardTitle></CardHeader>
                                 <CardContent>
                                     <p className="text-sm text-muted-foreground mb-1 line-clamp-2">{h.description}</p>
-                                    <p className="text-xs text-muted-foreground mb-2">Owner: {h.ownerEmail}</p>
+                                    <p className="text-xs text-muted-foreground mb-2">Owner: {h.host?.name || 'Unknown host'}</p>
                                     <p className="font-bold mb-4">₹{h.pricePerNight}/night</p>
                                     <div className="flex justify-between items-center">
                                         <span className={`text-xs px-2 py-1 rounded ${statusColor[h.status] || 'bg-gray-100 text-gray-800'}`}>{h.status}</span>
@@ -277,7 +277,7 @@ export default function AdminPage() {
                             <Card key={h.id} className={h.featured ? 'ring-2 ring-yellow-400' : ''}>
                                 <CardHeader><CardTitle className="text-base flex items-center gap-2">{h.name}{h.featured && <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />}</CardTitle></CardHeader>
                                 <CardContent>
-                                    <p className="text-xs text-muted-foreground mb-3">₹{h.pricePerNight}/night · {h.ownerEmail}</p>
+                                    <p className="text-xs text-muted-foreground mb-3">₹{h.pricePerNight}/night · {h.host?.name || 'Unknown host'}</p>
                                     <Button size="sm" variant={h.featured ? 'destructive' : 'default'}
                                         onClick={() => handleToggleFeatured(h.id, !!h.featured)}
                                         className="w-full"

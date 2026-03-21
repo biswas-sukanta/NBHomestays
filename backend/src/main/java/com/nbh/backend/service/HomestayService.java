@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.HashMap;
 import java.time.LocalDateTime;
@@ -283,14 +284,16 @@ public class HomestayService {
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public List<HomestayDto.Response> getAllHomestays() {
                 return repository.findAll().stream()
-                                .map(this::mapToResponse)
+                                .map(this::safeMapToResponse)
+                                .flatMap(Optional::stream)
                                 .collect(Collectors.toList());
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public List<HomestayDto.Response> getHomestaysByStatus(Homestay.Status status) {
                 return repository.findByStatus(status).stream()
-                                .map(this::mapToResponse)
+                                .map(this::safeMapToResponse)
+                                .flatMap(Optional::stream)
                                 .collect(Collectors.toList());
         }
 
@@ -497,7 +500,12 @@ public class HomestayService {
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public Page<HomestayDto.Response> getPendingHomestays(Pageable pageable) {
-                return repository.findByStatus(Homestay.Status.PENDING, pageable).map(this::mapToResponse);
+                Page<Homestay> pendingPage = repository.findByStatus(Homestay.Status.PENDING, pageable);
+                List<HomestayDto.Response> safeResponses = pendingPage.getContent().stream()
+                                .map(this::safeMapToResponse)
+                                .flatMap(Optional::stream)
+                                .toList();
+                return new PageImpl<>(safeResponses, pageable, safeResponses.size());
         }
 
         public HomestayDto.Response mapToResponse(Homestay homestay) {
@@ -547,6 +555,11 @@ public class HomestayService {
                                 .ofNullable(computeTrustSignals(homestay))
                                 .orElse(List.of());
 
+                User owner = safeOwner(homestay);
+                AuthorDto host = buildAuthor(owner);
+                DestinationDto destination = safeDestinationDto(homestay);
+                UUID ownerId = owner != null ? owner.getId() : null;
+
                 return HomestayDto.Response.builder()
                                 .id(homestay.getId())
                                 .name(homestay.getName())
@@ -569,27 +582,13 @@ public class HomestayService {
                                 .avgValueRating(homestay.getAvgValueRating())
                                 .totalReviews(homestay.getTotalReviews())
                                 .status(homestay.getStatus())
-                                .host(AuthorDto.builder()
-                                                .id(homestay.getOwner().getId())
-                                                .name((homestay.getOwner().getFirstName() != null
-                                                                ? homestay.getOwner().getFirstName()
-                                                                : "")
-                                                                + (homestay.getOwner().getLastName() != null
-                                                                                ? " " + homestay.getOwner()
-                                                                                                .getLastName()
-                                                                                : ""))
-                                                .role(homestay.getOwner().getRole() != null
-                                                                ? homestay.getOwner().getRole().name()
-                                                                : "ROLE_USER")
-                                                .avatarUrl(homestay.getOwner().getAvatarUrl())
-                                                .isVerifiedHost(homestay.getOwner().isVerifiedHost())
-                                                .build())
+                                .host(host)
                                 .latitude(homestay.getLatitude())
                                 .longitude(homestay.getLongitude())
                                 .locationName(homestay.getAddress())
-                                .ownerId(homestay.getOwner().getId())
-                                .featured(homestay.getFeatured())
-                                .destination(destinationService.mapToDto(homestay.getDestination()))
+                                .ownerId(ownerId)
+                                .featured(Boolean.TRUE.equals(homestay.getFeatured()))
+                                .destination(destination)
                                 .mealConfig(mealConfig)
                                 .mealPlanCode(mealPlanCode)
                                 .mealPlanLabel(mealPlanLabel)
@@ -597,6 +596,63 @@ public class HomestayService {
                                 .nearbyHighlights(nearbyHighlights)
                                 .bookingHeatScore(bookingHeatScore)
                                 .trustSignals(trustSignals)
+                                .build();
+        }
+
+        private Optional<HomestayDto.Response> safeMapToResponse(Homestay homestay) {
+                try {
+                        return Optional.of(mapToResponse(homestay));
+                } catch (Exception ex) {
+                        log.warn("Skipping homestay {} during DTO mapping due to inconsistent data: {}",
+                                        homestay != null ? homestay.getId() : null, ex.getMessage());
+                        return Optional.empty();
+                }
+        }
+
+        private User safeOwner(Homestay homestay) {
+                if (homestay == null) {
+                        return null;
+                }
+                try {
+                        return homestay.getOwner();
+                } catch (Exception ex) {
+                        log.warn("Failed to resolve owner for homestay {}: {}", homestay.getId(), ex.getMessage());
+                        return null;
+                }
+        }
+
+        private DestinationDto safeDestinationDto(Homestay homestay) {
+                if (homestay == null) {
+                        return null;
+                }
+                try {
+                        return destinationService.mapToDto(homestay.getDestination());
+                } catch (Exception ex) {
+                        log.warn("Failed to resolve destination for homestay {}: {}", homestay.getId(),
+                                        ex.getMessage());
+                        return null;
+                }
+        }
+
+        private AuthorDto buildAuthor(User owner) {
+                if (owner == null) {
+                        return AuthorDto.builder()
+                                        .name("Unknown host")
+                                        .role("ROLE_USER")
+                                        .isVerifiedHost(false)
+                                        .build();
+                }
+
+                String firstName = owner.getFirstName() != null ? owner.getFirstName() : "";
+                String lastName = owner.getLastName() != null ? owner.getLastName() : "";
+                String displayName = (firstName + " " + lastName).trim();
+
+                return AuthorDto.builder()
+                                .id(owner.getId())
+                                .name(displayName.isBlank() ? "Unknown host" : displayName)
+                                .role(owner.getRole() != null ? owner.getRole().name() : "ROLE_USER")
+                                .avatarUrl(owner.getAvatarUrl())
+                                .isVerifiedHost(owner.isVerifiedHost())
                                 .build();
         }
 

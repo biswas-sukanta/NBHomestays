@@ -9,6 +9,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
@@ -47,6 +49,7 @@ public class Homestay {
     @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private User owner;
 
     @Column(nullable = false)
@@ -143,6 +146,7 @@ public class Homestay {
     @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destination_id")
+    @NotFound(action = NotFoundAction.IGNORE)
     private Destination destination;
 
     public enum Status {

@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.util.Map;
 import java.util.UUID;
@@ -76,7 +78,7 @@ public class AdminController {
     })
     public ResponseEntity<Map<String, Object>> toggleFeatured(@PathVariable("id") UUID id) {
         Homestay homestay = homestayRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Homestay not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Homestay not found"));
         boolean newState = !Boolean.TRUE.equals(homestay.getFeatured());
         homestay.setFeatured(newState);
         homestayRepository.save(homestay);

@@ -4,6 +4,7 @@ import com.nbh.backend.service.HomestaySeederService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +31,8 @@ public class AdminDatabaseController {
             return ResponseEntity.ok(Map.of("message", "Database wiped and seeded with hyper-realistic homestays."));
         } catch (Exception e) {
             log.error("Failed to seed database.", e);
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("error", "Database seed failed"));
         }
     }
 }
