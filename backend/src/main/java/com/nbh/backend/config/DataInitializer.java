@@ -66,47 +66,103 @@ public class DataInitializer {
 
                         // Seed Homestays
                         if (homestayRepository.count() == 0) {
-                                Homestay h1 = Homestay.builder()
-                                                .name("Misty Mountain Retreat")
-                                                .description("A beautiful stay in Darjeeling with view of Kanchenjunga.")
-                                                .address("Darjeeling, West Bengal")
-                                                .pricePerNight(2500)
-                                                .owner(host)
-                                                .status(Homestay.Status.APPROVED)
-                                                .latitude(27.0360)
-                                                .longitude(88.2627)
-                                                .mediaFiles(new java.util.ArrayList<>())
-                                                .build();
-                                homestayRepository.save(h1);
+                                homestayRepository.save(createSeedHomestay(
+                                                "Misty Mountain Retreat",
+                                                "A beautiful stay in Darjeeling with view of Kanchenjunga.",
+                                                "Darjeeling, West Bengal",
+                                                2500,
+                                                host,
+                                                Homestay.Status.APPROVED,
+                                                27.0360,
+                                                88.2627,
+                                                "full"));
 
-                                Homestay h2 = Homestay.builder()
-                                                .name("River View Kalimpong")
-                                                .description("Peaceful stay near Teesta river.")
-                                                .address("Kalimpong, West Bengal")
-                                                .pricePerNight(1800)
-                                                .owner(host)
-                                                .status(Homestay.Status.APPROVED)
-                                                .latitude(27.0667)
-                                                .longitude(88.4667)
-                                                .mediaFiles(new java.util.ArrayList<>())
-                                                .build();
-                                homestayRepository.save(h2);
+                                homestayRepository.save(createSeedHomestay(
+                                                "River View Kalimpong",
+                                                "Peaceful stay near Teesta river.",
+                                                "Kalimpong, West Bengal",
+                                                1800,
+                                                host,
+                                                Homestay.Status.APPROVED,
+                                                27.0667,
+                                                88.4667,
+                                                "partial"));
 
-                                Homestay h3 = Homestay.builder()
-                                                .name("Mirik Lake Homestay")
-                                                .description("Cozy cottage near the lake. Needs approval.")
-                                                .address("Mirik, West Bengal")
-                                                .pricePerNight(1200)
-                                                .owner(host)
-                                                .status(Homestay.Status.PENDING)
-                                                .latitude(26.8833)
-                                                .longitude(88.1833)
-                                                .mediaFiles(new java.util.ArrayList<>())
-                                                .build();
-                                homestayRepository.save(h3);
+                                homestayRepository.save(createSeedHomestay(
+                                                "Mirik Lake Homestay",
+                                                "Cozy cottage near the lake. Needs approval.",
+                                                "Mirik, West Bengal",
+                                                1200,
+                                                host,
+                                                Homestay.Status.PENDING,
+                                                26.8833,
+                                                88.1833,
+                                                "minimal"));
 
                                 log.info("Seeded 3 homestays");
                         }
                 };
+        }
+
+        private Homestay createSeedHomestay(String name, String description, String address, int pricePerNight,
+                        User owner, Homestay.Status status, double latitude, double longitude, String variant) {
+                Homestay homestay = Homestay.builder()
+                                .name(name)
+                                .description(description)
+                                .address(address)
+                                .pricePerNight(pricePerNight)
+                                .owner(owner)
+                                .status(status)
+                                .latitude(latitude)
+                                .longitude(longitude)
+                                .mediaFiles(new java.util.ArrayList<>())
+                                .build();
+
+                if ("full".equals(variant)) {
+                                homestay.setSpaces(java.util.List.of(java.util.Map.of(
+                                                "type", "room",
+                                                "name", "Sunrise Suite",
+                                                "description", "Main guest room with a reading nook and valley-facing windows.",
+                                                "media", java.util.List.of(java.util.Map.of(
+                                                                "url", "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
+                                                                "caption", "Primary suite view")))));
+                                homestay.setVideos(java.util.List.of(java.util.Map.of(
+                                                "url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                                                "title", "Property Tour",
+                                                "type", "property")));
+                                homestay.setAttractions(java.util.List.of(
+                                                java.util.Map.of(
+                                                                "name", "Tiger Hill",
+                                                                "distance", "12 km",
+                                                                "time", "35 min",
+                                                                "type", "nature",
+                                                                "highlight", true),
+                                                java.util.Map.of(
+                                                                "name", "Chowrasta",
+                                                                "distance", "3 km",
+                                                                "time", "10 min",
+                                                                "type", "cafe",
+                                                                "highlight", false)));
+                                homestay.setOffers(java.util.Map.of(
+                                                "type", "DEAL",
+                                                "title", "Launch Offer",
+                                                "description", "10 percent off for the first five bookings.",
+                                                "validity", "2026-04-30",
+                                                "tags", java.util.List.of("launch", "starter")));
+                } else if ("partial".equals(variant)) {
+                                homestay.setSpaces(java.util.List.of(java.util.Map.of(
+                                                "type", "common",
+                                                "name", "Riverside Deck",
+                                                "description", "Open deck for tea and slow evenings.",
+                                                "media", java.util.List.of())));
+                                homestay.setAttractions(java.util.List.of(java.util.Map.of(
+                                                "name", "Teesta Viewpoint",
+                                                "distance", "4 km",
+                                                "time", "15 min",
+                                                "type", "nature",
+                                                "highlight", true)));
+                }
+
+                return homestay;
         }
 }

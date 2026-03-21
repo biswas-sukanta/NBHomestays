@@ -274,7 +274,7 @@ public class AdminDataService {
 
                         Destination destEntity = destinationMap.get(destination);
                         
-                        seedData.add(createHomestay(owner, title, description, price, lat, lng,
+                        seedData.add(createHomestay(owner, i % 3, title, description, price, lat, lng,
                                         destination + ", West Bengal",
                                         dynamicTags,
                                         photos,
@@ -285,7 +285,7 @@ public class AdminDataService {
                 return seedData.size();
         }
 
-        private Homestay createHomestay(User owner, String name, String desc, int price, double lat, double lng,
+        private Homestay createHomestay(User owner, int variant, String name, String desc, int price, double lat, double lng,
                         String locName, List<String> tags, List<String> photos, Destination destination) {
                 Homestay h = Homestay.builder()
                                 .owner(owner)
@@ -326,7 +326,74 @@ public class AdminDataService {
                                 .map(url -> com.nbh.backend.model.MediaResource.builder().url(url).homestay(h).build())
                                 .collect(Collectors.toList());
                 h.setMediaFiles(media);
+                applySeedVariant(h, photos, variant);
                 return h;
+        }
+
+        private void applySeedVariant(Homestay homestay, List<String> photos, int variant) {
+                String primaryPhoto = photos == null || photos.isEmpty() ? null : photos.get(0);
+
+                if (variant == 0) {
+                        List<Map<String, Object>> spaces = new ArrayList<>();
+                        spaces.add(Map.of(
+                                        "type", "room",
+                                        "name", "Panorama Room",
+                                        "description", "The best sunrise-facing room in the house.",
+                                        "media", primaryPhoto == null ? List.of()
+                                                        : List.of(Map.of(
+                                                                        "url", primaryPhoto,
+                                                                        "caption", "Main guest room"))));
+                        spaces.add(Map.of(
+                                        "type", "common",
+                                        "name", "Tea Lounge",
+                                        "description", "Shared lounge for evening tea and board games.",
+                                        "media", List.of()));
+                        homestay.setSpaces(spaces);
+                        homestay.setVideos(List.of(Map.of(
+                                        "url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                                        "title", "Property Tour",
+                                        "type", "property")));
+                        homestay.setAttractions(List.of(
+                                        Map.of(
+                                                        "name", "Sunrise Point",
+                                                        "distance", "7 km",
+                                                        "time", "20 min",
+                                                        "type", "nature",
+                                                        "highlight", true),
+                                        Map.of(
+                                                        "name", "Local Market",
+                                                        "distance", "2 km",
+                                                        "time", "8 min",
+                                                        "type", "culture",
+                                                        "highlight", false)));
+                        homestay.setOffers(Map.of(
+                                        "type", "DEAL",
+                                        "title", "Launch Offer",
+                                        "description", "10 percent off for the first five bookings.",
+                                        "validity", "2026-04-30",
+                                        "tags", List.of("launch", "seed")));
+                        return;
+                }
+
+                if (variant == 1) {
+                        homestay.setSpaces(List.of(Map.of(
+                                        "type", "outdoor",
+                                        "name", "Bonfire Terrace",
+                                        "description", "Open terrace for sunset and bonfire evenings.",
+                                        "media", List.of())));
+                        homestay.setAttractions(List.of(Map.of(
+                                        "name", "Monastery Trail",
+                                        "distance", "5 km",
+                                        "time", "18 min",
+                                        "type", "culture",
+                                        "highlight", true)));
+                        return;
+                }
+
+                homestay.setOffers(null);
+                homestay.setSpaces(null);
+                homestay.setVideos(null);
+                homestay.setAttractions(null);
         }
 
         // ═══════════════════════════════════════════════════════════════════════════

@@ -2,12 +2,13 @@
 
 Date: 2026-03-22
 
-Purpose: document what was implemented for the Add Homestay and Homestay Detail Page upgrade, why those changes were made, what was changed in the final restricted-scope stabilization pass, and what remains before release.
+Purpose: document what was implemented for the Add Homestay and Homestay Detail Page upgrade, why those changes were made, what was changed in the final restricted-scope stabilization pass, and what was completed in the final system-alignment pass across admin, seed, and purge flows.
 
-This report is based only on the two canonical documents:
+This report is based only on the canonical documents:
 
 - `docs/features/add-homestay.md`
 - `docs/features/homestay-detail-page.md`
+- this review document for final run notes
 
 It is intended for engineering review.
 
@@ -100,10 +101,11 @@ This conflicted with the requested UX constraint. The implementation corrected t
 
 ## 3. Files Changed
 
-This review now reflects two phases:
+This review now reflects three phases:
 
 - initial additive extension and compatibility tightening
 - final restricted-scope stabilization pass limited to the allowed implementation files
+- final system-alignment pass covering admin, seed, and purge behavior
 
 ### 3.1 Added
 
@@ -113,6 +115,9 @@ This review now reflects two phases:
 ### 3.2 Updated
 
 - `backend/src/main/java/com/nbh/backend/service/HomestayService.java`
+- `backend/src/main/java/com/nbh/backend/config/DataInitializer.java`
+- `backend/src/main/java/com/nbh/backend/service/AdminDataService.java`
+- `backend/src/main/java/com/nbh/backend/service/HomestaySeederService.java`
 - `frontend/components/host/HomestayForm.tsx`
 - `frontend/app/homestays/[id]/page.tsx`
 - `docs/add-homestay-upgrade-review.md`
@@ -1045,3 +1050,163 @@ Observed final result:
 - backend still starts successfully with `mvn -Dmaven.test.skip=true spring-boot:run -Dspring-boot.run.profiles=local`
 - authenticated create/update/fetch behavior for spaces, videos, attractions, and offers still works
 - the async post-process job finishes without emitting a backend `ERROR` log for the tested create flow
+
+## 21. Final System Audit
+
+The final pass expanded beyond the host add-homestay path and verified the full system alignment requested in the production push workflow:
+
+- host create/update API
+- admin create/update path
+- admin seed endpoints
+- purge/reset path
+- seeded data coverage for the new JSON fields
+
+### 21.1 Admin API Result
+
+There is no separate admin create/update homestay mutation stack in this codebase.
+
+Verified behavior:
+
+- host and admin both create through `POST /api/homestays`
+- update remains `PUT /api/homestays/{id}`
+- admin authorization is accepted through the shared controller and `HomestayService`
+
+Why this matters:
+
+- there was no second unsanitized admin write path to patch
+- the main `HomestayService` sanitization is the backend source of truth for both host and admin flows
+
+### 21.2 Seed Coverage Result
+
+The real system gap was seed coverage.
+
+Before the final system pass:
+
+- startup seed data did not exercise full/partial/minimal combinations of:
+  - `spaces`
+  - `videos`
+  - `attractions`
+  - `offers`
+- admin seed paths were inconsistent with the new contract
+
+After the final system pass:
+
+- `DataInitializer` now seeds:
+  - one full example
+  - one partial example
+  - one minimal example
+- `AdminDataService.seedHomestays(...)` now rotates through:
+  - full
+  - partial
+  - minimal
+- `HomestaySeederService.seedHomestays()` now writes a realistic set of 8 homestays with the same variant spread
+
+This gives live verification data for:
+
+- full-feature traveler pages
+- partial optional-field pages
+- old-style/minimal pages with none of the new fields
+
+### 21.3 Purge / Reset Result
+
+The purge logic in `AdminDataService` was already safe and was verified live:
+
+- clears `posts.homestay_id`
+- clears timeline homestay references
+- deletes review rows
+- deletes `media_resources` linked to homestays
+- hard-deletes homestays
+- attempts ImageKit file cleanup
+
+The reset logic in `HomestaySeederService` was not aligned before this pass.
+
+Observed failure:
+
+- `POST /api/admin/database/seed` returned `422`
+- root cause was a foreign-key violation because `HomestaySeederService` hard-deleted homestays without first clearing `posts.homestay_id`
+
+What was changed:
+
+- `HomestaySeederService` now clears:
+  - post homestay references
+  - timeline homestay references
+  - trip-board saves for the homestays being purged
+
+Why this was necessary:
+
+- the database seed endpoint is effectively a purge-then-seed reset flow
+- if purge/reset does not match production purge semantics, the admin reset path is not safe
+
+### 21.4 Live Verification Result
+
+Verified with the running local system:
+
+- backend started with:
+  - `mvn -Dmaven.test.skip=true spring-boot:run -Dspring-boot.run.profiles=local`
+- frontend started with:
+  - `npm run dev`
+- health endpoint returned `UP`
+- homepage and homestay routes returned `200`
+
+Verified flows:
+
+1. Host create with valid `spaces`, `videos`, `attractions`, `offers` succeeded.
+2. Admin create with valid `spaces`, `videos`, `attractions`, `offers` succeeded.
+3. Host update with invalid `spaces[].media[].fileId` and invalid non-YouTube video succeeded.
+4. Admin update with the same invalid nested data succeeded.
+5. Invalid nested space media was dropped while keeping the space.
+6. Invalid videos were omitted from the persisted/fetched result.
+7. `POST /api/admin/database/seed` now succeeds.
+8. Seeded data includes:
+   - full examples with all new fields
+   - partial examples
+   - minimal examples with none of the new fields
+9. `DELETE /api/admin/homestays/all` succeeds and leaves zero homestays.
+
+### 21.5 Detail Page Runtime Notes
+
+Traveler routes were verified as live `200` responses for:
+
+- a seeded full-data homestay
+- a seeded minimal/no-extension-field homestay
+
+The strongest verification for section placement and grouping remains code-backed:
+
+- section order in `frontend/app/homestays/[id]/page.tsx` is:
+  1. `Stay Story`
+  2. `Property tour`
+  3. `Highlights`
+- attractions are grouped into highlighted and non-highlighted buckets
+- all extension sections remain conditional on data presence
+
+Terminal-only limitation:
+
+- browser devtools console capture was not available from this environment
+- server-rendered route responses and backend/API behavior were verified instead
+
+## 22. Final Dependency-Safe Push Set
+
+After the final system-alignment pass, the required file set is:
+
+- `backend/src/main/java/com/nbh/backend/config/DataInitializer.java`
+- `backend/src/main/java/com/nbh/backend/service/AdminDataService.java`
+- `backend/src/main/java/com/nbh/backend/service/HomestaySeederService.java`
+- `docs/add-homestay-upgrade-review.md`
+
+These files are additive on top of the already-pushed add-homestay/detail implementation and are required together because:
+
+- `DataInitializer` now provides startup seed coverage for full/partial/minimal variants
+- `AdminDataService` provides the admin seed variant coverage used by `/api/admin/homestays/seed`
+- `HomestaySeederService` fixes the foreign-key-safe purge/reset path behind `/api/admin/database/seed`
+
+## 23. Final Push Readiness
+
+For the final system-alignment pass, the code is push-ready once the working tree is cleaned down to only the files in Section 22.
+
+Blocking cleanup items created during verification:
+
+- generated frontend file noise in `frontend/next-env.d.ts`
+- temporary API payload/response fixtures used during manual verification
+- temporary test image used for upload verification
+
+These are not part of the dependency-safe commit and should not be pushed.
