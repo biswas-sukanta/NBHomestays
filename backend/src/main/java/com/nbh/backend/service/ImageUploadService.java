@@ -186,7 +186,17 @@ public class ImageUploadService {
         if (fileId == null || fileId.isBlank() || folder == null || folder.isBlank()) {
             return;
         }
-        String normalizedFolder = folder.startsWith("/") ? folder : "/" + folder;
+        String normalizedFolder = folder.trim().replace('\\', '/');
+        while (normalizedFolder.startsWith("/")) {
+            normalizedFolder = normalizedFolder.substring(1);
+        }
+        while (normalizedFolder.endsWith("/")) {
+            normalizedFolder = normalizedFolder.substring(0, normalizedFolder.length() - 1);
+        }
+        if (normalizedFolder.isBlank()) {
+            return;
+        }
+        String sourceFolderPrefix = "/" + normalizedFolder + "/";
 
         try {
             Result details = ImageKit.getInstance().getFileDetail(fileId);
@@ -194,25 +204,27 @@ public class ImageUploadService {
             if (sourcePath == null || sourcePath.isBlank()) {
                 return;
             }
-            if (sourcePath.startsWith(normalizedFolder + "/")) {
+            if (sourcePath.startsWith(sourceFolderPrefix)) {
                 return;
             }
 
-            int slashIndex = sourcePath.lastIndexOf('/');
-            String fileName = slashIndex >= 0 ? sourcePath.substring(slashIndex + 1) : sourcePath;
-
             MoveFileRequest request = new MoveFileRequest();
             request.setSourceFilePath(sourcePath);
-            request.setDestinationPath(normalizedFolder + "/" + fileName);
+            request.setDestinationPath(normalizedFolder);
             ImageKit.getInstance().moveFile(request);
-            log.info("[IMAGEKIT MOVE] Moved fileId {} to {}", fileId, normalizedFolder);
+            log.info("[IMAGEKIT MOVE] Moved fileId {} to /{}", fileId, normalizedFolder);
         } catch (Exception e) {
             if (isNotFound(e)) {
                 // File may already be deleted; no retry needed.
                 log.info("[IMAGEKIT MOVE] File not found for move, treating as no-op. fileId={}", fileId);
                 return;
             }
-            throw new RuntimeException("Failed to move ImageKit fileId " + fileId + " to " + normalizedFolder, e);
+            if (isRecoverableMoveFailure(e)) {
+                log.warn("[IMAGEKIT MOVE] Recoverable move failure for fileId {} to /{}: {}", fileId, normalizedFolder,
+                        e.getMessage());
+                return;
+            }
+            throw new RuntimeException("Failed to move ImageKit fileId " + fileId + " to /" + normalizedFolder, e);
         }
     }
 
@@ -220,6 +232,15 @@ public class ImageUploadService {
         String className = e.getClass().getSimpleName();
         String message = e.getMessage();
         return "NotFoundException".equals(className) || (message != null && message.contains("404"));
+    }
+
+    private boolean isRecoverableMoveFailure(Exception e) {
+        String message = e.getMessage();
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+
+        return message.contains("Versions Limit Exceeded");
     }
 
     private void validateFile(MultipartFile file) {

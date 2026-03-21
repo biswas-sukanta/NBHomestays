@@ -4,14 +4,14 @@ import HomestayMapWrapper from '@/components/HomestayMapWrapper';
 import { MapPin, Navigation, Clock, ExternalLink } from 'lucide-react';
 
 interface LocationMapSectionProps {
-    latitude: number;
-    longitude: number;
-    locationName: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    locationName?: string;
     nearbyHighlights?: string[];
 }
 
 export function LocationMapSection({ latitude, longitude, locationName, nearbyHighlights }: LocationMapSectionProps) {
-    if (!latitude || !longitude) return null;
+    if (latitude === null || latitude === undefined || longitude === null || longitude === undefined) return null;
 
     const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
 

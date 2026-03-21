@@ -6,6 +6,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { destinationApi } from '@/lib/api/destinations';
 import { homestayApi } from '@/lib/api/homestays';
+import { imageApi } from '@/lib/api/images';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -137,6 +138,89 @@ const DEFAULT_POLICIES = [
     'Right to admission reserved.'
 ];
 
+const TOTAL_STEPS = 8;
+const SPACE_TYPES = ['room', 'bathroom', 'common', 'outdoor'] as const;
+const VIDEO_TYPES = ['property', 'room', 'experience'] as const;
+const ATTRACTION_TYPES = ['nature', 'culture', 'cafe'] as const;
+const OFFER_TYPES = ['DEAL', 'SEASONAL', 'LAST_MINUTE'] as const;
+const PAYMENT_TYPES = ['UPI', 'Cash', 'Bank Transfer'] as const;
+const ALCOHOL_POLICY_OPTIONS = ['allowed', 'restricted', 'prohibited'] as const;
+
+type MediaRef = { url: string; fileId?: string; tempId?: string; caption?: string };
+type SpaceType = typeof SPACE_TYPES[number];
+type VideoType = typeof VIDEO_TYPES[number];
+type AttractionType = typeof ATTRACTION_TYPES[number];
+type OfferType = typeof OFFER_TYPES[number];
+type AlcoholPolicy = typeof ALCOHOL_POLICY_OPTIONS[number];
+
+type SpaceForm = {
+    type: SpaceType;
+    name: string;
+    description: string;
+    media: MediaRef[];
+};
+
+type VideoForm = {
+    url: string;
+    title: string;
+    type: VideoType;
+};
+
+type AttractionForm = {
+    name: string;
+    distance: string;
+    time: string;
+    type: AttractionType;
+    highlight: boolean;
+};
+
+type OfferForm = {
+    type: OfferType | '';
+    title: string;
+    description: string;
+    validity: string;
+    tags: string;
+};
+
+type DestinationOption = {
+    id: string;
+    name: string;
+    stateName?: string;
+};
+
+type SavedMealExtra = {
+    code?: string;
+};
+
+const createEmptySpace = (): SpaceForm => ({
+    type: 'room',
+    name: '',
+    description: '',
+    media: [],
+});
+
+const createEmptyVideo = (): VideoForm => ({
+    url: '',
+    title: '',
+    type: 'property',
+});
+
+const createEmptyAttraction = (): AttractionForm => ({
+    name: '',
+    distance: '',
+    time: '',
+    type: 'nature',
+    highlight: false,
+});
+
+const createEmptyOffer = (): OfferForm => ({
+    type: '',
+    title: '',
+    description: '',
+    validity: '',
+    tags: '',
+});
+
 export interface HomestayFormProps {
     id?: string;
     isEditMode?: boolean;
@@ -157,6 +241,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
     const [location, setLocation] = useState({ latitude: null as number | null, longitude: null as number | null, locationName: '' });
     const [destinationId, setDestinationId] = useState<string>('');
     const [amenities, setAmenities] = useState<string[]>([]);
+    const [spaces, setSpaces] = useState<SpaceForm[]>([]);
     const [tags, setTags] = useState<string[]>([]);
     const [mapAutoSearch, setMapAutoSearch] = useState<string | undefined>(undefined);
 
@@ -179,6 +264,16 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
     const [mealPrice, setMealPrice] = useState('');
     const [dietTypes, setDietTypes] = useState<string[]>([]);
     const [extras, setExtras] = useState([...DEFAULT_EXTRAS]);
+    const [videos, setVideos] = useState<VideoForm[]>([]);
+    const [attractions, setAttractions] = useState<AttractionForm[]>([]);
+    const [offer, setOffer] = useState<OfferForm>(createEmptyOffer());
+    const [structuredPolicies, setStructuredPolicies] = useState({
+        checkIn: '13:00',
+        checkOut: '10:00',
+        paymentType: ['UPI', 'Cash'] as string[],
+        petsAllowed: false,
+        alcoholAllowed: 'restricted' as AlcoholPolicy,
+    });
 
     // Quick Facts
     const [quickFacts, setQuickFacts] = useState({
@@ -206,6 +301,16 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                 setAmenities(Object.keys(data.amenities || {}).filter(k => data.amenities[k]));
                 setPolicies(data.policies || []);
                 setExistingMedia(data.media || []);
+                setSpaces(Array.isArray(data.spaces) ? data.spaces : []);
+                setVideos(Array.isArray(data.videos) ? data.videos : []);
+                setAttractions(Array.isArray(data.attractions) ? data.attractions : []);
+                setOffer(data.offers ? {
+                    type: data.offers.type || '',
+                    title: data.offers.title || '',
+                    description: data.offers.description || '',
+                    validity: data.offers.validity || '',
+                    tags: Array.isArray(data.offers.tags) ? data.offers.tags.join(', ') : ''
+                } : createEmptyOffer());
                 if (data.quickFacts) {
                     setQuickFacts({
                         checkIn: data.quickFacts['Check-in'] || '13:00',
@@ -215,6 +320,15 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                         hike: data.quickFacts['Hike'] || 'None',
                         mobileNetwork: data.quickFacts['Mobile Network'] || 'Good Connectivity',
                         outsiders: data.quickFacts['Outsiders'] || 'Not Allowed'
+                    });
+                }
+                if (data.structuredPolicies) {
+                    setStructuredPolicies({
+                        checkIn: data.structuredPolicies.checkIn || '13:00',
+                        checkOut: data.structuredPolicies.checkOut || '10:00',
+                        paymentType: Array.isArray(data.structuredPolicies.paymentType) ? data.structuredPolicies.paymentType : ['UPI', 'Cash'],
+                        petsAllowed: Boolean(data.structuredPolicies.petsAllowed),
+                        alcoholAllowed: data.structuredPolicies.alcoholAllowed || 'restricted'
                     });
                 }
                 if (data.hostDetails) {
@@ -272,7 +386,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
             }
         } else if (currentStep === 2) {
             if (!destinationId) newErrors.destinationId = "Please select a Destination.";
-            if (!location.latitude || !location.longitude) {
+            if (location.latitude === null || location.longitude === null) {
                 newErrors.location = "Please pin your exact location on the map.";
             }
             if (!location.locationName.trim()) {
@@ -281,6 +395,16 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
         } else if (currentStep === 3) {
             if (existingMedia.length + imageFiles.length === 0) {
                 newErrors.photos = "Please upload at least 1 property photo.";
+            }
+        } else if (currentStep === 4) {
+            if (videos.length > 5) {
+                newErrors.videos = "You can add up to 5 YouTube videos.";
+            }
+            if (videos.some(video => video.url.trim() && !/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(video.url.trim()))) {
+                newErrors.videos = "Only YouTube links are allowed.";
+            }
+            if (attractions.length > 8) {
+                newErrors.attractions = "You can add up to 8 attractions.";
             }
         } else if (currentStep === 8) {
             if (hostDetails.yearsHosting && parseInt(hostDetails.yearsHosting) < 0) {
@@ -329,6 +453,45 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
         setPolicies(newP);
     };
     const removePolicy = (index: number) => setPolicies(prev => prev.filter((_, i) => i !== index));
+    const addSpace = () => setSpaces(prev => [...prev, createEmptySpace()]);
+    const updateSpace = (index: number, updates: Partial<SpaceForm>) =>
+        setSpaces(prev => prev.map((space, i) => i === index ? { ...space, ...updates } : space));
+    const removeSpace = (index: number) => setSpaces(prev => prev.filter((_, i) => i !== index));
+    const toggleSpaceMedia = (spaceIndex: number, media: MediaRef) => {
+        setSpaces(prev => prev.map((space, i) => {
+            if (i !== spaceIndex) {
+                return space;
+            }
+            const key = media.fileId ? `file:${media.fileId}` : `temp:${media.tempId}`;
+            const exists = space.media.some(item => (item.fileId ? `file:${item.fileId}` : `temp:${item.tempId}`) === key);
+            return {
+                ...space,
+                media: exists
+                    ? space.media.filter(item => (item.fileId ? `file:${item.fileId}` : `temp:${item.tempId}`) !== key)
+                    : [...space.media, media]
+            };
+        }));
+    };
+    const addVideo = () => setVideos(prev => [...prev, createEmptyVideo()]);
+    const updateVideo = (index: number, updates: Partial<VideoForm>) =>
+        setVideos(prev => prev.map((video, i) => i === index ? { ...video, ...updates } : video));
+    const removeVideo = (index: number) => setVideos(prev => prev.filter((_, i) => i !== index));
+    const addAttraction = () => setAttractions(prev => prev.length >= 8 ? prev : [...prev, createEmptyAttraction()]);
+    const updateAttraction = (index: number, updates: Partial<AttractionForm>) =>
+        setAttractions(prev => prev.map((item, i) => i === index ? { ...item, ...updates } : item));
+    const removeAttraction = (index: number) => setAttractions(prev => prev.filter((_, i) => i !== index));
+    const togglePaymentType = (paymentType: string) => {
+        setStructuredPolicies(prev => ({
+            ...prev,
+            paymentType: prev.paymentType.includes(paymentType)
+                ? prev.paymentType.filter(item => item !== paymentType)
+                : [...prev.paymentType, paymentType]
+        }));
+    };
+    const selectableMedia: MediaRef[] = [
+        ...existingMedia.map(media => ({ url: media.url, fileId: media.fileId })),
+        ...imageFiles.map(file => ({ url: file.previewUrl, tempId: file.id }))
+    ];
 
     const handleSubmit = async () => {
         // Re-validate all critical steps before submission to guard against any desync
@@ -347,19 +510,104 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
             setStep(3);
             return;
         }
-        if (!validateStep(8)) return;
+        if (!validateStep(4)) {
+            setStep(4);
+            return;
+        }
+        if (!validateStep(8)) {
+            setStep(8);
+            return;
+        }
 
         setLoading(true);
+        let uploadedFileIds: string[] = [];
         try {
-            // STEP A: Prepare the Homestay DTO Payload
-            const payload = {
+            let uploadedMedia: { url: string; fileId?: string }[] = [];
+            if (imageFiles.length > 0) {
+                const batches: StagedFile[][] = [];
+                for (let index = 0; index < imageFiles.length; index += 5) {
+                    batches.push(imageFiles.slice(index, index + 5));
+                }
+
+                for (const batch of batches) {
+                    const uploadFormData = new FormData();
+                    batch.forEach(staged => uploadFormData.append('files', staged.file));
+                    const response = await imageApi.uploadMultiple(uploadFormData);
+                    const batchMedia = Array.isArray(response.data) ? response.data : [];
+                    uploadedMedia = [...uploadedMedia, ...batchMedia];
+                    uploadedFileIds = [
+                        ...uploadedFileIds,
+                        ...batchMedia.map((item: { fileId?: string }) => item.fileId).filter(Boolean)
+                    ] as string[];
+                }
+            }
+
+            const uploadedMediaByTempId = new Map(
+                imageFiles.map((file, index) => [file.id, uploadedMedia[index]])
+            );
+            const finalMedia = [...existingMedia, ...uploadedMedia];
+            const allowedFileIds = new Set(finalMedia.map(media => media.fileId).filter(Boolean));
+            const normalizedSpaces = spaces
+                .map(space => ({
+                    type: space.type,
+                    name: space.name.trim(),
+                    description: space.description.trim() || undefined,
+                    media: space.media
+                        .map(media => media.fileId
+                            ? {
+                                url: media.url,
+                                fileId: media.fileId,
+                                caption: media.caption?.trim() || undefined
+                            }
+                            : uploadedMediaByTempId.get(media.tempId || ''))
+                        .filter(Boolean)
+                        .filter((media: any) => !media.fileId || allowedFileIds.has(media.fileId))
+                        .map((media: any) => ({
+                            url: media.url,
+                            fileId: media.fileId,
+                            caption: media.caption?.trim() || undefined
+                        }))
+                }))
+                .filter(space => space.name || space.media.length > 0 || space.description);
+
+            const normalizedVideos = videos
+                .map(video => ({
+                    url: video.url.trim(),
+                    title: video.title.trim() || undefined,
+                    type: video.type
+                }))
+                .filter(video => video.url)
+                .slice(0, 5);
+
+            const normalizedAttractions = attractions
+                .map(item => ({
+                    name: item.name.trim(),
+                    distance: item.distance.trim() || undefined,
+                    time: item.time.trim() || undefined,
+                    type: item.type,
+                    highlight: item.highlight
+                }))
+                .filter(item => item.name)
+                .slice(0, 8);
+
+            const normalizedOffer = offer.type && offer.title.trim() && offer.description.trim()
+                ? {
+                    type: offer.type,
+                    title: offer.title.trim(),
+                    description: offer.description.trim(),
+                    validity: offer.validity.trim() || undefined,
+                    tags: offer.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+                }
+                : undefined;
+
+            const payload: Record<string, unknown> = {
                 name: basicInfo.name,
                 description: basicInfo.description,
                 pricePerNight: parseFloat(basicInfo.pricePerNight),
                 latitude: location.latitude,
                 longitude: location.longitude,
                 locationName: location.locationName,
-                media: existingMedia,
+                media: finalMedia,
                 destinationId: destinationId,
                 tags: Array.from(new Set(tags)),
                 // JSONB Conversions
@@ -390,18 +638,36 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                     mealPricePerGuest: mealPrice ? parseFloat(mealPrice) : null,
                     dietTypes,
                     extras: extras.filter(e => e.enabled).map(({ enabled, ...rest }) => rest)
+                },
+                spaces: normalizedSpaces,
+                videos: normalizedVideos,
+                attractions: normalizedAttractions,
+                offers: normalizedOffer,
+                structuredPolicies: {
+                    checkIn: structuredPolicies.checkIn,
+                    checkOut: structuredPolicies.checkOut,
+                    paymentType: structuredPolicies.paymentType,
+                    petsAllowed: structuredPolicies.petsAllowed,
+                    alcoholAllowed: structuredPolicies.alcoholAllowed
+                },
+                meta: {
+                    structuredPolicies: {
+                        checkIn: structuredPolicies.checkIn,
+                        checkOut: structuredPolicies.checkOut,
+                        paymentType: structuredPolicies.paymentType,
+                        petsAllowed: structuredPolicies.petsAllowed,
+                        alcoholAllowed: structuredPolicies.alcoholAllowed
+                    }
                 }
             };
 
-            // STEP B: Compile into Multipart FormData
+            if (normalizedSpaces.length === 0) delete payload.spaces;
+            if (normalizedVideos.length === 0) delete payload.videos;
+            if (normalizedAttractions.length === 0) delete payload.attractions;
+            if (!normalizedOffer) delete payload.offers;
+
             const formData = new FormData();
             formData.append('request', new Blob([JSON.stringify(payload)], { type: "application/json" }));
-
-            if (imageFiles.length > 0) {
-                imageFiles.forEach(staged => {
-                    formData.append('files', staged.file);
-                });
-            }
 
             toast.info(isEditMode ? "Updating homestay..." : "Creating homestay...");
 
@@ -419,7 +685,10 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
             router.push('/host/dashboard');
         } catch (error: any) {
             console.error("Submission Error:", error.response?.data || error.message);
-            toast.error("Failed to create homestay. Check your connection.");
+            if (uploadedFileIds.length > 0) {
+                await imageApi.rollbackMedia(uploadedFileIds).catch(() => null);
+            }
+            toast.error(isEditMode ? "Failed to update homestay. Check your connection." : "Failed to create homestay. Check your connection.");
         } finally {
             setLoading(false);
         }
@@ -442,7 +711,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
 
             {/* Progress Bar */}
             <div className="w-full bg-secondary h-2 rounded-full mb-8 overflow-hidden">
-                <div className="bg-[#004d00] h-full transition-all duration-500 ease-in-out" style={{ width: `${(step / 8) * 100}%` }} />
+                <div className="bg-[#004d00] h-full transition-all duration-500 ease-in-out" style={{ width: `${(step / TOTAL_STEPS) * 100}%` }} />
             </div>
 
             <Card className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 mb-12 overflow-hidden">
@@ -557,6 +826,74 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                             </div>
 
                             <div className="space-y-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <Label className="text-base font-bold">Spaces & Stay</Label>
+                                        <p className="text-sm text-muted-foreground mt-1">Group existing or staged photos into room, bathroom, common, or outdoor spaces.</p>
+                                    </div>
+                                    <Button type="button" variant="outline" onClick={addSpace}>
+                                        <Plus className="w-4 h-4 mr-2" /> Add Space
+                                    </Button>
+                                </div>
+                                <div className="space-y-4">
+                                    {spaces.length === 0 && (
+                                        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 text-sm text-muted-foreground">
+                                            No spaces added yet. Add a room or common area to power the detail page.
+                                        </div>
+                                    )}
+                                    {spaces.map((space, spaceIndex) => (
+                                        <div key={`${space.type}-${spaceIndex}`} className="rounded-2xl border border-gray-200 p-5 space-y-4 bg-white">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
+                                                    <div className="space-y-2">
+                                                        <Label>Space Type</Label>
+                                                        <Select value={space.type} onValueChange={(value: SpaceType) => updateSpace(spaceIndex, { type: value })}>
+                                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                                            <SelectContent>
+                                                                {SPACE_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Space Name</Label>
+                                                        <Input value={space.name} onChange={e => updateSpace(spaceIndex, { name: e.target.value })} placeholder="Deluxe Mountain Room" />
+                                                    </div>
+                                                </div>
+                                                <Button type="button" variant="outline" size="icon" onClick={() => removeSpace(spaceIndex)}>
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Description</Label>
+                                                <Textarea value={space.description} onChange={e => updateSpace(spaceIndex, { description: e.target.value })} placeholder="Optional room details for guests" className="h-24" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Linked Photos</Label>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                    {selectableMedia.map((media, mediaIndex) => {
+                                                        const selected = space.media.some(item => (item.fileId && item.fileId === media.fileId) || (item.tempId && item.tempId === media.tempId));
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                key={media.fileId || media.tempId || mediaIndex}
+                                                                onClick={() => toggleSpaceMedia(spaceIndex, media)}
+                                                                className={`relative overflow-hidden rounded-2xl border ${selected ? 'border-emerald-600 ring-2 ring-emerald-200' : 'border-gray-200'} aspect-square`}
+                                                            >
+                                                                <img src={media.url} alt="" className="h-full w-full object-cover" />
+                                                                <span className={`absolute left-2 top-2 rounded-full px-2 py-1 text-[10px] font-bold ${selected ? 'bg-emerald-700 text-white' : 'bg-white/90 text-gray-700'}`}>
+                                                                    {selected ? 'Linked' : 'Select'}
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
                                 <Label className="text-base font-bold">Amenities & Features</Label>
                                 <div className="space-y-6">
                                     {Object.entries(AMENITY_CATEGORIES).map(([category, items]) => (
@@ -620,13 +957,189 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                                     </div>
                                 ))}
                             </ScrollArea>
+
+                            <div className="space-y-5 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <Label className="text-base font-bold">Property Tour Videos</Label>
+                                        <p className="text-sm text-muted-foreground mt-1">Optional YouTube links only, maximum 5.</p>
+                                    </div>
+                                    <Button type="button" variant="outline" onClick={addVideo} disabled={videos.length >= 5}>
+                                        <Plus className="w-4 h-4 mr-2" /> Add Video
+                                    </Button>
+                                </div>
+                                {errors.videos && <p className="text-red-500 text-xs font-medium">{errors.videos}</p>}
+                                <div className="space-y-4">
+                                    {videos.length === 0 && (
+                                        <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-5 text-sm text-muted-foreground">
+                                            No videos added yet.
+                                        </div>
+                                    )}
+                                    {videos.map((video, index) => (
+                                        <div key={`${video.url}-${index}`} className="rounded-2xl border border-gray-200 bg-white p-5 grid grid-cols-1 md:grid-cols-[1fr_180px_auto] gap-4 items-start">
+                                            <div className="space-y-2">
+                                                <Label>YouTube URL</Label>
+                                                <Input value={video.url} onChange={e => updateVideo(index, { url: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Type</Label>
+                                                <Select value={video.type} onValueChange={(value: VideoType) => updateVideo(index, { type: value })}>
+                                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                                    <SelectContent>
+                                                        {VIDEO_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <Button type="button" variant="outline" size="icon" onClick={() => removeVideo(index)}>
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                            <div className="md:col-span-3 space-y-2">
+                                                <Label>Title</Label>
+                                                <Input value={video.title} onChange={e => updateVideo(index, { title: e.target.value })} placeholder="Optional video title" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-5 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <Label className="text-base font-bold">Local Attractions</Label>
+                                        <p className="text-sm text-muted-foreground mt-1">Optional nearby places guests should know about.</p>
+                                    </div>
+                                    <Button type="button" variant="outline" onClick={addAttraction} disabled={attractions.length >= 8}>
+                                        <Plus className="w-4 h-4 mr-2" /> Add Attraction
+                                    </Button>
+                                </div>
+                                {errors.attractions && <p className="text-red-500 text-xs font-medium">{errors.attractions}</p>}
+                                <div className="space-y-4">
+                                    {attractions.length === 0 && (
+                                        <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-5 text-sm text-muted-foreground">
+                                            No attractions added yet.
+                                        </div>
+                                    )}
+                                    {attractions.map((item, index) => (
+                                        <div key={`${item.name}-${index}`} className="rounded-2xl border border-gray-200 bg-white p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Name</Label>
+                                                <Input value={item.name} onChange={e => updateAttraction(index, { name: e.target.value })} placeholder="Lava Monastery" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Distance</Label>
+                                                <Input value={item.distance} onChange={e => updateAttraction(index, { distance: e.target.value })} placeholder="5 km" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Travel Time</Label>
+                                                <Input value={item.time} onChange={e => updateAttraction(index, { time: e.target.value })} placeholder="15 min" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Type</Label>
+                                                <Select value={item.type} onValueChange={(value: AttractionType) => updateAttraction(index, { type: value })}>
+                                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                                    <SelectContent>
+                                                        {ATTRACTION_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <label className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 md:col-span-2">
+                                                <span className="text-sm font-medium text-gray-800">Highlight this attraction</span>
+                                                <input type="checkbox" checked={item.highlight} onChange={e => updateAttraction(index, { highlight: e.target.checked })} className="h-4 w-4" />
+                                            </label>
+                                            <div className="md:col-span-2 flex justify-end">
+                                                <Button type="button" variant="outline" onClick={() => removeAttraction(index)}>
+                                                    <Trash2 className="w-4 h-4 mr-2" /> Remove
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-5 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                                <p className="text-sm text-muted-foreground">Add an optional offer badge for the price card and detail page.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Offer Type</Label>
+                                        <Select value={offer.type || undefined} onValueChange={(value: OfferType) => setOffer(prev => ({ ...prev, type: value }))}>
+                                            <SelectTrigger><SelectValue placeholder="Select offer type" /></SelectTrigger>
+                                            <SelectContent>
+                                                {OFFER_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Validity</Label>
+                                        <Input value={offer.validity} onChange={e => setOffer(prev => ({ ...prev, validity: e.target.value }))} placeholder="Optional validity text" />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label>Offer Title</Label>
+                                        <Input value={offer.title} onChange={e => setOffer(prev => ({ ...prev, title: e.target.value }))} placeholder="Weekend Group Offer" />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label>Description</Label>
+                                        <Textarea value={offer.description} onChange={e => setOffer(prev => ({ ...prev, description: e.target.value }))} placeholder="Stay 2 nights, get 10% off" className="h-24" />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label>Tags</Label>
+                                        <Input value={offer.tags} onChange={e => setOffer(prev => ({ ...prev, tags: e.target.value }))} placeholder="group, weekend" />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )}
 
                     {/* STEP 5: Policies */}
                     {step === 5 && (
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                             <p className="text-sm text-muted-foreground mb-4">Edit or remove the default policies, or add your own custom rules.</p>
+                            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Structured Check-in</Label>
+                                        <Input type="time" value={structuredPolicies.checkIn} onChange={e => setStructuredPolicies(prev => ({ ...prev, checkIn: e.target.value }))} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Structured Check-out</Label>
+                                        <Input type="time" value={structuredPolicies.checkOut} onChange={e => setStructuredPolicies(prev => ({ ...prev, checkOut: e.target.value }))} />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Payment Types</Label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {PAYMENT_TYPES.map(paymentType => (
+                                            <button
+                                                key={paymentType}
+                                                type="button"
+                                                onClick={() => togglePaymentType(paymentType)}
+                                                className={`px-4 py-2 rounded-full text-sm font-semibold border ${structuredPolicies.paymentType.includes(paymentType) ? 'bg-[#004d00] text-white border-[#004d00]' : 'bg-white text-gray-700 border-gray-200'}`}
+                                            >
+                                                {paymentType}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Alcohol Policy</Label>
+                                        <Select value={structuredPolicies.alcoholAllowed} onValueChange={(value: AlcoholPolicy) => setStructuredPolicies(prev => ({ ...prev, alcoholAllowed: value }))}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                {ALCOHOL_POLICY_OPTIONS.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <label className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3">
+                                        <span className="text-sm font-medium text-gray-800">Pets Allowed</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={structuredPolicies.petsAllowed}
+                                            onChange={e => setStructuredPolicies(prev => ({ ...prev, petsAllowed: e.target.checked }))}
+                                            className="h-4 w-4"
+                                        />
+                                    </label>
+                                </div>
+                            </div>
                             <ScrollArea className="h-[400px] pr-4">
                                 <div className="space-y-3">
                                     {policies.map((policy, idx) => (
@@ -890,7 +1403,7 @@ export default function HomestayForm({ id, isEditMode = false }: { id?: string; 
                 </CardContent>
                 <CardFooter className="flex justify-between bg-muted/10 border-t border-border/50 p-6">
                     <Button variant="outline" onClick={handleBack} disabled={step === 1} className="w-24">Back</Button>
-                    {step < 8 ? (
+                    {step < TOTAL_STEPS ? (
                         <Button onClick={handleNext} className="w-24">Next</Button>
                     ) : (
                         <Button onClick={handleSubmit} disabled={loading} className="w-32 bg-green-600 hover:bg-green-700 font-bold transition-all">

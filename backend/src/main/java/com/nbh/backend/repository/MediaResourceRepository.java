@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Set;
 
 @Repository
 public interface MediaResourceRepository extends JpaRepository<MediaResource, UUID> {
@@ -61,6 +62,9 @@ public interface MediaResourceRepository extends JpaRepository<MediaResource, UU
 
     @Query(value = "SELECT file_id FROM media_resources WHERE homestay_id IN :homestayIds AND file_id IS NOT NULL", nativeQuery = true)
     List<String> findFileIdsByHomestayIdIn(@Param("homestayIds") List<UUID> homestayIds);
+
+    @Query("SELECT m.fileId FROM MediaResource m WHERE m.fileId IN :fileIds")
+    Set<String> findExistingFileIds(@Param("fileIds") List<String> fileIds);
 
     /**
      * Delete media_resources linked to homestays (no ON DELETE CASCADE on homestay_id FK).

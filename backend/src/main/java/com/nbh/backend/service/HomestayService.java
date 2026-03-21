@@ -9,7 +9,11 @@ import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.MediaResource;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.HomestayRepository;
+import com.nbh.backend.repository.MediaResourceRepository;
+import com.nbh.backend.repository.MediaUploadRepository;
 import com.nbh.backend.repository.UserRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,12 +49,22 @@ import java.util.concurrent.ConcurrentHashMap;
 @lombok.extern.slf4j.Slf4j
 public class HomestayService {
 
+        private enum OfferType {
+                DEAL,
+                SEASONAL,
+                LAST_MINUTE
+        }
+
         private final HomestayRepository repository;
         private final UserRepository userRepository;
+        private final MediaResourceRepository mediaResourceRepository;
+        private final MediaUploadRepository mediaUploadRepository;
         private final ImageUploadService imageUploadService;
+        private final MediaUploadTrackingService mediaUploadTrackingService;
         private final AsyncJobService asyncJobService;
         private final com.nbh.backend.repository.DestinationRepository destinationRepository;
         private final DestinationService destinationService;
+        private final ObjectMapper objectMapper;
 
         @Value("${homestay.signals.popularInquiryThreshold:5}")
         private long popularInquiryThreshold;
@@ -71,6 +86,9 @@ public class HomestayService {
                                 ? Homestay.Status.APPROVED
                                 : Homestay.Status.PENDING;
 
+                validateExtendedRequest(request);
+                Map<String, Object> meta = enrichMeta(request.getMeta(), request.getStructuredPolicies());
+
                 Homestay homestay = Homestay.builder()
                                 .id(UUID.randomUUID())
                                 .name(request.getName())
@@ -83,8 +101,7 @@ public class HomestayService {
                                 .hostDetails(request.getHostDetails())
                                 .mealConfig(request.getMealConfig() != null ? request.getMealConfig()
                                                 : new HashMap<>())
-                                .meta(request.getMeta() != null ? request.getMeta()
-                                                : new HashMap<>())
+                                .meta(meta)
                                 .status(status)
                                 .vibeScore(0.0)
                                 .latitude(request.getLatitude())
@@ -102,24 +119,19 @@ public class HomestayService {
                 }
 
                 if (request.getMedia() != null) {
-                        final com.nbh.backend.model.Homestay finalH = homestay;
-                        List<com.nbh.backend.model.MediaResource> entityMedia = request.getMedia().stream()
-                                        .map(dto -> com.nbh.backend.model.MediaResource.builder()
-                                                        .id(dto.getId())
-                                                        .url(dto.getUrl())
-                                                        .fileId(dto.getFileId())
-                                                        .homestay(finalH)
-                                                        .build())
-                                        .collect(Collectors.toList());
-                        homestay.setMediaFiles(entityMedia);
+                        homestay.setMediaFiles(mapMediaDtosToResources(request.getMedia(), homestay));
                 }
 
+                List<String> uploadedFileIds = new ArrayList<>();
                 if (files != null && !files.isEmpty()) {
                         try {
                                 List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
                                                 .uploadFiles(files, "homestays/" + homestay.getId());
                                 for (com.nbh.backend.model.MediaResource res : uploadedResources) {
                                         res.setHomestay(homestay);
+                                        if (res.getFileId() != null && !res.getFileId().isBlank()) {
+                                                uploadedFileIds.add(res.getFileId());
+                                        }
                                 }
                                 if (homestay.getMediaFiles() == null) {
                                         homestay.setMediaFiles(new ArrayList<>());
@@ -130,8 +142,14 @@ public class HomestayService {
                         }
                 }
 
+                applyExtendedFields(homestay, request);
+
                 Homestay saved = repository.save(homestay);
-                asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "homestays/" + saved.getId());
+                List<String> attachedFileIds = new ArrayList<>(collectReferencedFileIds(request));
+                attachedFileIds.addAll(uploadedFileIds);
+                attachedFileIds = attachedFileIds.stream().distinct().toList();
+                mediaUploadTrackingService.markAsAttached(attachedFileIds, "HOMESTAY", saved.getId().toString());
+                asyncJobService.enqueuePostProcessMedia(attachedFileIds, "homestays/" + saved.getId());
                 return mapToResponse(saved);
         }
 
@@ -351,6 +369,8 @@ public class HomestayService {
                         }
                 }
 
+                validateExtendedRequest(request);
+
                 if (request.getName() != null)
                         homestay.setName(request.getName());
                 if (request.getDescription() != null)
@@ -371,6 +391,8 @@ public class HomestayService {
                         homestay.setMealConfig(request.getMealConfig());
                 if (request.getMeta() != null)
                         homestay.setMeta(request.getMeta());
+                if (request.getStructuredPolicies() != null || request.getMeta() != null)
+                        homestay.setMeta(enrichMeta(homestay.getMeta(), request.getStructuredPolicies()));
                 if (request.getLocationName() != null)
                         homestay.setAddress(request.getLocationName());
 
@@ -390,34 +412,61 @@ public class HomestayService {
                         homestay.setLongitude(request.getLongitude());
 
                 // --- CLOUD JANITOR V2 DIFF: Purge orphaned Photos ---
+                final com.nbh.backend.model.Homestay finalH = homestay;
                 List<com.nbh.backend.model.MediaResource> finalMergedMedia = new ArrayList<>();
                 List<String> removedFileIds = new ArrayList<>();
                 if (request.getMedia() != null) {
                         List<com.nbh.backend.model.MediaResource> existingMedia = homestay.getMediaFiles();
-                        List<MediaDto> retainedMediaDtos = request.getMedia();
+                        Map<String, com.nbh.backend.model.MediaResource> existingByKey = new HashMap<>();
+                        if (existingMedia != null) {
+                                for (com.nbh.backend.model.MediaResource existing : existingMedia) {
+                                        String key = mediaKey(existing.getFileId(), existing.getUrl());
+                                        if (key != null) {
+                                                existingByKey.put(key, existing);
+                                        }
+                                }
+                        }
 
-                        Set<String> retainedFileIds = retainedMediaDtos.stream()
-                                        .map(MediaDto::getFileId)
+                        Set<String> retainedKeys = request.getMedia().stream()
+                                        .map(dto -> mediaKey(dto.getFileId(), dto.getUrl()))
                                         .filter(Objects::nonNull)
-                                        .filter(s -> !s.isBlank())
-                                        .collect(Collectors.toSet());
+                                        .collect(Collectors.toCollection(LinkedHashSet::new));
 
                         if (existingMedia != null) {
                                 java.util.Iterator<com.nbh.backend.model.MediaResource> it = existingMedia.iterator();
                                 while (it.hasNext()) {
                                         com.nbh.backend.model.MediaResource oldResource = it.next();
-                                        String oldFileId = oldResource.getFileId();
-                                        if (oldFileId != null && !retainedFileIds.contains(oldFileId)) {
-                                                removedFileIds.add(oldFileId);
+                                        String oldKey = mediaKey(oldResource.getFileId(), oldResource.getUrl());
+                                        if (oldKey != null && !retainedKeys.contains(oldKey)) {
+                                                if (oldResource.getFileId() != null && !oldResource.getFileId().isBlank()) {
+                                                        removedFileIds.add(oldResource.getFileId());
+                                                }
                                                 it.remove();
                                         }
                                 }
+                        }
 
-                                for (com.nbh.backend.model.MediaResource kept : existingMedia) {
-                                        if (kept.getFileId() != null) {
-                                                finalMergedMedia.add(kept);
-                                        }
+                        LinkedHashSet<String> addedKeys = new LinkedHashSet<>();
+                        for (MediaDto mediaDto : request.getMedia()) {
+                                String key = mediaKey(mediaDto.getFileId(), mediaDto.getUrl());
+                                if (key == null || !addedKeys.add(key)) {
+                                        continue;
                                 }
+                                com.nbh.backend.model.MediaResource existing = existingByKey.get(key);
+                                if (existing != null) {
+                                        existing.setHomestay(finalH);
+                                        finalMergedMedia.add(existing);
+                                        continue;
+                                }
+                                if (mediaDto.getUrl() == null || mediaDto.getUrl().isBlank()) {
+                                        continue;
+                                }
+                                finalMergedMedia.add(com.nbh.backend.model.MediaResource.builder()
+                                                .id(mediaDto.getId())
+                                                .url(mediaDto.getUrl())
+                                                .fileId(mediaDto.getFileId())
+                                                .homestay(finalH)
+                                                .build());
                         }
                 } else {
                         if (homestay.getMediaFiles() != null) {
@@ -426,13 +475,16 @@ public class HomestayService {
                 }
 
                 // --- Upload NEW files if any ---
-                final com.nbh.backend.model.Homestay finalH = homestay;
+                List<String> uploadedFileIds = new ArrayList<>();
                 if (files != null && !files.isEmpty()) {
                         try {
                                 List<com.nbh.backend.model.MediaResource> uploadedResources = imageUploadService
                                                 .uploadFiles(files, "homestays/" + homestay.getId());
                                 for (com.nbh.backend.model.MediaResource res : uploadedResources) {
                                         res.setHomestay(finalH);
+                                        if (res.getFileId() != null && !res.getFileId().isBlank()) {
+                                                uploadedFileIds.add(res.getFileId());
+                                        }
                                         finalMergedMedia.add(res);
                                 }
                         } catch (IOException e) {
@@ -445,10 +497,15 @@ public class HomestayService {
                 }
                 homestay.getMediaFiles().clear();
                 homestay.getMediaFiles().addAll(finalMergedMedia);
+                applyExtendedFields(homestay, request);
 
                 Homestay saved = repository.save(homestay);
+                List<String> attachedFileIds = new ArrayList<>(collectReferencedFileIds(request));
+                attachedFileIds.addAll(uploadedFileIds);
+                attachedFileIds = attachedFileIds.stream().distinct().toList();
+                mediaUploadTrackingService.markAsAttached(attachedFileIds, "HOMESTAY", saved.getId().toString());
                 asyncJobService.enqueueDeleteMedia(removedFileIds);
-                asyncJobService.enqueuePostProcessMedia(extractFileIds(request.getMedia()), "homestays/" + saved.getId());
+                asyncJobService.enqueuePostProcessMedia(attachedFileIds, "homestays/" + saved.getId());
                 return mapToResponse(saved);
         }
 
@@ -527,6 +584,19 @@ public class HomestayService {
                 Map<String, Object> mealConfig = homestay.getMealConfig() != null
                                 ? new HashMap<>(homestay.getMealConfig())
                                 : new HashMap<>();
+                List<HomestayDto.SpaceDto> spaces = toTypedList(homestay.getSpaces(),
+                                new TypeReference<List<HomestayDto.SpaceDto>>() {
+                                });
+                List<HomestayDto.VideoDto> videos = toTypedList(homestay.getVideos(),
+                                new TypeReference<List<HomestayDto.VideoDto>>() {
+                                });
+                List<HomestayDto.AttractionDto> attractions = toTypedList(homestay.getAttractions(),
+                                new TypeReference<List<HomestayDto.AttractionDto>>() {
+                                });
+                HomestayDto.OfferDto offers = homestay.getOffers() == null || homestay.getOffers().isEmpty()
+                                ? null
+                                : toTypedObject(homestay.getOffers(), new TypeReference<HomestayDto.OfferDto>() {
+                                });
 
                 String mealPlanCode = mealConfig.get("defaultMealPlan") != null
                                 ? String.valueOf(mealConfig.get("defaultMealPlan"))
@@ -550,6 +620,11 @@ public class HomestayService {
                 List<String> nearbyHighlights = meta.get("nearbyHighlights") != null
                                 ? new ArrayList<>((List<String>) meta.get("nearbyHighlights"))
                                 : null;
+                HomestayDto.StructuredPoliciesDto structuredPolicies = meta.get("structuredPolicies") != null
+                                ? toTypedObject(meta.get("structuredPolicies"),
+                                                new TypeReference<HomestayDto.StructuredPoliciesDto>() {
+                                                })
+                                : null;
 
                 List<HomestayDto.TrustSignal> trustSignals = java.util.Optional
                                 .ofNullable(computeTrustSignals(homestay))
@@ -560,7 +635,7 @@ public class HomestayService {
                 DestinationDto destination = safeDestinationDto(homestay);
                 UUID ownerId = owner != null ? owner.getId() : null;
 
-                return HomestayDto.Response.builder()
+                HomestayDto.Response.ResponseBuilder builder = HomestayDto.Response.builder()
                                 .id(homestay.getId())
                                 .name(homestay.getName())
                                 .description(homestay.getDescription())
@@ -595,8 +670,25 @@ public class HomestayService {
                                 .editorialLead(editorialLead)
                                 .nearbyHighlights(nearbyHighlights)
                                 .bookingHeatScore(bookingHeatScore)
-                                .trustSignals(trustSignals)
-                                .build();
+                                .trustSignals(trustSignals);
+
+                if (!spaces.isEmpty()) {
+                        builder.spaces(spaces);
+                }
+                if (!videos.isEmpty()) {
+                        builder.videos(videos);
+                }
+                if (!attractions.isEmpty()) {
+                        builder.attractions(attractions);
+                }
+                if (offers != null && offers.getType() != null && !offers.getType().isBlank()) {
+                        builder.offers(offers);
+                }
+                if (structuredPolicies != null) {
+                        builder.structuredPolicies(structuredPolicies);
+                }
+
+                return builder.build();
         }
 
         private Optional<HomestayDto.Response> safeMapToResponse(Homestay homestay) {
@@ -710,6 +802,247 @@ public class HomestayService {
                 return signals.subList(0, maxSignals);
         }
 
+        private void validateExtendedRequest(HomestayDto.Request request) {
+                if (request == null) {
+                        return;
+                }
+
+                validateMediaReferences(request.getMedia());
+        }
+
+        private void validateMediaReferences(List<MediaDto> media) {
+                validateReferencedFileIds(extractFileIds(media), "Unknown media fileIds referenced in media");
+        }
+
+        private List<String> extractSpaceFileIds(List<HomestayDto.SpaceDto> spaces) {
+                if (spaces == null || spaces.isEmpty()) {
+                        return List.of();
+                }
+                return spaces.stream()
+                                .filter(Objects::nonNull)
+                                .map(HomestayDto.SpaceDto::getMedia)
+                                .filter(Objects::nonNull)
+                                .flatMap(List::stream)
+                                .filter(Objects::nonNull)
+                                .map(HomestayDto.SpaceMediaDto::getFileId)
+                                .filter(Objects::nonNull)
+                                .filter(fileId -> !fileId.isBlank())
+                                .distinct()
+                                .toList();
+        }
+
+        private void validateReferencedFileIds(List<String> fileIds, String errorMessage) {
+                if (fileIds == null || fileIds.isEmpty()) {
+                        return;
+                }
+
+                Set<String> existingInMedia = mediaResourceRepository.findExistingFileIds(fileIds);
+                Set<String> existingInUploads = mediaUploadRepository.findByFileIdIn(fileIds).stream()
+                                .map(com.nbh.backend.model.MediaUpload::getFileId)
+                                .collect(Collectors.toSet());
+
+                List<String> missing = fileIds.stream()
+                                .filter(fileId -> !existingInMedia.contains(fileId) && !existingInUploads.contains(fileId))
+                                .distinct()
+                                .toList();
+                if (!missing.isEmpty()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errorMessage);
+                }
+        }
+
+        private List<HomestayDto.SpaceDto> sanitizeSpaces(List<HomestayDto.SpaceDto> spaces, Set<String> validFileIds) {
+                if (spaces == null || spaces.isEmpty()) {
+                        return new ArrayList<>();
+                }
+
+                Set<String> safeFileIds = validFileIds == null ? Set.of() : validFileIds;
+                List<HomestayDto.SpaceDto> sanitizedSpaces = new ArrayList<>();
+
+                for (HomestayDto.SpaceDto space : spaces) {
+                        if (space == null) {
+                                continue;
+                        }
+
+                        List<HomestayDto.SpaceMediaDto> sanitizedMedia = new ArrayList<>();
+                        if (space.getMedia() != null) {
+                                for (HomestayDto.SpaceMediaDto media : space.getMedia()) {
+                                        if (media == null || media.getUrl() == null || media.getUrl().isBlank()) {
+                                                continue;
+                                        }
+
+                                        String fileId = media.getFileId();
+                                        if (fileId != null && !fileId.isBlank() && !safeFileIds.contains(fileId)) {
+                                                log.warn("Skipping invalid space media reference fileId={} for space={}",
+                                                                fileId, space.getName());
+                                                continue;
+                                        }
+
+                                        sanitizedMedia.add(HomestayDto.SpaceMediaDto.builder()
+                                                        .url(media.getUrl())
+                                                        .fileId(fileId)
+                                                        .caption(media.getCaption())
+                                                        .build());
+                                }
+                        }
+
+                        sanitizedSpaces.add(HomestayDto.SpaceDto.builder()
+                                        .type(space.getType())
+                                        .name(space.getName())
+                                        .description(space.getDescription())
+                                        .media(sanitizedMedia)
+                                        .build());
+                }
+
+                return sanitizedSpaces;
+        }
+
+        private List<HomestayDto.VideoDto> sanitizeVideos(List<HomestayDto.VideoDto> videos) {
+                if (videos == null || videos.isEmpty()) {
+                        return new ArrayList<>();
+                }
+
+                List<HomestayDto.VideoDto> sanitizedVideos = new ArrayList<>();
+                for (HomestayDto.VideoDto video : videos) {
+                        if (video == null || video.getUrl() == null) {
+                                continue;
+                        }
+
+                        String url = video.getUrl().trim();
+                        if (url.isBlank() || !url.toLowerCase().contains("youtube")) {
+                                continue;
+                        }
+
+                        sanitizedVideos.add(HomestayDto.VideoDto.builder()
+                                        .url(url)
+                                        .title(video.getTitle())
+                                        .type(video.getType())
+                                        .build());
+                        if (sanitizedVideos.size() == 5) {
+                                break;
+                        }
+                }
+
+                return sanitizedVideos;
+        }
+
+        private List<HomestayDto.AttractionDto> sanitizeAttractions(List<HomestayDto.AttractionDto> attractions) {
+                if (attractions == null || attractions.isEmpty()) {
+                        return new ArrayList<>();
+                }
+
+                List<HomestayDto.AttractionDto> sanitizedAttractions = new ArrayList<>();
+                for (HomestayDto.AttractionDto attraction : attractions) {
+                        if (attraction == null || attraction.getName() == null || attraction.getName().isBlank()) {
+                                continue;
+                        }
+
+                        sanitizedAttractions.add(HomestayDto.AttractionDto.builder()
+                                        .name(attraction.getName().trim())
+                                        .distance(attraction.getDistance())
+                                        .time(attraction.getTime())
+                                        .type(attraction.getType())
+                                        .highlight(attraction.getHighlight())
+                                        .build());
+                        if (sanitizedAttractions.size() == 8) {
+                                break;
+                        }
+                }
+
+                return sanitizedAttractions;
+        }
+
+        private HomestayDto.OfferDto sanitizeOffer(HomestayDto.OfferDto offer) {
+                if (offer == null || offer.getType() == null || offer.getType().isBlank()) {
+                        return null;
+                }
+
+                try {
+                        OfferType.valueOf(offer.getType().trim().toUpperCase());
+                } catch (IllegalArgumentException ex) {
+                        return null;
+                }
+
+                return HomestayDto.OfferDto.builder()
+                                .type(offer.getType().trim().toUpperCase())
+                                .title(offer.getTitle())
+                                .description(offer.getDescription())
+                                .validity(offer.getValidity())
+                                .tags(offer.getTags())
+                                .build();
+        }
+
+        private void applyExtendedFields(Homestay homestay, HomestayDto.Request request) {
+                if (homestay == null || request == null) {
+                        return;
+                }
+
+                if (request.getSpaces() != null) {
+                        Set<String> validFileIds = homestay.getMediaFiles() == null ? Set.of()
+                                        : homestay.getMediaFiles().stream()
+                                                        .map(MediaResource::getFileId)
+                                                        .filter(Objects::nonNull)
+                                                        .filter(fileId -> !fileId.isBlank())
+                                                        .collect(Collectors.toSet());
+                        List<HomestayDto.SpaceDto> sanitizedSpaces = sanitizeSpaces(request.getSpaces(), validFileIds);
+                        homestay.setSpaces(sanitizedSpaces.isEmpty() ? null : toJsonList(sanitizedSpaces));
+                }
+
+                if (request.getVideos() != null) {
+                        List<HomestayDto.VideoDto> sanitizedVideos = sanitizeVideos(request.getVideos());
+                        homestay.setVideos(sanitizedVideos.isEmpty() ? null : toJsonList(sanitizedVideos));
+                }
+
+                if (request.getAttractions() != null) {
+                        List<HomestayDto.AttractionDto> sanitizedAttractions = sanitizeAttractions(request.getAttractions());
+                        homestay.setAttractions(sanitizedAttractions.isEmpty() ? null : toJsonList(sanitizedAttractions));
+                }
+
+                if (request.getOffers() != null) {
+                        HomestayDto.OfferDto sanitizedOffer = sanitizeOffer(request.getOffers());
+                        homestay.setOffers(sanitizedOffer == null ? null : toJsonMap(sanitizedOffer));
+                }
+        }
+
+        private Map<String, Object> enrichMeta(Map<String, Object> source, HomestayDto.StructuredPoliciesDto structuredPolicies) {
+                Map<String, Object> meta = source != null ? new HashMap<>(source) : new HashMap<>();
+                if (structuredPolicies != null) {
+                        meta.put("structuredPolicies", objectMapper.convertValue(structuredPolicies,
+                                        new TypeReference<Map<String, Object>>() {
+                                        }));
+                }
+                return meta;
+        }
+
+        private List<Map<String, Object>> toJsonList(Object value) {
+                if (value == null) {
+                        return new ArrayList<>();
+                }
+                return objectMapper.convertValue(value, new TypeReference<List<Map<String, Object>>>() {
+                });
+        }
+
+        private Map<String, Object> toJsonMap(Object value) {
+                if (value == null) {
+                        return new HashMap<>();
+                }
+                return objectMapper.convertValue(value, new TypeReference<Map<String, Object>>() {
+                });
+        }
+
+        private <T> T toTypedObject(Object value, TypeReference<T> typeReference) {
+                if (value == null) {
+                        return null;
+                }
+                return objectMapper.convertValue(value, typeReference);
+        }
+
+        private <T> List<T> toTypedList(Object value, TypeReference<List<T>> typeReference) {
+                if (value == null) {
+                        return new ArrayList<>();
+                }
+                return objectMapper.convertValue(value, typeReference);
+        }
+
         private String resolveMealPlanLabel(String code) {
                 if (code == null || code.isBlank() || "none".equalsIgnoreCase(code)) {
                         return null;
@@ -738,5 +1071,47 @@ public class HomestayService {
                                 .filter(s -> !s.isBlank())
                                 .distinct()
                                 .toList();
+        }
+
+        private List<MediaResource> mapMediaDtosToResources(List<MediaDto> media, Homestay homestay) {
+                if (media == null || media.isEmpty()) {
+                        return new ArrayList<>();
+                }
+
+                LinkedHashSet<String> seenKeys = new LinkedHashSet<>();
+                List<MediaResource> resources = new ArrayList<>();
+                for (MediaDto dto : media) {
+                        if (dto == null || dto.getUrl() == null || dto.getUrl().isBlank()) {
+                                continue;
+                        }
+                        String key = mediaKey(dto.getFileId(), dto.getUrl());
+                        if (key == null || !seenKeys.add(key)) {
+                                continue;
+                        }
+                        resources.add(MediaResource.builder()
+                                        .id(dto.getId())
+                                        .url(dto.getUrl())
+                                        .fileId(dto.getFileId())
+                                        .homestay(homestay)
+                                        .build());
+                }
+                return resources;
+        }
+
+        private String mediaKey(String fileId, String url) {
+                if (fileId != null && !fileId.isBlank()) {
+                        return "file:" + fileId;
+                }
+                if (url != null && !url.isBlank()) {
+                        return "url:" + url;
+                }
+                return null;
+        }
+
+        private List<String> collectReferencedFileIds(HomestayDto.Request request) {
+                if (request == null) {
+                        return List.of();
+                }
+                return new ArrayList<>(new LinkedHashSet<>(extractFileIds(request.getMedia())));
         }
 }

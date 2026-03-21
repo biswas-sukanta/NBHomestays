@@ -19,41 +19,29 @@ import { LocationMapSection } from '@/components/homestay/location-map-section';
 import { HomestayQASection } from '@/components/homestay/homestay-qa-section';
 import { MealsSection } from '@/components/homestay/meals-section';
 import { SectionNav } from '@/components/homestay/section-nav';
+import type { Homestay } from '@/src/lib/api/models/homestay';
 
-interface MediaItem { id: string; type: 'image' | 'video'; url: string; }
+function toYouTubeEmbedUrl(rawUrl?: string) {
+    if (!rawUrl) {
+        return null;
+    }
 
-interface Homestay {
-    id: string;
-    name: string;
-    description: string;
-    locationName: string;
-    latitude: number;
-    longitude: number;
-    pricePerNight: number;
-    rating: number;
-    vibeScore: number;
-    totalReviews?: number;
-    amenities: Record<string, boolean>;
-    policies?: string[];
-    quickFacts?: Record<string, string>;
-    hostDetails?: Record<string, any>;
-    media?: { url: string; fileId?: string }[];
-    ownerId?: string;
-    ownerEmail?: string;
-    mealConfig?: {
-        defaultMealPlan?: string;
-        mealPlanLabel?: string;
-        mealsIncludedPerDay?: number;
-        mealPricePerGuest?: number | null;
-        dietTypes?: string[];
-        extras?: { code: string; title: string; price: number; unit: string }[];
-    };
-    mealPlanCode?: string;
-    mealPlanLabel?: string;
-    editorialLead?: string;
-    nearbyHighlights?: string[];
-    bookingHeatScore?: number;
-    trustSignals?: TrustSignal[];
+    try {
+        const url = new URL(rawUrl);
+        if (url.hostname.includes('youtu.be')) {
+            const videoId = url.pathname.replace('/', '').trim();
+            return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+        }
+
+        if (url.hostname.includes('youtube.com')) {
+            const videoId = url.searchParams.get('v') || url.pathname.split('/').filter(Boolean).pop();
+            return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+        }
+    } catch {
+        return null;
+    }
+
+    return null;
 }
 
 export default async function HomestayPage({ params }: { params: Promise<{ id: string }> }) {
@@ -81,25 +69,37 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
         apiFetch(`/homestays/${id}/view`, { method: 'POST' }).catch(() => {});
 
         console.log("[HOMESTAY PAGE] Fetched homestay:", homestay.id, homestay.name);
-        if (!homestay?.id && !homestay?.name) return notFound();
+        if (!homestay?.id) return notFound();
     } catch {
         return notFound();
     }
 
-    const vibeScore = homestay.vibeScore || homestay.rating || 4.5;
+    const vibeScore = homestay.vibeScore || 4.5;
     const vibeClass = vibeScore >= 4.5 ? 'vibe-high' : vibeScore >= 3.5 ? 'vibe-mid' : 'vibe-low';
+    const homestayId = homestay.id;
+    const homestayName = homestay.name || 'Homestay';
+    const locationName = homestay.locationName || 'North Bengal';
+    const galleryMediaUrls = (homestay.media ?? []).map(media => media.url).filter((url): url is string => Boolean(url));
+    const pricePerNight = typeof homestay.pricePerNight === 'number' ? homestay.pricePerNight : null;
 
-    const trustSignals = (homestay.trustSignals ?? []).slice(0, 2);
+    const trustSignals = ((homestay.trustSignals ?? []) as TrustSignal[]).slice(0, 2);
+    const spaces = (homestay.spaces ?? []).filter(space => (space.media?.length ?? 0) > 0 || space.name || space.description);
+    const videos = (homestay.videos ?? [])
+        .map(video => ({ ...video, embedUrl: toYouTubeEmbedUrl(video.url) }))
+        .filter(video => video.url && video.embedUrl);
+    const attractions = (homestay.attractions ?? []).filter(item => item.name);
+    const mustVisit = attractions.filter(item => item.highlight);
+    const otherAttractions = attractions.filter(item => !item.highlight);
 
-    const isPriceUnset = typeof homestay.pricePerNight === 'number' && homestay.pricePerNight <= 1;
+    const isPriceUnset = pricePerNight !== null && pricePerNight <= 1;
 
     // Build trip board item for sticky bar
     const tripBoardItem = {
-        id: homestay.id,
-        name: homestay.name,
+        id: homestayId,
+        name: homestayName,
         imageUrl: homestay.media?.[0]?.url || '',
-        locationName: homestay.locationName || 'North Bengal',
-        pricePerNight: homestay.pricePerNight,
+        locationName,
+        pricePerNight: pricePerNight ?? undefined,
     };
 
     // Calculate dynamic highlights
@@ -157,16 +157,16 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     }
 
     // Extract Owner Name
-    const ownerNameDisplay = homestay.ownerEmail ? homestay.ownerEmail.split('@')[0] : 'Host';
+    const ownerNameDisplay = homestay.host?.name || 'Host';
 
     return (
         <div className="min-h-screen bg-background pb-28 md:pb-10">
             {/* ═══════ GALLERY ═══════ */}
             <div className="md:container md:mx-auto md:px-4 md:pt-6">
                 <BentoGallery
-                    mediaUrls={homestay.media?.map(m => m.url) || []}
-                    name={homestay.name}
-                    locationName={homestay.locationName}
+                    mediaUrls={galleryMediaUrls}
+                    name={homestayName}
+                    locationName={locationName}
                     editorialLead={homestay.editorialLead}
                     data-testid="bento-gallery"
                 />
@@ -184,7 +184,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     <div id="overview" className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1 min-w-0">
                             <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-[1.15]">
-                                {homestay.name}
+                                {homestayName}
                             </h1>
                             {homestay.editorialLead && (
                                 <p className="text-xl text-gray-700 font-medium italic mt-3 mb-4 leading-relaxed tracking-wide">
@@ -194,7 +194,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                             <div className="flex items-center gap-3 mt-2 text-gray-600 text-sm font-medium flex-wrap">
                                 <span className="flex items-center gap-1.5">
                                     <MapPin className="w-4 h-4 text-primary flex-none" />
-                                    <span className="underline underline-offset-4 decoration-gray-300 font-semibold">{homestay.locationName || 'North Bengal'}</span>
+                                    <span className="underline underline-offset-4 decoration-gray-300 font-semibold">{locationName}</span>
                                 </span>
                                 {/* Desktop inline rating */}
                                 <span className="hidden md:flex items-center gap-1 text-sm">
@@ -234,9 +234,6 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     <hr className="border-gray-200 mb-0" />
 
-                    {/* ── Highlights ── */}
-                    <Highlights items={highlightsItems} />
-
                     {/* ── Stay Story (Editorial) ── */}
                     {homestay.editorialLead || homestay.description ? (
                         <section className="py-10 border-t border-b border-gray-200 mt-6">
@@ -249,27 +246,83 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                         </section>
                     ) : null}
 
-                    {/* ── Experience Highlights ── */}
-                    <section className="py-10 border-b border-gray-200">
-                        <h3 className="text-xl font-bold text-gray-900 mb-5 tracking-tight">Experience Highlights</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {experienceCards.slice(0, 4).map((card) => (
-                                <div
-                                    key={card.title}
-                                    className="rounded-2xl border border-gray-200 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_26px_rgba(0,0,0,0.08)] transition-shadow p-5"
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-none">
-                                            {card.icon}
+                    {/* ── Property Tour ── */}
+                    {videos.length > 0 && (
+                        <section id="videos" className="py-10 border-b border-gray-200">
+                            <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">Property tour</h2>
+                            <div className="flex gap-4 overflow-x-auto pb-2">
+                                {videos.map((video, index) => (
+                                    <div key={`${video.url}-${index}`} className="min-w-[320px] md:min-w-[420px]">
+                                        <div className="overflow-hidden rounded-3xl border border-gray-200 bg-black shadow-sm">
+                                            <iframe
+                                                src={video.embedUrl || undefined}
+                                                title={video.title || `Homestay video ${index + 1}`}
+                                                className="h-[220px] w-full md:h-[260px]"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            />
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className="text-base font-bold text-gray-900 tracking-tight">{card.title}</p>
-                                            <p className="text-sm text-gray-600 mt-1 leading-relaxed">{card.subtitle}</p>
+                                        <div className="mt-3 px-1">
+                                            <p className="text-sm font-bold text-gray-900">{video.title || 'Property tour'}</p>
+                                            {video.type && <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 mt-1">{video.type}</p>}
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* ── Highlights ── */}
+                    <Highlights items={highlightsItems} />
+
+                    {/* ── Experience Highlights ── */}
+                    <section id="experience" className="py-10 border-b border-gray-200">
+                        <h3 className="text-xl font-bold text-gray-900 mb-5 tracking-tight">Experience Highlights</h3>
+                        {spaces.length > 0 ? (
+                            <div className="space-y-6">
+                                {spaces.map((space, index) => (
+                                    <div key={`${space.type}-${space.name || index}`} className="rounded-3xl border border-gray-200 bg-white p-5 shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+                                        <div className="flex items-start justify-between gap-4 mb-4">
+                                            <div>
+                                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">{space.type}</p>
+                                                <h4 className="text-lg font-bold text-gray-900 mt-1">{space.name || 'Space details'}</h4>
+                                                {space.description && <p className="text-sm text-gray-600 mt-2 max-w-2xl">{space.description}</p>}
+                                            </div>
+                                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+                                                {(space.media?.length ?? 0)} photo{(space.media?.length ?? 0) === 1 ? '' : 's'}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {(space.media ?? []).map((media, mediaIndex) => (
+                                                <div key={media.fileId || `${space.name}-${mediaIndex}`} className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
+                                                    <img src={media.url} alt={media.caption || space.name || 'Homestay space'} className="h-40 w-full object-cover" loading="lazy" decoding="async" />
+                                                    {media.caption && <p className="px-3 py-2 text-xs font-medium text-gray-600">{media.caption}</p>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {experienceCards.slice(0, 4).map((card) => (
+                                    <div
+                                        key={card.title}
+                                        className="rounded-2xl border border-gray-200 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_26px_rgba(0,0,0,0.08)] transition-shadow p-5"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-none">
+                                                {card.icon}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-base font-bold text-gray-900 tracking-tight">{card.title}</p>
+                                                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{card.subtitle}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </section>
 
                     {/* ── Visual Rhythm: Image Break ── */}
@@ -278,7 +331,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                             <div className="rounded-2xl overflow-hidden h-[200px] md:h-[280px] relative">
                                 <img
                                     src={homestay.media[1]?.url}
-                                    alt={`${homestay.name} — atmosphere`}
+                                    alt={`${homestayName} — atmosphere`}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
                                     decoding="async"
@@ -309,7 +362,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                             <div className="rounded-2xl overflow-hidden h-[200px] md:h-[260px] relative shadow-sm">
                                 <img
                                     src={homestay.media[2]?.url}
-                                    alt={`${homestay.name} — details`}
+                                    alt={`${homestayName} — details`}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
                                     decoding="async"
@@ -336,9 +389,54 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     <LocationMapSection
                         latitude={homestay.latitude}
                         longitude={homestay.longitude}
-                        locationName={homestay.locationName}
+                        locationName={locationName}
                         nearbyHighlights={homestay.nearbyHighlights}
                     />
+
+                    {attractions.length > 0 && (
+                        <section id="attractions" className="py-10 border-b border-gray-200">
+                            <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">Nearby places</h2>
+                            <div className="space-y-6">
+                                {mustVisit.length > 0 && (
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">Must visit</h3>
+                                        {mustVisit.map((attraction, index) => (
+                                            <div key={`must-${attraction.name}-${index}`} className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                                                <div>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <p className="text-base font-bold text-gray-900">{attraction.name}</p>
+                                                        <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white">Highlight</span>
+                                                        {attraction.type && <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-600">{attraction.type}</span>}
+                                                    </div>
+                                                    <p className="text-sm text-gray-600 mt-1">
+                                                        {[attraction.distance, attraction.time].filter(Boolean).join(' • ') || 'Near the property'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {otherAttractions.length > 0 && (
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-gray-500">More nearby</h3>
+                                        {otherAttractions.map((attraction, index) => (
+                                            <div key={`other-${attraction.name}-${index}`} className="rounded-2xl border border-gray-200 bg-white px-4 py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                                                <div>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <p className="text-base font-bold text-gray-900">{attraction.name}</p>
+                                                        {attraction.type && <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-600">{attraction.type}</span>}
+                                                    </div>
+                                                    <p className="text-sm text-gray-600 mt-1">
+                                                        {[attraction.distance, attraction.time].filter(Boolean).join(' • ') || 'Near the property'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+                    )}
 
                     {/* ── Social Proof / Reviews Placeholder ── */}
                     <section className="py-10 border-b border-gray-200">
@@ -355,7 +453,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {/* ── Desktop QA Section ── */}
                     <div id="qa" className="hidden md:block">
-                        <HomestayQASection homestayId={homestay.id} />
+                        <HomestayQASection homestayId={homestayId} />
                     </div>
                 </div>
 
@@ -407,9 +505,22 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                 </div>
                             )}
 
+                            {homestay.offers?.type && homestay.offers?.title && (
+                                <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 relative z-10">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+                                            {homestay.offers.type}
+                                        </span>
+                                        <p className="text-sm font-bold text-amber-950">{homestay.offers.title}</p>
+                                    </div>
+                                    {homestay.offers.description && <p className="text-sm text-amber-900 mt-2">{homestay.offers.description}</p>}
+                                    {homestay.offers.validity && <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700 mt-2">{homestay.offers.validity}</p>}
+                                </div>
+                            )}
+
                             <hr className="border-gray-200 mb-6" />
 
-                            <InquirySection homestayId={homestay.id} homestayName={homestay.name} />
+                            <InquirySection homestayId={homestayId} homestayName={homestayName} />
 
                             <div className="mt-4 grid grid-cols-2 gap-3">
                                 <button
@@ -431,14 +542,14 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                 {/* Mobile QA Section */}
                 <div className="md:hidden w-full" id="qa-mobile">
-                    <HomestayQASection homestayId={homestay.id} />
+                    <HomestayQASection homestayId={homestayId} />
                 </div>
             </div>
 
             {/* ═══════ STICKY MOBILE ACTION BAR ═══════ */}
             <div className="md:hidden">
                 <StickyMobileBar
-                    homestayName={homestay.name}
+                    homestayName={homestayName}
                     tripBoardItem={tripBoardItem}
                 />
             </div>

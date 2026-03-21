@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 public class HomestayDto {
 
@@ -24,6 +25,80 @@ public class HomestayDto {
         NEW_LISTING,
         TRUSTED_HOST,
         HIGH_DEMAND
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SpaceMediaDto {
+        private String url;
+        private String fileId;
+        private String caption;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SpaceDto {
+        private String type;
+        private String name;
+        private String description;
+        @Builder.Default
+        private List<SpaceMediaDto> media = new ArrayList<>();
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class VideoDto {
+        private String url;
+        private String title;
+        private String type;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class AttractionDto {
+        private String name;
+        private String distance;
+        private String time;
+        private String type;
+        private Boolean highlight;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class OfferDto {
+        private String type;
+        private String title;
+        private String description;
+        private String validity;
+        private List<String> tags;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class StructuredPoliciesDto {
+        private String checkIn;
+        private String checkOut;
+        private List<String> paymentType;
+        private Boolean petsAllowed;
+        private String alcoholAllowed;
     }
 
     @Data
@@ -60,6 +135,12 @@ public class HomestayDto {
         private Map<String, Object> mealConfig;
         private Map<String, Object> meta;
         private List<MediaDto> media;
+        private List<SpaceDto> spaces;
+        @Size(max = 5, message = "Maximum 5 videos are allowed")
+        private List<VideoDto> videos;
+        private List<AttractionDto> attractions;
+        private OfferDto offers;
+        private StructuredPoliciesDto structuredPolicies;
 
         @NotBlank(message = "Destination is mandatory")
         private String destinationId;
@@ -96,6 +177,11 @@ public class HomestayDto {
         private Boolean featured;
         private DestinationDto destination;
         private Map<String, Object> mealConfig;
+        private List<SpaceDto> spaces;
+        private List<VideoDto> videos;
+        private List<AttractionDto> attractions;
+        private OfferDto offers;
+        private StructuredPoliciesDto structuredPolicies;
 
         private String mealPlanCode;
         private String mealPlanLabel;
