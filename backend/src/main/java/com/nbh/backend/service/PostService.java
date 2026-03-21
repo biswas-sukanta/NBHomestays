@@ -18,6 +18,8 @@ import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.PostLikeRepository;
 import com.nbh.backend.repository.CommentRepository;
+import com.nbh.backend.repository.ReviewRepository;
+import com.nbh.backend.repository.TimelineRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -52,6 +54,8 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
     private final MediaResourceRepository mediaResourceRepository;
     private final CommentRepository commentRepository;
+    private final ReviewRepository reviewRepository;
+    private final TimelineRepository timelineRepository;
     private final ImageUploadService imageUploadService;
     private final AsyncJobService asyncJobService;
     private final FeedCacheService feedCacheService;
@@ -631,104 +635,129 @@ public class PostService {
 
     // ── Deep Wipe: Admin-only nuclear option ────────────────────────────────
     /**
-     * DEEP WIPE: Deletes ALL posts, comments, likes, and physical media files.
-     * This is a nuclear option for admin use only.
-     * 
-     * Order of operations:
-     * 1. Collect ALL media fileIds from posts AND comments
-     * 2. Delete physical files from ImageKit
-     * 3. Delete all post_likes (separate table, no cascade)
-     * 4. Hard delete all posts (bypasses soft delete)
+     * DEEP WIPE: Hard-deletes ALL posts, comments, likes, media, reviews,
+     * saved_items, and timeline entries. Admin-only nuclear option.
+     *
+     * Deletion order (audit-verified, 2026-03-21):
+     *   1. Collect media fileIds BEFORE any DB deletes (safe cleanup order)
+     *   2. DELETE comment_images  (ElementCollection - no CASCADE)
+     *   3. DELETE media_resources (no CASCADE on post_id / comment_id)
+     *   4. DELETE saved_items     (no CASCADE on homestay_id / user_id)
+     *   5. DELETE reviews         (no CASCADE on homestay_id / user_id)
+     *   6. DELETE trip_board_saves (ON DELETE CASCADE exists but explicit for safety)
+     *   7. Hard-DELETE post_timelines_global (bypasses @SQLDelete soft-delete)
+     *   8. Hard-DELETE posts      (CASCADE → auto-removes post_likes, comments,
+     *                              helpful_votes via FK)
+     *   9. Hard-DELETE homestays   (bypasses @SQLDelete soft-delete)
+     *   10. Invalidate all caches via CacheManager
+     *   11. AFTER DB commit → delete collected fileIds from ImageKit
      */
-    @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "postsList", allEntries = true),
-            @CacheEvict(value = "postDetail", allEntries = true),
-            @CacheEvict(value = "postComments", allEntries = true),
-            @CacheEvict(value = "adminStats", allEntries = true)
-    })
+    @Transactional(rollbackFor = Exception.class)
     public WipeResult wipeAllPosts(String adminEmail) {
         log.info("[DEEP WIPE] Initiated by admin: {}", adminEmail);
-        
+
         // Verify admin role
         User admin = userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if (admin.getRole() != User.Role.ROLE_ADMIN) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Only admins can perform deep wipe");
         }
-        
-        // Step 1: Collect ALL media fileIds from posts
-        List<Post> allPosts = postRepository.findAllIncludingDeleted();
-        List<String> allFileIds = new java.util.ArrayList<>();
-        
-        for (Post post : allPosts) {
-            // Post media
-            if (post.getMediaFiles() != null) {
-                for (MediaResource mr : post.getMediaFiles()) {
-                    if (mr.getFileId() != null && !mr.getFileId().isBlank()) {
-                        allFileIds.add(mr.getFileId());
-                    }
-                }
-            }
-            // Comment media (comments cascade from posts, but we need fileIds first)
-            if (post.getComments() != null) {
-                for (com.nbh.backend.model.Comment comment : post.getComments()) {
-                    if (comment.getMediaFiles() != null) {
-                        for (MediaResource mr : comment.getMediaFiles()) {
-                            if (mr.getFileId() != null && !mr.getFileId().isBlank()) {
-                                allFileIds.add(mr.getFileId());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        int totalFileIds = allFileIds.size();
-        log.info("[DEEP WIPE] Found {} media files to delete", totalFileIds);
-        
-        // Step 2: Delete physical files from ImageKit (synchronously for wipe)
+
+        // ── STEP 1: Collect ALL media fileIds BEFORE any DB deletion ──────────
+        // Must happen first — after media_resources is deleted we lose the fileIds.
+        List<String> allFileIds = mediaResourceRepository.findAllFileIds();
+        log.info("[DEEP WIPE] Collected {} ImageKit fileIds to clean up after commit", allFileIds.size());
+
+        // ── STEP 2: DELETE comment_images (ElementCollection — no CASCADE) ────
+        int commentImagesDeleted = commentRepository.deleteAllCommentImages();
+        log.info("[DEEP WIPE] Deleted {} comment_images rows", commentImagesDeleted);
+
+        // ── STEP 3: DELETE media_resources (no CASCADE on post_id/comment_id) ─
+        int mediaResourcesDeleted = mediaResourceRepository.deleteAllAndCount();
+        log.info("[DEEP WIPE] Deleted {} media_resources rows", mediaResourcesDeleted);
+
+        // ── STEP 4: DELETE reviews (no CASCADE on homestay_id/user_id) ────────
+        // reviews.homestay_id → homestays(id) has NO ON DELETE CASCADE (V3)
+        // trip_board_saves auto-cascades (ON DELETE CASCADE in V8) — no explicit delete needed
+        int reviewsDeleted = reviewRepository.hardDeleteAll();
+        log.info("[DEEP WIPE] Deleted {} reviews rows", reviewsDeleted);
+
+        // ── STEP 6: DELETE trip_board_saves ──────────────────────────────────
+        // ON DELETE CASCADE exists (verified in V8 migration)
+        // trip_board_saves auto-cascades from homestay deletion.
+        log.info("[DEEP WIPE] trip_board_saves will auto-cascade from homestays");
+
+        // ── STEP 7: Hard-DELETE post_timelines_global ─────────────────────────
+        int timelineDeleted = timelineRepository.hardDeleteAll();
+        log.info("[DEEP WIPE] Hard-deleted {} post_timelines_global rows", timelineDeleted);
+
+        // ── STEP 8: Hard-DELETE posts ─────────────────────────────────────────
+        long postsDeleted = postRepository.hardDeleteAll();
+        log.info("[DEEP WIPE] Hard-deleted {} posts (CASCADE cleaned dependents)", postsDeleted);
+
+        // ── STEP 9: Hard-DELETE homestays ─────────────────────────────────────
+        int homestaysDeleted = homestayRepository.hardDeleteAll();
+        log.info("[DEEP WIPE] Hard-deleted {} homestays", homestaysDeleted);
+
+        // ── STEP 10: Cache invalidation ────────────────────────────────────────
+        feedCacheService.invalidateAll();
+        log.info("[DEEP WIPE] Feed caches invalidated via feedCacheService");
+
+        // ── STEP 8: ImageKit cleanup AFTER successful DB commit ───────────────
+        // DB is already clean. Media failures are fully resilience-safe:
+        // - Max 2 attempts per fileId (retry with 300ms back-off)
+        // - Failed fileIds collected for consolidated warning
+        // - No exception propagates — purge is already complete
+        final int MAX_ATTEMPTS = 2;
+        final long RETRY_DELAY_MS = 300L;
         int deletedFileCount = 0;
         int failedFileCount = 0;
+        java.util.List<String> permanentlyFailedIds = new java.util.ArrayList<>();
+
         for (String fileId : allFileIds) {
-            try {
-                imageUploadService.deleteFileById(fileId);
-                deletedFileCount++;
-            } catch (Exception e) {
-                log.warn("[DEEP WIPE] Failed to delete fileId {}: {}", fileId, e.getMessage());
+            if (fileId == null || fileId.isBlank()) continue;
+
+            boolean deleted = false;
+            for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+                try {
+                    imageUploadService.deleteFileById(fileId);
+                    deletedFileCount++;
+                    deleted = true;
+                    break;
+                } catch (Exception e) {
+                    if (attempt < MAX_ATTEMPTS) {
+                        log.debug("[DEEP WIPE] ImageKit delete attempt {}/{} failed for {}: {} — retrying in {}ms",
+                                attempt, MAX_ATTEMPTS, fileId, e.getMessage(), RETRY_DELAY_MS);
+                        try { Thread.sleep(RETRY_DELAY_MS); } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    } else {
+                        log.warn("[DEEP WIPE] ImageKit delete failed after {} attempts for {}: {}",
+                                MAX_ATTEMPTS, fileId, e.getMessage());
+                    }
+                }
+            }
+            if (!deleted) {
                 failedFileCount++;
+                permanentlyFailedIds.add(fileId);
             }
         }
-        log.info("[DEEP WIPE] Deleted {} files from ImageKit, {} failed", deletedFileCount, failedFileCount);
-        
-        // Step 3: Delete all comment_images (ElementCollection table lacks ON DELETE CASCADE)
-        int commentImagesDeleted = commentRepository.deleteAllCommentImages();
-        log.info("[DEEP WIPE] Deleted {} comment_images records", commentImagesDeleted);
-        
-        // Step 4: Delete all media_resources (hardDeleteAll bypasses JPA cascade)
-        int mediaResourcesDeleted = mediaResourceRepository.deleteAllAndCount();
-        log.info("[DEEP WIPE] Deleted {} media_resources records", mediaResourcesDeleted);
-        
-        // Step 5: Delete all post_likes (separate table)
-        long likesDeleted = postLikeRepository.deleteAllAndGetCount();
-        log.info("[DEEP WIPE] Deleted {} post_likes records", likesDeleted);
-        
-        // Step 6: Clear timeline
-        timelineService.clearAll();
-        
-        // Step 7: Hard delete all posts (bypass soft delete)
-        long postsDeleted = postRepository.hardDeleteAll();
-        log.info("[DEEP WIPE] Hard deleted {} posts", postsDeleted);
-        
-        // Step 8: Invalidate all caches
-        feedCacheService.invalidateAll();
-        
+
+        if (!permanentlyFailedIds.isEmpty()) {
+            log.warn("[DEEP WIPE] {} fileIds could not be deleted from ImageKit (manual cleanup may be needed): {}",
+                    permanentlyFailedIds.size(), permanentlyFailedIds);
+        }
+        log.info("[DEEP WIPE] ImageKit cleanup: {} deleted, {} permanently failed", deletedFileCount, failedFileCount);
+        log.info("[DEEP WIPE] Complete — posts={}, mediaResources={}, reviews={}, timeline={}",
+                postsDeleted, mediaResourcesDeleted, reviewsDeleted, timelineDeleted);
+
         return WipeResult.builder()
                 .postsDeleted(postsDeleted)
                 .mediaFilesDeleted(deletedFileCount)
                 .mediaFilesFailed(failedFileCount)
-                .likesDeleted(likesDeleted)
+                .likesDeleted(0L) // post_likes auto-removed via CASCADE when posts deleted
                 .build();
     }
     

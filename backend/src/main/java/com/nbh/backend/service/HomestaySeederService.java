@@ -3,6 +3,8 @@ package com.nbh.backend.service;
 import com.nbh.backend.model.Homestay;
 import com.nbh.backend.model.User;
 import com.nbh.backend.repository.HomestayRepository;
+import com.nbh.backend.repository.MediaResourceRepository;
+import com.nbh.backend.repository.ReviewRepository;
 import com.nbh.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,15 +25,30 @@ import java.util.stream.Collectors;
 public class HomestaySeederService {
 
         private final HomestayRepository homestayRepository;
+        private final MediaResourceRepository mediaResourceRepository;
+        private final ReviewRepository reviewRepository;
         private final UserRepository userRepository;
         private final PasswordEncoder passwordEncoder;
 
-        @Transactional
+        @Transactional(rollbackFor = Exception.class)
         public void seedHomestays() {
-                log.info("Starting database purge for homestays...");
-                // Purge existing homestays to ensure a clean slate
-                homestayRepository.deleteAll();
-                log.info("Database purged.");
+                log.info("Starting hard-purge of existing homestays...");
+
+                // FIX (Issue E+F): Replace JPA deleteAll() which triggers @SQLDelete soft-delete.
+                // Correct order: delete children without CASCADE first, then hard-delete homestays.
+                //
+                // media_resources.homestay_id → homestays(id) has NO ON DELETE CASCADE (V26)
+                int deletedMedia = mediaResourceRepository.deleteByHomestayIdIsNotNull();
+                log.info("Hard-deleted {} media_resources linked to homestays", deletedMedia);
+
+                // reviews.homestay_id → homestays(id) has NO ON DELETE CASCADE (V3)
+                int deletedReviews = reviewRepository.hardDeleteAll();
+                log.info("Hard-deleted {} reviews", deletedReviews);
+
+                // Hard delete homestays — bypasses @SQLDelete(sql = "UPDATE homestays SET is_deleted = true WHERE id=?")
+                // Uses native DELETE FROM homestays, preventing soft-deleted row accumulation.
+                int deletedHomestays = homestayRepository.hardDeleteAll();
+                log.info("Hard-deleted {} homestays (no soft-delete accumulation)", deletedHomestays);
 
                 log.info("Fetching or creating system admin owner...");
                 User owner = userRepository.findByEmail("admin@nbhomestays.com")

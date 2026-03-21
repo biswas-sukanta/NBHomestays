@@ -42,4 +42,16 @@ public interface HomestayRepository extends JpaRepository<Homestay, UUID>, Homes
         @Modifying
         @Query(value = "UPDATE homestays SET inquiry_count = COALESCE(inquiry_count, 0) + 1 WHERE id = :id", nativeQuery = true)
         int incrementInquiryCount(@Param("id") UUID id);
+
+        /**
+         * Hard delete ALL homestays, bypassing @SQLDelete (soft-delete).
+         * Must be called AFTER media_resources and reviews are deleted (no CASCADE on those FKs).
+         * Used during seeder purge to prevent soft-deleted row accumulation.
+         *
+         * @return Number of rows deleted
+         */
+        @Modifying(flushAutomatically = true, clearAutomatically = true)
+        @Query(value = "DELETE FROM homestays", nativeQuery = true)
+        int hardDeleteAll();
 }
+

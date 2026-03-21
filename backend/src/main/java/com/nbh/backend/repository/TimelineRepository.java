@@ -150,4 +150,12 @@ public interface TimelineRepository extends JpaRepository<PostTimeline, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "DELETE FROM post_timelines_global WHERE post_id IN :postIds", nativeQuery = true)
     int deleteByPostIdIn(@Param("postIds") List<UUID> postIds);
+
+    /**
+     * Hard delete ALL timeline entries, bypassing @SQLDelete (soft-delete).
+     * Used during purge to ensure post_timelines_global is fully cleared.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "DELETE FROM post_timelines_global", nativeQuery = true)
+    int hardDeleteAll();
 }

@@ -48,4 +48,14 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
      */
     @Query("SELECT SUM(c.helpfulCount) FROM Comment c WHERE c.user.id = :userId")
     long countHelpfulByUserId(@Param("userId") UUID userId);
+
+    /**
+     * Hard delete ALL comments, bypassing any soft-delete logic.
+     * Must be called AFTER deleteAllCommentImages() since comment_images has no CASCADE.
+     *
+     * @return Number of rows deleted
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "DELETE FROM comments", nativeQuery = true)
+    int hardDeleteAll();
 }

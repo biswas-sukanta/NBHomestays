@@ -16,6 +16,7 @@ import java.util.Map;
 public class AdminDataController {
 
     private final AdminDataService adminDataService;
+    private final com.nbh.backend.service.PostService postService;
 
     @DeleteMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -33,15 +34,16 @@ public class AdminDataController {
 
     @DeleteMapping("/all")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Map<String, Object>> deleteAllHomestays() {
-        log.info("REST: DELETE /api/admin/homestays/all - Entry");
+    public ResponseEntity<Map<String, Object>> deleteAllHomestays(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        log.info("REST: DELETE /api/admin/homestays/all - Entry (by {})", userDetails.getUsername());
         try {
-            adminDataService.deleteAllHomestays();
+            postService.wipeAllPosts(userDetails.getUsername());
             log.info("REST: DELETE /api/admin/homestays/all - Success return");
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
             log.error("REST: DELETE /api/admin/homestays/all - ERROR", e);
-            throw e; // Let global handler log it too if it wants
+            throw e; 
         }
     }
 

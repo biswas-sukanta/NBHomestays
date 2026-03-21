@@ -145,33 +145,21 @@ public class AdminDataService {
         @Transactional(timeout = 300)
         public void deleteAllHomestays() {
                 log.info("Purging all homestays using failsafe DML...");
-                // Nuclear wipe using DELETE to avoid locking and handle legacy tables
-                jdbcTemplate.execute("DELETE FROM post_likes");
-                jdbcTemplate.execute("DELETE FROM trip_board_saves");
-                jdbcTemplate.execute("DELETE FROM media_resources");
-                jdbcTemplate.execute("DELETE FROM homestay_photos");
+                // LEGACY FLOW: Reverted to baseline as per protocol.
+                // This method is no longer used by AdminDataController for the purge.
                 jdbcTemplate.execute("DELETE FROM homestay_answers");
                 jdbcTemplate.execute("DELETE FROM homestay_questions");
-                jdbcTemplate.execute("DELETE FROM comments");
                 jdbcTemplate.execute("DELETE FROM post_images");
-                jdbcTemplate.execute("DELETE FROM posts");
                 jdbcTemplate.execute("DELETE FROM review_photos");
                 jdbcTemplate.execute("DELETE FROM reviews");
-                jdbcTemplate.execute("DELETE FROM questions");
+                jdbcTemplate.execute("DELETE FROM comments");
+                jdbcTemplate.execute("DELETE FROM posts");
                 jdbcTemplate.execute("DELETE FROM homestays");
 
                 entityManager.clear(); // Sync persistence context
-
-                // Clear all caches to avoid ghosting in the UI
-                cacheManager.getCacheNames().forEach(cacheName -> {
-                        org.springframework.cache.Cache cache = cacheManager.getCache(cacheName);
-                        if (cache != null) {
-                                cache.clear();
-                        }
-                });
-
-                log.info("Database strictly purged of all homestay-related entities and caches flushed.");
+                log.info("Database purged (Legacy Flow): homestay_answers, homestay_questions, post_images, review_photos, reviews, comments, posts, homestays.");
         }
+
 
         @Transactional
         public int seedHomestays(int count) {

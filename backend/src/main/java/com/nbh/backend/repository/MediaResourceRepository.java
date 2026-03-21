@@ -39,10 +39,30 @@ public interface MediaResourceRepository extends JpaRepository<MediaResource, UU
      * Delete all media resources and return count (for full wipe).
      * Used during deep wipe to clear all media_resources before posts.
      * Named differently to avoid clash with CrudRepository.deleteAll() which returns void.
-     * 
+     *
      * @return Number of rows deleted
      */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "DELETE FROM media_resources", nativeQuery = true)
     int deleteAllAndCount();
+
+    /**
+     * Collect all ImageKit fileIds before DB deletion.
+     * Safe purge order: collect IDs FIRST, then delete DB records, then delete from ImageKit.
+     * Null file_id values are excluded (URL-only resources).
+     *
+     * @return List of non-null file_id strings
+     */
+    @Query(value = "SELECT file_id FROM media_resources WHERE file_id IS NOT NULL", nativeQuery = true)
+    List<String> findAllFileIds();
+
+    /**
+     * Delete media_resources linked to homestays (no ON DELETE CASCADE on homestay_id FK).
+     * Must be called before homestays are hard-deleted during seeder purge.
+     *
+     * @return Number of rows deleted
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "DELETE FROM media_resources WHERE homestay_id IS NOT NULL", nativeQuery = true)
+    int deleteByHomestayIdIsNotNull();
 }

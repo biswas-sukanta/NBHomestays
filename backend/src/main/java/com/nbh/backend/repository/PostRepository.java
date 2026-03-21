@@ -316,5 +316,5 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
          */
         @Modifying(flushAutomatically = true, clearAutomatically = true)
         @Query(value = "DELETE FROM posts", nativeQuery = true)
-        long hardDeleteAll();
+        int hardDeleteAll();
 }
