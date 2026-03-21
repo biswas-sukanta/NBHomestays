@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,12 +70,12 @@ public class User implements UserDetails {
     @Column(name = "languages", columnDefinition = "TEXT[]")
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Builder.Default
-    private List<String> languages = new ArrayList<>();
+    private String[] languages = new String[0];
 
     @Column(name = "interests", columnDefinition = "TEXT[]")
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Builder.Default
-    private List<String> interests = new ArrayList<>();
+    private String[] interests = new String[0];
 
     @Enumerated(EnumType.STRING)
     @Column(name = "traveller_type")
@@ -177,6 +178,22 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
+    }
+
+    public List<String> getLanguages() {
+        return languages == null ? new ArrayList<>() : new ArrayList<>(Arrays.asList(languages));
+    }
+
+    public void setLanguages(List<String> languages) {
+        this.languages = languages == null ? new String[0] : languages.toArray(String[]::new);
+    }
+
+    public List<String> getInterests() {
+        return interests == null ? new ArrayList<>() : new ArrayList<>(Arrays.asList(interests));
+    }
+
+    public void setInterests(List<String> interests) {
+        this.interests = interests == null ? new String[0] : interests.toArray(String[]::new);
     }
 
     @Override

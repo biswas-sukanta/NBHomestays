@@ -406,3 +406,18 @@ CREATE INDEX idx_user_xp_post_helpful_user_id ON user_xp_post_helpful(user_id);
 CREATE INDEX idx_user_xp_post_helpful_post_id ON user_xp_post_helpful(post_id);
 
 CREATE INDEX idx_helpful_votes_user_id ON helpful_votes(user_id, voted_at DESC);
+
+INSERT INTO states (slug, name)
+VALUES ('west-bengal', 'West Bengal')
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO badge_definitions (name, slug, badge_type, icon_url, xp_reward, stage_number, min_xp_threshold)
+VALUES
+    ('Explorer', 'explorer', 'STAGE', '/icons/stages/explorer.svg', 0, 1, 100),
+    ('Guide', 'guide', 'STAGE', '/icons/stages/guide.svg', 0, 2, 500),
+    ('Expert', 'expert', 'STAGE', '/icons/stages/expert.svg', 0, 3, 1500),
+    ('Mentor', 'mentor', 'STAGE', '/icons/stages/mentor.svg', 0, 4, 5000),
+    ('Helper 20', 'helper-20', 'ACHIEVEMENT', '/icons/badges/helper-20.svg', 0, NULL, 0),
+    ('Reviewer 5', 'reviewer-5', 'ACHIEVEMENT', '/icons/badges/reviewer-5.svg', 0, NULL, 0),
+    ('Contributor 50', 'contributor-50', 'ACHIEVEMENT', '/icons/badges/contributor-50.svg', 0, NULL, 0)
+ON CONFLICT (slug) DO NOTHING;
