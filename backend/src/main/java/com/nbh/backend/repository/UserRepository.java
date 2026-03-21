@@ -27,6 +27,40 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                    u.last_name AS lastName,
                    u.email AS email,
                    u.avatar_url AS avatarUrl,
+                   COALESCE(ph.totalXp, 0) + COALESCE(h.totalXp, 0) AS totalXp
+            FROM users u
+            LEFT JOIN (
+                SELECT user_id, SUM(xp_delta) AS totalXp
+                FROM user_xp_post_helpful
+                GROUP BY user_id
+            ) ph ON ph.user_id = u.id
+            LEFT JOIN (
+                SELECT user_id, SUM(xp_delta) AS totalXp
+                FROM user_xp_history
+                GROUP BY user_id
+            ) h ON h.user_id = u.id
+            WHERE u.is_deleted = false
+            ORDER BY COALESCE(ph.totalXp, 0) + COALESCE(h.totalXp, 0) DESC, u.id
+            """,
+            countQuery = "SELECT COUNT(*) FROM users WHERE is_deleted = false",
+            nativeQuery = true)
+    Page<LeaderboardProjection> findLeaderboard(Pageable pageable);
+
+    @Query(value = """
+            SELECT COALESCE((
+                SELECT SUM(xp_delta) FROM user_xp_post_helpful WHERE user_id = :userId
+            ), 0) + COALESCE((
+                SELECT SUM(xp_delta) FROM user_xp_history WHERE user_id = :userId
+            ), 0)
+            """, nativeQuery = true)
+    Integer findComputedTotalXpById(@Param("userId") UUID userId);
+
+    @Query(value = """
+            SELECT u.id AS id,
+                   u.first_name AS firstName,
+                   u.last_name AS lastName,
+                   u.email AS email,
+                   u.avatar_url AS avatarUrl,
                    u.role AS role,
                    u.is_verified_host AS verifiedHost
             FROM users u
@@ -74,5 +108,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
         String getRole();
         Boolean getVerifiedHost();
         Long getPostCount();
+    }
+
+    interface LeaderboardProjection {
+        UUID getId();
+        String getFirstName();
+        String getLastName();
+        String getEmail();
+        String getAvatarUrl();
+        Integer getTotalXp();
     }
 }

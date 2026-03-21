@@ -84,6 +84,9 @@ public class ProfileService {
     public HostProfileDto getProfile(UUID userId, UUID viewerUserId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        int totalXp = userRepository.findComputedTotalXpById(userId) != null
+                ? userRepository.findComputedTotalXpById(userId)
+                : 0;
 
         long followersCount = userFollowRepository.countByFollowedUserId(userId);
         long followingCount = userFollowRepository.countByFollowerUserId(userId);
@@ -91,8 +94,8 @@ public class ProfileService {
         var postsPage = postService.getPostsByUser(user.getEmail(), PageRequest.of(0, 20));
 
         // Compute stage based on total XP
-        StageInfo stage = computeStage(user.getTotalXp());
-        Integer xpToNextStage = computeXpToNextStage(user.getTotalXp());
+        StageInfo stage = computeStage(totalXp);
+        Integer xpToNextStage = computeXpToNextStage(totalXp);
 
         // Get pinned badges
         List<BadgeDto> pinnedBadges = badgeService.getPinnedBadges(userId).stream()
@@ -132,7 +135,7 @@ public class ProfileService {
                 .verificationStatus(user.getVerificationStatus() != null 
                         ? user.getVerificationStatus().name() : null)
                 // Gamification fields
-                .totalXp(user.getTotalXp())
+                .totalXp(totalXp)
                 .currentStageTitle(stage.title())
                 .currentStageIconUrl(stage.iconUrl())
                 .xpToNextStage(xpToNextStage)

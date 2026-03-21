@@ -3,7 +3,6 @@ package com.nbh.backend.controller;
 import com.nbh.backend.dto.LeaderboardEntryDto;
 import com.nbh.backend.model.BadgeDefinition;
 import com.nbh.backend.model.BadgeDefinition.BadgeType;
-import com.nbh.backend.model.User;
 import com.nbh.backend.repository.BadgeDefinitionRepository;
 import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.repository.UserFollowRepository;
@@ -67,13 +66,13 @@ public class LeaderboardController {
             loadStages();
         }
         
-        // Fetch top users by XP with limit
-        Page<User> topUsers = userRepository.findAllByOrderByTotalXpDesc(PageRequest.of(0, effectiveLimit));
+        // Fetch top users by computed XP with limit.
+        Page<UserRepository.LeaderboardProjection> topUsers = userRepository.findLeaderboard(PageRequest.of(0, effectiveLimit));
         
         List<LeaderboardEntryDto> entries = new ArrayList<>();
         int rank = 1;
         
-        for (User user : topUsers.getContent()) {
+        for (UserRepository.LeaderboardProjection user : topUsers.getContent()) {
             int totalXp = user.getTotalXp() != null ? user.getTotalXp() : 0;
             StageInfo stage = computeStage(totalXp);
             

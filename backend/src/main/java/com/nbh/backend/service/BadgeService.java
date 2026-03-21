@@ -4,6 +4,7 @@ import com.nbh.backend.model.BadgeDefinition;
 import com.nbh.backend.model.User;
 import com.nbh.backend.model.UserBadge;
 import com.nbh.backend.model.UserXpHistory;
+import com.nbh.backend.repository.UserXpPostHelpfulRepository;
 import com.nbh.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class BadgeService {
     private final ReviewRepository reviewRepository;
     private final HelpfulVoteRepository helpfulVoteRepository;
     private final PostRepository postRepository;
+    private final UserXpPostHelpfulRepository userXpPostHelpfulRepository;
     private final XpService xpService;
 
     // Khazana badge slugs (merit-based achievements)
@@ -97,12 +99,12 @@ public class BadgeService {
             return;
         }
 
-        // Count comments marked as helpful
-        long helpfulCommentCount = commentRepository.countHelpfulByUserId(user.getId());
+        // Count surviving helpful-vote XP rows so badge criteria matches the XP source of truth.
+        long helpfulCommentCount = userXpPostHelpfulRepository.countByUserId(user.getId());
         
         if (helpfulCommentCount >= 20) {
             awardBadge(user.getId(), BADGE_HELPER_20, 
-                    "Received 20+ helpful marks on comments");
+                    "Received 20+ helpful votes on posts");
         }
     }
 

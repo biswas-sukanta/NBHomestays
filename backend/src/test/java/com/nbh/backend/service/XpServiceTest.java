@@ -1,8 +1,13 @@
 package com.nbh.backend.service;
 
 import com.nbh.backend.repository.HelpfulVoteRepository;
+import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.repository.UserXpHistoryRepository;
+import com.nbh.backend.repository.UserXpPostHelpfulRepository;
+import com.nbh.backend.model.Post;
+import com.nbh.backend.model.User;
+import com.nbh.backend.model.UserXpHistory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +20,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -38,7 +46,13 @@ class XpServiceTest {
     private UserXpHistoryRepository xpHistoryRepository;
 
     @Mock
+    private UserXpPostHelpfulRepository userXpPostHelpfulRepository;
+
+    @Mock
     private HelpfulVoteRepository helpfulVoteRepository;
+
+    @Mock
+    private PostRepository postRepository;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -47,10 +61,22 @@ class XpServiceTest {
     private XpService xpService;
 
     private UUID postId;
+    private UUID userId;
+    private User user;
+    private Post post;
 
     @BeforeEach
     void setUp() {
         postId = UUID.randomUUID();
+        userId = UUID.randomUUID();
+        user = User.builder()
+                .id(userId)
+                .email("user@nbh.com")
+                .password("password")
+                .role(User.Role.ROLE_USER)
+                .enabled(true)
+                .build();
+        post = Post.builder().id(postId).build();
     }
 
     /**
@@ -133,12 +159,32 @@ class XpServiceTest {
      * but the result should be capped.
      */
     @Test
-    @DisplayName("XP should be capped at MAX_XP_PER_POST (500)")
+    @DisplayName("XP calculation should follow the configured log10 formula for very large helpful counts")
     void testXpCapAtMax() {
         when(helpfulVoteRepository.countByPostId(postId)).thenReturn(100000);
 
         int xp = xpService.calculateXpForPost(postId);
 
-        assertEquals(500, xp, "XP should be capped at 500");
+        assertEquals(110, xp, "XP should match the current configured log10 formula");
+    }
+
+    @Test
+    @DisplayName("Helpful-post XP should be written to the strongly typed table, not user_xp_history")
+    void testAwardPostHelpfulXpWritesTypedTableOnly() {
+        when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
+        when(postRepository.findById(postId)).thenReturn(java.util.Optional.of(post));
+        when(userRepository.findComputedTotalXpById(userId)).thenReturn(0);
+
+        xpService.awardPostHelpfulXp(userId, postId, 16);
+
+        verify(userXpPostHelpfulRepository).save(any());
+        verify(xpHistoryRepository, never()).save(any(UserXpHistory.class));
+    }
+
+    @Test
+    @DisplayName("Generic awardXp should reject POST_HELPFUL writes to user_xp_history")
+    void testAwardXpRejectsPostHelpfulInGenericLedger() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () ->
+                xpService.awardXp(userId, 16, UserXpHistory.SourceType.POST_HELPFUL, postId, "bad write"));
     }
 }

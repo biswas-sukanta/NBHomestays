@@ -292,6 +292,14 @@ CREATE TABLE user_xp_history (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE user_xp_post_helpful (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    xp_delta INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE helpful_votes (
     post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -303,6 +311,24 @@ CREATE TABLE destination_tags (
     destination_id UUID NOT NULL REFERENCES destinations(id),
     tag VARCHAR(255)
 );
+
+CREATE OR REPLACE FUNCTION purge_post_helpful_xp_for_deleted_post()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.is_deleted = TRUE AND COALESCE(OLD.is_deleted, FALSE) = FALSE THEN
+        DELETE FROM user_xp_post_helpful
+        WHERE post_id = NEW.id;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trigger_purge_post_helpful_xp_on_soft_delete
+AFTER UPDATE OF is_deleted ON posts
+FOR EACH ROW
+EXECUTE FUNCTION purge_post_helpful_xp_for_deleted_post();
 
 CREATE INDEX idx_users_is_deleted ON users(is_deleted);
 CREATE INDEX idx_users_location ON users(location);
@@ -376,5 +402,7 @@ CREATE INDEX idx_user_badges_pinned ON user_badges(user_id, is_pinned) WHERE is_
 CREATE INDEX idx_user_badges_badge_id ON user_badges(badge_id);
 CREATE INDEX idx_user_xp_history_user_id ON user_xp_history(user_id, created_at DESC);
 CREATE INDEX idx_user_xp_history_source ON user_xp_history(source_type, source_id);
+CREATE INDEX idx_user_xp_post_helpful_user_id ON user_xp_post_helpful(user_id);
+CREATE INDEX idx_user_xp_post_helpful_post_id ON user_xp_post_helpful(post_id);
 
 CREATE INDEX idx_helpful_votes_user_id ON helpful_votes(user_id, voted_at DESC);

@@ -3,8 +3,12 @@ package com.nbh.backend.service;
 import com.nbh.backend.dto.XpHistoryDto;
 import com.nbh.backend.model.User;
 import com.nbh.backend.model.UserXpHistory;
+import com.nbh.backend.model.UserXpPostHelpful;
+import com.nbh.backend.model.Post;
+import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.repository.UserXpHistoryRepository;
+import com.nbh.backend.repository.UserXpPostHelpfulRepository;
 import com.nbh.backend.repository.HelpfulVoteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +42,9 @@ public class XpService {
 
     private final UserRepository userRepository;
     private final UserXpHistoryRepository xpHistoryRepository;
+    private final UserXpPostHelpfulRepository userXpPostHelpfulRepository;
     private final HelpfulVoteRepository helpfulVoteRepository;
+    private final PostRepository postRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     // XP configuration constants
@@ -79,11 +85,8 @@ public class XpService {
             return;
         }
 
-        // Award XP to post author
-        awardXp(event.authorId(), xpAwarded, 
-                UserXpHistory.SourceType.POST_HELPFUL,
-                event.postId(),
-                "Post marked as helpful");
+        // Award XP to post author. Helpful-post XP is stored in the strongly-typed table.
+        awardPostHelpfulXp(event.authorId(), event.postId(), xpAwarded);
     }
 
     /**
@@ -122,12 +125,12 @@ public class XpService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        int currentXp = user.getTotalXp() != null ? user.getTotalXp() : 0;
-        int newTotal = currentXp + xpDelta;
+        if (sourceType == UserXpHistory.SourceType.POST_HELPFUL) {
+            throw new IllegalArgumentException("POST_HELPFUL XP must be stored in user_xp_post_helpful");
+        }
 
-        // Update user's total XP
-        user.setTotalXp(newTotal);
-        userRepository.save(user);
+        int currentXp = getComputedTotalXp(userId);
+        int newTotal = currentXp + xpDelta;
 
         // Create immutable history entry
         UserXpHistory history = UserXpHistory.builder()
@@ -141,11 +144,44 @@ public class XpService {
                 .build();
         
         xpHistoryRepository.save(history);
+        user.setTotalXp(newTotal);
+        userRepository.save(user);
 
         log.info("XP awarded: userId={}, delta={}, newTotal={}, source={}",
                 userId, xpDelta, newTotal, sourceType);
 
         // Publish event for badge eligibility check
+        eventPublisher.publishEvent(new BadgeService.XpAwardedEvent(userId, xpDelta, newTotal, Instant.now()));
+    }
+
+    /**
+     * Award XP for a helpful vote on a post.
+     * Stored in the strongly-typed table so post deletion cascades remove the XP row.
+     */
+    @Transactional
+    public void awardPostHelpfulXp(UUID userId, UUID postId, int xpDelta) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
+
+        int currentXp = getComputedTotalXp(userId);
+        int newTotal = currentXp + xpDelta;
+
+        UserXpPostHelpful entry = UserXpPostHelpful.builder()
+                .user(user)
+                .post(post)
+                .xpDelta(xpDelta)
+                .createdAt(Instant.now())
+                .build();
+
+        userXpPostHelpfulRepository.save(entry);
+        user.setTotalXp(newTotal);
+        userRepository.save(user);
+
+        log.info("Helpful-post XP awarded: userId={}, postId={}, delta={}, newTotal={}",
+                userId, postId, xpDelta, newTotal);
+
         eventPublisher.publishEvent(new BadgeService.XpAwardedEvent(userId, xpDelta, newTotal, Instant.now()));
     }
 
@@ -218,11 +254,9 @@ public class XpService {
     public XpHistoryDto getXpHistory(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        
-        List<UserXpHistory> history = xpHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId);
-        int totalXp = user.getTotalXp() != null ? user.getTotalXp() : 0;
-        
-        return XpHistoryDto.fromEntities(history, totalXp);
+
+        int totalXp = getComputedTotalXp(userId);
+        return buildMergedHistory(userId, totalXp, null);
     }
     
     /**
@@ -233,12 +267,55 @@ public class XpService {
      */
     @Transactional(readOnly = true)
     public XpHistoryDto getXpHistoryByType(UUID userId, UserXpHistory.SourceType sourceType) {
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        
-        List<UserXpHistory> history = xpHistoryRepository.findByUserIdAndSourceType(userId, sourceType);
-        int totalXp = user.getTotalXp() != null ? user.getTotalXp() : 0;
-        
-        return XpHistoryDto.fromEntities(history, totalXp);
+
+        int totalXp = getComputedTotalXp(userId);
+        return buildMergedHistory(userId, totalXp, sourceType);
+    }
+
+    private int getComputedTotalXp(UUID userId) {
+        return userRepository.findComputedTotalXpById(userId) != null
+                ? userRepository.findComputedTotalXpById(userId)
+                : 0;
+    }
+
+    private XpHistoryDto buildMergedHistory(UUID userId, int totalXp, UserXpHistory.SourceType filterType) {
+        List<XpHistoryDto.XpEntry> entries = new ArrayList<>();
+
+        if (filterType == null || filterType == UserXpHistory.SourceType.POST_HELPFUL) {
+            userXpPostHelpfulRepository.findByUserIdOrderByCreatedAtDesc(userId).forEach(entry ->
+                    entries.add(XpHistoryDto.XpEntry.builder()
+                            .id(entry.getId())
+                            .sourceType(UserXpHistory.SourceType.POST_HELPFUL.name())
+                            .sourceId(entry.getPost().getId())
+                            .xpDelta(entry.getXpDelta())
+                            .reason("Post marked as helpful")
+                            .balanceAfter(totalXp)
+                            .createdAt(entry.getCreatedAt())
+                            .build()));
+        }
+
+        List<UserXpHistory> history = filterType == null
+                ? xpHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId)
+                : xpHistoryRepository.findByUserIdAndSourceType(userId, filterType);
+
+        history.forEach(h -> entries.add(XpHistoryDto.XpEntry.builder()
+                .id(h.getId())
+                .sourceType(h.getSourceType().name())
+                .sourceId(h.getSourceId())
+                .xpDelta(h.getXpDelta())
+                .reason(h.getReason())
+                .balanceAfter(h.getBalanceAfter())
+                .createdAt(h.getCreatedAt())
+                .build()));
+
+        entries.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+
+        return XpHistoryDto.builder()
+                .entries(entries)
+                .totalEntries(entries.size())
+                .totalXp(totalXp)
+                .build();
     }
 }
