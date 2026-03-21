@@ -182,6 +182,7 @@ public interface FeedRepository extends Repository<Post, UUID> {
         SELECT c.post_id as postId, COUNT(*) as count
         FROM comments c
         WHERE c.post_id IN :postIds
+          AND c.is_deleted = false
         GROUP BY c.post_id
         """,
         nativeQuery = true)

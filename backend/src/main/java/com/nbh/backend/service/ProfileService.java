@@ -213,6 +213,10 @@ public class ProfileService {
         if (!combined.isBlank()) {
             return combined;
         }
+        if (!user.isShowEmail()) {
+            String id = user.getId() != null ? user.getId().toString() : "guest";
+            return "Traveler_" + id.substring(0, Math.min(5, id.length()));
+        }
         String email = user.getEmail() == null ? "" : user.getEmail();
         int at = email.indexOf('@');
         return at > 0 ? email.substring(0, at) : email;

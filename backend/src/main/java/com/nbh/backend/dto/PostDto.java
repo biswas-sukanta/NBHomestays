@@ -65,7 +65,6 @@ public class PostDto {
         private boolean isPinned;
         private boolean isTrending;
         private double trendingScore;
-        private double editorialScore;
         private Response originalPost;
         private Instant createdAt;
         private List<String> tags;

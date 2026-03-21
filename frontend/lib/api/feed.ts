@@ -38,7 +38,6 @@ export interface PostFeedItem {
   isTrending?: boolean;
   viewCount?: number;
   trendingScore?: number;
-  editorialScore?: number;
   homestayId?: string;
   homestayName?: string;
   tags: string[];

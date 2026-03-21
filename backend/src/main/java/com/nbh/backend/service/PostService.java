@@ -264,7 +264,6 @@ public class PostService {
                 .isPinned(toBoolean(row[22]))
                 .isTrending(toBoolean(row[23]))
                 .trendingScore(toDouble(row[24]))
-                .editorialScore(toDouble(row[25]))
                 .originalPost(null) // Not loaded in list view for performance
                 .createdAt(createdAt)
                 .tags(tags)
@@ -1003,7 +1002,6 @@ public class PostService {
                 .isPinned(post.isPinned())
                 .isTrending(post.isTrending())
                 .trendingScore(post.getTrendingScore())
-                .editorialScore(post.getEditorialScore())
                 .originalPost(originalPostDto)
                 .createdAt(post.getCreatedAt())
                 .tags(post.getTags() == null ? java.util.List.of() : new java.util.ArrayList<>(post.getTags()))

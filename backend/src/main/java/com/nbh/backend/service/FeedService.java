@@ -644,7 +644,6 @@ public class FeedService {
                 .isTrending(meta != null && meta.isTrending)
                 .viewCount(meta != null ? meta.viewCount : 0)
                 .trendingScore(meta != null ? meta.trendingScore : 0d)
-                .editorialScore(meta != null ? meta.editorialScore : 0d)
                 .build();
     }
 
@@ -778,7 +777,6 @@ public class FeedService {
                 .isTrending(meta != null && meta.isTrending)
                 .viewCount(meta != null ? meta.viewCount : 0)
                 .trendingScore(meta != null ? meta.trendingScore : 0d)
-                .editorialScore(meta != null ? meta.editorialScore : 0d)
                 // Elevation Engine fields
                 .helpfulCount(helpfulCountDb != null ? helpfulCountDb.intValue() : 0)
                 .lastComputedXp(lastComputedXpDb != null ? lastComputedXpDb.intValue() : 0)

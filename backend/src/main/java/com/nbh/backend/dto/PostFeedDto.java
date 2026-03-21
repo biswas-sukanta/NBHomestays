@@ -49,8 +49,6 @@ public class PostFeedDto {
     private boolean isTrending;
     private int viewCount;
     private double trendingScore;
-    private double editorialScore;
-    
     // Tags (loaded via batch query)
     private List<String> tags;
     
