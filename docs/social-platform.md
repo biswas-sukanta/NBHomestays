@@ -1,6 +1,6 @@
 # Social Platform Features
 
-Verified against repository code on 2026-03-15.
+Verified against repository code on 2026-03-21.
 
 ## 1. Post Taxonomy
 
@@ -246,6 +246,43 @@ CREATE TABLE post_trending_history (
   "blocks": ["FeedBlockDto"]
 }
 ```
+
+### 7.4 Guest User Guard for Following Tab
+
+The "Following" feed scope requires authentication. Unauthenticated users receive clear UX feedback:
+
+**Behavior:**
+- Clicking "Following" tab when not logged in triggers login modal
+- `EmptyFeedState` component handles `NOT_LOGGED_IN` reason with appropriate CTA
+- No broken feed or silent failure
+
+**Location:** `frontend/app/community/page.tsx`
+
+```typescript
+// Guest user guard on Following tab click
+if (!user && feedScope !== 'following') {
+    setIsLoginModalOpen(true);
+    return;
+}
+setFeedScope('following');
+```
+
+### 7.5 Trending Travelers Sidebar
+
+The community page includes a sidebar showing top travelers from the XP leaderboard.
+
+**Component:** `frontend/components/community/sidebar.tsx`
+
+**Features:**
+- Fetches top 5 users via `getLeaderboard(5)` API call
+- Uses `staleTime: 5 * 60 * 1000` (5 minutes) to prevent refetch on tab switches
+- Graceful empty state with encouraging CTA (no fake users)
+- Links each traveler to their profile page
+
+**Empty State Handling:**
+- Loading: Shows skeleton placeholders
+- Error: Shows "Start your journey" CTA
+- Empty leaderboard: Shows "Start your journey" CTA
 
 ## 8. Post Interactions
 

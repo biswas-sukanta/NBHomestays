@@ -1,6 +1,6 @@
 # System Architecture
 
-Verified against repository code on 2026-03-15.
+Verified against repository code on 2026-03-21.
 
 ## 1. System Overview
 
@@ -193,6 +193,34 @@ Community tables use `TIMESTAMP WITH TIME ZONE` for UTC-safe storage:
 - `user_follows.created_at`
 
 Java entities use `Instant` for these fields.
+
+### 5.3 Hibernate 6 JSONB/Array Mapping Rules
+
+**CRITICAL:** All `Map`, `List`, and `Set` fields mapped to JSONB or PostgreSQL arrays MUST use explicit `@JdbcTypeCode` annotations to prevent `JdbcTypeRecommendationException`.
+
+**Required Pattern:**
+```java
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+// For JSONB columns
+@JdbcTypeCode(SqlTypes.JSON)
+@Column(columnDefinition = "jsonb")
+private Map<String, Object> metadata;
+
+// For PostgreSQL ARRAY columns
+@JdbcTypeCode(SqlTypes.ARRAY)
+@Column(columnDefinition = "TEXT[]")
+private List<String> tags;
+```
+
+**Entities with Explicit Type Codes:**
+| Entity | Fields |
+|--------|--------|
+| `Homestay` | `amenities`, `policies`, `quickFacts`, `tags`, `hostDetails`, `mealConfig`, `meta` |
+| `User` | `languages` (ARRAY), `interests` (ARRAY), `socialLinks` |
+| `UserBadge` | `metadata` |
+| `AsyncJob` | `payload` |
 
 ## 6. Caching Strategy
 

@@ -1,9 +1,68 @@
 # System Integrity Audit Report
 
-**Audit Date:** 2026-03-15  
+**Audit Date:** 2026-03-15 | **Updated:** 2026-03-21  
 **Auditor:** Staff Security & Performance Engineer  
 **Scope:** Ultra-deep system integrity and codebase audit across five phases  
-**Status:** Updated with resolution tracking  
+**Status:** Updated with resolution tracking
+
+---
+
+## March 2026 Deep Integrity Audit (RESOLVED ISSUES)
+
+The following issues were identified and resolved during the March 2026 deep integrity audit:
+
+### R.1 JPA Mapping Crashes - RESOLVED ✅
+
+**Issue:** Hibernate 6 throws `JdbcTypeRecommendationException` when mapping `Map`, `List`, and `Set` fields to JSONB or PostgreSQL array columns without explicit type codes.
+
+**Resolution:** Added explicit `@JdbcTypeCode` annotations to all affected entity fields:
+
+| Entity | Field | Type Code |
+|--------|-------|-----------|
+| `Homestay` | `amenities` | `SqlTypes.JSON` |
+| `Homestay` | `policies` | `SqlTypes.JSON` |
+| `Homestay` | `quickFacts` | `SqlTypes.JSON` |
+| `Homestay` | `tags` | `SqlTypes.JSON` |
+| `Homestay` | `hostDetails` | `SqlTypes.JSON` |
+| `Homestay` | `mealConfig` | `SqlTypes.JSON` |
+| `Homestay` | `meta` | `SqlTypes.JSON` |
+| `User` | `languages` | `SqlTypes.ARRAY` |
+| `User` | `interests` | `SqlTypes.ARRAY` |
+| `User` | `socialLinks` | `SqlTypes.JSON` |
+| `UserBadge` | `metadata` | `SqlTypes.JSON` |
+| `AsyncJob` | `payload` | `SqlTypes.JSON` |
+
+**Status:** ✅ RESOLVED
+
+---
+
+### R.2 Sidebar Data Starvation - RESOLVED ✅
+
+**Issue:** "Trending Travelers" sidebar showed empty state when XP leaderboard was empty, creating poor UX.
+
+**Resolution:** Implemented graceful fallback in `CommunitySidebar` component:
+- Empty leaderboard shows encouraging CTA instead of broken UI
+- No fake/placeholder users displayed
+- `staleTime: 5 * 60 * 1000` (5 minutes) prevents refetch on tab switches
+
+**Location:** `frontend/components/community/sidebar.tsx`
+
+**Status:** ✅ RESOLVED
+
+---
+
+### R.3 Following Tab Guest User Guard - RESOLVED ✅
+
+**Issue:** Unauthenticated users clicking "Following" tab saw broken feed or silence.
+
+**Resolution:** Implemented guest user guard in community page:
+- Clicking "Following" when not logged in triggers login modal
+- `EmptyFeedState` component handles `NOT_LOGGED_IN` reason
+- Clear UX feedback instead of silent failure
+
+**Location:** `frontend/app/community/page.tsx`
+
+**Status:** ✅ RESOLVED  
 
 ---
 

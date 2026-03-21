@@ -119,6 +119,27 @@ Data flow (typical):
   - vendored JAR at `backend/libs/imagekit-java-2.0.1.jar`
   - installed via Maven install plugin during `initialize`
 
+**Hibernate 6 Mapping Rule (CRITICAL):**
+All `Map`, `List`, and `Set` fields mapped to JSONB or PostgreSQL arrays MUST use explicit `@JdbcTypeCode` annotations to prevent `JdbcTypeRecommendationException`.
+
+```java
+// For JSONB columns
+@JdbcTypeCode(SqlTypes.JSON)
+@Column(columnDefinition = "jsonb")
+private Map<String, Object> metadata;
+
+// For PostgreSQL ARRAY columns
+@JdbcTypeCode(SqlTypes.ARRAY)
+@Column(columnDefinition = "TEXT[]")
+private List<String> tags;
+```
+
+**Entities with Explicit Type Codes:**
+- `Homestay`: `amenities`, `policies`, `quickFacts`, `tags`, `hostDetails`, `mealConfig`, `meta`
+- `User`: `languages` (ARRAY), `interests` (ARRAY), `socialLinks`
+- `UserBadge`: `metadata`
+- `AsyncJob`: `payload`
+
 ## Frontend (`frontend/package.json`)
 
 - Next.js `16.1.6`

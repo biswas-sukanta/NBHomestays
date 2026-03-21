@@ -1,6 +1,6 @@
 # Elevation Engine (Unified Profile & Gamification)
 
-**Single source of truth for the gamification system.** Verified against codebase on 2026-03-16.
+**Single source of truth for the gamification system.** Verified against codebase on 2026-03-21.
 
 ---
 
@@ -435,7 +435,16 @@ Authorization: Bearer <jwt>
 
 **Endpoint:** `GET /api/community/leaderboard`
 
-**Response (top 50 users):**
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | Integer | No | Maximum entries to return (default: 50, max: 50) |
+
+**Usage Notes:**
+- Sidebar uses `limit=5` to fetch only top travelers for compact display
+- Full leaderboard page uses default limit of 50
+
+**Response:**
 ```json
 [
   {
@@ -450,6 +459,15 @@ Authorization: Bearer <jwt>
     "followersCount": 120
   }
 ]
+```
+
+**Frontend Caching (Sidebar):**
+```typescript
+const { data: leaderboard } = useQuery({
+    queryKey: ['community', 'trendingTravelers'],
+    queryFn: () => getLeaderboard(5),
+    staleTime: 5 * 60 * 1000, // 5 minutes - prevent refetch on tab switches
+});
 ```
 
 ### 5.4 Badge Pin Endpoint

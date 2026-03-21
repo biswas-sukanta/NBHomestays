@@ -2,7 +2,7 @@
 
 *Auto-Updated Document*: This file maps the exact DTO structures and endpoints found in the `com.nbh.backend` package.
 
-Verified against repository code on 2026-03-15.
+Verified against repository code on 2026-03-21.
 
 ## Authentication (AuthDto)
 - **Register**: `POST /api/auth/register` - `email`, `password`, `firstname`, `lastname`, `role`
@@ -328,6 +328,38 @@ Returns pending homestays for admin approval.
 
 ### GET /api/homestays/my-listings
 Returns current user's homestay listings.
+
+## Community Endpoints
+
+### GET /api/community/leaderboard
+
+Retrieves the community leaderboard - top users by XP.
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | Integer | No | Maximum entries to return (default: 50, max: 50) |
+
+**Response:**
+```json
+[
+  {
+    "rank": 1,
+    "userId": "uuid",
+    "displayName": "Top Traveler",
+    "avatarUrl": "https://...",
+    "totalXp": 15000,
+    "stageTitle": "The Shikhar Seeker",
+    "stageIconUrl": "/icons/stages/13-shikhar.svg",
+    "postCount": 45,
+    "followersCount": 120
+  }
+]
+```
+
+**Controller:** `backend/src/main/java/com/nbh/backend/controller/LeaderboardController.java`
+
+---
 
 ## User Endpoints
 
