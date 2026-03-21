@@ -10,6 +10,9 @@ import com.nbh.backend.repository.HomestayRepository;
 import com.nbh.backend.repository.PostRepository;
 import com.nbh.backend.repository.UserRepository;
 import com.nbh.backend.repository.DestinationRepository;
+import com.nbh.backend.repository.MediaResourceRepository;
+import com.nbh.backend.repository.ReviewRepository;
+import com.nbh.backend.repository.TimelineRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -36,6 +39,10 @@ public class AdminDataService {
         private final jakarta.persistence.EntityManager entityManager;
         private final org.springframework.cache.CacheManager cacheManager;
         private final ImageUploadService imageUploadService;
+        private final MediaResourceRepository mediaResourceRepository;
+        private final ReviewRepository reviewRepository;
+        private final TimelineRepository timelineRepository;
+        private final FeedCacheService feedCacheService;
 
         private static final String[] DESTINATIONS = { "Darjeeling", "Kalimpong", "Kurseong", "Mirik", "Siliguri" };
 
@@ -127,37 +134,90 @@ public class AdminDataService {
                 log.info("Deleting {} homestays...", limit);
                 Page<Homestay> page = homestayRepository.findAll(PageRequest.of(0, limit));
                 List<Homestay> toDelete = page.getContent();
+                List<UUID> homestayIds = toDelete.stream()
+                                .map(Homestay::getId)
+                                .toList();
 
-                // Explicitly delete orphan references before homestays
-                for (Homestay h : toDelete) {
-                        tripBoardSaveRepository.deleteByHomestayId(h.getId());
-                        // Cleanup likes for posts referencing this homestay
-                        jdbcTemplate.update(
-                                        "DELETE FROM post_likes WHERE post_id IN (SELECT id FROM posts WHERE homestay_id = ?)",
-                                        h.getId());
+                if (homestayIds.isEmpty()) {
+                        return 0;
                 }
 
-                homestayRepository.deleteAll(toDelete);
-                log.info("Successfully deleted {} homestays.", toDelete.size());
-                return toDelete.size();
+                List<String> fileIds = mediaResourceRepository.findFileIdsByHomestayIdIn(homestayIds);
+
+                // Preserve community posts while removing homestay references.
+                postRepository.clearHomestayReferences(homestayIds);
+                timelineRepository.clearHomestayReferences(homestayIds);
+
+                for (UUID homestayId : homestayIds) {
+                        tripBoardSaveRepository.deleteByHomestayId(homestayId);
+                }
+
+                reviewRepository.hardDeleteByHomestayIdIn(homestayIds);
+                mediaResourceRepository.deleteByHomestayIdIn(homestayIds);
+                int deleted = homestayRepository.hardDeleteByIdIn(homestayIds);
+
+                purgeImageKitFiles(fileIds);
+                clearAdminCaches();
+
+                log.info("Successfully hard-deleted {} homestays.", deleted);
+                return deleted;
         }
 
         @Transactional(timeout = 300)
         public void deleteAllHomestays() {
-                log.info("Purging all homestays using failsafe DML...");
-                // LEGACY FLOW: Reverted to baseline as per protocol.
-                // This method is no longer used by AdminDataController for the purge.
-                jdbcTemplate.execute("DELETE FROM homestay_answers");
-                jdbcTemplate.execute("DELETE FROM homestay_questions");
-                jdbcTemplate.execute("DELETE FROM post_images");
-                jdbcTemplate.execute("DELETE FROM review_photos");
-                jdbcTemplate.execute("DELETE FROM reviews");
-                jdbcTemplate.execute("DELETE FROM comments");
-                jdbcTemplate.execute("DELETE FROM posts");
-                jdbcTemplate.execute("DELETE FROM homestays");
+                log.info("Purging all homestays without touching community posts...");
 
-                entityManager.clear(); // Sync persistence context
-                log.info("Database purged (Legacy Flow): homestay_answers, homestay_questions, post_images, review_photos, reviews, comments, posts, homestays.");
+                List<String> fileIds = mediaResourceRepository.findHomestayFileIds();
+
+                postRepository.clearAllHomestayReferences();
+                timelineRepository.clearAllHomestayReferences();
+
+                reviewRepository.hardDeleteAll();
+                mediaResourceRepository.deleteByHomestayIdIsNotNull();
+                homestayRepository.hardDeleteAll();
+
+                entityManager.clear();
+                purgeImageKitFiles(fileIds);
+                clearAdminCaches();
+
+                log.info("All homestays hard-deleted. Posts were preserved and disassociated.");
+        }
+
+        private void purgeImageKitFiles(List<String> fileIds) {
+                if (fileIds == null || fileIds.isEmpty()) {
+                        return;
+                }
+
+                int deleted = 0;
+                int failed = 0;
+                for (String fileId : fileIds) {
+                        if (fileId == null || fileId.isBlank()) {
+                                continue;
+                        }
+                        try {
+                                imageUploadService.deleteFileById(fileId);
+                                deleted++;
+                        } catch (Exception e) {
+                                failed++;
+                                log.warn("Failed to delete homestay media file {} from ImageKit: {}", fileId,
+                                                e.getMessage());
+                        }
+                }
+                log.info("Homestay media cleanup complete. deleted={}, failed={}", deleted, failed);
+        }
+
+        private void clearAdminCaches() {
+                entityManager.clear();
+                feedCacheService.invalidateAll();
+                if (cacheManager.getCache("homestaysSearch") != null) {
+                        cacheManager.getCache("homestaysSearch").clear();
+                }
+                if (cacheManager.getCache("homestay") != null) {
+                        cacheManager.getCache("homestay").clear();
+                }
+                if (cacheManager.getCache("adminStats") != null) {
+                        cacheManager.getCache("adminStats").clear();
+                }
         }
 
 

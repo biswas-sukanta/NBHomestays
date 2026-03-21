@@ -27,4 +27,8 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "DELETE FROM reviews", nativeQuery = true)
     int hardDeleteAll();
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "DELETE FROM reviews WHERE homestay_id IN :homestayIds", nativeQuery = true)
+    int hardDeleteByHomestayIdIn(@Param("homestayIds") List<UUID> homestayIds);
 }

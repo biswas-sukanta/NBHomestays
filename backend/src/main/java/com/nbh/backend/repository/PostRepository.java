@@ -310,6 +310,14 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
         @Query(value = "DELETE FROM posts WHERE id IN :postIds", nativeQuery = true)
         int hardDeleteByIdIn(@Param("postIds") java.util.List<UUID> postIds);
 
+        @Modifying(flushAutomatically = true, clearAutomatically = true)
+        @Query(value = "UPDATE posts SET homestay_id = NULL WHERE homestay_id IN :homestayIds", nativeQuery = true)
+        int clearHomestayReferences(@Param("homestayIds") List<UUID> homestayIds);
+
+        @Modifying(flushAutomatically = true, clearAutomatically = true)
+        @Query(value = "UPDATE posts SET homestay_id = NULL WHERE homestay_id IS NOT NULL", nativeQuery = true)
+        int clearAllHomestayReferences();
+
         /**
          * Hard delete all posts, bypassing soft delete.
          * Returns count of deleted rows.

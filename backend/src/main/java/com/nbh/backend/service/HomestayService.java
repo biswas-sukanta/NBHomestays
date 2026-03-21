@@ -288,6 +288,13 @@ public class HomestayService {
         }
 
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
+        public List<HomestayDto.Response> getHomestaysByStatus(Homestay.Status status) {
+                return repository.findByStatus(status).stream()
+                                .map(this::mapToResponse)
+                                .collect(Collectors.toList());
+        }
+
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public List<HomestayDto.LookupResponse> getHomestayLookups() {
                 return repository.findAll().stream()
                                 .map(h -> HomestayDto.LookupResponse.builder()

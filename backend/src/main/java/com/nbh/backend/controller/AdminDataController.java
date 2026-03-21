@@ -1,5 +1,8 @@
 package com.nbh.backend.controller;
 
+import com.nbh.backend.dto.HomestayDto;
+import com.nbh.backend.model.Homestay;
+import com.nbh.backend.service.HomestayService;
 import com.nbh.backend.service.AdminDataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +19,26 @@ import java.util.Map;
 public class AdminDataController {
 
     private final AdminDataService adminDataService;
-    private final com.nbh.backend.service.PostService postService;
+    private final HomestayService homestayService;
+
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<java.util.List<HomestayDto.Response>> getAllHomestays() {
+        return ResponseEntity.ok(homestayService.getAllHomestays());
+    }
+
+    @GetMapping("/pending")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<java.util.List<HomestayDto.Response>> getPendingHomestays() {
+        return ResponseEntity.ok(homestayService.getPendingHomestays(
+                org.springframework.data.domain.Pageable.unpaged()).getContent());
+    }
+
+    @GetMapping("/approved")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<java.util.List<HomestayDto.Response>> getApprovedHomestays() {
+        return ResponseEntity.ok(homestayService.getHomestaysByStatus(Homestay.Status.APPROVED));
+    }
 
     @DeleteMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -38,7 +60,7 @@ public class AdminDataController {
             @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
         log.info("REST: DELETE /api/admin/homestays/all - Entry (by {})", userDetails.getUsername());
         try {
-            postService.wipeAllPosts(userDetails.getUsername());
+            adminDataService.deleteAllHomestays();
             log.info("REST: DELETE /api/admin/homestays/all - Success return");
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {

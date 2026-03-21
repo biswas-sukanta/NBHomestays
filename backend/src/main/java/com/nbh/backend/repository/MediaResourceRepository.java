@@ -56,6 +56,12 @@ public interface MediaResourceRepository extends JpaRepository<MediaResource, UU
     @Query(value = "SELECT file_id FROM media_resources WHERE file_id IS NOT NULL", nativeQuery = true)
     List<String> findAllFileIds();
 
+    @Query(value = "SELECT file_id FROM media_resources WHERE homestay_id IS NOT NULL AND file_id IS NOT NULL", nativeQuery = true)
+    List<String> findHomestayFileIds();
+
+    @Query(value = "SELECT file_id FROM media_resources WHERE homestay_id IN :homestayIds AND file_id IS NOT NULL", nativeQuery = true)
+    List<String> findFileIdsByHomestayIdIn(@Param("homestayIds") List<UUID> homestayIds);
+
     /**
      * Delete media_resources linked to homestays (no ON DELETE CASCADE on homestay_id FK).
      * Must be called before homestays are hard-deleted during seeder purge.
@@ -65,4 +71,8 @@ public interface MediaResourceRepository extends JpaRepository<MediaResource, UU
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "DELETE FROM media_resources WHERE homestay_id IS NOT NULL", nativeQuery = true)
     int deleteByHomestayIdIsNotNull();
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "DELETE FROM media_resources WHERE homestay_id IN :homestayIds", nativeQuery = true)
+    int deleteByHomestayIdIn(@Param("homestayIds") List<UUID> homestayIds);
 }

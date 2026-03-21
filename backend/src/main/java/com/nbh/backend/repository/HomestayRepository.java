@@ -53,5 +53,9 @@ public interface HomestayRepository extends JpaRepository<Homestay, UUID>, Homes
         @Modifying(flushAutomatically = true, clearAutomatically = true)
         @Query(value = "DELETE FROM homestays", nativeQuery = true)
         int hardDeleteAll();
+
+        @Modifying(flushAutomatically = true, clearAutomatically = true)
+        @Query(value = "DELETE FROM homestays WHERE id IN :homestayIds", nativeQuery = true)
+        int hardDeleteByIdIn(@Param("homestayIds") List<UUID> homestayIds);
 }
 

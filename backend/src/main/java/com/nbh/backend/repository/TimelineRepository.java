@@ -151,6 +151,24 @@ public interface TimelineRepository extends JpaRepository<PostTimeline, Long> {
     @Query(value = "DELETE FROM post_timelines_global WHERE post_id IN :postIds", nativeQuery = true)
     int deleteByPostIdIn(@Param("postIds") List<UUID> postIds);
 
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = """
+        UPDATE post_timelines_global
+        SET homestay_id = NULL,
+            homestay_name = NULL
+        WHERE homestay_id IN :homestayIds
+        """, nativeQuery = true)
+    int clearHomestayReferences(@Param("homestayIds") List<UUID> homestayIds);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = """
+        UPDATE post_timelines_global
+        SET homestay_id = NULL,
+            homestay_name = NULL
+        WHERE homestay_id IS NOT NULL
+        """, nativeQuery = true)
+    int clearAllHomestayReferences();
+
     /**
      * Hard delete ALL timeline entries, bypassing @SQLDelete (soft-delete).
      * Used during purge to ensure post_timelines_global is fully cleared.
