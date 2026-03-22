@@ -47,4 +47,4 @@ backend/src/main/resources/application-local.yaml
 backend/src/main/resources/logback-spring-local.xml
 
 # Local docs containing credentials (keep local, never commit)
-docs/AI_TEST_CREDENTIALS.md
+docs/test-guidance/AI_TEST_CREDENTIALS.md
