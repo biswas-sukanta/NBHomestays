@@ -6,7 +6,7 @@ export const fetchCache = 'force-no-store';
 import { BentoGallery } from '@/components/bento-gallery';
 import { StickyMobileBar } from '@/components/sticky-mobile-bar';
 import { InquirySection } from '@/components/inquiry-section';
-import { MapPin, Star, Mountain, Wifi, Flame, CookingPot, TrendingUp, MessageSquare, Sunrise, Leaf } from 'lucide-react';
+import { MapPin, Star, Mountain, Wifi, Flame, MessageSquare, Sunrise, Leaf, PlayCircle } from 'lucide-react';
 import { getTrustSignalLabel, type TrustSignal } from '@/lib/trustSignals';
 
 // Architecture Components
@@ -19,6 +19,7 @@ import { LocationMapSection } from '@/components/homestay/location-map-section';
 import { HomestayQASection } from '@/components/homestay/homestay-qa-section';
 import { MealsSection } from '@/components/homestay/meals-section';
 import { SectionNav } from '@/components/homestay/section-nav';
+import { HideOnErrorImage } from '@/components/ui/hide-on-error-image';
 import type { Homestay } from '@/src/lib/api/models/homestay';
 
 function toYouTubeEmbedUrl(rawUrl?: string) {
@@ -44,6 +45,27 @@ function toYouTubeEmbedUrl(rawUrl?: string) {
     return null;
 }
 
+function isValidHttpUrl(value?: string | null): value is string {
+    return Boolean(value && value.startsWith('http'));
+}
+
+function truncateText(value?: string, maxLength = 150) {
+    if (!value) {
+        return null;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return null;
+    }
+
+    if (trimmed.length <= maxLength) {
+        return trimmed;
+    }
+
+    return `${trimmed.slice(0, maxLength).trimEnd()}...`;
+}
+
 export default async function HomestayPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
 
@@ -66,17 +88,37 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
         return notFound();
     }
 
+    const pageShell = 'mx-auto w-full max-w-[1280px] px-4 md:px-6';
+    const sectionShell = 'mt-8 rounded-[28px] bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] md:p-8';
+    const sectionTitle = 'text-[24px] font-bold tracking-tight text-gray-900';
+
     const vibeScore = homestay.vibeScore || 4.5;
     const vibeClass = vibeScore >= 4.5 ? 'vibe-high' : vibeScore >= 3.5 ? 'vibe-mid' : 'vibe-low';
     const homestayId = homestay.id;
     const homestayName = homestay.name || 'Homestay';
     const locationName = homestay.locationName || 'North Bengal';
-    const galleryMediaUrls = (homestay.media ?? []).map(media => media.url).filter((url): url is string => Boolean(url));
+    const galleryMediaUrls = Array.from(
+        new Set(
+            (homestay.media ?? [])
+                .map((media) => media.url)
+                .filter((url): url is string => isValidHttpUrl(url))
+        )
+    );
+    const descriptionText = homestay.description?.trim() || homestay.editorialLead?.trim() || '';
+    const shortDescription = truncateText(descriptionText, 150);
     const pricePerNight = typeof homestay.pricePerNight === 'number' ? homestay.pricePerNight : null;
     const formattedPricePerNight = pricePerNight == null ? null : pricePerNight.toLocaleString();
+    const visibleTags = (homestay.tags ?? [])
+        .filter((tag): tag is string => Boolean(tag && tag.trim()))
+        .slice(0, 6);
 
-    const trustSignals = ((homestay.trustSignals ?? []) as TrustSignal[]).slice(0, 2);
-    const spaces = (homestay.spaces ?? []).filter(space => (space.media?.length ?? 0) > 0 || space.name || space.description);
+    const trustSignals = ((homestay.trustSignals ?? []) as TrustSignal[]).slice(0, 3);
+    const spaces = (homestay.spaces ?? [])
+        .map((space) => ({
+            ...space,
+            media: (space.media ?? []).filter((media) => isValidHttpUrl(media.url)),
+        }))
+        .filter((space) => (space.media?.length ?? 0) > 0 || space.name || space.description);
     const videos = (homestay.videos ?? [])
         .map(video => ({ ...video, embedUrl: toYouTubeEmbedUrl(video.url) }))
         .filter(video => video.url && video.embedUrl);
@@ -90,7 +132,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     const tripBoardItem = {
         id: homestayId,
         name: homestayName,
-        imageUrl: homestay.media?.[0]?.url || '',
+        imageUrl: galleryMediaUrls[0] || '',
         locationName,
         pricePerNight: pricePerNight ?? undefined,
     };
@@ -98,17 +140,17 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     // Calculate dynamic highlights
     const highlightsItems = [];
     if (homestay.amenities?.['Mountain View']) {
-        highlightsItems.push({ id: '1', title: 'Stunning Views', subtitle: 'Enjoy panoramic mountain views right from your property.', iconKey: 'Mountain View' });
+        highlightsItems.push({ id: '1', title: 'Stunning Views', subtitle: 'Enjoy panoramic mountain views right from the property.', iconKey: 'Mountain View' });
     }
     if (homestay.amenities?.['Wifi'] || homestay.amenities?.['Free Wi-Fi']) {
-        highlightsItems.push({ id: '2', title: 'Dedicated Workspace', subtitle: "A room with wifi that's well-suited for working.", iconKey: 'Dedicated workspace' });
+        highlightsItems.push({ id: '2', title: 'Reliable Wi-Fi', subtitle: 'A comfortable setup for remote work and long, relaxed stays.', iconKey: 'Dedicated workspace' });
     }
     if (homestay.hostDetails?.reviewsCount && homestay.hostDetails.reviewsCount > 50) {
-        highlightsItems.push({ id: '3', title: 'Highly Rated Host', subtitle: `${homestay.hostDetails.reviewsCount} recent guests praised this host.`, iconKey: 'Host greets you' });
+        highlightsItems.push({ id: '3', title: 'Loved by Guests', subtitle: `${homestay.hostDetails.reviewsCount} recent guests praised this host.`, iconKey: 'Host greets you' });
     }
     if (highlightsItems.length === 0) {
-        highlightsItems.push({ id: '4', title: 'Great Location', subtitle: '100% of recent guests gave the location a 5-star rating.', iconKey: 'Location' });
-        highlightsItems.push({ id: '5', title: 'Self check-in', subtitle: 'Check yourself in with the lockbox.', iconKey: 'Check-in' });
+        highlightsItems.push({ id: '4', title: 'Great Location', subtitle: 'A peaceful base close to local experiences and scenic viewpoints.', iconKey: 'Location' });
+        highlightsItems.push({ id: '5', title: 'Easy Arrival', subtitle: 'Simple check-in and a straightforward stay setup.', iconKey: 'Check-in' });
     }
 
     // Stay Highlights chips (data-driven from amenities)
@@ -116,14 +158,14 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     if (homestay.amenities?.['Mountain View']) {
         experienceCards.push({
             title: 'Sunrise balcony view',
-            subtitle: 'Wake up to ridgelines and golden-hour light, right from your room.',
+            subtitle: 'Wake up to ridgelines and changing light across the hills.',
             icon: <Sunrise className="w-5 h-5 text-amber-600" />
         });
     }
     if (homestay.amenities?.['Bonfire (Extra)']) {
         experienceCards.push({
             title: 'Bonfire evenings',
-            subtitle: 'Slow nights, warm conversations, and mountain air under the stars.',
+            subtitle: 'Warm up after dusk with mountain air, stories, and slow evenings.',
             icon: <Flame className="w-5 h-5 text-rose-600" />
         });
     }
@@ -144,7 +186,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     if (experienceCards.length === 0) {
         experienceCards.push({
             title: 'Nature retreat',
-            subtitle: 'A quiet base for slow mornings, forest walks, and fresh air.',
+            subtitle: 'A quiet base for slow mornings, fresh air, and restorative time outdoors.',
             icon: <Mountain className="w-5 h-5 text-emerald-800" />
         });
     }
@@ -153,9 +195,9 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     const ownerNameDisplay = homestay.host?.name || 'Host';
 
     return (
-        <div className="min-h-screen bg-background pb-28 md:pb-10">
+        <div className="min-h-screen bg-stone-50 pb-28 md:pb-10">
             {/* ═══════ GALLERY ═══════ */}
-            <div className="md:container md:mx-auto md:px-4 md:pt-6">
+            <div className={`${pageShell} pt-4 md:pt-6`}>
                 <BentoGallery
                     mediaUrls={galleryMediaUrls}
                     name={homestayName}
@@ -169,10 +211,9 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
             <SectionNav />
 
             {/* ═══════ DETAILS W/ SIDEBAR ═══════ */}
-            <div className="container mx-auto px-4 md:px-6 mt-6 md:mt-10 flex flex-col md:flex-row gap-12 lg:gap-20 max-w-[1280px]">
+            <div className={`${pageShell} mt-6 md:mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]`}>
 
-                {/* Main Content Column */}
-                <div className="flex-1 max-w-[700px]">
+                <div className="min-w-0">
                     {/* ── Header ── */}
                     <div id="overview" className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1 min-w-0">
@@ -182,6 +223,23 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                             {homestay.editorialLead && (
                                 <p className="text-xl text-gray-700 font-medium italic mt-3 mb-4 leading-relaxed tracking-wide">
                                     {homestay.editorialLead}
+                                </p>
+                            )}
+                            {visibleTags.length > 0 && (
+                                <div className="mb-4 flex flex-wrap gap-2">
+                                    {visibleTags.map((tag) => (
+                                        <span
+                                            key={tag}
+                                            className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm font-semibold text-gray-700"
+                                        >
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            {shortDescription && (
+                                <p className="mb-4 max-w-3xl text-base leading-7 text-gray-600">
+                                    {shortDescription}
                                 </p>
                             )}
                             <div className="flex items-center gap-3 mt-2 text-gray-600 text-sm font-medium flex-wrap">
@@ -241,24 +299,29 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {/* ── Property Tour ── */}
                     {videos.length > 0 && (
-                        <section id="videos" className="py-10 border-b border-gray-200">
-                            <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">Property tour</h2>
-                            <div className="flex gap-4 overflow-x-auto pb-2">
+                        <section id="videos" className={sectionShell}>
+                            <div className="flex items-center gap-3 mb-5">
+                                <PlayCircle className="h-6 w-6 text-primary" />
+                                <h2 className={sectionTitle}>Watch Property Tour</h2>
+                            </div>
+                            <div className="space-y-6">
                                 {videos.map((video, index) => (
-                                    <div key={`${video.url}-${index}`} className="min-w-[320px] md:min-w-[420px]">
-                                        <div className="overflow-hidden rounded-3xl border border-gray-200 bg-black shadow-sm">
+                                    <div key={`${video.url}-${index}`} className="overflow-hidden rounded-[24px] border border-stone-200 bg-stone-950">
+                                        <div className="aspect-video w-full">
                                             <iframe
                                                 src={video.embedUrl || undefined}
                                                 title={video.title || `Homestay video ${index + 1}`}
-                                                className="h-[220px] w-full md:h-[260px]"
+                                                className="h-full w-full"
                                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                                 allowFullScreen
                                             />
                                         </div>
-                                        <div className="mt-3 px-1">
-                                            <p className="text-sm font-bold text-gray-900">{video.title || 'Property tour'}</p>
-                                            {video.type && <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 mt-1">{video.type}</p>}
-                                        </div>
+                                        {(video.title || video.type) && (
+                                            <div className="border-t border-white/10 bg-stone-950/95 px-5 py-4 text-white">
+                                                <p className="text-base font-semibold">{video.title || 'Property tour'}</p>
+                                                {video.type && <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/60">{video.type}</p>}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -266,73 +329,96 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     )}
 
                     {/* ── Highlights ── */}
-                    <Highlights items={highlightsItems} />
+                    <section className={sectionShell}>
+                        <h2 className={sectionTitle}>Why guests notice this stay</h2>
+                        <div className="mt-6">
+                            <Highlights items={highlightsItems} />
+                        </div>
+                    </section>
 
                     {/* ── Experience Highlights ── */}
-                    <section id="experience" className="py-10 border-b border-gray-200">
-                        <h3 className="text-xl font-bold text-gray-900 mb-5 tracking-tight">Experience Highlights</h3>
+                    <section id="experience" className={sectionShell}>
+                        <h3 className={sectionTitle}>Experience Highlights</h3>
                         {spaces.length > 0 ? (
-                            <div className="space-y-6">
+                            <div className="mt-6 grid gap-4 md:grid-cols-2">
                                 {spaces.map((space, index) => (
-                                    <div key={`${space.type}-${space.name || index}`} className="rounded-3xl border border-gray-200 bg-white p-5 shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
-                                        <div className="flex items-start justify-between gap-4 mb-4">
-                                            <div>
-                                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">{space.type}</p>
-                                                <h4 className="text-lg font-bold text-gray-900 mt-1">{space.name || 'Space details'}</h4>
-                                                {space.description && <p className="text-sm text-gray-600 mt-2 max-w-2xl">{space.description}</p>}
-                                            </div>
-                                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
-                                                {(space.media?.length ?? 0)} photo{(space.media?.length ?? 0) === 1 ? '' : 's'}
-                                            </span>
-                                        </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                            {(space.media ?? []).map((media, mediaIndex) => (
-                                                <div key={media.fileId || `${space.name}-${mediaIndex}`} className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
-                                                    <img src={media.url} alt={media.caption || space.name || 'Homestay space'} className="h-40 w-full object-cover" loading="lazy" decoding="async" />
-                                                    {media.caption && <p className="px-3 py-2 text-xs font-medium text-gray-600">{media.caption}</p>}
+                                    <details key={`${space.type}-${space.name || index}`} className="group overflow-hidden rounded-[24px] border border-stone-200 bg-stone-950 shadow-[0_14px_32px_rgba(15,23,42,0.16)]">
+                                        <summary className="list-none cursor-pointer">
+                                            <div className="relative aspect-[4/3]">
+                                                {space.media?.[0]?.url ? (
+                                                    <HideOnErrorImage
+                                                        src={space.media[0].url}
+                                                        alt={space.name || 'Homestay space'}
+                                                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                    />
+                                                ) : (
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-700 via-stone-900 to-stone-950" />
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                                <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                                                    {space.type && <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">{space.type}</p>}
+                                                    <h4 className="mt-2 text-xl font-bold tracking-tight">{space.name || 'Space details'}</h4>
+                                                    {space.description && <p className="mt-2 text-sm leading-6 text-white/80">{truncateText(space.description, 110)}</p>}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                            </div>
+                                        </summary>
+                                        {(space.media?.length ?? 0) > 1 && (
+                                            <div className="grid grid-cols-2 gap-3 bg-white p-5">
+                                                {(space.media ?? []).slice(1).map((media, mediaIndex) => {
+                                                    if (!media.url) {
+                                                        return null;
+                                                    }
+
+                                                    return (
+                                                        <div key={media.fileId || `${space.name}-${mediaIndex}`} className="overflow-hidden rounded-2xl border border-stone-200 bg-stone-50">
+                                                            <HideOnErrorImage
+                                                                src={media.url}
+                                                                alt={media.caption || space.name || 'Homestay space'}
+                                                                className="aspect-[4/3] h-full w-full object-cover"
+                                                                loading="lazy"
+                                                                decoding="async"
+                                                            />
+                                                            {media.caption && <p className="px-3 py-2 text-xs font-medium text-gray-600">{media.caption}</p>}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </details>
                                 ))}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {experienceCards.slice(0, 4).map((card) => (
-                                    <div
+                                    <details
                                         key={card.title}
-                                        className="rounded-2xl border border-gray-200 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_26px_rgba(0,0,0,0.08)] transition-shadow p-5"
+                                        className="group overflow-hidden rounded-[24px] border border-stone-200 bg-white shadow-sm transition-shadow hover:shadow-[0_14px_30px_rgba(15,23,42,0.10)]"
                                     >
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-none">
-                                                {card.icon}
+                                        <summary className="list-none cursor-pointer">
+                                            <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-stone-950 via-stone-800 to-emerald-900 p-5 text-white">
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+                                                <div className="relative flex items-start gap-3">
+                                                    <div className="rounded-2xl bg-white/10 p-3 backdrop-blur">
+                                                        {card.icon}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-base font-bold tracking-tight">{card.title}</p>
+                                                        <p className="mt-2 text-sm leading-6 text-white/80">{truncateText(card.subtitle, 110)}</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="min-w-0">
-                                                <p className="text-base font-bold text-gray-900 tracking-tight">{card.title}</p>
-                                                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{card.subtitle}</p>
-                                            </div>
+                                        </summary>
+                                        <div className="border-t border-stone-100 p-5 text-sm leading-7 text-gray-600">
+                                            {card.subtitle}
                                         </div>
-                                    </div>
+                                    </details>
                                 ))}
                             </div>
                         )}
                     </section>
 
-                    {/* ── Visual Rhythm: Image Break ── */}
-                    {homestay.media && homestay.media.length > 1 && (
-                        <section className="py-6 border-b border-gray-200">
-                            <div className="rounded-2xl overflow-hidden h-[200px] md:h-[280px] relative">
-                                <img
-                                    src={homestay.media[1]?.url}
-                                    alt={`${homestayName} — atmosphere`}
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                    decoding="async"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                            </div>
-                        </section>
-                    )}
 
                     {/* ── Quick Facts ── */}
                     {homestay.quickFacts && Object.keys(homestay.quickFacts).length > 0 && (
@@ -349,21 +435,6 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                         <PoliciesSection policies={homestay.policies} />
                     )}
 
-                    {/* ── Visual Rhythm: Secondary Image Break ── */}
-                    {homestay.media && homestay.media.length > 2 && (
-                        <section className="py-8 border-b border-gray-200">
-                            <div className="rounded-2xl overflow-hidden h-[200px] md:h-[260px] relative shadow-sm">
-                                <img
-                                    src={homestay.media[2]?.url}
-                                    alt={`${homestayName} — details`}
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                    decoding="async"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-                            </div>
-                        </section>
-                    )}
 
                     {/* ── Meals & Dining ── */}
                     {homestay.mealConfig && (
