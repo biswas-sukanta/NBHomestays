@@ -1,4 +1,4 @@
-import { User, Shield, GraduationCap, Briefcase, Globe, Star, Award } from 'lucide-react';
+import { User, GraduationCap, Briefcase, Globe, Star, Award } from 'lucide-react';
 import Link from 'next/link';
 
 interface HostProfileProps {
@@ -18,97 +18,90 @@ export function HostProfile({ ownerId, ownerName = 'Host', hostDetails }: HostPr
         work,
         languages,
         currentLocation,
-        bio
+        bio,
     } = hostDetails;
 
     const isSuperhost = rating >= 4.5;
 
     return (
-        <section id="host" className="py-10 border-b border-gray-200">
-            <h2 className="text-[22px] font-bold mb-8 text-gray-900">Meet your host</h2>
+        <section id="host" className="mt-10">
+            <h2 className="text-[22px] font-bold mb-6 text-gray-900">Meet your host</h2>
 
-            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-8 max-w-2xl flex flex-col items-center relative overflow-hidden mx-auto md:mx-0">
-                {/* Decorative watermark */}
-                <div className="absolute -top-4 -right-4 p-4 opacity-[0.03]">
-                    <Shield className="w-48 h-48" />
-                </div>
-
-                {/* Avatar with gradient ring */}
-                <div className="relative mb-4">
-                    <div className="w-[104px] h-[104px] rounded-full p-[3px] bg-gradient-to-tr from-emerald-500 via-primary to-blue-500 shadow-lg">
-                        <div className="w-full h-full rounded-full bg-gradient-to-tr from-gray-800 to-gray-600 flex items-center justify-center text-white text-4xl font-bold">
+            <div className="flex flex-col gap-6 md:flex-row md:items-start">
+                <div className="relative w-fit">
+                    <div className="h-24 w-24 rounded-full bg-gradient-to-tr from-emerald-500 via-primary to-blue-500 p-[3px] shadow-lg">
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-tr from-gray-800 to-gray-600 text-4xl font-bold text-white">
                             {ownerName ? ownerName.charAt(0).toUpperCase() : <User />}
                         </div>
                     </div>
-                    {/* Superhost badge */}
                     {isSuperhost && (
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-primary text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md whitespace-nowrap">
-                            <Award className="w-3 h-3" />
+                        <div className="absolute -bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
+                            <Award className="h-3 w-3" />
                             Superhost
                         </div>
                     )}
                 </div>
 
-                <h3 className="text-2xl font-bold text-gray-900 z-10 tracking-tight mt-2">{ownerName}</h3>
-                {currentLocation && <p className="text-sm text-gray-500 mb-6 font-medium z-10">{currentLocation}</p>}
+                <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <h3 className="text-2xl font-bold tracking-tight text-gray-900">{ownerName}</h3>
+                            {currentLocation && <p className="mt-1 text-sm font-medium text-gray-500">{currentLocation}</p>}
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div className="text-2xl font-extrabold text-gray-900">{reviewsCount}</div>
+                                <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 sm:text-xs">Reviews</div>
+                            </div>
+                            <div>
+                                <div className="flex items-center justify-center gap-1 text-2xl font-extrabold text-gray-900">
+                                    {rating} <Star className="h-5 w-5 -mt-1 fill-gray-900 text-gray-900" />
+                                </div>
+                                <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 sm:text-xs">Rating</div>
+                            </div>
+                            <div>
+                                <div className="text-2xl font-extrabold text-gray-900">{yearsHosting}</div>
+                                <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 sm:text-xs">Years hosting</div>
+                            </div>
+                        </div>
+                    </div>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-3 gap-0 w-full border-y border-gray-100 py-6 mb-6 z-10 text-center">
-                    <div className="flex flex-col items-center justify-center">
-                        <span className="text-2xl font-extrabold text-gray-900">{reviewsCount}</span>
-                        <span className="text-[10px] sm:text-xs text-gray-500 font-bold tracking-wider uppercase mt-1">Reviews</span>
+                    {bio && (
+                        <div className="mt-6 border-l-[3px] border-primary/30 pl-4">
+                            <p className="text-base font-medium italic leading-relaxed text-gray-700">"{bio}"</p>
+                        </div>
+                    )}
+
+                    <div className="mt-6 flex flex-col gap-4 text-sm text-gray-700 md:text-base">
+                        {school && (
+                            <div className="flex items-start gap-4">
+                                <GraduationCap className="h-6 w-6 shrink-0 text-gray-400" />
+                                <span><strong className="font-semibold text-gray-900">Where I went to school: </strong>{school}</span>
+                            </div>
+                        )}
+                        {work && (
+                            <div className="flex items-start gap-4">
+                                <Briefcase className="h-6 w-6 shrink-0 text-gray-400" />
+                                <span><strong className="font-semibold text-gray-900">My work: </strong>{work}</span>
+                            </div>
+                        )}
+                        {languages && languages.length > 0 && (
+                            <div className="flex items-start gap-4">
+                                <Globe className="h-6 w-6 shrink-0 text-gray-400" />
+                                <span><strong className="font-semibold text-gray-900">Speaks: </strong>{Array.isArray(languages) ? languages.join(', ') : languages}</span>
+                            </div>
+                        )}
                     </div>
-                    <div className="flex flex-col items-center justify-center border-x border-gray-100 px-2 lg:px-4">
-                        <span className="text-2xl font-extrabold flex items-center gap-1 text-gray-900">
-                            {rating} <Star className="w-5 h-5 fill-gray-900 text-gray-900 -mt-1" />
-                        </span>
-                        <span className="text-[10px] sm:text-xs text-gray-500 font-bold tracking-wider uppercase mt-1">Rating</span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center">
-                        <span className="text-2xl font-extrabold text-gray-900">{yearsHosting}</span>
-                        <span className="text-[10px] sm:text-xs text-gray-500 font-bold tracking-wider uppercase mt-1">Years hosting</span>
-                    </div>
+
+                    {ownerId && (
+                        <Link
+                            href={`/profile/${ownerId}`}
+                            className="mt-6 inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline"
+                        >
+                            View full profile →
+                        </Link>
+                    )}
                 </div>
-
-                {/* Bio quote */}
-                {bio && (
-                    <div className="w-full text-left mb-8 z-10 relative pl-4 border-l-[3px] border-primary/30">
-                        <p className="text-gray-700 leading-relaxed text-base italic font-medium">"{bio}"</p>
-                    </div>
-                )}
-
-                {/* Personal Details */}
-                <div className="w-full flex flex-col gap-4 text-sm md:text-base text-gray-700 z-10">
-                    {school && (
-                        <div className="flex items-start gap-4">
-                            <GraduationCap className="w-6 h-6 text-gray-400 shrink-0" />
-                            <span><strong className="font-semibold text-gray-900">Where I went to school: </strong>{school}</span>
-                        </div>
-                    )}
-                    {work && (
-                        <div className="flex items-start gap-4">
-                            <Briefcase className="w-6 h-6 text-gray-400 shrink-0" />
-                            <span><strong className="font-semibold text-gray-900">My work: </strong>{work}</span>
-                        </div>
-                    )}
-                    {(languages && languages.length > 0) && (
-                        <div className="flex items-start gap-4">
-                            <Globe className="w-6 h-6 text-gray-400 shrink-0" />
-                            <span><strong className="font-semibold text-gray-900">Speaks: </strong>
-                                {Array.isArray(languages) ? languages.join(', ') : languages}
-                            </span>
-                        </div>
-                    )}
-                </div>
-
-                {ownerId && (
-                    <Link
-                        href={`/profile/${ownerId}`}
-                        className="mt-8 text-sm font-bold text-primary hover:underline flex items-center gap-1 z-10"
-                    >
-                        View full profile →
-                    </Link>
-                )}
             </div>
         </section>
     );
