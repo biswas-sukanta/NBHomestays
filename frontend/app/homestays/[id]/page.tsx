@@ -112,7 +112,6 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
         )
     );
     const descriptionText = homestay.description?.trim() || homestay.editorialLead?.trim() || '';
-    const shortDescription = truncateText(descriptionText, 120);
     const pricePerNight = typeof homestay.pricePerNight === 'number' ? homestay.pricePerNight : null;
     const formattedPricePerNight = pricePerNight == null ? null : pricePerNight.toLocaleString();
     const visibleTags = (homestay.tags ?? [])
@@ -201,31 +200,6 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                 <div className="min-w-0">
                     {/* ── Header ── */}
-                    <section id="overview" className="rounded-[28px] bg-white px-6 py-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] md:px-8 md:py-7">
-                        <div className="max-w-3xl">
-                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-                                <MapPin className="h-4 w-4 text-primary" />
-                                <span>{locationName}</span>
-                            </div>
-                            {shortDescription && (
-                                <p className="mt-4 text-base leading-7 text-stone-600 md:text-lg md:leading-8">
-                                    {shortDescription}
-                                </p>
-                            )}
-                            {trustSignals.length > 0 && (
-                                <div className="mt-5 flex flex-wrap gap-2">
-                                    {trustSignals.map((signal) => (
-                                        <span
-                                            key={signal}
-                                            className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-stone-700"
-                                        >
-                                            {getTrustSignalLabel(signal)}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </section>
 
                     {/* ── Stay Story (Editorial) ── */}
                     {descriptionText ? (
