@@ -39,6 +39,8 @@ public class InfrastructureHealthCheck implements CommandLineRunner {
         Map<String, Object> redis = detailsService.checkRedis();
         if ("UP".equals(redis.get("status"))) {
             log.info("Redis integration: UP - {}", redis.get("message"));
+        } else if ("DISABLED".equals(redis.get("status"))) {
+            log.info("Redis integration: DISABLED - {}", redis.get("message"));
         } else {
             log.error("Redis integration: DOWN - {}", redis.get("error"));
         }

@@ -116,7 +116,7 @@ public class RedisConfig {
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory factory) {
         if (!cacheEnabled) {
-            log.warn("🛑 Redis caching is DISABLED (app.cache.redis.enabled=false). Routing @Cacheable to Caffeine.");
+            log.info("Redis caching is disabled (app.cache.redis.enabled=false). Routing @Cacheable to Caffeine.");
 
             CaffeineCacheManager caffeineManager = new CaffeineCacheManager(
                     "states",

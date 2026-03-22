@@ -37,16 +37,18 @@ const nextConfig: NextConfig = {
   },
 };
 
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+
 // Sentry configuration options
 const sentryOptions = {
   org: "nbh-jm",
   project: "javascript-nextjs",
 
   // An auth token is required for uploading source maps.
-  authToken: process.env.SENTRY_AUTH_TOKEN,
+  authToken: sentryAuthToken,
 
-  // Only print logs for uploading source maps in build
-  silent: false,
+  // Keep builds quiet when release upload is not configured.
+  silent: true,
 
   // Forwards certain Sentry config to the client-side
   widenClientFileUpload: true,
@@ -60,13 +62,6 @@ const sentryOptions = {
   // Hides source maps from the client-side build
   hideSourceMaps: true,
 
-  // Tree-shakes Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors.
-  // See the following for more information:
-  // https://docs.sentry.io/product/crons/
-  automaticVercelMonitors: true,
 };
 
-export default withSentryConfig(nextConfig, sentryOptions);
+export default sentryAuthToken ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;

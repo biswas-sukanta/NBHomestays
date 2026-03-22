@@ -183,12 +183,6 @@ function ClusteredMarkers({ homestays, hoveredHomestayId, selectedHomestayId, se
         if (process.env.NODE_ENV === 'development' && clusters.length > 0) {
             const clusterCount = clusters.filter((c: any) => c.properties.cluster).length;
             const singleCount = clusters.filter((c: any) => !c.properties.cluster).length;
-            console.log(`[MAP_PERF] Zoom ${zoom} -> ${clusterCount} clusters | ${singleCount} individual markers (Total Nodes: ${clusters.length})`);
-
-            // Performance Warning check
-            if (clusters.length > 100) {
-                console.warn("[MAP_PERF] Excessive map cluster/node density detected. Consider reducing options.radius or adjusting map layout sizes.");
-            }
         }
     }, [clusters, zoom]);
 
@@ -252,15 +246,7 @@ function MapUpdater({ homestays, onMapChange, searchAsIMove, onManualMove }: { h
                 clearTimeout(timeoutRef.current);
             }
 
-            if (process.env.NODE_ENV === 'development') {
-                console.log(`[MAP_PERF] Map Interaction Detected at ${performance.now().toFixed(2)}ms. Debouncing API for 500ms...`);
-            }
-
             timeoutRef.current = setTimeout(() => {
-                if (process.env.NODE_ENV === 'development') {
-                    const cb = map.getBounds();
-                    console.log(`[MAP_PERF] Firing API Payload -> Bounds: [S: ${cb.getSouth().toFixed(2)}, N: ${cb.getNorth().toFixed(2)}, W: ${cb.getWest().toFixed(2)}, E: ${cb.getEast().toFixed(2)}]`);
-                }
                 onMapChange(map.getBounds());
             }, 500);
         } else if (!searchAsIMove && onManualMove) {
@@ -274,12 +260,6 @@ function MapUpdater({ homestays, onMapChange, searchAsIMove, onManualMove }: { h
     });
 
     useEffect(() => {
-        if (process.env.NODE_ENV === 'development') {
-            map.whenReady(() => {
-                console.log(`[MAP_PERF] Leaflet Map Fully Ready at: ${performance.now().toFixed(2)}ms`);
-            });
-        }
-
         return () => {
 
             if (timeoutRef.current) {
@@ -315,12 +295,9 @@ function MapUpdater({ homestays, onMapChange, searchAsIMove, onManualMove }: { h
 //    - Open React DevTools -> Profiler -> Record.
 //    - Hover right-hand homestay cards rapidly.
 //    - Verify: only `<MemoizedHomestayMarker>` boundaries re-render. All array iterations skip.
-//    - Watch console: `[MAP_PERF] Marker Rendered:` increments exactly 2 times per hover swap.
 //
 // 2. Network Drag Limits:
 //    - Drag map continuously.
-//    - Verify: `[MAP_PERF] Map Drag Event Detected` fires frequently.
-//    - Verify: `[MAP_PERF] Firing API Payload` triggers exactly ONCE per drag gap (500ms delay).
 //
 // 3. Leaflet Hydration bounds: tracked via `performance.now()`.
 // ═══════════════════════════════════════════════════════════════════════
@@ -341,11 +318,6 @@ export default function HomestayMapView({ homestays, onMapChange, hoveredHomesta
     useEffect(() => {
         if (process.env.NODE_ENV === 'development') {
             initTime.current = performance.now();
-            console.log(`[MAP_PERF] Map System Initialization Started at ${initTime.current.toFixed(2)}ms`);
-
-            return () => {
-                console.log(`[MAP_PERF] Map System Unmounted`);
-            }
         }
     }, []);
 

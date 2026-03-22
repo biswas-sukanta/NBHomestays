@@ -92,7 +92,11 @@ function TripBoardsTab() {
                         </button>
                         <div className="p-3">
                             <h3 className="font-semibold text-sm text-foreground line-clamp-1">{item.name}</h3>
-                            <p className="text-xs text-muted-foreground mt-0.5">₹{item.pricePerNight.toLocaleString()} / night</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                {typeof item.pricePerNight === 'number'
+                                    ? <>₹{item.pricePerNight.toLocaleString()} / night</>
+                                    : 'Contact host for price'}
+                            </p>
                         </div>
                     </motion.div>
                 ))}

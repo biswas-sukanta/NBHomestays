@@ -51,11 +51,6 @@ const HomestayMarker = ({ h, latitude, longitude, isActive, isSelected = false, 
     // Performance Tracking: Marker Renders
     if (process.env.NODE_ENV === 'development') {
         if (totalRenders) totalRenders.current++;
-        console.log(`[MAP_PERF] Marker Rendered: ${h.name} (Active: ${isActive}) | Total Marker Renders in DOM: ${totalRenders?.current}`);
-
-        if (totalRenders?.current && totalRenders.current > 150) {
-            console.warn("[MAP_PERF] Unexpected marker render volume. Suspected React.memo breakage or cluster leak.");
-        }
     }
 
     return (

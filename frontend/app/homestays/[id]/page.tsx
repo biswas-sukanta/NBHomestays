@@ -47,18 +47,11 @@ function toYouTubeEmbedUrl(rawUrl?: string) {
 export default async function HomestayPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
 
-    const isDev = process.env.NODE_ENV === 'development';
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    const fetchUrl = `${backendUrl}/api/homestays/${id}`;
-
-    console.log("[HOMESTAY PAGE] Fetching URL:", fetchUrl);
-
     let homestay: Homestay;
     try {
         const { apiFetch } = await import('@/lib/api-client');
         const res = await apiFetch(`/homestays/${id}`, { cache: 'no-store' });
         if (!res.ok) {
-            console.error(`[HOMESTAY PAGE] Fetch failed with status: ${res.status}`);
             return notFound();
         }
 
@@ -68,7 +61,6 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
         // Fire-and-forget telemetry: view
         apiFetch(`/homestays/${id}/view`, { method: 'POST' }).catch(() => {});
 
-        console.log("[HOMESTAY PAGE] Fetched homestay:", homestay.id, homestay.name);
         if (!homestay?.id) return notFound();
     } catch {
         return notFound();
@@ -81,6 +73,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     const locationName = homestay.locationName || 'North Bengal';
     const galleryMediaUrls = (homestay.media ?? []).map(media => media.url).filter((url): url is string => Boolean(url));
     const pricePerNight = typeof homestay.pricePerNight === 'number' ? homestay.pricePerNight : null;
+    const formattedPricePerNight = pricePerNight == null ? null : pricePerNight.toLocaleString();
 
     const trustSignals = ((homestay.trustSignals ?? []) as TrustSignal[]).slice(0, 2);
     const spaces = (homestay.spaces ?? []).filter(space => (space.media?.length ?? 0) > 0 || space.name || space.description);
@@ -206,7 +199,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                 <span className="hidden md:inline text-sm font-semibold text-gray-900">
                                     {isPriceUnset
                                         ? 'Contact host for price'
-                                        : <>₹{homestay.pricePerNight.toLocaleString()}<span className="text-gray-500 font-medium"> / night</span></>}
+                                        : <>₹{formattedPricePerNight}<span className="text-gray-500 font-medium"> / night</span></>}
                                 </span>
                             </div>
                         </div>
@@ -225,7 +218,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                         ) : (
                             <>
                                 <span className="text-3xl font-extrabold text-gray-900">
-                                    ₹{homestay.pricePerNight.toLocaleString()}
+                                    ₹{formattedPricePerNight}
                                 </span>
                                 <span className="text-gray-600 font-medium tracking-wide text-sm">/ night</span>
                             </>
@@ -471,7 +464,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                     ) : (
                                         <>
                                             <span className="text-[32px] font-extrabold text-gray-900 leading-tight">
-                                                ₹{homestay.pricePerNight.toLocaleString()}
+                                                ₹{formattedPricePerNight}
                                             </span>
                                             <span className="text-gray-600 font-medium tracking-wide">/ night</span>
                                         </>

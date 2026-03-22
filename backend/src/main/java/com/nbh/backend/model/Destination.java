@@ -41,7 +41,7 @@ public class Destination {
     private String localImageName;
 
     @com.fasterxml.jackson.annotation.JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "state_id", nullable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private State state;

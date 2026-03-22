@@ -10,6 +10,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -74,7 +75,7 @@ public class DestinationService {
                 destination.getLocalImageName(),
                 stateName,
                 stateSlug,
-                destination.getTags()
+                destination.getTags() != null ? new ArrayList<>(destination.getTags()) : List.of()
         );
     }
 
@@ -91,7 +92,7 @@ public class DestinationService {
                 .heroTitle(destination.getHeroTitle())
                 .description(destination.getDescription())
                 .localImageName(destination.getLocalImageName())
-                .tags(destination.getTags());
+                .tags(destination.getTags() != null ? new ArrayList<>(destination.getTags()) : List.of());
 
         // Safely populate state fields if the relationship is loaded
         if (destination.getState() != null) {

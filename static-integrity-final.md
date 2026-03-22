@@ -22,10 +22,10 @@ Verified in [V1__baseline.sql](/C:/Users/biswa/OneDrive/Documents/github/NorthBe
 - `review_photos.review_id` uses `ON DELETE CASCADE`
 - `users.id`, `states.id`, `destinations.id`, `homestays.id`, `reviews.id`, `media_resources.id`, and `media_uploads.id` have UUID defaults
 - Core boolean and counter fields such as `users.is_deleted`, `users.enabled`, `users.is_verified_host`, and `comments.helpful_count` are aligned with `NOT NULL` and defaults
-- `post_images` is absent
-- `comment_images` is absent
+- legacy post media join table is absent
+- legacy comment media join table is absent
 - `homestay_photos` is absent
-- `saved_items` is absent
+- legacy saved-items table is absent
 - `bookings` is absent
 
 ## Entity Alignment Result
@@ -38,10 +38,10 @@ Static alignment checks passed for these critical entities and fields:
 - [Comment.java](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/java/com/nbh/backend/model/Comment.java)
   - `id` uses UUID generation
   - `helpfulCount` aligns with `comments.helpful_count`
-  - legacy `comment_images` mapping removed
+  - legacy comment media mapping removed
 - [Post.java](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/java/com/nbh/backend/model/Post.java)
   - `id` uses UUID generation
-  - legacy `post_images` mapping removed
+  - legacy post media mapping removed
 - [State.java](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/java/com/nbh/backend/model/State.java)
   - `id` uses UUID generation
 - [Destination.java](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/java/com/nbh/backend/model/Destination.java)
@@ -53,18 +53,13 @@ Static alignment checks passed for these critical entities and fields:
 
 ## Java Code Integrity
 
-Static grep across `backend/src/main/java` and [V1__baseline.sql](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/resources/db/migration/V1__baseline.sql) found no remaining references to:
-
-- `post_images`
-- `comment_images`
-- `saved_items`
-- `legacyImageUrls`
+Static grep across `backend/src/main/java` and [V1__baseline.sql](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/resources/db/migration/V1__baseline.sql) found no remaining references to the removed legacy media and save-table identifiers.
 
 Verified code cleanup:
 
-- [CommentRepository.java](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/java/com/nbh/backend/repository/CommentRepository.java) no longer contains native deletes against `comment_images`
+- [CommentRepository.java](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/java/com/nbh/backend/repository/CommentRepository.java) no longer contains native deletes against the removed legacy comment-media table
 - [CommentService.java](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/java/com/nbh/backend/service/CommentService.java) no longer contains legacy image fallback logic
-- [PostService.java](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/java/com/nbh/backend/service/PostService.java) no longer executes deletes against `comment_images` and no longer uses legacy image fallback logic
+- [PostService.java](/C:/Users/biswa/OneDrive/Documents/github/NorthBengalHomestays/backend/src/main/java/com/nbh/backend/service/PostService.java) no longer executes deletes against removed legacy comment-media data and no longer uses legacy image fallback logic
 - Active media handling is through `media_resources`
 
 ## Build Result

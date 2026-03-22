@@ -25,12 +25,12 @@ public class DataSourceProxyConfig {
     private long slowSqlThresholdMs;
 
     @Bean
-    public BeanPostProcessor dataSourceProxyBeanPostProcessor() {
+    public static BeanPostProcessor dataSourceProxyBeanPostProcessor() {
         return new BeanPostProcessor() {
             @Override
             public Object postProcessAfterInitialization(Object bean, String beanName) {
                 if (bean instanceof DataSource && !(bean instanceof ProxyDataSource)) {
-                    QueryExecutionListener listener = new SlowQueryListener(slowSqlThresholdMs);
+                    QueryExecutionListener listener = new SlowQueryListener();
                     return ProxyDataSourceBuilder.create((DataSource) bean)
                             .name("nbh-ds")
                             .methodListener(new ConnectionAcquireListener())
@@ -71,12 +71,6 @@ public class DataSourceProxyConfig {
 
     static final class SlowQueryListener implements QueryExecutionListener {
 
-        private final long thresholdMs;
-
-        SlowQueryListener(long thresholdMs) {
-            this.thresholdMs = thresholdMs;
-        }
-
         @Override
         public void beforeQuery(net.ttddyy.dsproxy.ExecutionInfo execInfo, List<net.ttddyy.dsproxy.QueryInfo> queryInfoList) {
             // no-op
@@ -95,7 +89,7 @@ public class DataSourceProxyConfig {
                 ctx.addDurationNs("database_query_time", execInfo.getElapsedTime());
             }
 
-            if (elapsedMs < thresholdMs) {
+            if (elapsedMs < 50) {
                 return;
             }
 

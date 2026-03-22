@@ -24,7 +24,7 @@ export function LocationMapSection({ latitude, longitude, locationName, nearbyHi
                 <HomestayMapWrapper
                     latitude={latitude}
                     longitude={longitude}
-                    locationName={locationName}
+                    locationName={locationName || 'North Bengal'}
                 />
 
                 {/* Frosted Glass Overlay */}

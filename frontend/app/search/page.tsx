@@ -324,6 +324,10 @@ function SearchResults() {
         ? isAllInitialLoading
         : (mapBounds ? boundsQuery.isFetching : searchQuery.isFetching);
 
+    const formatPrice = (price: unknown) => {
+        return typeof price === 'number' ? price.toLocaleString() : null;
+    };
+
     return (
         <div className="min-h-screen bg-[#FAF9F6] text-slate-900 pb-20">
             {/* STEP 1: Global Brand Green Banner */}
@@ -517,7 +521,9 @@ function SearchResults() {
                                                                         </div>
                                                                         <div className="flex items-end justify-between">
                                                                             <div className="text-gray-900 font-black text-sm">
-                                                                                ₹{h.pricePerNight.toLocaleString()} <span className="text-[10px] font-normal text-gray-500">/ night</span>
+                                                                                {formatPrice(h.pricePerNight) == null
+                                                                                    ? 'Contact host for price'
+                                                                                    : <>₹{formatPrice(h.pricePerNight)} <span className="text-[10px] font-normal text-gray-500">/ night</span></>}
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -588,7 +594,9 @@ function SearchResults() {
                                                             <span className="text-sm font-bold text-white">{(allStays[0].vibeScore || 4.5).toFixed(1)}</span>
                                                         </div>
                                                         <span className="text-white font-bold text-lg md:text-xl">
-                                                            From ₹{allStays[0].pricePerNight.toLocaleString()} <span className="font-normal text-white/70 text-sm">/night</span>
+                                                            {formatPrice(allStays[0].pricePerNight) == null
+                                                                ? 'Contact host for price'
+                                                                : <>From ₹{formatPrice(allStays[0].pricePerNight)} <span className="font-normal text-white/70 text-sm">/night</span></>}
                                                         </span>
                                                     </div>
                                                 </div>

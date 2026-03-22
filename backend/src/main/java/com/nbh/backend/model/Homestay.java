@@ -47,7 +47,7 @@ public class Homestay {
     private String description;
 
     @com.fasterxml.jackson.annotation.JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "owner_id", nullable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private User owner;
@@ -164,7 +164,7 @@ public class Homestay {
     private Map<String, Object> meta = new HashMap<>();
 
     @com.fasterxml.jackson.annotation.JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "destination_id")
     @NotFound(action = NotFoundAction.IGNORE)
     private Destination destination;

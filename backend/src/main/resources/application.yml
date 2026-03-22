@@ -19,8 +19,11 @@ spring:
       idle-timeout: 30000
       validation-timeout: 5000
       initialization-fail-timeout: 0 # Prevent crash if DB is temporarily slow
-      max-lifetime: 1800000
+      keepalive-time: 30000
+      max-lifetime: 120000
   jpa:
+    open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none # Temporary workaround until entity-schema alignment migration is created
     properties:
@@ -28,8 +31,10 @@ spring:
         default_schema: public
         generate_statistics: false
         format_sql: true
+        boot:
+          allow_jdbc_metadata_access: false
   flyway:
-    out-of-order: true
+    out-of-order: false
     baseline-on-migrate: true
     repair-on-migrate: true
     validate-on-migrate: false

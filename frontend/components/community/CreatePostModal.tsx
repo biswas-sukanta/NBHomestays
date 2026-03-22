@@ -327,7 +327,6 @@ export function CreatePostModal({ postData, repostTarget, onSuccess, onCancel }:
             if (uploadedFileIds.length > 0) {
                 try {
                     await postApi.rollbackMedia(uploadedFileIds);
-                    console.log('Rollback: Deleted orphaned media files', uploadedFileIds);
                 } catch (rollbackErr) {
                     console.error('Rollback failed', rollbackErr);
                 }

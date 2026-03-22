@@ -6,7 +6,7 @@ export interface TripBoardItem {
     name: string;
     imageUrl: string;
     locationName: string;
-    pricePerNight: number;
+    pricePerNight?: number;
 }
 
 interface TripBoardStore {
