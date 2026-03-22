@@ -11,10 +11,11 @@ interface BentoGalleryProps {
     name: string;
     locationName?: string;
     editorialLead?: string;
+    tags?: string[];
     className?: string;
 }
 
-export function BentoGallery({ mediaUrls, name, locationName, editorialLead, className }: BentoGalleryProps) {
+export function BentoGallery({ mediaUrls, name, locationName, editorialLead, tags, className }: BentoGalleryProps) {
     const [lightboxIndex, setLightboxIndex] = React.useState<number | null>(null);
     const [hiddenUrls, setHiddenUrls] = React.useState<string[]>([]);
 
@@ -109,14 +110,23 @@ export function BentoGallery({ mediaUrls, name, locationName, editorialLead, cla
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
                             <div className="absolute inset-x-0 bottom-0 p-6 text-left md:p-8">
                                 <h2 className="text-3xl font-extrabold tracking-tight text-white md:text-5xl">{name}</h2>
-                                {editorialLead && (
-                                    <p className="mt-2 max-w-3xl text-sm font-medium italic text-white/85 md:text-base">
-                                        {editorialLead}
-                                    </p>
-                                )}
                                 {locationName && (
                                     <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
                                         {locationName}
+                                    </p>
+                                )}
+                                {tags && tags.length > 0 && (
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {tags.slice(0, 4).map((tag) => (
+                                            <span key={tag} className="rounded-full border border-white/20 bg-black/25 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                                {editorialLead && (
+                                    <p className="mt-4 max-w-3xl text-sm font-medium italic text-white/85 md:text-base">
+                                        {editorialLead}
                                     </p>
                                 )}
                             </div>
@@ -132,8 +142,8 @@ export function BentoGallery({ mediaUrls, name, locationName, editorialLead, cla
                 ) : (
                     <>
                         <div className="hidden md:block">
-                            <div className="space-y-3">
-                                <div className="relative overflow-hidden rounded-[28px] bg-white shadow-[0_20px_45px_rgba(15,23,42,0.12)]">
+                            <div className="relative overflow-hidden rounded-[30px] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
+                                <div className="relative">
                                     <button
                                         type="button"
                                         className="relative block aspect-[16/9] w-full overflow-hidden focus:outline-none"
@@ -147,17 +157,26 @@ export function BentoGallery({ mediaUrls, name, locationName, editorialLead, cla
                                             className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.03]"
                                             onError={handleImageError(validImages[0])}
                                         />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                                         <div className="absolute inset-x-0 bottom-0 p-6 text-left md:p-8">
                                             <h2 className="text-3xl font-extrabold tracking-tight text-white md:text-5xl">{name}</h2>
-                                            {editorialLead && (
-                                                <p className="mt-2 max-w-3xl text-sm font-medium italic text-white/85 md:text-base">
-                                                    {editorialLead}
-                                                </p>
-                                            )}
                                             {locationName && (
                                                 <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
                                                     {locationName}
+                                                </p>
+                                            )}
+                                            {tags && tags.length > 0 && (
+                                                <div className="mt-4 flex max-w-2xl flex-wrap gap-2">
+                                                    {tags.slice(0, 5).map((tag) => (
+                                                        <span key={tag} className="rounded-full border border-white/20 bg-black/25 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {editorialLead && (
+                                                <p className="mt-4 max-w-2xl text-sm font-medium italic text-white/85 md:text-base">
+                                                    {editorialLead}
                                                 </p>
                                             )}
                                         </div>
@@ -172,15 +191,13 @@ export function BentoGallery({ mediaUrls, name, locationName, editorialLead, cla
                                             View all photos
                                         </span>
                                     </button>
-                                </div>
-
-                                {previewImages.length > 1 && (
-                                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                                        {previewImages.slice(1).map((url, index) => (
+                                    {previewImages.length > 1 && (
+                                        <div className="absolute bottom-6 right-6 hidden w-[300px] grid-cols-2 gap-2 lg:grid">
+                                            {previewImages.slice(1, 5).map((url, index) => (
                                             <button
                                                 key={url}
                                                 type="button"
-                                                className="group relative overflow-hidden rounded-[24px] bg-white focus:outline-none"
+                                                className="group relative overflow-hidden rounded-[20px] border border-white/15 bg-black/10 shadow-[0_16px_30px_rgba(0,0,0,0.22)] backdrop-blur focus:outline-none"
                                                 onClick={() => openLightbox(index + 1)}
                                                 aria-label={`View photo ${index + 2} of ${name}`}
                                             >
@@ -192,17 +209,18 @@ export function BentoGallery({ mediaUrls, name, locationName, editorialLead, cla
                                                         className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                                                         onError={handleImageError(url)}
                                                     />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-80" />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-90" />
                                                 </div>
-                                                {index === previewImages.slice(1).length - 1 && validImages.length > previewImages.length && (
-                                                    <div className="absolute inset-x-0 bottom-0 p-4 text-left text-sm font-semibold text-white">
+                                                {index === Math.min(previewImages.length - 2, 3) && validImages.length > previewImages.length && (
+                                                    <div className="absolute inset-x-0 bottom-0 p-3 text-left text-sm font-semibold text-white">
                                                         +{validImages.length - previewImages.length} more photos
                                                     </div>
                                                 )}
                                             </button>
-                                        ))}
-                                    </div>
-                                )}
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
