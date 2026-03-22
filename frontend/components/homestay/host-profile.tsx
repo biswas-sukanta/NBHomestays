@@ -24,8 +24,8 @@ export function HostProfile({ ownerId, ownerName = 'Host', hostDetails }: HostPr
     const isSuperhost = rating >= 4.5;
 
     return (
-        <section id="host" className="mt-10">
-            <h2 className="text-[22px] font-bold mb-6 text-gray-900">Meet your host</h2>
+        <section id="host" className="mt-10 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-6">
+            <h2 className="text-[22px] font-bold mb-6 text-gray-900">👤 Meet your host</h2>
 
             <div className="flex flex-col gap-6 md:flex-row md:items-start">
                 <div className="relative w-fit">

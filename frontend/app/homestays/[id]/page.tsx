@@ -74,8 +74,10 @@ function toSentenceCase(value: string) {
         .join(' ');
 }
 
-function getSpaceImage(space?: HomestaySpace) {
-    return space?.media?.find((media) => isValidHttpUrl(media.url))?.url ?? null;
+function getSpaceImage(space?: any) {
+    if (space?.media?.length > 0) return space.media.find((m: any) => isValidHttpUrl(m.url))?.url ?? null;
+    if (space?.linkedPhotos?.length > 0) return space.linkedPhotos[0] ?? null;
+    return null;
 }
 
 export default async function HomestayPage({ params }: { params: Promise<{ id: string }> }) {
@@ -131,7 +133,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     const hostYearsHosting = typeof homestay.hostDetails?.yearsHosting === 'number' ? homestay.hostDetails.yearsHosting : null;
     const hostReviewsCount = typeof homestay.hostDetails?.reviewsCount === 'number' ? homestay.hostDetails.reviewsCount : null;
     const trustSignals = ((homestay.trustSignals ?? []) as TrustSignal[]).slice(0, 3);
-    const stayOptions = homestay.spaces ?? [];
+    const stayOptions = homestay.spaces ?? (homestay as any).roomTypes ?? [];
     const videos = (homestay.videos ?? [])
         .map(video => ({ ...video, embedUrl: toYouTubeEmbedUrl(video.url) }))
         .filter(video => video.url && video.embedUrl);
@@ -200,8 +202,8 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {/* ── Stay Story (Editorial) ── */}
                     {descriptionText ? (
-                        <section className="mt-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-6">
-                            <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">Stay Story</h2>
+                        <section className={sectionShell}>
+                            <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">📝 Stay Story</h2>
                             <div className="pl-5 py-2 border-l-[4px] border-primary/40 bg-gray-50/50 rounded-r-2xl shadow-sm">
                                 <p className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-line font-medium italic md:text-base md:leading-8">
                                     {homestay.description?.trim() || homestay.editorialLead?.trim()}
@@ -218,7 +220,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {experienceHighlightCards.length > 0 && (
                         <section id="experience" className={sectionShell}>
                             <div className="flex items-end justify-between gap-4">
-                                <h2 className={sectionTitle}>Experience Highlights</h2>
+                                <h2 className={sectionTitle}>✨ Experience Highlights</h2>
                             </div>
                             <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
                                 {experienceHighlightCards.map((item, index) => (
@@ -240,10 +242,10 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {stayOptions.length > 0 && (
                     <section id="room-types" className={sectionShell}>
                         <div className="flex items-end justify-between gap-4">
-                            <h3 className={sectionTitle}>Stay Options</h3>
+                            <h3 className={sectionTitle}>🏡 Stay Options</h3>
                         </div>
                             <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                                {stayOptions.map((space, index) => (
+                                {stayOptions.map((space: any, index: number) => (
                                     <details
                                         key={`${space.type}-${space.name || index}`}
                                         className="group overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
@@ -268,7 +270,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                         </summary>
                                         {(space.media?.length ?? 0) > 1 && (
                                             <div className="grid grid-cols-2 gap-4 bg-white p-5">
-                                                {(space.media ?? []).slice(1).map((media, mediaIndex) => {
+                                                {(space.media ?? []).slice(1).map((media: any, mediaIndex: number) => {
                                                     if (!media.url) {
                                                         return null;
                                                     }
@@ -310,7 +312,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {uniquePoints.length > 0 && (
                         <section className={sectionShell}>
                             <div className="flex items-end justify-between gap-4">
-                                <h2 className={sectionTitle}>What Makes This Place Unique</h2>
+                                <h2 className={sectionTitle}>🌟 What Makes This Place Unique</h2>
                             </div>
                             <div className="mt-4 grid gap-4 md:grid-cols-2">
                                 {uniquePoints.slice(0, 5).map((point) => {
@@ -331,8 +333,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {videos.length > 0 && (
                         <section id="videos" className={sectionShell}>
                             <div className="flex items-center gap-3">
-                                <PlayCircle className="h-6 w-6 text-primary" />
-                                <h2 className={sectionTitle}>Watch Property Tour</h2>
+                                <h2 className={sectionTitle}>🎥 Watch Property Tour</h2>
                             </div>
                             <div className="mt-4 space-y-4">
                                 {videos.map((video, index) => (
@@ -379,7 +380,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {attractions.length > 0 && (
                         <section id="attractions" className={sectionShell}>
-                            <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">Nearby places</h2>
+                            <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">📍 Nearby places</h2>
                             <div className="mt-4 space-y-4">
                                 {mustVisit.length > 0 && (
                                     <div className="space-y-3">
@@ -423,6 +424,14 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     )}
 
                     {/* ── Social Proof / Reviews Placeholder ── */}
+                    <section id="reviews" className={sectionShell}>
+                        <h2 className={sectionTitle}>⭐ Guest Reviews</h2>
+                        <div className="mt-4 p-8 text-center rounded-xl bg-stone-50 border border-dashed border-gray-200">
+                            <Star className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+                            <p className="text-sm font-semibold text-gray-900">No reviews yet</p>
+                            <p className="text-xs text-gray-500 mt-1">Be the first to review this stay after your trip.</p>
+                        </div>
+                    </section>
 
                     {/* ── Desktop QA Section ── */}
                     {homestay.quickFacts && Object.keys(homestay.quickFacts).length > 0 && (

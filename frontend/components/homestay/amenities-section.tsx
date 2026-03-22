@@ -165,8 +165,8 @@ export function AmenitiesSection({ providedAmenities }: AmenitiesSectionProps) {
     ) : null;
 
     return (
-        <section id="amenities" className="py-10 border-b border-gray-200">
-            <h2 className="text-[22px] font-bold mb-6 text-gray-900">Amenities</h2>
+        <section id="amenities">
+            <h2 className="text-[22px] font-bold mb-6 text-gray-900">🧰 Amenities</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 mb-6">
                 {previewList.map(item => (

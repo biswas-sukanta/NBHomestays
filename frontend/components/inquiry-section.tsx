@@ -14,7 +14,7 @@ export function InquirySection({ homestayId, homestayName, phoneNumber }: Inquir
     const waNumber = phoneNumber ?? '919046044606';
 
     return (
-        <div className="border-t pt-8 space-y-4">
+        <div className="space-y-4">
             <div className="p-6 bg-green-50 rounded-2xl border border-green-100">
                 <h3 className="text-xl font-bold text-green-900 mb-2">Love this vibe?</h3>
                 <p className="text-green-800 mb-6">Connect directly with the host to check availability and plan your trip.</p>

@@ -52,12 +52,9 @@ export function MealsSection({ mealConfig }: MealsSectionProps) {
     const isIncluded = !mealConfig.mealPricePerGuest;
 
     return (
-        <section id="meals" className="py-10 border-b border-gray-200" data-testid="meals-section">
+        <section id="meals" data-testid="meals-section">
             <h2 className="text-[22px] font-bold text-gray-900 mb-6 flex items-center gap-2.5">
-                <span className="p-2 bg-emerald-50 rounded-xl">
-                    <UtensilsCrossed className="w-5 h-5 text-emerald-700" />
-                </span>
-                Meals & Dining
+                🍽️ Meals & Dining
             </h2>
 
             <div className="space-y-5">

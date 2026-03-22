@@ -95,12 +95,12 @@ export function HomestayQASection({ homestayId }: { homestayId: string }) {
     const isOwner = (firstName?: string) => user?.firstName === firstName || user?.role === 'ROLE_ADMIN';
 
     return (
-        <section className="mt-8 border-b border-gray-200 w-full mb-8 pt-6 md:pt-0">
-            <div className="bg-gray-50/80 p-5 md:p-8 rounded-3xl w-full">
+        <section className="w-full">
+            <div className="w-full">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
-                        <h2 className="text-2xl font-extrabold text-gray-900 flex items-center gap-2 tracking-tight">
-                            Community Q&A
+                        <h2 className="text-[22px] font-bold text-gray-900 flex items-center gap-2 tracking-tight">
+                            💬 Community Q&A
                         </h2>
                         <p className="text-sm text-gray-500 font-medium mt-1">Ask the host or past guests about this stay.</p>
                     </div>

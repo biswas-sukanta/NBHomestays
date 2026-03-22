@@ -8,8 +8,8 @@ export function QuickFacts({ facts }: QuickFactsProps) {
     if (!facts || Object.keys(facts).length === 0) return null;
 
     return (
-        <div className="py-8 border-b border-gray-200">
-            <h2 className="text-xl font-bold mb-5 text-gray-900">Know Before You Go</h2>
+        <div>
+            <h2 className="text-[22px] font-bold mb-5 text-gray-900">⚠️ Know Before You Go</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {Object.entries(facts).map(([key, value]) => (
                     <div

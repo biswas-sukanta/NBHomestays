@@ -19,8 +19,8 @@ export function PoliciesSection({ policies }: PoliciesSectionProps) {
     const visiblePolicies = isExpanded ? policies : policies.slice(0, limit);
 
     return (
-        <div className="py-8 border-b border-gray-200">
-            <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-900">House rules & Policies</h2>
+        <div>
+            <h2 className="text-[22px] font-bold mb-6 text-gray-900">📜 House rules & Policies</h2>
             <div className="flex flex-col text-gray-700">
                 <AnimatePresence initial={false}>
                     {visiblePolicies.map((policy, index) => (
