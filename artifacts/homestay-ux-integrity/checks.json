@@ -1,0 +1,20 @@
+{
+  "hasHero": 1,
+  "hasStayStory": 1,
+  "hasPropertyTour": 1,
+  "hasExperienceHighlights": 1,
+  "hasUniqueSection": 1,
+  "hasRoomTypes": 1,
+  "hasQuickFacts": 1,
+  "hasAmenities": 1,
+  "hasPolicies": 1,
+  "hasMeals": 1,
+  "hasHost": 1,
+  "hasMap": 1,
+  "roomTypeCards": 2,
+  "experienceCards": 4,
+  "uniqueCards": 5,
+  "shortSummaryLength": 123,
+  "stayStoryLength": 246,
+  "duplicateDescription": false
+}

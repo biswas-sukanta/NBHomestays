@@ -118,7 +118,7 @@ export function AmenitiesSection({ providedAmenities }: AmenitiesSectionProps) {
                         >
                             <X className="w-5 h-5 text-gray-700" />
                         </button>
-                        <h3 className="text-xl font-bold">What this place offers</h3>
+                        <h3 className="text-xl font-bold">Amenities</h3>
                     </div>
 
                     <div className="p-4 sm:p-6 sm:px-8 overflow-y-auto overscroll-contain flex-1">
@@ -166,7 +166,7 @@ export function AmenitiesSection({ providedAmenities }: AmenitiesSectionProps) {
 
     return (
         <section id="amenities" className="py-10 border-b border-gray-200">
-            <h2 className="text-[22px] font-bold mb-6 text-gray-900">What this place offers</h2>
+            <h2 className="text-[22px] font-bold mb-6 text-gray-900">Amenities</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 mb-6">
                 {previewList.map(item => (

@@ -6,7 +6,7 @@ export const fetchCache = 'force-no-store';
 import { BentoGallery } from '@/components/bento-gallery';
 import { StickyMobileBar } from '@/components/sticky-mobile-bar';
 import { InquirySection } from '@/components/inquiry-section';
-import { MapPin, Star, MessageSquare, PlayCircle } from 'lucide-react';
+import { BadgeCheck, Globe2, MapPin, MessageSquare, PlayCircle, ShieldCheck, Star, UtensilsCrossed, type LucideIcon } from 'lucide-react';
 import { getTrustSignalLabel, type TrustSignal } from '@/lib/trustSignals';
 
 // Architecture Components
@@ -65,6 +65,15 @@ function truncateText(value?: string, maxLength = 120) {
     return `${trimmed.slice(0, maxLength).trimEnd()}...`;
 }
 
+function toSentenceCase(value: string) {
+    return value
+        .toLowerCase()
+        .split(/[\s_-]+/)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+}
+
 export default async function HomestayPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
 
@@ -109,7 +118,11 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     const visibleTags = (homestay.tags ?? [])
         .filter((tag): tag is string => Boolean(tag && tag.trim()))
         .slice(0, 6);
-
+    const hostLanguages = Array.isArray(homestay.hostDetails?.languages)
+        ? homestay.hostDetails.languages.filter((language: unknown): language is string => typeof language === 'string' && language.trim().length > 0)
+        : [];
+    const hostYearsHosting = typeof homestay.hostDetails?.yearsHosting === 'number' ? homestay.hostDetails.yearsHosting : null;
+    const hostReviewsCount = typeof homestay.hostDetails?.reviewsCount === 'number' ? homestay.hostDetails.reviewsCount : null;
     const trustSignals = ((homestay.trustSignals ?? []) as TrustSignal[]).slice(0, 3);
     const spaces = (homestay.spaces ?? [])
         .map((space) => ({
@@ -117,12 +130,41 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
             media: (space.media ?? []).filter((media) => isValidHttpUrl(media.url)),
         }))
         .filter((space) => (space.media?.length ?? 0) > 0 || space.name || space.description);
+    const roomTypeSpaces = spaces.filter((space) => {
+        const normalizedName = space.name?.trim().toLowerCase();
+        return space.type !== 'outdoor' && normalizedName !== 'outdoor';
+    });
     const videos = (homestay.videos ?? [])
         .map(video => ({ ...video, embedUrl: toYouTubeEmbedUrl(video.url) }))
         .filter(video => video.url && video.embedUrl);
     const attractions = (homestay.attractions ?? []).filter(item => item.name);
     const mustVisit = attractions.filter(item => item.highlight);
     const otherAttractions = attractions.filter(item => !item.highlight);
+    const experienceHighlightCards = visibleTags.slice(0, 4).map((tag, index) => ({
+        tag,
+        imageUrl: galleryMediaUrls.length > 0 ? galleryMediaUrls[index % galleryMediaUrls.length] : null,
+        accent: index === 0 && trustSignals[0] ? getTrustSignalLabel(trustSignals[0]) : index === 1 ? `Vibe ${vibeScore.toFixed(1)}` : null,
+    }));
+    const uniquePoints = [
+        vibeScore
+            ? { icon: Star, text: `Vibe score ${vibeScore.toFixed(1)} / 5 sets the overall tone for the stay.` }
+            : null,
+        hostLanguages.length > 0
+            ? { icon: Globe2, text: `Host support is available in ${hostLanguages.slice(0, 3).join(', ')}${hostLanguages.length > 3 ? ` +${hostLanguages.length - 3} more` : ''}.` }
+            : null,
+        hostYearsHosting
+            ? { icon: BadgeCheck, text: `Hosting journey started in ${hostYearsHosting}.` }
+            : null,
+        homestay.mealPlanLabel
+            ? { icon: UtensilsCrossed, text: `${homestay.mealPlanLabel} is available for this stay.` }
+            : null,
+        trustSignals[0]
+            ? { icon: ShieldCheck, text: `Trust signal: ${getTrustSignalLabel(trustSignals[0])}.` }
+            : null,
+        hostReviewsCount && hostReviewsCount > 0
+            ? { icon: MessageSquare, text: `${hostReviewsCount} host profile reviews are already attached to this listing.` }
+            : null,
+    ].filter((item): item is { icon: LucideIcon; text: string } => Boolean(item));
 
     const isPriceUnset = pricePerNight !== null && pricePerNight <= 1;
 
@@ -187,13 +229,20 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {/* ── Stay Story (Editorial) ── */}
                     {descriptionText ? (
-                        <section className="py-10 border-t border-b border-gray-200 mt-6">
+                        <section className="mt-8 rounded-[28px] border border-stone-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] md:p-8">
                             <h2 className="text-[22px] font-bold text-gray-900 mb-5 tracking-tight">Stay Story</h2>
-                            <div className="pl-5 py-2 border-l-[4px] border-primary/40 bg-gray-50/50 rounded-r-2xl shadow-sm">
-                                <p className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-line font-medium italic md:text-base md:leading-8">
-                                    {homestay.description?.trim() || homestay.editorialLead?.trim()}
-                                </p>
-                            </div>
+                            <details className="group" open>
+                                <summary className="list-none cursor-pointer">
+                                    <div className="pl-5 py-2 border-l-[4px] border-primary/40 bg-gray-50/50 rounded-r-2xl shadow-sm">
+                                        <p className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-line font-medium italic md:text-base md:leading-8">
+                                            {homestay.description?.trim() || homestay.editorialLead?.trim()}
+                                        </p>
+                                    </div>
+                                    <span className="mt-4 inline-flex rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-stone-700">
+                                        Full description
+                                    </span>
+                                </summary>
+                            </details>
                         </section>
                     ) : null}
 
@@ -230,20 +279,84 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
 
                     {/* ── Experience Highlights ── */}
-                    <section id="experience" className={sectionShell}>
+                    {experienceHighlightCards.length > 0 && (
+                        <section id="experience" className={sectionShell}>
+                            <div className="flex items-end justify-between gap-4">
+                                <div>
+                                    <h2 className={sectionTitle}>Experience Highlights</h2>
+                                    <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">
+                                        These cards come from the actual listing tags, with photography drawn from the listing gallery.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                {experienceHighlightCards.map((item, index) => (
+                                    <article
+                                        key={`${item.tag}-${index}`}
+                                        className="group relative overflow-hidden rounded-[24px] border border-stone-200 bg-stone-950 shadow-[0_16px_34px_rgba(15,23,42,0.14)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.18)]"
+                                    >
+                                        <div className="relative aspect-[4/5]">
+                                            {item.imageUrl ? (
+                                                <HideOnErrorImage
+                                                    src={item.imageUrl}
+                                                    alt={item.tag}
+                                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                />
+                                            ) : (
+                                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-700 via-stone-900 to-stone-950" />
+                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                            <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                                                {item.accent && <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">{item.accent}</p>}
+                                                <h3 className="mt-2 text-xl font-bold tracking-tight">{item.tag}</h3>
+                                            </div>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {uniquePoints.length > 0 && (
+                        <section className={sectionShell}>
+                            <div className="flex items-end justify-between gap-4">
+                                <div>
+                                    <h2 className={sectionTitle}>What Makes This Place Unique</h2>
+                                    <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">
+                                        These notes are derived from the live listing metadata, host profile, trust signals, and meal setup.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="mt-6 grid gap-3 md:grid-cols-2">
+                                {uniquePoints.slice(0, 5).map((point) => {
+                                    const Icon = point.icon;
+                                    return (
+                                        <div key={point.text} className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
+                                            <div className="rounded-2xl bg-white p-2.5 shadow-sm">
+                                                <Icon className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <p className="text-sm leading-6 text-stone-700 md:text-base">{point.text}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
+
+                    <section id="room-types" className={sectionShell}>
                         <div className="flex items-end justify-between gap-4">
                             <div>
-                                <h3 className={sectionTitle}>{spaces.length > 0 ? 'Room Types' : 'Experience Highlights'}</h3>
+                                <h3 className={sectionTitle}>Room Types</h3>
                                 <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">
-                                    {spaces.length > 0
-                                        ? 'Choose the part of the stay that fits your trip best, with room-by-room visuals and details.'
-                                        : 'A quick look at what shapes the experience here.'}
+                                    Only space records that represent actual stay units are shown here, so outdoor visuals do not get mislabeled as rooms.
                                 </p>
                             </div>
                         </div>
-                        {spaces.length > 0 ? (
+                        {roomTypeSpaces.length > 0 ? (
                             <div className="mt-6 grid gap-5 md:grid-cols-2">
-                                {spaces.map((space, index) => (
+                                {roomTypeSpaces.map((space, index) => (
                                     <details
                                         key={`${space.type}-${space.name || index}`}
                                         className="group overflow-hidden rounded-[26px] border border-stone-200 bg-stone-950 shadow-[0_16px_34px_rgba(15,23,42,0.16)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.2)]"
@@ -263,7 +376,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                                 )}
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                                                 <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                                                    {space.type && <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">{space.type}</p>}
+                                                    {space.type && <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">{toSentenceCase(space.type)}</p>}
                                                     <h4 className="mt-2 text-xl font-bold tracking-tight md:text-2xl">{space.name || 'Space details'}</h4>
                                                     {space.description && <p className="mt-3 text-sm leading-6 text-white/80">{truncateText(space.description, 110)}</p>}
                                                 </div>
@@ -293,7 +406,11 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                     </details>
                                 ))}
                             </div>
-                        ) : null}
+                        ) : (
+                            <div className="mt-6 rounded-[24px] border border-dashed border-stone-300 bg-stone-50 px-5 py-6 text-sm leading-6 text-stone-600">
+                                Room-level media is not available in the current listing payload yet.
+                            </div>
+                        )}
                     </section>
 
 
@@ -497,6 +614,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
         </div>
     );
 }
+
 
 
 
