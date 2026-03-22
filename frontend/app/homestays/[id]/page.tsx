@@ -6,7 +6,7 @@ export const fetchCache = 'force-no-store';
 import { BentoGallery } from '@/components/bento-gallery';
 import { StickyMobileBar } from '@/components/sticky-mobile-bar';
 import { InquirySection } from '@/components/inquiry-section';
-import { BadgeCheck, Globe2, MapPin, MessageSquare, PlayCircle, ShieldCheck, Star, UtensilsCrossed, type LucideIcon } from 'lucide-react';
+import { BadgeCheck, Globe2, MessageSquare, PlayCircle, ShieldCheck, Star, UtensilsCrossed, type LucideIcon } from 'lucide-react';
 import { getTrustSignalLabel, type TrustSignal } from '@/lib/trustSignals';
 
 // Architecture Components
@@ -97,8 +97,10 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
     }
 
     const pageShell = 'mx-auto w-full max-w-[1280px] px-4 md:px-6';
-    const sectionShell = 'mt-8 rounded-[28px] bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] md:p-8';
-    const sectionTitle = 'text-[24px] font-bold tracking-tight text-gray-900';
+    const sectionShell = 'mt-10 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-6';
+    const sectionTitle = 'text-[22px] font-bold tracking-tight text-gray-900';
+    const standardizedCardShell = 'mt-10 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-6';
+    const standardizedCardReset = '[&>section]:border-0 [&>section]:py-0 [&>div]:border-0 [&>div]:py-0';
 
     const vibeScore = homestay.vibeScore || 4.5;
     const homestayId = homestay.id;
@@ -129,19 +131,17 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
             media: (space.media ?? []).filter((media) => isValidHttpUrl(media.url)),
         }))
         .filter((space) => (space.media?.length ?? 0) > 0 || space.name || space.description);
-    const roomTypeSpaces = spaces.filter((space) => {
-        const normalizedName = space.name?.trim().toLowerCase();
-        return space.type !== 'outdoor' && normalizedName !== 'outdoor';
-    });
+    const stayOptions = spaces;
     const videos = (homestay.videos ?? [])
         .map(video => ({ ...video, embedUrl: toYouTubeEmbedUrl(video.url) }))
         .filter(video => video.url && video.embedUrl);
     const attractions = (homestay.attractions ?? []).filter(item => item.name);
     const mustVisit = attractions.filter(item => item.highlight);
     const otherAttractions = attractions.filter(item => !item.highlight);
+    const highlightImagePool = galleryMediaUrls.slice(1, 5);
     const experienceHighlightCards = visibleTags.slice(0, 4).map((tag, index) => ({
         tag,
-        imageUrl: galleryMediaUrls.length > 0 ? galleryMediaUrls[index % galleryMediaUrls.length] : null,
+        imageUrl: highlightImagePool[index] ?? null,
         accent: index === 0 && trustSignals[0] ? getTrustSignalLabel(trustSignals[0]) : index === 1 ? `Vibe ${vibeScore.toFixed(1)}` : null,
     }));
     const uniquePoints = [
@@ -196,7 +196,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
             <SectionNav />
 
             {/* ═══════ DETAILS W/ SIDEBAR ═══════ */}
-            <div className={`${pageShell} mt-6 md:mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_400px]`}>
+            <div className={`${pageShell} mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]`}>
 
                 <div className="min-w-0">
                     {/* ── Header ── */}
@@ -222,7 +222,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {/* ── Property Tour ── */}
                     {videos.length > 0 && (
-                        <section id="videos" className="mt-12 space-y-5">
+                        <section id="videos" className="mt-10 space-y-5">
                             <div className="flex items-center gap-3">
                                 <PlayCircle className="h-6 w-6 text-primary" />
                                 <h2 className={sectionTitle}>Watch Property Tour</h2>
@@ -256,18 +256,13 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {experienceHighlightCards.length > 0 && (
                         <section id="experience" className={sectionShell}>
                             <div className="flex items-end justify-between gap-4">
-                                <div>
-                                    <h2 className={sectionTitle}>Experience Highlights</h2>
-                                    <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">
-                                        These cards come from the actual listing tags, with photography drawn from the listing gallery.
-                                    </p>
-                                </div>
+                                <h2 className={sectionTitle}>Experience Highlights</h2>
                             </div>
-                            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                                 {experienceHighlightCards.map((item, index) => (
                                     <article
                                         key={`${item.tag}-${index}`}
-                                        className="group relative overflow-hidden rounded-[24px] border border-stone-200 bg-stone-950 shadow-[0_16px_34px_rgba(15,23,42,0.14)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.18)]"
+                                        className="group relative overflow-hidden rounded-xl border border-gray-100 bg-stone-950 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
                                     >
                                         <div className="relative aspect-[4/5]">
                                             {item.imageUrl ? (
@@ -281,8 +276,8 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                             ) : (
                                                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-700 via-stone-900 to-stone-950" />
                                             )}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                                            <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                            <div className="absolute inset-x-0 bottom-0 p-3 text-white">
                                                 {item.accent && <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">{item.accent}</p>}
                                                 <h3 className="mt-2 text-xl font-bold tracking-tight">{item.tag}</h3>
                                             </div>
@@ -296,18 +291,13 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                     {uniquePoints.length > 0 && (
                         <section className={sectionShell}>
                             <div className="flex items-end justify-between gap-4">
-                                <div>
-                                    <h2 className={sectionTitle}>What Makes This Place Unique</h2>
-                                    <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">
-                                        These notes are derived from the live listing metadata, host profile, trust signals, and meal setup.
-                                    </p>
-                                </div>
+                                <h2 className={sectionTitle}>What Makes This Place Unique</h2>
                             </div>
-                            <div className="mt-6 grid gap-3 md:grid-cols-2">
+                            <div className="mt-4 grid gap-4 md:grid-cols-2">
                                 {uniquePoints.slice(0, 5).map((point) => {
                                     const Icon = point.icon;
                                     return (
-                                        <div key={point.text} className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
+                                        <div key={point.text} className="flex items-start gap-4 rounded-xl border border-gray-100 bg-stone-50 px-4 py-4">
                                             <div className="rounded-2xl bg-white p-2.5 shadow-sm">
                                                 <Icon className="h-5 w-5 text-primary" />
                                             </div>
@@ -321,19 +311,14 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     <section id="room-types" className={sectionShell}>
                         <div className="flex items-end justify-between gap-4">
-                            <div>
-                                <h3 className={sectionTitle}>Room Types</h3>
-                                <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">
-                                    Only space records that represent actual stay units are shown here, so outdoor visuals do not get mislabeled as rooms.
-                                </p>
-                            </div>
+                            <h3 className={sectionTitle}>Stay Options</h3>
                         </div>
-                        {roomTypeSpaces.length > 0 ? (
-                            <div className="mt-6 grid gap-5 md:grid-cols-2">
-                                {roomTypeSpaces.map((space, index) => (
+                        {stayOptions.length > 0 ? (
+                            <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                {stayOptions.map((space, index) => (
                                     <details
                                         key={`${space.type}-${space.name || index}`}
-                                        className="group overflow-hidden rounded-[26px] border border-stone-200 bg-stone-950 shadow-[0_16px_34px_rgba(15,23,42,0.16)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.2)]"
+                                        className="group overflow-hidden rounded-xl border border-gray-100 bg-stone-950 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
                                     >
                                         <summary className="list-none cursor-pointer">
                                             <div className="relative aspect-[4/3]">
@@ -348,8 +333,8 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                                 ) : (
                                                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-700 via-stone-900 to-stone-950" />
                                                 )}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                                                <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                                                <div className="absolute inset-x-0 bottom-0 p-4 text-white">
                                                     {space.type && <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">{toSentenceCase(space.type)}</p>}
                                                     <h4 className="mt-2 text-xl font-bold tracking-tight md:text-2xl">{space.name || 'Space details'}</h4>
                                                     {space.description && <p className="mt-3 text-sm leading-6 text-white/80">{truncateText(space.description, 110)}</p>}
@@ -357,7 +342,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                             </div>
                                         </summary>
                                         {(space.media?.length ?? 0) > 1 && (
-                                            <div className="grid grid-cols-2 gap-3 bg-white p-5">
+                                            <div className="grid grid-cols-2 gap-4 bg-white p-5">
                                                 {(space.media ?? []).slice(1).map((media, mediaIndex) => {
                                                     if (!media.url) {
                                                         return null;
@@ -381,8 +366,8 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                                 ))}
                             </div>
                         ) : (
-                            <div className="mt-6 rounded-[24px] border border-dashed border-stone-300 bg-stone-50 px-5 py-6 text-sm leading-6 text-stone-600">
-                                Room-level media is not available in the current listing payload yet.
+                            <div className="mt-4 rounded-xl border border-dashed border-stone-300 bg-stone-50 px-5 py-6 text-sm leading-6 text-stone-600">
+                                Stay option media is not available in the current listing payload yet.
                             </div>
                         )}
                     </section>
@@ -395,12 +380,16 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
 
                     {/* ── Amenities ── */}
                     {homestay.amenities && Object.keys(homestay.amenities).length > 0 && (
-                        <AmenitiesSection providedAmenities={homestay.amenities} />
+                        <div className={`${standardizedCardShell} ${standardizedCardReset}`}>
+                            <AmenitiesSection providedAmenities={homestay.amenities} />
+                        </div>
                     )}
 
                     {/* ── Policies ── */}
                     {homestay.policies && homestay.policies.length > 0 && (
-                        <PoliciesSection policies={homestay.policies} />
+                        <div className={`${standardizedCardShell} ${standardizedCardReset}`}>
+                            <PoliciesSection policies={homestay.policies} />
+                        </div>
                     )}
 
 
@@ -490,7 +479,7 @@ export default async function HomestayPage({ params }: { params: Promise<{ id: s
                 </div>
 
                 {/* Desktop Sticky Sidebar (Pricing / Inquiry) */}
-                <div className="hidden md:block w-[350px] lg:w-[400px] flex-none relative">
+                <div className="hidden lg:block w-[360px] flex-none relative">
                     <div className="sticky top-28">
                         <div className="relative overflow-hidden rounded-[28px] border border-stone-200/80 bg-white/92 p-7 shadow-[0_24px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl">
                             {/* Subtle gradient border effect */}
