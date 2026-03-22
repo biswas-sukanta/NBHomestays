@@ -74,12 +74,6 @@ public class Comment {
     @Builder.Default
     private List<MediaResource> mediaFiles = new ArrayList<>();
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "comment_images", joinColumns = @JoinColumn(name = "comment_id"))
-    @Column(name = "image_url")
-    @Builder.Default
-    private List<String> legacyImageUrls = new ArrayList<>();
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

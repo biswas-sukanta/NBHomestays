@@ -83,11 +83,6 @@ CREATE TABLE posts (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE post_images (
-    post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-    image_url TEXT NOT NULL
-);
-
 -- 6. Seed Data
 -- Users (Password is 'password' or similar hash from V5)
 INSERT INTO users (id, first_name, last_name, email, password, role, enabled) 

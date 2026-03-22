@@ -635,15 +635,15 @@ public class PostService {
     // ── Deep Wipe: Admin-only nuclear option ────────────────────────────────
     /**
      * DEEP WIPE: Hard-deletes ALL posts, comments, likes, media, reviews,
-     * saved_items, and timeline entries. Admin-only nuclear option.
+     * and timeline entries. Admin-only nuclear option.
      *
      * Deletion order (audit-verified, 2026-03-21):
      *   1. Collect media fileIds BEFORE any DB deletes (safe cleanup order)
-     *   2. DELETE comment_images  (ElementCollection - no CASCADE)
-     *   3. DELETE media_resources (no CASCADE on post_id / comment_id)
-     *   4. DELETE saved_items     (no CASCADE on homestay_id / user_id)
-     *   5. DELETE reviews         (no CASCADE on homestay_id / user_id)
-     *   6. DELETE trip_board_saves (ON DELETE CASCADE exists but explicit for safety)
+     *   2. DELETE media_resources (no CASCADE on post_id / comment_id)
+     *   3. DELETE reviews         (no CASCADE on homestay_id / user_id)
+     *   4. DELETE trip_board_saves (ON DELETE CASCADE exists but explicit for safety)
+     *   5. Hard-DELETE post_timelines_global (bypasses @SQLDelete soft-delete)
+     *   6. Hard-DELETE posts      (CASCADE removes post_likes, comments,
      *   7. Hard-DELETE post_timelines_global (bypasses @SQLDelete soft-delete)
      *   8. Hard-DELETE posts      (CASCADE → auto-removes post_likes, comments,
      *                              helpful_votes via FK)
@@ -668,11 +668,7 @@ public class PostService {
         List<String> allFileIds = mediaResourceRepository.findAllFileIds();
         log.info("[DEEP WIPE] Collected {} ImageKit fileIds to clean up after commit", allFileIds.size());
 
-        // ── STEP 2: DELETE comment_images (ElementCollection — no CASCADE) ────
-        int commentImagesDeleted = commentRepository.deleteAllCommentImages();
-        log.info("[DEEP WIPE] Deleted {} comment_images rows", commentImagesDeleted);
-
-        // ── STEP 3: DELETE media_resources (no CASCADE on post_id/comment_id) ─
+        // ── STEP 2: DELETE media_resources (no CASCADE on post_id/comment_id) ─
         int mediaResourcesDeleted = mediaResourceRepository.deleteAllAndCount();
         log.info("[DEEP WIPE] Deleted {} media_resources rows", mediaResourcesDeleted);
 
@@ -879,11 +875,6 @@ public class PostService {
         }
         log.info("[BATCH WIPE] Deleted {} files from ImageKit, {} failed", deletedFileCount, failedFileCount);
         
-        // Step 4: Delete comment_images (ElementCollection table lacks ON DELETE CASCADE)
-        // Must be deleted BEFORE comments are removed
-        int commentImagesDeleted = commentRepository.deleteCommentImagesByPostIdIn(postIds);
-        log.info("[BATCH WIPE] Deleted {} comment_images records", commentImagesDeleted);
-        
         // Step 5: Delete media_resources explicitly (deleteAllByIdInBatch bypasses JPA cascade)
         // 5a: Delete comment media first (media_resources.comment_id lacks ON DELETE CASCADE)
         int commentMediaDeleted = mediaResourceRepository.deleteByCommentPostIdIn(postIds);
@@ -952,13 +943,6 @@ public class PostService {
         if (post.getMediaFiles() != null) {
             combinedMedia.addAll(post.getMediaFiles());
         }
-        // Fallback for Legacy Images
-        if (post.getLegacyImageUrls() != null && !post.getLegacyImageUrls().isEmpty() && combinedMedia.isEmpty()) {
-            for (String url : post.getLegacyImageUrls()) {
-                combinedMedia.add(com.nbh.backend.model.MediaResource.builder().url(url).build());
-            }
-        }
-
         AuthorDto author = AuthorDto.builder()
                 .id(post.getUser().getId())
                 .name(post.getUser().getFirstName()

@@ -213,12 +213,6 @@ public class CommentService {
         if (c.getMediaFiles() != null) {
             combinedMedia.addAll(c.getMediaFiles());
         }
-        // Fallback for Legacy Images
-        if (c.getLegacyImageUrls() != null && !c.getLegacyImageUrls().isEmpty() && combinedMedia.isEmpty()) {
-            for (String url : c.getLegacyImageUrls()) {
-                combinedMedia.add(com.nbh.backend.model.MediaResource.builder().url(url).build());
-            }
-        }
 
         List<MediaDto> dtoMedia = combinedMedia.stream()
                 .map(m -> MediaDto.builder().id(m.getId()).url(m.getUrl()).fileId(m.getFileId())

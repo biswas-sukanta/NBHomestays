@@ -60,11 +60,6 @@ public class Post {
     private List<MediaResource> mediaFiles = new java.util.ArrayList<>();
 
     @ElementCollection
-    @CollectionTable(name = "post_images", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "image_url")
-    private List<String> legacyImageUrls;
-
-    @ElementCollection
     @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "tag")
     @Builder.Default

@@ -150,11 +150,6 @@ CREATE TABLE posts (
     editorial_score DOUBLE PRECISION NOT NULL DEFAULT 0
 );
 
-CREATE TABLE post_images (
-    post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-    image_url TEXT NOT NULL
-);
-
 CREATE TABLE post_tags (
     post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     tag VARCHAR(255) NOT NULL
@@ -169,11 +164,6 @@ CREATE TABLE comments (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     helpful_count INTEGER NOT NULL DEFAULT 0
-);
-
-CREATE TABLE comment_images (
-    comment_id UUID NOT NULL REFERENCES comments(id),
-    image_url VARCHAR(255)
 );
 
 CREATE TABLE post_likes (
